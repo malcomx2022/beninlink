@@ -61,7 +61,36 @@
   et reporter les noms réels ici.
 
 ## Points à compléter après cartographie (Étape 0)
-- [ ] Interface de passerelle de paiement : `__________`
-- [ ] Service de crédit wallet : `__________`
-- [ ] Module d'abonnement : `__________`
-- [ ] Helper de résolution du locataire : `__________`
+- [x] Interface de passerelle de paiement : `App\Library\SslCommerz\SslCommerzInterface`
+  (seul contrat de passerelle formel du socle ; méthodes `makePayment`,
+  `orderValidate`, `setParams`, `setRequiredInfo`, `setCustomerInfo`,
+  `setShipmentInfo`, `setProductInfo`, `setAdditionalInfo`, `callToApi`).
+  ⚠️ **Aucune classe Paystack** dans le socle, et **pas de contrat commun**
+  couvrant toutes les passerelles : Stripe/PayPal/Skrill/SSLCommerz sont câblés
+  ad hoc dans les contrôleurs (`OnlinePaymentController`, `SkrillController`,
+  `SslCommerzPaymentController`…). FedaPay devra donc s'inspirer de
+  `SslCommerzInterface` (Abstract + Interface + Notification) plutôt que d'un
+  contrat déjà partagé.
+- [x] Service de crédit wallet : `App\Repositories\Wallet\WalletRepository`
+  (contrat `App\Repositories\Wallet\WalletInterface`). Crédit effectif du solde
+  marchand dans `approved($id)` et `adminstore($request)`
+  (`$merchant->wallet_balance += $wallet->amount`) ; `store()` crée la recharge
+  en statut PENDING, `paymentStatus()` fixe transaction_id + statut.
+- [x] Module d'abonnement : `App\Repositories\Superadmin\Company\CompanyRepository`
+  (contrat `CompanyInterface`) + modèle `App\Models\Backend\Subscription` et
+  `App\Models\Backend\Superadmin\Plan`. Activation dans `store()`, renouvellement
+  dans `update()`, changement de plan dans `switchPlan()` — `expired_date` calculé
+  via `plan->days_count`. Contrôleur `Superadmin\PlanController` / routes
+  `routes/superadmin.php` ; garde d'accès `subscriptionCheckMiddleware`.
+  (Ne pas confondre avec `App\Models\Subscribe` = newsletter frontend.)
+- [x] Helper de résolution du locataire : paquet `stancl/tenancy` v3.7.
+  Modèle `App\Models\Tenant` (colonne custom `company_id`, `HasDomains`),
+  config `config/tenancy.php`, provider `App\Providers\TenancyServiceProvider`.
+  Identification par middleware `Stancl\...\InitializeTenancyByDomain`
+  + `PreventAccessFromCentralDomains` + `App\Http\Middleware\CompanyActivationMiddleware`,
+  activés dans `routes/web.php` quand l'hôte figure dans la table `domains`.
+  ⚠️ Le locataire est ensuite mappé sur une **entreprise** : le scoping data réel
+  passe par `company_id` (scope `scopeCompanywise()` = `settings()->id`, helper
+  `settings()` dans `app/Http/Helper/Helper.php`, résolu via `tenant()->company_id`).
+  Le switch de base de données stancl (`DatabaseTenancyBootstrapper`, `routes/tenant.php`)
+  est **désactivé/commenté** : mono-base, cloisonnement par `company_id`.
