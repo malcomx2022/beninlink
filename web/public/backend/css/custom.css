@@ -1,0 +1,605 @@
+.card-height {
+    height: 95% !important;
+}
+
+.parcelSearch
+{
+    width: 40%!important;
+    margin-left: 25%!important;
+
+}
+
+.parcelsearchFlex{
+    align-items: center!important;
+}
+
+
+.fi{
+    background-size: contain;
+    background-position: 50%;
+    background-repeat: no-repeat;
+}
+
+
+
+/*admin dashboard icon*/
+
+.total-card-body {
+    padding-left: 0px;
+    padding-right: 0px;
+    padding-bottom: 0px;
+    padding-top: 20px;
+}
+.total-card-body  .box-content {
+    margin-bottom: 0px;
+}
+
+.total-card-body  .box-content h5{
+    margin-bottom: 0px;
+}
+.total-card-body  .box-content .metric-value{
+        margin-bottom: 10px;
+}
+
+.lang-dropdown{
+    left: 0!important;
+    margin-top: 0.5em!important;
+}
+.lang-dropdown .btn{
+    color: #212529!important;
+    border:none!important;
+}
+.dropdown-menu{
+    min-width: 8.5em!important;
+}
+.lang-dropdown .dropdown-item{
+    padding-left: 15px!important;
+}
+.dropdown-toggle{
+    border:none!important;
+}
+/* salary  */
+
+.dashboard-salary label.icon{
+    width: 20%!important;
+}
+.dashboard-salary .d-flex p.ml-3{
+        color:#7171a6 !important;
+        text-align: left!important;
+}
+.dashboard-salary .d-flex p{
+    width: 100%!important;
+    text-align: center!important;
+}
+.border-1px{
+    border-bottom: 1px solid!important;
+}
+/*admin dashboard icon*/
+
+
+.notification-dropdown
+{
+    min-width: 320px!important;
+}
+
+
+@media only screen and (max-width: 991px) {
+
+
+    .notification-dropdown
+    {
+        min-width: 200px!important;
+    }
+}
+
+
+/* custome full site background and color change */
+
+:root{
+    --warningcolor:#7e0095;
+}
+.btn-primary{
+    color: white!important;
+    background-color: var(--warningcolor)!important;
+    border-color: var(--warningcolor)!important;
+}
+.badge-primary{
+    background-color: var(--warningcolor)!important;
+}
+
+
+.card-header{
+    background-color: none!important
+}
+
+
+.btn-outline-light:hover{
+    background-color: var(--warningcolor)!important;
+    color:white!important;
+    border-color: var(--warningcolor)!important;
+
+}
+
+/* end custom full site background and color change*/
+
+
+.dashboard-calendar
+{
+    width: 100%!important;
+}
+
+
+.fc-today-button.fc-button.fc-button-primary
+{
+    text-transform: capitalize!important;
+}
+
+.fc .fc-daygrid-event-harness
+{
+    margin-bottom: 2px!important;
+}
+
+
+
+/* login page design css */
+
+.login-bg-image{
+    background: linear-gradient(0deg,rgba(0, 0, 0, 0.76),rgba(51, 51, 51, 0.32)),url(../images/1.jpg);
+    text-align: center;
+    background-size: cover;
+    background-position: center;
+}
+/* end login page design css */
+
+
+.pickup-request .btn{
+    padding: 10px 30px 10px 30px!important;
+    margin: 30px 20px;
+}
+
+
+@media screen and (max-width:768px){
+    .dashboard-filter-input{
+        width: 50%!important;
+    }
+}
+
+
+.dropdown-menu .dropdown-item:hover{
+    background-color: #7e0095!important;
+    color:white!important;
+}
+.btn-primary.ml-0{
+    margin-left: 0px!important;
+}
+
+.card .card-body.pt-0px
+{
+    padding-top: 0px!important;
+}
+
+
+.apexcharts {
+    max-width: 650px;
+    margin: 0px auto;
+  }
+
+
+  .font-size-12{
+      font-size: 12px!important;
+  }
+
+  .metric-label{
+      text-transform: capitalize!important;
+      margin-top: 0px!important;
+  }
+
+  .merchant-panel.header-summery .card .text-primary{
+      color:#7e0095!important;
+    }
+  .merchant-panel.header-summery .card .card-body{
+        padding-left: 15px!important;
+    }
+
+    .merchant-panel.header-summery .card:hover .text-primary{
+        color:white!important;
+    }
+
+    .merchant-panel.all-reports .card:hover .text-primary{
+        color:white!important;
+    }
+
+    .merchant-panel.all-reports .card i{
+        font-size: 50px!important;
+    }
+
+
+    .navbar-brand img.logo{
+        width: 200px!important;
+        height: 30px!important;
+        object-fit: contain!important;
+    }
+
+    @media screen and (min-width:960px) {
+        .footer-text{
+            margin-left: 25%!important;
+        }
+    }
+
+    .dropdown-toggle{
+        border:none!important;
+    }
+
+
+
+    /* canvas menu */
+
+    /* end canvas menu */
+
+
+    .merchant-panel.header-summery.all-reports .card i{
+        font-size: 2.5rem!important;
+    }
+
+    .nav-item.dropdown.connection .dropdown-item{
+        color: #455560!important;
+
+    }
+
+    .nav-item.dropdown.connection .dropdown-item:hover{
+        background:none!important;
+    }
+
+    @media screen and (max-width:990px){
+        .notification .nav-link.nav-icons .mobile-notification.indicator{
+            right: 3px!important;
+            top:20px!important;
+        }
+
+
+        .nav-left-sidebar{
+            display: none!important;
+        }
+        .main-content{
+            margin-left: 0px!important;
+        }
+
+
+        .merchant-mobile-navbar-nav .nav-item.dropdown a.dropdown-item{
+            width: 250px!important;
+        }
+
+        #todoModal1{
+            margin-left: 15px!important;
+            margin-right: 15px!important;
+        }
+    }
+
+
+
+    .merchant-panel.header-summery .icon{
+        margin-bottom: 0px!important;
+    }
+
+
+    table .dropdown-menu{
+        max-width: 20em!important;
+    }
+
+    table .btn.btn-primary.dropdown-toggle.dropdown-toggle-split{
+        width: 40px!important;
+    }
+
+
+    table td .row .btn.btn-sm:hover{
+        border:none!important;
+    }
+
+    table td .row .btn.btn-sm:focus-visible{
+        border:none!important;
+        box-shadow: none!important;
+    }
+
+    .table-responsive{
+        /* margin-top: 10px!important; */
+    }
+
+    @media screen and (max-width: 412px){
+        .dashboard-filter-input {
+            width: 40%!important;
+        }
+
+        .merchant-dashboard-filter input.w200{
+            min-width: 250px!important;
+        }
+
+
+        .notification .nav-link.nav-icons .mobile-notification.indicator {
+            top: 20px!important;
+        }
+
+        .notification-list{
+            background: white !important;
+        }
+    }
+
+
+    .list-group-item {
+
+        border: 1px solid #e6e6f2!important;
+    }
+
+
+    .permission-table tr td .row label{
+        width: 90%!important;
+    }
+
+    .swal2-confirm.swal2-styled{
+        background: #7e0095 !important;
+    }
+
+
+    html[dir="rtl"] .merchant-panel.header-summery .card-body .d-flex{
+        text-align: right!important;
+    }
+
+    html[dir="rtl"] .merchant-panel.header-summery.all-reports .d-flex.justify-content-between{
+        text-align: right!important;
+        justify-content: unset!important;
+    }
+
+
+    html[dir="rtl"] .merchant-panel.header-summery.all-reports .d-flex.justify-content-between p{
+        margin-left: 15px!important;
+    }
+
+    .merchant-panel.header-summery.all-reports .d-flex.justify-content-between{
+        text-align: right!important;
+        justify-content: unset!important;
+    }
+
+    .merchant-panel.header-summery.all-reports .d-flex.justify-content-between p.h3.text-primary{
+        text-align: left;
+    }
+    html[dir="rtl"] .merchant-panel.header-summery.all-reports .d-flex.justify-content-between p.h3.text-primary{
+        text-align: right!important;
+    }
+    .merchant-panel.header-summery.all-reports .d-flex.justify-content-between p{
+        margin-right:15px!important ;
+    }
+    html[dir="rtl"] .merchant-panel.header-summery.all-reports .d-flex.justify-content-between p{
+        margin-right:unset!important ;
+    }
+
+
+    html[dir="rtl"] .d-description
+    {
+        text-align: right!important;
+    }
+
+
+.hub-view .card:hover .total-card-body .text-center .icon,
+.hub-view .card:hover .total-card-body .text-center .box-content .text-muted,
+.hub-view .card:hover .total-card-body .text-center .icon .box-content .metric-value h1.mb-1
+{
+    color: #7e0095!important;
+}
+
+
+.glyphicon.glyphicon-chevron-up,
+.glyphicon.glyphicon-chevron-down{
+    display: none!important;
+}
+
+.bootstrap-datetimepicker-widget table td.active, .bootstrap-datetimepicker-widget table td.active:hover
+{
+    background-color: #7e0095!important;
+}
+
+.bootstrap-datetimepicker-widget table td.day {
+    line-height: 40px!important;
+    width: 30px!important;
+}
+
+
+.picker-switch
+{
+    padding:10px!important;
+}
+
+
+.select2-container--default .select2-selection--single
+{
+    border-radius: 30px!important;
+}
+
+.select2-dropdown{
+    border-radius: 10px 10px 20px 20px!important;
+    overflow: hidden!important;
+}
+
+.select2-search__field{
+    margin-top: 5px!important;
+}
+
+.select2-container--default .select2-results__option--selected
+{
+    background-color: #7e0095!important;
+    color: white!important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow
+{
+    right: 10px!important;
+}
+
+ button.pickup-request-btn{
+     border-radius: 4px!important;
+ }
+
+ .note-toolbar button.btn{
+    min-width: 20px!important;
+    margin: 5px!important;
+    border-radius: 5px!important;
+ }
+input[type="file"]{
+    padding-left: 5px!important;
+    box-shadow: none!important;
+    border:1px solid #d2d2e4!important;
+}
+
+.margin-top-5px{
+    margin-top: 5px!important;
+}
+
+.nav-left-sidebar .navbar-nav .nav-link:hover,.nav-left-sidebar .navbar-nav .nav-link.active{
+    background-color: #6a027c12!important;
+}
+
+.pickup-req-btn-merchant{
+    padding: 30px 40px!important;
+    margin-top: 21px!important;
+    font-size:20px!important;
+    border-radius:5px!important
+}
+
+.pickup-req-btn-merchant i
+{
+    font-size:20px!important;
+    margin-right:10px!important;
+}
+
+.modal-content{
+    border: none!important;
+    box-shadow: 0px 0px 5px white!important;
+}
+
+.merchantpanelAddbutton::after
+{
+    display: none!important;
+}
+
+
+@media screen and (min-width: 991px){
+    .merchantpanelAddDropdown{
+        left: -16px!important;
+    }
+}
+
+
+.mtext-color{
+    color:#455560!important;
+}
+
+.mobilePlusBtn button
+{
+    color:#455560!important;
+}
+
+.m-newsoffers{
+    padding: 5px 10px!important;
+}
+
+@media screen and (max-width: 991px) {
+        .merchant-navbar .nav-item.dropdown.connection.mt-md-3{
+            margin-top: 0px!important;
+        }
+
+        .notification .nav-link.nav-icons .mobile-notification.indicator.admin{
+            margin-top: -10px!important;
+        }
+
+        .navbar-nav a.dropdown-item i.fa-newspaper{
+            margin-right: 0px!important;
+        }
+
+        .mobileLocale button{
+            padding-left: 10px!important;
+        }
+        .mobileLocale button i{
+            margin-right: 5px!important;
+        }
+}
+
+
+.width300px{
+    width: 300px!important;
+}
+.width100px{
+    width: 100px!important;
+}
+
+
+.totalCalculationHead .text-white{
+    color:white!important;
+}
+
+.marchantStatusReportsSelect .select2-selection.select2-selection--multiple{
+        padding:8px!important;
+}
+
+.w-25
+{
+    width: 25%!important;
+}
+
+.select2-selection.select2-selection--single{
+    height: unset!important;
+    line-height: 1.5!important;
+    min-height: calc(1.5em + 0.5rem + 2px)!important;
+    font-size: .875rem!important;
+}
+.select2-selection.select2-selection--single .select2-selection__rendered{
+    padding: 3px 0 0 14px !important;
+}
+
+@media screen and (min-width:991px){
+    .admin-panel.notification .nav-link.nav-icons .indicator{
+        top:15px!important;
+    }
+}
+
+@media screen and (min-width:991px){
+    .merchant-panel.notification .nav-link.nav-icons .indicator{
+        top:15px!important;
+    }
+}
+
+
+.fundTransferSearch{
+    width: 100%!important;
+    margin-left: 0%!important;
+}
+
+.list-style-none{
+    list-style: none!important;
+}
+
+html[dir="rtl"] .parcelSearch
+{
+    margin-left: 0%!important;
+}
+
+@media screen and (max-width:768px){
+    body, button.btn, a.btn,label.btn, input.form-control, p,a,span,li,button.dropdown-item,select,textarea{
+        font-size: 1.2rem!important;
+    }
+}
+
+
+img.logo-img {
+    height: 40px;
+    width: 250px;
+}
+
+.parcel-index .form-check-input{
+    position: relative!important;
+    margin-right: 0px!important;
+    margin-left: 0px!important;
+}
+
+.navbar-globe{
+    font-size: 17px;
+    margin: 15px 10px;
+}
+

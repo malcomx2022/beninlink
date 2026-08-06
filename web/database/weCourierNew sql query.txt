@@ -1,0 +1,35 @@
+
+ALTER TABLE `parcels` ADD `pickup_lat` VARCHAR(255) NULL AFTER `customer_address`, ADD `pickup_long` VARCHAR(255) NULL AFTER `pickup_lat`, ADD `customer_lat` VARCHAR(255) NULL AFTER `pickup_long`, ADD `customer_long` VARCHAR(255) NULL AFTER `customer_lat`, ADD `priority_type_id` INT(11) NULL AFTER `customer_long`;
+
+
+
+ALTER TABLE `delivery_man` ADD `delivery_lat` VARCHAR(255) NULL AFTER `status`, ADD `delivery_long` VARCHAR(255) NULL AFTER `delivery_lat`;
+
+
+ALTER TABLE `parcel_events` ADD `delivery_lat` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL AFTER `parcel_status`, ADD `delivery_long` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL AFTER `delivery_lat`, ADD `signature_image` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL AFTER `delivery_long`, ADD `delivered_image` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL AFTER `signature_image`;
+
+
+ALTER TABLE `merchant_shops` ADD `merchant_lat` VARCHAR(255) NULL AFTER `address`, ADD `merchant_long` VARCHAR(255) NULL AFTER `merchant_lat`;
+
+
+ALTER TABLE `hubs` ADD `hub_lat` VARCHAR(255) NULL AFTER `address`, ADD `hub_long` VARCHAR(255) NULL AFTER `hub_lat`;
+
+
+CREATE TABLE `google_map_setting` (`id` INT NOT NULL AUTO_INCREMENT , `map_key` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL , `created_at` TIMESTAMP NULL , `updated_at` TIMESTAMP NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB;
+
+ALTER TABLE `merchants` ADD `wallet_balance` DECIMAL  DEFAULT 0  AFTER `opening_balance`, ADD `wallet_use_activation` bigint(20) DEFAULT 0 AFTER `opening_balance`;
+
+
+CREATE TABLE `wallets` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `source` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `merchant_id` bigint(20) UNSIGNED NOT NULL,
+  `transaction_id` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `amount` decimal(22,2) DEFAULT NULL,
+  `type` tinyint(3) UNSIGNED NOT NULL DEFAULT 1 COMMENT '1= Income,2= Expense',
+  `payment_method` tinyint(3) UNSIGNED NOT NULL DEFAULT 1 COMMENT '1 = Offline ',
+  `status` tinyint(3) UNSIGNED NOT NULL DEFAULT 1 COMMENT '1 = Pending , 2= Approved,3= Reject',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

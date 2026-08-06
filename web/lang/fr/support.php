@@ -1,0 +1,42 @@
+<?php
+
+return [
+
+  'dashboard' => 'Tableau de bord',
+  'supprot' => 'Ticket',
+  'supprot_add' => 'Ajouter un ticket',
+  'supprot_edit' => 'Modifier le ticket',
+  'supprot_delete' => 'Supprimer le ticket',
+  'supprot_list' => 'Liste des tickets',
+  'title' => 'Titre',
+  'description' => 'Description',
+  'date' => 'Date',
+  'status' => 'Statut',
+  'action' => 'Action',
+  'subject' => 'Sujet',
+  'department_id' => 'Département',
+  'service' => 'Service',
+  'priority' => 'Priorité',
+  'attached' => 'Attaché',
+  'user_info' => 'Informations utilisateur',
+  'name' => 'Nom',
+  'email' => 'E-mail',
+  'priority' => 'Priorité',
+  'department' => 'Département',
+  'support_edit' => 'Modifier le ticket',
+  'reply' => 'Répondre',
+  'message' => 'Message',
+  'attached_file' => 'Fichier joint',
+  'user_name' => 'Nom',
+  'user_email' => 'E-mail',
+
+  'delete' => 'Supprimer',
+  'sl' => 'SL',
+  'status_update' => 'Mise à jour du statut',
+  'added_msg' => 'Ticket ajouté avec succès !',
+  'update_msg' => 'Ticket mis à jour avec succès !',
+  'error_msg' => 'Oops ! Quelque chose s\'est mal passé',
+  'delete_msg' => 'Ticket supprimé avec succès !',
+  'reply_msg' => 'Message envoyé avec succès !',
+
+];

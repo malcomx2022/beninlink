@@ -1,0 +1,69 @@
+
+* {
+    font-family: "Lucida Console", "Courier New", monospace;
+}
+@media print {
+    .hidden-print,
+    .hidden-print * {
+        display: none !important;
+    }
+    .print{
+        display: none;
+    }
+    @page  {
+        size:landscape;
+
+    }
+    /* /* print.css */
+
+
+}
+table tr th{
+            color:white!important;
+        }
+    table tfoot,table thead{
+            background:#5969ff!important;
+            color:white;
+        }
+
+
+    table tr.odd{
+        background: #dee2e6;
+    }
+    table tr td{
+        padding:5px;
+    }
+    .officehead .left-col{
+        text-align: right;
+        padding-left: 10px;
+        width: 50%;
+    }
+    .officehead .right-col{
+        text-align: left
+    }
+    table tr th{
+        padding:5px!important;
+    }
+
+
+    .btn-primary{
+        color: #fff;
+        background-color: #5969ff;
+        border-color: #5969ff;
+        font-size: 14px;
+        padding: 9px 16px;
+        border-radius: 2px;
+        cursor:pointer;
+        border:none;
+    }
+    .btn-danger{
+        color: #fff;
+        background-color: #f0346e;
+        border-color: #f0346e;
+        font-size: 14px;
+        padding: 9px 16px;
+        border-radius: 2px;
+        text-decoration: none;
+        cursor:pointer;
+        border:none;
+    }
