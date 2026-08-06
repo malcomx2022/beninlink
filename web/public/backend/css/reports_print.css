@@ -1,0 +1,128 @@
+
+* {
+    font-family: "Lucida Console", "Courier New", monospace;
+}
+@media print {
+    .hidden-print,
+    .hidden-print * {
+        display: none !important;
+    }
+    .print{
+        display: none;
+    }
+    @page  {
+        size:landscape;
+
+    }
+    /* /* print.css */
+
+
+}
+table tr th{
+            color:white!important;
+        }
+    table tfoot,table thead{
+            background:#7e0095!important;
+            color:white;
+        }
+
+
+    table tr.odd{
+        background: #7e0095;
+    }
+    table tr td{
+        padding:5px;
+    }
+    .officehead .left-col{
+        text-align: right;
+        padding-left: 10px;
+        width: 50%;
+    }
+    .officehead .right-col{
+        text-align: left
+    }
+    table tr th{
+        padding:5px!important;
+    }
+
+
+    .btn-primary{
+        color: #fff;
+        background-color: #7e0095;
+        border-color: #5969ff;
+        font-size: 14px;
+        padding: 9px 16px;
+        border-radius: 2px;
+        cursor:pointer;
+        border:none;
+    }
+    .btn-danger{
+        color: #fff;
+        background-color: #f0346e;
+        border-color: #f0346e;
+        font-size: 14px;
+        padding: 9px 16px;
+        border-radius: 2px;
+        text-decoration: none;
+        cursor:pointer;
+        border:none;
+    }
+    .bg-primary{
+        color: #fff;
+        background-color: #7e0095;
+    }
+
+
+    .totalCalculationHead,.totalCalculationRow{
+        font-weight: bold;
+    }
+    table tr td,table tr th{
+        text-align: left;
+    }
+
+    .badge{
+        display: inline-block;
+        padding: 3px 7px;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+}
+
+
+
+    .badge-danger{
+        background-color: #da0419;
+        color:white;
+    }
+    .badge-primary{
+        background-color: #5969ff;
+        color:white;
+    }
+    .badge-warning{
+        background-color: #f3b600;
+        color: #2e2f39;
+    }
+    .badge-info{
+        background-color: #0998b0;
+        color:white;
+    }
+    .badge-dark{
+        background-color: #1f202b;
+        color:white;
+    }
+
+    .badge-success{
+        background-color: #21ae41;
+        color:white;
+    }
+
+    .badge-secondary{
+        background-color: #ff407b;
+        color:white;
+    }
+
+

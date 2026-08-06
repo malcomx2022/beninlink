@@ -1,0 +1,91 @@
+<?php
+return [
+    'title'                 => 'Dashboard',
+    'courier'               => 'Courier',
+    'merchant'              => 'Merchant',
+    'delivery_man'          => 'Delivery Man',
+    'hub'                   => 'Branch',
+    'total_parcel'          => 'Total Parcel',
+    'total_user'            =>  'Total User',
+    'total_merchant'        => 'Total Merchant',
+    'total_delivery_man'    => 'Total Delivery Man',
+    'total_hubs'            => 'Total Branch',
+    'total_accounts'        => 'Total Accounts',
+    'balance'               =>   'Balance',
+    'balances'              =>   'Balance',
+    'total_balance'         =>   'Total Balance',
+    'revenue'               =>  'Revenue',
+    'recent'                =>   'Recent',
+    'view_details'          =>   'View Details',
+    'bank_transaction'      =>   'Bank Transaction',
+    'statements'            =>   'Statements',
+    'bank'                  =>  'Bank',
+    'vat'                   =>   'Vat',
+
+
+    'total_deliverd_'        =>   'Total deliverd',
+    'total_return'          =>   'Total return',
+    'total_transit'         =>   'Total transit',
+    'total_sales_amount'    =>   'Total sales amount',
+    'total_delivery_fees_paid'=> 'Total delivery fees paid',
+    'payment_processing'    =>   'Payment processing',
+    'paid_amount'           =>   'Paid amount',
+    'total_shop'            =>   'Total shop',
+    'total_parcel_bank_items'=> 'Total parcel bank items',
+
+
+    'total_pending'              => 'Total parcels pending',
+    'total_pickup_assigned'      => 'Total Pickup Assgined',
+    'total_warehouse'           =>   'Total received warehouse',
+    'total_delivery_man_assigned'=>  'Total Deliveryman Assigned',
+    'total_partial_deliverd'     =>  'Total Partial Delivered',
+    'total_deliverd'             =>   'Total parcels deliverd',
+    'today'                      =>   'Today',
+    'yesterday'                  =>   'Yesterday',
+    'last_week'                  =>   'Last Week',
+    'custom'                     =>   'Custom',
+    'last_15_days'               =>   'Last 15 Days',
+    'last_month'                 =>   'Last 30 Days',
+    'total_payment_request'  => 'Total payment request',
+    'total_fraud_customer'   => 'Total fraud customer',
+    'net_profit_ammount'     => 'Net profit amount',
+
+    'total_cash_collection'        => 'Total cash collection',
+    'total_selling_price'          => 'Total selling price',
+
+    'cash_collection'        => 'Cash collection',
+    'selling_price'          => 'Selling price',
+
+    'total_liquid_fragile_amount'  => 'Total liquid fragile amount',
+    'total_vat_amount'             => 'Total vat amount',
+    'total_delivery_charge'        => 'Total delivery charge',
+    'total_cod_amount'             => 'Total cod amount',
+    'total_packaging_amount'       => 'Total packaging amount',
+    'total_total_delivery_amount'  => 'Total delivery amount',
+    'total_current_payable'        => 'Total current payable',
+
+    // salary
+    'total_generated_month'        => 'Total generated month',
+    'total_generated_amount'       => 'Total generated amount',
+    'total_paid_amount'            =>  'Total paid amount',
+    'total_unpaid_amount'          => 'Total unpaid amount',
+    //salary
+    'parcel_reports'               => 'Parcel Reports',
+    'all_reports'                  => 'All Reports',
+    'current_balance'              => 'Current Balance',
+    'opening_balance'              => 'Opening Balance',
+    'vat'                          => 'Vat',
+    'profit'                       => 'Profit',
+
+    'total'                        => 'Total',
+    'pending'                      => 'Pending',
+    'deliver'                      => 'Delivered',
+    'par_deliver'                  => 'Partial Delivered',
+    'return'                       => 'Return',
+
+    'total_company'                => 'Total Company',
+    'total_plans'                  => 'Total Plans',
+    'total_subscription'           => 'Total Subscription',
+    'total_subscription_price'     => 'Total subscription price'
+
+];

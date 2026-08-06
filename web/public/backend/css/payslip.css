@@ -1,0 +1,107 @@
+
+* {
+    font-family: "Lucida Console", "Courier New", monospace;
+}
+@media print {
+    .hidden-print,
+    .hidden-print * {
+        display: none !important;
+    }
+    .print{
+        display: none;
+    }
+    @page  {
+        size:landscape;
+
+    }
+    /* /* print.css */
+
+
+}
+table tr th{
+            color:white!important;
+        }
+    table tfoot,table thead{
+            background:#5969ff!important;
+            color:white;
+        }
+
+
+
+    table tr td{
+        padding:5px;
+    }
+    .officehead .left-col{
+        text-align: right;
+        padding-left: 10px;
+        width: 50%;
+    }
+    .officehead .right-col{
+        text-align: left
+    }
+    table tr th{
+        padding:5px!important;
+    }
+
+
+    .btn-primary{
+        color: #fff;
+        background-color: #5969ff;
+        border-color: #5969ff;
+        font-size: 14px;
+        padding: 9px 16px;
+        border-radius: 2px;
+        cursor:pointer;
+        border:none;
+    }
+    .btn-danger{
+        color: #fff;
+        background-color: #f0346e;
+        border-color: #f0346e;
+        font-size: 14px;
+        padding: 9px 16px;
+        border-radius: 2px;
+        text-decoration: none;
+        cursor:pointer;
+        border:none;
+    }
+
+
+    .userInfo .row{
+        display: flex;
+        width: 100%;
+    }
+    .userInfo .col-6{
+        width: 50%;
+    }
+    .userInfo .col-4,.userInfo,.col-8{
+
+        padding:5px;
+    }
+
+
+    .userInfo .col-4{
+        width: 40%;
+    }
+    .userInfo .col-8{
+        width: 79%;
+    }
+
+    table.userInfo{
+        width:100%;
+    }
+
+    .row.odd{
+        background:#ebebf3!important;
+    }
+
+    .bg-color{
+        background:#5969ff;
+    }
+    .text-white{
+        color:white;
+    }
+
+    .font-bold{
+        font-weight: bold;
+    }

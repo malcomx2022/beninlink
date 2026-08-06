@@ -1,0 +1,31 @@
+<?php
+
+return [
+
+    'title'                           => 'Paiement de Centre',
+    'added_msg'                       => 'Paiement de Centre ajouté avec succès.',
+    'update_msg'                      => 'Paiement de Centre mis à jour avec succès.',
+    'error_msg'                       => 'Quelque chose s\'est mal passé.',
+    'delete_msg'                      => 'Paiement de Centre supprimé avec succès.',
+    'rejected_msg'                    => 'Paiement de Centre rejeté avec succès.',
+    'cancel_rejected_msg'             => 'Paiement annulé rejeté.',
+    'processed_msg'                   => 'Paiement de Centre traité avec succès.',
+    'cancel_processed_msg'            => 'Paiement annulé traité.',
+    'create_payment'                  => 'Créer un paiement',
+    'edit_payment'                    => 'Modifier le paiement',
+    'amount'                          => 'Montant',
+    'transaction_id'                  => 'Trans.ID',
+    'from_account'                    => 'Du compte',
+    'reference_file'                  => 'Fichier de référence',
+    'description'                     => 'Description',
+    'file'                            => 'Fichier',
+    'reference'                       => 'Référence',
+    'payment'                         => 'Paiement',
+    'not_enough_balance'              => 'Solde insuffisant',
+    'not_enough_courier_balance'      => 'Solde de messagerie insuffisant',
+    'payment_process'                 => 'Processus de paiement',
+    'current_balance'                 => 'Solde actuel',
+    'details'                         => 'Détails',
+    'hub_payment_withdrawal'          => 'Retrait du paiement de Centre',
+    'cancel_hub_payment_withdrawal'   => 'Annuler le retrait du paiement de Centre',
+];
