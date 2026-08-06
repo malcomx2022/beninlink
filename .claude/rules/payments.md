@@ -1,7 +1,7 @@
 ---
-paths: ["app/Services/Payments/**", "app/Http/Controllers/Payment/**"]
+paths: ["web/app/Services/Payments/**", "web/app/Http/Controllers/Payment/**"]
 ---
-# Règles paiement (FedaPay)
+# Règles paiement (FedaPay) — web/
 - FedaPay est la passerelle Mobile Money du Bénin (MTN MoMo + Moov Money).
 - Le **webhook signé** (`transaction.approved`) est la **seule source de vérité**
   pour créditer un wallet ou activer un abonnement. Le retour navigateur/WebView
