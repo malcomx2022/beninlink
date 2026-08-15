@@ -1,7 +1,7 @@
 ---
 paths: ["web/app/**/Invoice*", "web/resources/views/**/invoice*"]
 ---
-# Règles facturation SYSCOHADA — web/
-- Mentions légales béninoises obligatoires (IFU, RCCM du locataire).
-- TVA au taux local ; numérotation conforme.
-- Prévoir un export compatible plan comptable OHADA/SYSCOHADA.
+# Règles facturation / relevés — web/
+- Mentions légales béninoises (IFU, RCCM du locataire) · TVA locale · numérotation conforme.
+- « Facture » marchand = **relevé de règlement** : Encaissé COD − Frais − TVA = Net à reverser.
+- Export compatible plan comptable OHADA/SYSCOHADA (PDF/CSV).

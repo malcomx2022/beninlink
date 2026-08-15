@@ -1,0 +1,14 @@
+BENINLINK — PAQUET DE LIVRAISON
+
+docs/   BeninLink_Documentation_maitre_DAT.docx
+        Document maître : doc fonctionnelle, DAT, arborescence, charte,
+        chantiers, méthode Claude et bibliothèque de prompts.
+maquettes/  (ouvrir dans un navigateur)
+        1_app_marchand.html · 2_app_livreur.html · 3_back_office_web.html
+config/ CLAUDE_monorepo_ReactNative.zip
+        CLAUDE.md (racine + web/ + mobile/ + mobile-livreur/) + .claude/rules/
+        -> décompresser à la racine du dépôt GitHub.
+
+Démarrage : décompresser config/ à la racine ; lancer Claude Code ; prompt A1
+(cartographie) ; puis prompts B (backend) -> C (app marchand) -> D (thème web).
+Dépôt privé (licence Envato) · app livreur = fenêtre Création · maquettes non contractuelles.

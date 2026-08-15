@@ -1,0 +1,2 @@
+# crontab -e (utilisateur deploy) — planificateur Laravel (MRR/ARR, tâches récurrentes)
+* * * * * cd /var/www/beninlink/web && php artisan schedule:run >> /dev/null 2>&1
