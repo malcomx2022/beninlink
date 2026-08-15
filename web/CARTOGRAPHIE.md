@@ -562,10 +562,43 @@ aucune passerelle existante ne servant de modèle.
   └── en.json          ← seul fichier JSON
   ```
   - **`lang/fr/` existe : 76 fichiers** contre **79** pour `lang/en/`.
-    **3 manquants** : `WalletPaymentMethod.php`, `WalletStatus.php`, `addon.php`
-    — précisément les libellés wallet que le chantier FedaPay va toucher.
+    **3 fichiers entièrement absents**, et **23 chaînes** en tout :
+    | Fichier absent | Chaînes | Contenu |
+    |---|---|---|
+    | `WalletPaymentMethod.php` | **2** | `WalletPaymentMethod::OFFLINE` → « Offline », `::WALLET` → « Wallet » |
+    | `WalletStatus.php` | **3** | `WalletStatus::PENDING` → « Pending », `::APPROVED` → « **Confirm** » (sic), `::REJECTED` → « Rejected » |
+    | `addon.php` | **18** | écran Addons : `title`, `name`, `version`, `purchase_code`, `zip_file`, `install_update`, messages d'erreur… |
+    ⇒ Les deux premiers **portent les libellés d'état du wallet** que le chantier
+    FedaPay va afficher : à créer **avant** de brancher la recharge, sinon les statuts
+    s'affichent en anglais dans une interface française. Volume dérisoire (5 chaînes).
+    `addon.php` concerne un écran d'administration technique, pas le parcours métier.
+  - 🚩 **Le compte de fichiers masque le vrai trou : les fichiers présents sont
+    incomplets.** Sur les 76 fichiers communs, **13 sont incomplets** et **149 clés de
+    `lang/en/` n'ont pas d'équivalent dans `lang/fr/`** (sur 2 008 au total) :
+    | Fichier | EN | FR | Clés absentes |
+    |---|---|---|---|
+    | `levels.php` | 370 | 322 | **48** |
+    | `parcel.php` | 175 | 137 | **38** |
+    | `merchant.php` | 97 | 79 | **29** |
+    | `permissions.php` | 123 | 111 | **12** |
+    | `dashboard.php` · `menus.php` | 74 · 81 | 70 · 77 | 4 · 4 |
+    | `to_do.php` · `validation.php` | 24 · 105 | 24 · 104 | 3 · 3 |
+    | `delete.php` · `designation.php` · `placeholder.php` | | | 2 chacun |
+    | `ActivityLogs.php` · `userType.php` | | | 1 chacun |
+    ⚠️ `to_do.php` et `designation.php` ont **autant de clés des deux côtés mais pas les
+    mêmes** ⇒ divergences de nommage, pas seulement des oublis.
+  - ⚠️ **Toutes ces clés ne sont pas à traduire.** Les 29 de `merchant.php` sont des
+    **noms de banques bangladaises** (`ab_bank_ltd`, `agrani_bank_ltd`, `brac_bank_ltd`,
+    `dbbl_agent_banking`…) — à **supprimer et remplacer** par les banques et opérateurs
+    béninois, pas à franciser (cf. `config/merchantpayment.php`). À l'inverse,
+    `parcel.php` touche le métier **et le wallet** (`priority`, `normal`, `high`, `map`,
+    `my_wallet`, `wallet_history`, `wallet_request`, `are_you_approve_this_request`…),
+    et `levels.php` les écrans de réglages (`map_key`, `razorpay_*`, `franch` (sic)…).
+  - **Volume réel de la francisation : ~172 chaînes** (23 des fichiers absents + 149 des
+    fichiers incomplets), dont une part à supprimer plutôt qu'à traduire.
   - **Pas de `lang/fr.json`** ⇒ toute chaîne passant par `__('texte libre')`
-    retombera sur l'anglais quelle que soit la locale.
+    retombera sur l'anglais quelle que soit la locale. Portée limitée : `lang/en.json`
+    ne contient que **5 clés** — le socle passe presque partout par des fichiers PHP.
   - **Bascule de langue** : `routes/web.php:137` → `GET localization/{language}` →
     `LocalizationController::setLocalization` (`App::setLocale()` +
     `session()->put('locale', …)`), réappliquée à chaque requête par
@@ -607,10 +640,15 @@ aucune passerelle existante ne servant de modèle.
   **Total : 142 appels à `number_format` avec `2` codé en dur.**
 
 ### ⇒ Conséquences pour le chantier 1 (francisation + FCFA)
-1. **Langue** : basculer `config/app.php` sur `fr`, compléter les 3 fichiers
-   manquants de `lang/fr/`, créer `lang/fr.json`, et décider si la locale doit être
-   persistée **par société** plutôt qu'en session (question ouverte aussi pour l'API,
-   aujourd'hui sans locale). Passer `timezone` à UTC+1.
+1. **Langue** : basculer `config/app.php` sur `fr`, puis traiter `lang/fr/` en trois
+   temps — (a) créer les **3 fichiers absents**, en commençant par les **5 chaînes**
+   `WalletStatus`/`WalletPaymentMethod` dont le chantier FedaPay a besoin ; (b) combler
+   les **149 clés manquantes** des 13 fichiers incomplets, en **triant ce qui doit être
+   supprimé** (les 29 banques bangladaises de `merchant.php`) de ce qui doit être
+   traduit (`parcel.php`, `levels.php`, `permissions.php`) ; (c) créer `lang/fr.json`
+   (5 clés côté `en.json`). Décider aussi si la locale doit être persistée **par
+   société** plutôt qu'en session — question ouverte pour l'API, aujourd'hui sans
+   locale. Passer `timezone` à UTC+1.
 2. **Devise — aucun point unique à modifier.** L'absence de helper = 142 sites.
    ⇒ **Introduire d'abord un helper** (ex. `formatAmount($n)` dans `Helper.php` :
    zéro décimale, séparateur de milliers espace insécable, symbole positionné),
