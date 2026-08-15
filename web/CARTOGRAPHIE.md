@@ -816,12 +816,27 @@ vestige du squelette Laravel.
   pour `+229` (cf. `digits_between:11,14` du bloc F).
 
 ### Push — `app/Http/Services/PushNotificationService.php`
-- 🚨 **API FCM « legacy »** : `https://fcm.googleapis.com/fcm/send` avec
-  `Authorization: key=<server key>` (l.30, 71, 197) et `iid.googleapis.com` pour les
-  abonnements aux topics (l.108, 140). **Google a arrêté cette API en juin 2024** ⇒ le
-  push est vraisemblablement **déjà hors service** et relève d'une **réécriture** (HTTP v1
-  + compte de service OAuth2), pas d'un simple reparamétrage. **À confirmer sur
-  l'installation avant chiffrage.**
+- 🚨 **Envoi : API FCM « legacy », arrêtée par Google — le push ne fonctionne plus.**
+  `https://fcm.googleapis.com/fcm/send` avec `Authorization: key=<server key>`
+  (l.30, 71, 197). Chronologie officielle : **dépréciée le 20 juin 2023**, support
+  **arrêté le 20 juin 2024**, extinction effective **à partir du 22 juillet 2024**.
+  ⇒ **réécriture** vers `POST https://fcm.googleapis.com/v1/projects/<id>/messages:send`
+  avec jeton **OAuth2 issu d'un compte de service** (fichier de clé privée JSON), et
+  **charge utile restructurée** (tout sous un objet `message`, options Android
+  regroupées, `time_to_live` → `ttl`, `data` limité à un plat `string → string`).
+- ⚠️ **Abonnement aux topics : l'URL reste valable, c'est l'authentification qui ne
+  passe plus.** `iid.googleapis.com/iid/v1/<token>/rel/topics/<topic>` (l.108, 140)
+  **continue d'exister**, mais **n'accepte plus les clés serveur statiques depuis le
+  21 juin 2024** — il faut un en-tête `Authorization: Bearer <access_token>` OAuth2.
+  ⇒ correctif plus léger que pour l'envoi : conserver l'appel, remplacer l'en-tête.
+  (`fcmUnsubscribe` (l.161) vise en outre `iid.googleapis.com/v1/web/iid/<token>`,
+  un endpoint *web push* sans rapport avec les topics — à revoir aussi.)
+- ⇒ **Conséquence commune : `notification_settings.fcm_secret_key` (clé serveur) ne sert
+  plus à rien.** Le stockage par société doit accueillir un **compte de service JSON**,
+  pas une clé — impact sur la table et sur l'écran de réglages.
+  Sources : [Migrate from legacy FCM APIs to HTTP v1](https://firebase.google.com/docs/cloud-messaging/migrate-v1)
+  · [Azure Notification Hubs — FCM migration](https://learn.microsoft.com/en-us/azure/notification-hubs/firebase-migration-rest)
+  · [Instance ID — Server Reference](https://developers.google.com/instance-id/reference/server)
 - Configuration par société : `notification_settings` (`fcm_secret_key`, `fcm_topic`),
   via `notificationSettings()` (`Helper.php:129`, `companywise()`).
 - 🚨 **Le topic est dérivé de l'adresse e-mail** : `fcm_topic . '_' .
@@ -860,8 +875,10 @@ vestige du squelette Laravel.
 2. **Mettre les envois en file avant d'en ajouter** : `QUEUE_CONNECTION=redis` est prévu
    côté infra ; sans cela chaque notification allonge la requête et une panne fournisseur
    bloque un changement de statut de colis.
-3. **Réécrire le push (FCM HTTP v1)** et **cesser d'utiliser l'e-mail comme topic** :
-   rattacher le jeton d'appareil à l'utilisateur authentifié.
+3. **Réécrire l'envoi push sur FCM HTTP v1** (compte de service + nouvelle charge utile),
+   **rebrancher les abonnements aux topics sur un jeton OAuth2** (l'URL, elle, reste
+   bonne), et **cesser d'utiliser l'e-mail comme topic** : rattacher le jeton d'appareil
+   à l'utilisateur authentifié. À chiffrer comme un développement, pas comme un réglage.
 4. **Traduire les gabarits** (SMS OTP, titres push, objets d'e-mail) — chantier 1.
 5. **Journaliser les envois** : aucun canal ne trace aujourd'hui ses échecs.
 
@@ -947,8 +964,9 @@ vestige du squelette Laravel.
 5. **S2 et le bloc J vont ensemble** : rapatrier le calcul côté serveur et refaire le
    barème (zones en lignes, poids en tranches) sont **le même chantier** — le repli de
    tarif actuel ignore le poids et n'est pas scopé par société.
-6. **Vérifier l'état réel du push (bloc K) avant toute promesse de notification** dans
-   les apps `mobile/` et `mobile-livreur/` : l'API FCM utilisée est l'ancienne, arrêtée
-   par Google. À confirmer sur l'installation, puis chiffrer une réécriture.
+6. **Le push (bloc K) est hors service, pas mal configuré** : l'API d'envoi utilisée a
+   été arrêtée par Google le 20 juin 2024 (extinction dès le 22 juillet 2024). Toute
+   promesse de notification dans `mobile/` et `mobile-livreur/` suppose d'abord la
+   migration HTTP v1 — à chiffrer comme un développement.
 7. **Mettre les envois en file avant d'ajouter une passerelle SMS locale** : aujourd'hui
    tout part en `sync`, dans la requête HTTP.
