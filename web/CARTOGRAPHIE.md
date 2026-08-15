@@ -792,7 +792,7 @@ vestige du squelette Laravel.
 - **3 fournisseurs codés en dur** : **REVE** (opérateur bangladais, cURL brut),
   **Twilio** (`twilio/sdk ^8.2`), **Nexmo/Vonage** (`vonage/client ^4.0`).
   Pas d'interface, pas de registre — même schéma qu'au bloc C côté paiement.
-- **État des deux API vérifié (contrairement au push, elles sont vivantes)** :
+- **État des trois API vérifié (contrairement au push, elles sont toutes vivantes)** :
   - **REVE** : service **toujours en activité**, aucun arrêt annoncé — mais c'est un
     fournisseur A2P **du Bangladesh uniquement** (agréé BTRC). Rien à migrer : c'est
     **hors géographie** pour BeninLink, à désactiver. `reve_api_url` étant un réglage en
@@ -805,18 +805,29 @@ vestige du squelette Laravel.
     2026)** et le paquet **n'est pas abandonné** (`vonage/client-core` 4.3.2,
     `vonage/nexmo-bridge` 0.1.2 pour la compatibilité de l'ancien namespace). Le code
     appelle directement `\Vonage\Client` : **rien à réécrire**, seulement à mettre à jour.
+  - **Twilio** : API et SDK **actifs**. `composer.json` demande `twilio/sdk ^8.2`,
+    `composer.lock` fige **8.2.3** alors que la dernière version est **8.11.6 (7 mai
+    2026)** — paquet non abandonné, **0 avis de sécurité**. La contrainte `^8.2` autorise
+    déjà la montée : c'est un simple `composer update`, pas une migration.
+    ⚠️ Différence de conception avec Vonage : `twilioSms()` envoie depuis
+    `smsSettings('twilio_from')`, un **numéro** (long code) et non un identifiant
+    alphanumérique ⇒ vers le Bénin, un long code étranger est mal acheminé ou filtré ;
+    la voie conforme reste le **sender ID enregistré** (mêmes règles que ci-dessous).
 - 🚩 **Le vrai obstacle n'est pas technique, il est réglementaire (Bénin).** Vonage
-  dessert le Bénin (indicatif **229**, ISO **BJ**), mais :
-  - **Le sender ID alphanumérique doit être pré-enregistré.** Or `nexmoSms()` passe
-    `settings()->name` en expéditeur (l.107) ⇒ **identifiant non enregistré, messages
-    rejetés** tant que la démarche n'est pas faite auprès de Vonage/des opérateurs.
+  **et** Twilio desservent le Bénin (indicatif **229**, ISO **BJ**) et imposent les
+  mêmes règles locales :
+  - **Le sender ID alphanumérique doit être pré-enregistré** (démarche en console chez
+    les deux fournisseurs, pièces justificatives à fournir ; 11 caractères max). Or
+    `nexmoSms()` passe `settings()->name` en expéditeur (l.107) ⇒ **identifiant non
+    enregistré, messages rejetés** tant que la démarche n'est pas faite.
   - **Fenêtre d'envoi imposée : 8 h – 17 h GMT+1.** Les **29 envois** du socle sont
     déclenchés par des événements de colis, **à toute heure** ⇒ il faut une file avec
     fenêtre d'expédition (renforce le point 2 des conséquences ci-dessous).
   - **Double opt-in et commandes STOP/HELP** exigés ; contenus politiques, religieux,
     promotionnels non sollicités et jeux d'argent interdits. Régulateur : **ARCEP Bénin**.
+  - **SMS bidirectionnel et messages concaténés** (160 caractères GSM-7) supportés ;
+    **pas de lignes fixes**.
   - Opérateurs : **MTN Bénin, Moov Bénin, Glo Bénin**.
-  - (L'état de **Twilio** n'a pas été vérifié — non demandé ; le SDK est figé à `8.2.3`.)
 - Configuration **en base, par société** : table `sms_settings` (`company_id`, `key`,
   `value`), lue par `smsSettings('clé')` (`Helper.php:827`) : `reve_status`,
   `reve_api_key`, `reve_secret_key`, `reve_api_url`, `twilio_status`, `twilio_sid`,
@@ -894,9 +905,10 @@ vestige du squelette Laravel.
   mais n'est pas utilisé) ⇒ envoi bloquant, y compris à l'inscription.
 
 ### ⇒ Conséquences pour les notifications BeninLink
-1. **Choisir la voie SMS pour le Bénin.** Vonage est déjà branché et fonctionne : la
-   question n'est pas « quelle API est morte » mais **enregistrer un sender ID** et
-   comparer le coût par SMS avec un agrégateur local MTN/Moov. REVE est à désactiver.
+1. **Choisir la voie SMS pour le Bénin.** Vonage et Twilio sont déjà branchés et
+   fonctionnent : la question n'est pas « quelle API est morte » mais **enregistrer un
+   sender ID** chez l'un des deux, puis comparer leur coût par SMS avec un agrégateur
+   local MTN/Moov. REVE est à désactiver, et le SDK Twilio à remonter (`^8.2` le permet).
    Si un fournisseur local s'ajoute, l'absence d'interface impose **une 4ᵉ méthode privée
    + un `if`** — ou l'occasion d'introduire enfin un contrat, comme pour les paiements
    (bloc C).
