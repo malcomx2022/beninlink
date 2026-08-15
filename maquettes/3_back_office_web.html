@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BeninLink — Back-office web (charte unifiée)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --vert:#12503A; --vert-vif:#1F9D6B; --ocre:#E0A63C; --ocre-fonce:#B9832A;
+    --encre:#14201B; --gris:#5B6B63; --brume:#F4F6F3; --ligne:#E7ECE9;
+    --rouge:#D1495B; --ardoise:#64748B; --carte:#FFFFFF; --bleu:#2678B0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',system-ui,sans-serif;color:var(--encre);
+    background:#E8EDEA;-webkit-font-smoothing:antialiased;padding:26px 18px 50px}
+  .wrap{max-width:1200px;margin:0 auto}
+  .intro{margin-bottom:18px}
+  .intro h1{font-family:'Sora';font-weight:800;font-size:22px;letter-spacing:-.02em}
+  .intro p{color:var(--gris);font-size:13.5px;margin-top:6px;max-width:720px;line-height:1.5}
+  .intro b{color:var(--encre)}
+  .pill-rn{display:inline-block;font-family:'Sora';font-weight:600;font-size:11.5px;color:var(--vert);
+    background:#DCEDE4;border:1px solid #C4E0D2;padding:5px 11px;border-radius:999px;margin-top:10px}
+
+  /* fenêtre navigateur */
+  .window{background:var(--carte);border-radius:18px;overflow:hidden;box-shadow:0 30px 70px -30px rgba(11,20,15,.5);border:1px solid #DCE3DF}
+  .chrome{height:38px;background:#EBF0ED;display:flex;align-items:center;gap:7px;padding:0 14px;border-bottom:1px solid var(--ligne)}
+  .dot{width:11px;height:11px;border-radius:50%}
+  .dot.r{background:#E9736B}.dot.y{background:#E9C06B}.dot.g{background:#7BC98C}
+  .urlbar{margin-left:12px;background:#fff;border:1px solid var(--ligne);border-radius:8px;height:24px;flex:1;max-width:420px;
+    display:flex;align-items:center;padding:0 10px;font-size:11.5px;color:var(--gris);font-family:'Sora'}
+
+  .app{display:flex;min-height:720px}
+
+  /* sidebar */
+  .side{width:230px;flex:0 0 230px;background:#fff;border-right:1px solid var(--ligne);padding:16px 12px;display:flex;flex-direction:column}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 16px;border-bottom:1px solid var(--ligne);margin-bottom:12px}
+  .brand .lg{width:34px;height:34px;border-radius:10px;background:linear-gradient(150deg,var(--vert),#0C3A29);display:grid;place-items:center}
+  .brand .lg svg{width:20px;height:20px}
+  .brand b{font-family:'Sora';font-weight:800;font-size:16px}
+  .navlbl{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--ardoise);text-transform:uppercase;padding:8px 10px 6px}
+  .nav{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;cursor:pointer;color:var(--gris);font-size:13.5px;font-weight:500;margin-bottom:2px}
+  .nav svg{width:18px;height:18px;stroke:currentColor}
+  .nav:hover{background:#F2F6F4;color:var(--encre)}
+  .nav.on{background:var(--vert);color:#fff}
+  .side-foot{margin-top:auto;padding:12px 10px 4px;border-top:1px solid var(--ligne);display:flex;align-items:center;gap:10px}
+  .side-foot .av{width:32px;height:32px;border-radius:9px;background:#E1EDE7;display:grid;place-items:center;font-family:'Sora';font-weight:700;font-size:12px;color:var(--vert)}
+  .side-foot .nm{font-size:12.5px;font-weight:600}.side-foot .rl{font-size:11px;color:var(--gris)}
+
+  /* topbar */
+  .main{flex:1;background:var(--brume);min-width:0;display:flex;flex-direction:column}
+  .topbar{height:60px;background:#fff;border-bottom:1px solid var(--ligne);display:flex;align-items:center;padding:0 22px;gap:16px}
+  .topbar .pagetitle{font-family:'Sora';font-weight:700;font-size:16px}
+  .search{margin-left:auto;background:var(--brume);border:1px solid var(--ligne);border-radius:10px;height:36px;width:230px;display:flex;align-items:center;gap:8px;padding:0 11px;color:var(--gris);font-size:12.5px}
+  .search svg{width:15px;height:15px;stroke:var(--gris)}
+  .tbtn{width:36px;height:36px;border-radius:10px;background:var(--brume);border:1px solid var(--ligne);display:grid;place-items:center;cursor:pointer;position:relative}
+  .tbtn svg{width:17px;height:17px;stroke:var(--encre)}
+  .tbtn .dt{position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--ocre)}
+  .lang{font-family:'Sora';font-size:12px;font-weight:600;color:var(--gris);border:1px solid var(--ligne);border-radius:10px;padding:9px 11px;background:var(--brume)}
+  .me{width:36px;height:36px;border-radius:10px;background:var(--vert);color:#fff;display:grid;place-items:center;font-family:'Sora';font-weight:700;font-size:13px}
+
+  .content{padding:22px;overflow-y:auto}
+  .view{display:none}.view.on{display:block}
+
+  /* KPI cards */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .kpi{background:#fff;border:1px solid var(--ligne);border-radius:15px;padding:15px}
+  .kpi .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;margin-bottom:11px}
+  .kpi .ic svg{width:18px;height:18px}
+  .kpi .n{font-family:'Sora';font-weight:800;font-size:24px;letter-spacing:-.02em;line-height:1}
+  .kpi .l{font-size:12px;color:var(--gris);margin-top:5px}
+
+  .grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:14px}
+  .panel{background:#fff;border:1px solid var(--ligne);border-radius:15px;padding:16px}
+  .panel h3{font-family:'Sora';font-weight:700;font-size:14px;margin-bottom:2px}
+  .panel .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .panel .sub{font-size:12px;color:var(--gris)}
+  .link{color:var(--vert);font-weight:600;font-size:12px;text-decoration:none;cursor:pointer}
+
+  /* donut */
+  .donut-wrap{display:flex;align-items:center;gap:18px}
+  .legend{display:flex;flex-direction:column;gap:9px}
+  .lg-item{display:flex;align-items:center;gap:9px;font-size:12.5px}
+  .lg-item .sw{width:11px;height:11px;border-radius:3px}
+  .lg-item b{font-family:'Sora'}
+
+  /* bars */
+  .bars{display:flex;align-items:flex-end;gap:12px;height:150px;padding-top:10px}
+  .bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%;justify-content:flex-end}
+  .bar .col{width:60%;border-radius:6px 6px 0 0;background:linear-gradient(var(--vert-vif),#7FD0AC)}
+  .bar .col.o{background:linear-gradient(var(--ocre),#EFCD86)}
+  .bar .bl{font-size:10.5px;color:var(--gris)}
+
+  /* table */
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-size:11px;font-weight:700;letter-spacing:.03em;color:var(--ardoise);text-transform:uppercase;padding:10px 12px;border-bottom:1px solid var(--ligne)}
+  td{padding:12px;border-bottom:1px solid var(--ligne);font-size:12.5px;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  .mono{font-family:'Sora';font-weight:600;font-size:12px;color:var(--vert)}
+  .fcfa{font-family:'Sora';font-weight:700}
+  .u{font-family:'Sora';font-weight:600;font-size:11px;color:var(--gris)}
+  .who{display:flex;flex-direction:column}.who small{color:var(--gris);font-size:11px}
+
+  .pill{font-size:10.5px;font-weight:600;font-family:'Sora';padding:4px 9px;border-radius:999px;white-space:nowrap;display:inline-block}
+  .p-attente{background:#EEF1F4;color:var(--ardoise)}
+  .p-transit{background:#FBF0DA;color:var(--ocre-fonce)}
+  .p-hub{background:#E3F1FB;color:var(--bleu)}
+  .p-assign{background:#DEF2EE;color:#0F7B6C}
+  .p-livre{background:#E1F3EA;color:#157F55}
+  .p-retour{background:#FBE6E9;color:var(--rouge)}
+  .pay-paid{color:#157F55;font-weight:600;font-size:11.5px}
+  .pay-unpaid{color:var(--ardoise);font-weight:600;font-size:11.5px}
+
+  .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .seg{display:flex;gap:7px}
+  .segb{border:1px solid var(--ligne);background:#fff;border-radius:9px;padding:8px 13px;font-size:12px;font-weight:600;color:var(--gris);cursor:pointer}
+  .segb.on{background:#EEF6F1;border-color:var(--vert);color:var(--vert)}
+  .btn{font-family:'DM Sans';font-weight:600;font-size:12.5px;border:none;border-radius:10px;padding:9px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  .btn svg{width:15px;height:15px}
+  .btn-ocre{background:var(--ocre);color:#3A2A06}
+  .btn-vert{background:var(--vert);color:#fff}
+  .btn-ghost{background:#EEF3F0;color:var(--vert)}
+  .push{margin-left:auto}
+
+  /* logs timeline (suivi) */
+  .flow{display:flex;align-items:flex-start;justify-content:space-between;position:relative;margin:14px 8px 6px;max-width:640px}
+  .flow::before{content:"";position:absolute;top:22px;left:6%;right:6%;height:2px;background:var(--vert-vif)}
+  .fstep{display:flex;flex-direction:column;align-items:center;gap:8px;z-index:2;flex:1}
+  .fnode{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--vert);color:#fff}
+  .fstep.pending .fnode{background:#EEF1F4;color:var(--ardoise)}
+  .fnode svg{width:20px;height:20px;stroke:currentColor}
+  .fstep .fl{font-size:11px;font-weight:600;font-family:'Sora';text-align:center}
+  .fstep.pending .fl{color:var(--ardoise)}
+  .logcards{margin-top:18px;display:flex;flex-direction:column;gap:10px;max-width:520px}
+  .logc{border:1px solid var(--ligne);border-left:3px solid var(--vert);border-radius:11px;padding:12px 14px;background:#fff}
+  .logc .lt{font-family:'Sora';font-weight:600;font-size:13px}
+  .logc .ld{font-size:12px;color:var(--gris);margin-top:2px;line-height:1.4}
+  .logc .lm{font-size:11px;color:var(--ardoise);margin-top:5px}
+
+  @media(max-width:900px){.app{flex-direction:column}.side{width:100%;flex-basis:auto;flex-direction:row;overflow-x:auto}.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="intro">
+    <h1>BeninLink — Back-office web</h1>
+    <p>Refonte du panneau opérateur We Courier dans la <b>charte unifiée BeninLink</b> — vert profond, ocre, Sora / DM Sans —
+    identique aux apps marchand et livreur. Mêmes statuts backend, FCFA. <b>Cliquez le menu à gauche</b> pour naviguer.</p>
+    <span class="pill-rn">Charte partagée · mobile + web</span>
+  </div>
+
+  <div class="window">
+    <div class="chrome">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <div class="urlbar">🔒 kola-distribution.beninlink.app/dashboard</div>
+    </div>
+
+    <div class="app">
+      <!-- SIDEBAR -->
+      <aside class="side">
+        <div class="brand">
+          <div class="lg"><svg viewBox="0 0 24 24" fill="none"><path d="M3 8.5 12 4l9 4.5M3 8.5 12 13m-9-4.5V16l9 4.5M12 13l9-4.5M12 13v9m9-13.5V16l-9 4.5" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+          <b>BeninLink</b>
+        </div>
+        <div class="navlbl">Pilotage</div>
+        <div class="nav on" data-view="dashboard" onclick="go('dashboard')"><svg viewBox="0 0 24 24" fill="none"><path d="M3 13h8V3H3zM13 21h8V3h-8zM3 21h8v-6H3z" stroke-width="1.7" stroke-linejoin="round"/></svg> Tableau de bord</div>
+        <div class="nav" data-view="parcels" onclick="go('parcels')"><svg viewBox="0 0 24 24" fill="none"><path d="M3 8 12 4l9 4v8l-9 4-9-4zM3 8l9 4 9-4M12 12v8" stroke-width="1.7" stroke-linejoin="round"/></svg> Colis</div>
+        <div class="nav" data-view="logs" onclick="go('logs')"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke-width="1.8" stroke-linecap="round"/></svg> Suivi des colis</div>
+        <div class="navlbl">Réseau</div>
+        <div class="nav" data-view="merchants" onclick="go('merchants')"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9h16l-1-4H5zM4 9v10h16V9M9 19v-6h6v6" stroke-width="1.7" stroke-linejoin="round"/></svg> Marchands</div>
+        <div class="nav"><svg viewBox="0 0 24 24" fill="none"><path d="M3 13h11V6H3zM14 9h4l3 3v4h-7" stroke-width="1.7" stroke-linejoin="round"/><circle cx="7" cy="18" r="1.8" stroke-width="1.7"/><circle cx="17" cy="18" r="1.8" stroke-width="1.7"/></svg> Livreurs</div>
+        <div class="nav"><svg viewBox="0 0 24 24" fill="none"><path d="M4 21V9l8-5 8 5v12M9 21v-6h6v6" stroke-width="1.7" stroke-linejoin="round"/></svg> Branches</div>
+        <div class="navlbl">Gestion</div>
+        <div class="nav"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2.5" stroke-width="1.7"/><path d="M3 10h18" stroke-width="1.7"/></svg> Finances</div>
+        <div class="nav"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke-width="1.7"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 6.6 19l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 4 13.4H4a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 5.6 6.6l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 11 4V4a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8" stroke-width="1.5" stroke-linejoin="round"/></svg> Paramètres</div>
+        <div class="side-foot">
+          <div class="av">KD</div>
+          <div><div class="nm">Kola Distribution</div><div class="rl">Opérateur · Cotonou</div></div>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <div class="main">
+        <div class="topbar">
+          <div class="pagetitle" id="ptitle">Tableau de bord</div>
+          <div class="search"><svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke-width="2"/><path d="m20 20-3-3" stroke-width="2" stroke-linecap="round"/></svg> Rechercher un colis…</div>
+          <div class="lang">🇧🇯 FR</div>
+          <div class="tbtn"><svg viewBox="0 0 24 24" fill="none"><path d="M6 8a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6M9 18a3 3 0 0 0 6 0" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="dt"></span></div>
+          <div class="me">KD</div>
+        </div>
+
+        <div class="content">
+
+          <!-- ===== DASHBOARD ===== -->
+          <section class="view on" data-view="dashboard">
+            <div class="kpis">
+              <div class="kpi"><div class="ic" style="background:#EAF3EE"><svg viewBox="0 0 24 24" fill="none"><path d="M3 8 12 4l9 4v8l-9 4-9-4zM3 8l9 4 9-4" stroke="#12503A" stroke-width="1.7" stroke-linejoin="round"/></svg></div><div class="n">248</div><div class="l">Colis ce mois</div></div>
+              <div class="kpi"><div class="ic" style="background:#E1F3EA"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="#157F55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="n">186</div><div class="l">Livrés</div></div>
+              <div class="kpi"><div class="ic" style="background:#FBF0DA"><svg viewBox="0 0 24 24" fill="none"><path d="M12 7v5l3 2M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18Z" stroke="#B9832A" stroke-width="1.7"/></svg></div><div class="n">42</div><div class="l">En cours</div></div>
+              <div class="kpi"><div class="ic" style="background:#FBE6E9"><svg viewBox="0 0 24 24" fill="none"><path d="M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" stroke="#D1495B" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="n">9</div><div class="l">Retours</div></div>
+            </div>
+
+            <div class="grid2">
+              <div class="panel">
+                <div class="ph"><div><h3>Revenus vs charges</h3><div class="sub">6 derniers mois (FCFA)</div></div><a class="link">Détails</a></div>
+                <div class="bars">
+                  <div class="bar"><div class="col" style="height:38%"></div><div class="bl">Fév</div></div>
+                  <div class="bar"><div class="col" style="height:52%"></div><div class="bl">Mar</div></div>
+                  <div class="bar"><div class="col" style="height:46%"></div><div class="bl">Avr</div></div>
+                  <div class="bar"><div class="col" style="height:70%"></div><div class="bl">Mai</div></div>
+                  <div class="bar"><div class="col" style="height:63%"></div><div class="bl">Juin</div></div>
+                  <div class="bar"><div class="col o" style="height:88%"></div><div class="bl">Juil</div></div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="ph"><div><h3>Statut des colis</h3><div class="sub">Ce mois</div></div></div>
+                <div class="donut-wrap">
+                  <svg width="128" height="128" viewBox="0 0 42 42">
+                    <circle cx="21" cy="21" r="15.9" fill="none" stroke="#EEF1F4" stroke-width="6"/>
+                    <circle cx="21" cy="21" r="15.9" fill="none" stroke="#1F9D6B" stroke-width="6" stroke-dasharray="75 25" stroke-dashoffset="25"/>
+                    <circle cx="21" cy="21" r="15.9" fill="none" stroke="#E0A63C" stroke-width="6" stroke-dasharray="17 83" stroke-dashoffset="0"/>
+                    <circle cx="21" cy="21" r="15.9" fill="none" stroke="#D1495B" stroke-width="6" stroke-dasharray="5 95" stroke-dashoffset="-17"/>
+                    <text x="21" y="20.5" text-anchor="middle" font-size="7" font-family="Sora" font-weight="800" fill="#14201B">248</text>
+                    <text x="21" y="26" text-anchor="middle" font-size="3.2" font-family="DM Sans" fill="#5B6B63">colis</text>
+                  </svg>
+                  <div class="legend">
+                    <div class="lg-item"><span class="sw" style="background:#1F9D6B"></span> Livré <b>&nbsp;75%</b></div>
+                    <div class="lg-item"><span class="sw" style="background:#E0A63C"></span> En cours <b>&nbsp;17%</b></div>
+                    <div class="lg-item"><span class="sw" style="background:#D1495B"></span> Retour <b>&nbsp;5%</b></div>
+                    <div class="lg-item"><span class="sw" style="background:#EEF1F4;border:1px solid #ddd"></span> Partiel <b>&nbsp;3%</b></div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:16px">
+                  <div style="flex:1;background:var(--brume);border-radius:11px;padding:11px"><div class="sub">Encaissé (COD)</div><div class="fcfa" style="font-size:15px;margin-top:3px">2 340 000 <span class="u">F</span></div></div>
+                  <div style="flex:1;background:var(--brume);border-radius:11px;padding:11px"><div class="sub">Marchands actifs</div><div class="fcfa" style="font-size:15px;margin-top:3px">18</div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel" style="margin-top:14px">
+              <div class="ph"><div><h3>Colis récents</h3></div><a class="link" onclick="go('parcels')">Tout voir →</a></div>
+              <table>
+                <thead><tr><th>N° de suivi</th><th>Marchand</th><th>Destinataire</th><th>Montant</th><th>Statut</th></tr></thead>
+                <tbody>
+                  <tr><td class="mono">WE-BL-0481-C19</td><td>Kola Distribution</td><td class="who">Aïcha K.<small>Calavi</small></td><td class="fcfa">12 000 <span class="u">F</span></td><td><span class="pill p-assign">Livreur assigné</span></td></tr>
+                  <tr><td class="mono">WE-BL-0483-C21</td><td>Sonia Cosmetics</td><td class="who">Kossi A.<small>Cotonou</small></td><td class="fcfa">8 500 <span class="u">F</span></td><td><span class="pill p-hub">Entrepôt</span></td></tr>
+                  <tr><td class="mono">WE-BL-0479-C17</td><td>Kola Distribution</td><td class="who">Rachidatou B.<small>Porto-Novo</small></td><td class="fcfa">9 000 <span class="u">F</span></td><td><span class="pill p-livre">Livré</span></td></tr>
+                  <tr><td class="mono">WE-BL-0475-C13</td><td>Béni Shop</td><td class="who">Salifou D.<small>Sèmè-Podji</small></td><td class="fcfa">15 000 <span class="u">F</span></td><td><span class="pill p-retour">Retour</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- ===== PARCELS ===== -->
+          <section class="view" data-view="parcels">
+            <div class="toolbar">
+              <div class="seg">
+                <div class="segb on">Tous</div><div class="segb">En cours</div><div class="segb">Livrés</div><div class="segb">Retours</div>
+              </div>
+              <button class="btn btn-ghost push"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12M8 11l4 4 4-4M5 21h14" stroke="#12503A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Exporter</button>
+              <button class="btn btn-ocre"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#3A2A06" stroke-width="2.2" stroke-linecap="round"/></svg> Nouveau colis</button>
+            </div>
+            <div class="panel" style="padding:0">
+              <table>
+                <thead><tr><th>N° de suivi</th><th>Marchand</th><th>Destinataire</th><th>COD</th><th>Statut</th><th>Paiement</th><th>Date</th></tr></thead>
+                <tbody>
+                  <tr><td class="mono" onclick="go('logs')" style="cursor:pointer">WE-BL-0481-C19</td><td>Kola Distribution</td><td class="who">Aïcha K.<small>Calavi, Arconville</small></td><td class="fcfa">12 000 <span class="u">F</span></td><td><span class="pill p-assign">Livreur assigné</span></td><td class="pay-unpaid">Non réglé</td><td>15 juil.</td></tr>
+                  <tr><td class="mono" onclick="go('logs')" style="cursor:pointer">WE-BL-0483-C21</td><td>Sonia Cosmetics</td><td class="who">Kossi A.<small>Cotonou, Fidjrossè</small></td><td class="fcfa">8 500 <span class="u">F</span></td><td><span class="pill p-hub">Entrepôt</span></td><td class="pay-unpaid">Non réglé</td><td>15 juil.</td></tr>
+                  <tr><td class="mono" onclick="go('logs')" style="cursor:pointer">WE-BL-0478-C16</td><td>Kola Distribution</td><td class="who">Ismaël T.<small>Abomey-Calavi</small></td><td class="fcfa">6 000 <span class="u">F</span></td><td><span class="pill p-attente">En attente</span></td><td class="pay-unpaid">Non réglé</td><td>14 juil.</td></tr>
+                  <tr><td class="mono" onclick="go('logs')" style="cursor:pointer">WE-BL-0476-C14</td><td>Béni Shop</td><td class="who">Rachidatou B.<small>Porto-Novo</small></td><td class="fcfa">9 000 <span class="u">F</span></td><td><span class="pill p-livre">Livré</span></td><td class="pay-paid">Réglé</td><td>14 juil.</td></tr>
+                  <tr><td class="mono" onclick="go('logs')" style="cursor:pointer">WE-BL-0475-C13</td><td>Béni Shop</td><td class="who">Salifou D.<small>Sèmè-Podji</small></td><td class="fcfa">15 000 <span class="u">F</span></td><td><span class="pill p-retour">Retour</span></td><td class="pay-unpaid">Non réglé</td><td>13 juil.</td></tr>
+                  <tr><td class="mono" onclick="go('logs')" style="cursor:pointer">WE-BL-0470-C08</td><td>Sonia Cosmetics</td><td class="who">Grace H.<small>Cotonou, Cadjèhoun</small></td><td class="fcfa">11 500 <span class="u">F</span></td><td><span class="pill p-transit">Ramassage assigné</span></td><td class="pay-unpaid">Non réglé</td><td>13 juil.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- ===== LOGS / SUIVI ===== -->
+          <section class="view" data-view="logs">
+            <div class="panel">
+              <div class="ph"><div><h3>Suivi du colis WE-BL-0481-C19</h3><div class="sub">Kola Distribution → Aïcha K. · Calavi</div></div><a class="link" onclick="go('parcels')">← Retour à la liste</a></div>
+              <div class="flow">
+                <div class="fstep"><div class="fnode"><svg viewBox="0 0 24 24" fill="none"><path d="M12 7v5l3 2M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18Z" stroke-width="1.8"/></svg></div><div class="fl">En attente</div></div>
+                <div class="fstep"><div class="fnode"><svg viewBox="0 0 24 24" fill="none"><path d="M3 13h11V6H3zM14 9h4l3 3v4h-7" stroke-width="1.8" stroke-linejoin="round"/></svg></div><div class="fl">Ramassage<br>assigné</div></div>
+                <div class="fstep"><div class="fnode"><svg viewBox="0 0 24 24" fill="none"><path d="M4 21V9l8-5 8 5v12" stroke-width="1.8" stroke-linejoin="round"/></svg></div><div class="fl">Entrepôt</div></div>
+                <div class="fstep"><div class="fnode"><svg viewBox="0 0 24 24" fill="none"><path d="M3 13h11V6H3zM6.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M17.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M14 9h4l3 3v4h-7" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="fl">Livreur<br>assigné</div></div>
+                <div class="fstep pending"><div class="fnode"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="fl">Livré</div></div>
+              </div>
+              <div class="logcards">
+                <div class="logc" style="border-left-color:var(--ocre)"><div class="lt">Livreur assigné</div><div class="ld">Livreur : Ibrahim Salifou · +229 97 88 21 03 — en route vers Calavi.</div><div class="lm">Aujourd'hui · 09h35</div></div>
+                <div class="logc"><div class="lt">Réception à l'entrepôt</div><div class="ld">Hub : Godomey · agent réception.</div><div class="lm">13 juil. · 08h10</div></div>
+                <div class="logc"><div class="lt">Ramassage assigné</div><div class="ld">Enlèvement chez Kola Distribution, Cotonou.</div><div class="lm">12 juil. · 16h20</div></div>
+                <div class="logc"><div class="lt">Colis créé</div><div class="ld">Aïcha K. · +229 97 88 21 03 · COD 12 000 FCFA.</div><div class="lm">12 juil. · 14h05</div></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===== MERCHANTS ===== -->
+          <section class="view" data-view="merchants">
+            <div class="toolbar">
+              <div class="seg"><div class="segb on">Actifs</div><div class="segb">Tous</div></div>
+              <button class="btn btn-ocre push"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#3A2A06" stroke-width="2.2" stroke-linecap="round"/></svg> Ajouter un marchand</button>
+            </div>
+            <div class="panel" style="padding:0">
+              <table>
+                <thead><tr><th>Marchand</th><th>IFU / RCCM</th><th>Boutiques</th><th>Colis</th><th>Solde wallet</th><th>Statut</th></tr></thead>
+                <tbody>
+                  <tr><td class="who">Kola Distribution<small>Fatou A. · Cotonou</small></td><td class="who">3202410461142<small>RB/COT/24 B 1180</small></td><td>3</td><td>54</td><td class="fcfa">148 500 <span class="u">F</span></td><td><span class="pill p-livre">Actif</span></td></tr>
+                  <tr><td class="who">Sonia Cosmetics<small>Sonia G. · Calavi</small></td><td class="who">3202398110284<small>RB/COT/23 A 0912</small></td><td>2</td><td>37</td><td class="fcfa">92 000 <span class="u">F</span></td><td><span class="pill p-livre">Actif</span></td></tr>
+                  <tr><td class="who">Béni Shop<small>Rachid B. · Porto-Novo</small></td><td class="who">3202411550771<small>RB/PN/24 B 0345</small></td><td>1</td><td>21</td><td class="fcfa">31 000 <span class="u">F</span></td><td><span class="pill p-livre">Actif</span></td></tr>
+                  <tr><td class="who">Wari Textile<small>Karim W. · Parakou</small></td><td class="who">3202405339210<small>RB/PAR/24 A 0128</small></td><td>1</td><td>8</td><td class="fcfa">12 500 <span class="u">F</span></td><td><span class="pill p-attente">En attente</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var TITLES = { dashboard:'Tableau de bord', parcels:'Colis', logs:'Suivi des colis', merchants:'Marchands' };
+  function go(view){
+    document.querySelectorAll('.view').forEach(function(v){ v.classList.toggle('on', v.getAttribute('data-view')===view); });
+    document.querySelectorAll('.nav').forEach(function(n){ n.classList.toggle('on', n.getAttribute('data-view')===view); });
+    document.getElementById('ptitle').textContent = TITLES[view] || '';
+    document.querySelector('.content').scrollTop = 0;
+  }
+</script>
+</body>
+</html>
