@@ -41,6 +41,8 @@ avant les apps.
 - Jamais de clés en dur : `FEDAPAY_*` dans `web/.env`.
 
 ## Étape 0 — cartographie (à lire AVANT de coder ici)
-Le relevé des points de branchement réels vit dans **`docs/CARTOGRAPHIE.md`**
-(multi-tenancy `company_id`, absence d'abstraction de paiement, `WalletRepository::approved()`,
-abonnement Stripe codé en dur, `ParcelStatus`, API `/api/v10`). Blocs F/G/H à compléter.
+Le relevé des points de branchement réels vit dans **`web/CARTOGRAPHIE.md`** (blocs A-I) :
+multi-tenancy par `company_id`, **absence d'abstraction de paiement**,
+`WalletRepository::approved()` seul point de crédit du wallet, abonnement Stripe codé
+en dur, `ParcelStatus`, API `/api/v10`. Il contient aussi les constats de sécurité et
+les routes mortes relevés au passage.
