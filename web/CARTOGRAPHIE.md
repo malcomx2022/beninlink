@@ -1,9 +1,8 @@
 # CARTOGRAPHIE.md — Étape 0 (socle We Courier, dossier web/)
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
-> Remplir chaque bloc à partir des réponses de Claude Code, en citant les
-> fichiers réels. Committer sur la branche `chore/cartographie`.
-> Date : ______________   Auteur : ______________
+> Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
+> Dernière mise à jour : 2026-08-15 (ajout des blocs J — tarifs et K — notifications).
 
 ---
 
@@ -714,6 +713,158 @@ vestige du squelette Laravel.
   modifier. **Documenter avant de figer le format FCFA produirait une spec périmée**
   ⇒ faire le chantier 1 d'abord.
 
+## Bloc J — Tarifs de livraison (barème poids × zone)
+- **Tables** :
+  - `deliverycategories` (`…2014_10_11_000000_create_deliverycategories_table.php`) :
+    `company_id`, `title`, `status`, `position` — une « catégorie » de colis, libellé libre.
+  - `delivery_charges` (`…2022_04_09_101126_create_delivery_charges_table.php`) :
+    `company_id`, `category_id` (FK `deliverycategories`), **`weight` `tinyInteger`**,
+    puis **4 colonnes tarifaires** `decimal(16,2)` : `same_day`, `next_day`, `sub_city`,
+    `outside_city`, + `position`, `status`.
+  - `merchant_delivery_charges` (même horodatage) : `company_id`, `merchant_id`,
+    `delivery_charge_id`, **`weight` `bigInteger`**, `category_id`
+    (`unsignedTinyInteger`, **sans contrainte FK ici**), les mêmes 4 colonnes en nullable.
+    ⇒ surcharge du barème société **par marchand**.
+- ⚠️ **Il n'existe pas de zone géographique.** Les 4 colonnes mélangent **délai** et
+  **périmètre** — `app/Enums/DeliveryType.php` : `SAMEDAY=1`, `NEXTDAY=2`, `SUBCITY=3`,
+  `OUTSIDECITY=4`. Une zone est une **colonne**, pas une ligne : en ajouter une = `ALTER
+  TABLE` sur deux tables + tous les sites de lecture.
+- ⚠️ **Le poids n'est pas une tranche** (ni min ni max) : une ligne = une valeur discrète.
+  `tinyInteger` côté société ⇒ **plafond 127**, et **type incohérent** avec la table
+  marchand (`bigInteger`).
+- **Résolution du tarif — deux méthodes AJAX jumelles, non partagées** :
+  - `ParcelController::deliveryCharge:420` (`POST parcel/delivery-charge`, `routes/web.php:450`)
+    et `MerchantPanel\MerchantParcelController::deliveryCharge:277`.
+  - Même algorithme : chercher `MerchantDeliveryCharge` (`merchant_id` + `category_id` +
+    `weight`), sinon retomber sur `DeliveryCharge`, puis un `if/elseif` sur
+    `delivery_type_id` renvoie **un nombre brut** (`return $chargeAmount;`) — pas de JSON,
+    `return 0` en cas d'échec, **indistinguable d'un tarif nul**.
+  - 🚨 **Le repli ignore le poids** : `DeliveryCharge::where(['category_id' => …])->first()`
+    → première ligne de la catégorie **quel que soit le poids demandé**. Un colis lourd
+    peut être facturé au tarif le plus bas, silencieusement.
+  - 🚨 **Le repli admin n'est pas scopé par société** : `ParcelController:432` et `:438`
+    appellent `DeliveryCharge::where(…)` **sans `companywise()`**, alors que
+    `MerchantParcelController:283,288` l'utilisent. Fuite inter-locataires (cf. S7).
+  - `MerchantDeliveryCharge::where([…])` est sans `companywise()` des deux côtés
+    (scopé de fait par `merchant_id`).
+  - Poids proposés à la saisie : `deliveryWeight()` (`ParcelController:462`,
+    `MerchantParcelController:311`) — celui-ci **est** scopé `companywise()`.
+- 🚨 **Application au colis : côté client, comme la TVA (S2).** Le montant renvoyé par
+  l'AJAX est recalculé en JavaScript puis reposté dans `chargeDetails` :
+  `$parcel->delivery_charge = $chargeDetails->deliveryChargeAmount`
+  (`ParcelRepository:414`, `:593`), avec `codChargeAmount`, `totalDeliveryChargeAmount`,
+  `currentPayable` — **aucun n'est revérifié**.
+  Seule exception : le **taux** COD est lu côté serveur,
+  `$Codmerchant->cod_charges['inside_city' | 'sub_city' | 'outside_city']`
+  (`ParcelRepository:419-425`), colonne `merchants.cod_charges` castée en `array`
+  (`Merchant.php:23`) — ⚠️ **3 clés de zone, qui ne correspondent pas aux 4 colonnes
+  de `delivery_charges`**. Le *montant* COD, lui, revient du client.
+- **Exposition** :
+  - Admin : `delivery-charge/*` (`routes/web.php:475-482`, permissions `delivery_charge_*`)
+    et `merchant/{merchant}/delivery-charge/*` (`:322-328`).
+  - Marchand (web) : `MerchantPanel\SettingsController::deliveryCharges` — lecture seule.
+  - API authentifiée : `GET /api/v10/settings/delivery-charges` (`routes/api.php:74`,
+    `DeliveryChargeResource`).
+  - 🚨 API **hors `auth:sanctum`** : `GET /api/v10/delivery-charges` (`routes/api.php:174`
+    → `Api/V10/ParcelController::DeliveryCharges:267` → `allGet()`). Sans utilisateur
+    authentifié, `settings()` retombe sur **`company_id = 1`** (bloc A) : la route
+    renvoie **les tarifs de la société plateforme quel que soit le sous-domaine appelé**.
+  - Import CSV : `app/Imports/ParcelImport.php:180`.
+- 🐞 `DeliveryChargeRepository::allGet()` (l.11-22) contient **10 lignes mortes** après
+  son `return` (l.14).
+
+### ⇒ Conséquences pour le barème béninois
+1. **Modéliser les zones en lignes, pas en colonnes** (Cotonou / périphérie / intérieur /
+   CEDEAO) : la structure à 4 colonnes fixes ne se prolonge pas.
+2. **Passer le poids en tranches** (min/max) et sortir du `tinyInteger`.
+3. **Un seul résolveur de tarif, côté serveur** : les deux méthodes AJAX dupliquées, le
+   repli sans poids et le repli non scopé disparaissent ensemble si le calcul devient un
+   service appelé à l'enregistrement — **même chantier que S2**.
+4. **Aligner les zones COD** (3 clés) sur les zones de livraison (4 colonnes).
+5. Les **8 colonnes tarifaires sont en `decimal(…,2)`** ⇒ chantier 1 (FCFA).
+
+## Bloc K — Notifications (SMS, e-mail, push)
+> **Aucune file d'attente** : `app/Jobs/` n'existe pas et `config/queue.php:16` donne
+> `QUEUE_CONNECTION` par défaut à **`sync`**. Les trois canaux partent **dans la requête
+> HTTP** de l'utilisateur.
+
+### SMS — `app/Http/Services/SmsService.php` (123 lignes)
+- **3 fournisseurs codés en dur** : **REVE** (opérateur bangladais, cURL brut),
+  **Twilio** (`twilio/sdk ^8.2`), **Nexmo/Vonage** (`vonage/client ^4.0`).
+  Pas d'interface, pas de registre — même schéma qu'au bloc C côté paiement.
+- Configuration **en base, par société** : table `sms_settings` (`company_id`, `key`,
+  `value`), lue par `smsSettings('clé')` (`Helper.php:827`) : `reve_status`,
+  `reve_api_key`, `reve_secret_key`, `reve_api_url`, `twilio_status`, `twilio_sid`,
+  `twilio_token`, `twilio_from`, `nexmo_status`, `nexmo_key`, `nexmo_secret_key`.
+  Hors session authentifiée, le helper retombe sur `company_id = 1`.
+- ⚠️ **Les fournisseurs actifs se cumulent** : trois `if` indépendants (l.32-40) ⇒ deux
+  fournisseurs actifs = **deux SMS facturés** par envoi.
+- ⚠️ **`sendOtp()` ne teste que REVE et Twilio** (l.15-22) : avec Nexmo seul actif,
+  **aucun OTP ne part**, sans erreur.
+- 🚨 `reveSms()` : `CURLOPT_SSL_VERIFYPEER = FALSE` (l.67) — **vérification TLS
+  désactivée** sur un appel qui transporte la clé API en *query string*.
+- ⚠️ Les trois méthodes **avalent leurs exceptions** (`return $exception`) et aucun
+  appelant ne teste le retour ⇒ **un SMS non parti est invisible**. Aucune table de journal.
+- Message OTP **en anglais codé en dur** (l.52) : `… ' is your ' . settings()->name .
+  ' verification code.'` — hors i18n (bloc H).
+- **Déclencheurs** : **29 appels** à `sendSms()` dans `app/`, surtout `ParcelRepository`
+  (l.499, 848, 862, 941-955…) et `MerchantRepository` (OTP, l.229, 250).
+  ⚠️ **Seuls 3 sont débrayables** : table `sms_send_settings` + `App\Enums\SmsSendStatus`
+  (`PARCEL_CREATE=1`, `DELIVERED_CANCEL_CUSTOMER=2`, `DELIVERED_CANCEL_MERCHANT=3`),
+  testés par `SmsSendSettingHelper()` (`ParcelRepository:492, 2135, 2144`).
+- ⚠️ **Aucun formatage E.164** : le numéro part tel quel depuis la base — à reprendre
+  pour `+229` (cf. `digits_between:11,14` du bloc F).
+
+### Push — `app/Http/Services/PushNotificationService.php`
+- 🚨 **API FCM « legacy »** : `https://fcm.googleapis.com/fcm/send` avec
+  `Authorization: key=<server key>` (l.30, 71, 197) et `iid.googleapis.com` pour les
+  abonnements aux topics (l.108, 140). **Google a arrêté cette API en juin 2024** ⇒ le
+  push est vraisemblablement **déjà hors service** et relève d'une **réécriture** (HTTP v1
+  + compte de service OAuth2), pas d'un simple reparamétrage. **À confirmer sur
+  l'installation avant chiffrage.**
+- Configuration par société : `notification_settings` (`fcm_secret_key`, `fcm_topic`),
+  via `notificationSettings()` (`Helper.php:129`, `companywise()`).
+- 🚨 **Le topic est dérivé de l'adresse e-mail** : `fcm_topic . '_' .
+  str_replace(['@','.','+'], …, $topicName)` avec `$topicName =
+  $parcel->merchant->user->email` (`ParcelRepository:487, 871, 961…`). `fcmSubscribe()`
+  (l.94, exposée en API) abonne **n'importe quel device token au topic de n'importe qui**
+  ⇒ connaître une adresse e-mail suffit pour recevoir les notifications de ce marchand.
+- 🚨 `CURLOPT_SSL_VERIFYPEER = false` dans les trois méthodes d'envoi (l.43, 83, 239) ;
+  `sendWebNotification` y ajoute `CURLOPT_SSL_VERIFYHOST = 0` (l.237).
+- 🐞 `die('Curl failed: ' . curl_error($ch))` (l.48) : une panne réseau **interrompt la
+  requête HTTP** en plein changement de statut de colis.
+- Textes **en anglais codés en dur** (l.66 `"Your parcel #… status updated"`, l.207
+  `"A new parcel has been placed"`).
+- **14 appels** à `sendStatusPushNotification()`. ⚠️ La table `push_notifications` ne
+  journalise rien : elle stocke les notifications **rédigées à la main** par l'admin
+  (`title`, `description`, `image_id`, `user_id`/`merchant_id`).
+
+### E-mail
+- **4 Mailables** (`app/Mail/`) : `CompanySignup`, `MerchantSignup`, `ContactMail`,
+  `InvoicePDFSend`. Transport = `config/mail.php` (donc `.env`) — **aucun réglage par
+  société**, contrairement au SMS et au push.
+- Expéditeur des inscriptions : `settings()->email` (`CompanySignup:21`,
+  `MerchantSignup`) ⇒ **le domaine d'expédition n'est pas forcément celui du serveur
+  d'envoi** : SPF/DKIM à cadrer au déploiement.
+- 🚨 `ContactMail:34` : `->from($data['email'])` — **l'adresse saisie par le visiteur
+  devient l'expéditeur** ⇒ usurpation et rejets SPF.
+- ⚠️ `InvoicePDFSend` : expéditeur `admin@example.com` **codé en dur** (bloc G).
+- Objets en anglais codés en dur (`'Welcome to new company'`, `'Welcome to new merchant'`).
+- ⚠️ **Aucun Mailable n'implémente `ShouldQueue`** (l'import existe dans `CompanySignup`
+  mais n'est pas utilisé) ⇒ envoi bloquant, y compris à l'inscription.
+
+### ⇒ Conséquences pour les notifications BeninLink
+1. **Ajouter une passerelle SMS locale** : REVE/Twilio/Nexmo ne couvrent pas MTN/Moov BJ
+   à tarif local. Sans interface, c'est **une 4ᵉ méthode privée + un `if`** — ou
+   l'occasion d'introduire enfin un contrat, comme pour les paiements (bloc C).
+2. **Mettre les envois en file avant d'en ajouter** : `QUEUE_CONNECTION=redis` est prévu
+   côté infra ; sans cela chaque notification allonge la requête et une panne fournisseur
+   bloque un changement de statut de colis.
+3. **Réécrire le push (FCM HTTP v1)** et **cesser d'utiliser l'e-mail comme topic** :
+   rattacher le jeton d'appareil à l'utilisateur authentifié.
+4. **Traduire les gabarits** (SMS OTP, titres push, objets d'e-mail) — chantier 1.
+5. **Journaliser les envois** : aucun canal ne trace aujourd'hui ses échecs.
+
 ---
 
 ## Synthèse — à recopier dans web/CLAUDE.md
@@ -768,6 +919,12 @@ vestige du squelette Laravel.
 | S5 | I | **Aucune séparation marchand/livreur** : jetons sans `abilities`, pas de garde `user_type` | `routes/api.php:60-165` |
 | S6 | C | **`Setting::where('key')` non scopé par `company_id`** : une société écrase les clés de passerelle d'une autre | `PayoutSetupRepository:46` |
 | S7 | B | **Aucun filet contre les fuites inter-locataires** : un oubli de `companywise()` suffit | transverse (47/51 modèles) |
+| S8 | J | **Repli de tarif non scopé par société** : `DeliveryCharge::where(…)` sans `companywise()` | `ParcelController:432,438` |
+| S9 | J | **Repli de tarif ignorant le poids** ⇒ sous-facturation silencieuse | `ParcelController:432,438` · `MerchantParcelController:283,288` |
+| S10 | J | **`GET /api/v10/delivery-charges` hors `auth:sanctum`** : sert les tarifs de `company_id = 1` sur tous les sous-domaines | `routes/api.php:174` |
+| S11 | K | **Topic FCM dérivé de l'e-mail** : `fcmSubscribe()` permet de s'abonner aux notifications d'autrui | `PushNotificationService:94-124` |
+| S12 | K | **TLS non vérifié** sur les appels sortants SMS et push (`CURLOPT_SSL_VERIFYPEER=false`) | `SmsService:67` · `PushNotificationService:43,83,239` |
+| S13 | K | **Expéditeur d'e-mail contrôlé par le visiteur** (`->from($data['email'])`) | `ContactMail:34` |
 
 ## Routes mortes repérées
 | Route | Méthode cible | Statut |
@@ -787,3 +944,11 @@ vestige du squelette Laravel.
    facture produite n'est opposable.
 4. **Chantier 1** : créer `formatAmount()` **d'abord**, sinon 142 sites à éditer
    indépendamment.
+5. **S2 et le bloc J vont ensemble** : rapatrier le calcul côté serveur et refaire le
+   barème (zones en lignes, poids en tranches) sont **le même chantier** — le repli de
+   tarif actuel ignore le poids et n'est pas scopé par société.
+6. **Vérifier l'état réel du push (bloc K) avant toute promesse de notification** dans
+   les apps `mobile/` et `mobile-livreur/` : l'API FCM utilisée est l'ancienne, arrêtée
+   par Google. À confirmer sur l'installation, puis chiffrer une réécriture.
+7. **Mettre les envois en file avant d'ajouter une passerelle SMS locale** : aujourd'hui
+   tout part en `sync`, dans la requête HTTP.
