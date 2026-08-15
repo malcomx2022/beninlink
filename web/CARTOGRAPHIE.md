@@ -2,7 +2,8 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-08-15 (ajout des blocs J — tarifs et K — notifications).
+> Dernière mise à jour : 2026-08-15 (blocs J — tarifs et K — notifications ; bloc H
+> détaillé, et les 3 fichiers `lang/fr/` manquants créés).
 
 ---
 
@@ -561,20 +562,24 @@ aucune passerelle existante ne servant de modèle.
   ├── ar/  bn/  en/  es/  fr/  in/  zh/
   └── en.json          ← seul fichier JSON
   ```
-  - **`lang/fr/` existe : 76 fichiers** contre **79** pour `lang/en/`.
-    **3 fichiers entièrement absents**, et **23 chaînes** en tout :
-    | Fichier absent | Chaînes | Contenu |
+  - ✅ **`lang/fr/` : 79 fichiers, à parité avec `lang/en/` depuis le 2026-08-15.**
+    Trois fichiers manquaient (23 chaînes), **créés depuis** — seule correction de code
+    apportée à l'issue de cette cartographie :
+    | Fichier créé | Chaînes | Note de traduction |
     |---|---|---|
-    | `WalletPaymentMethod.php` | **2** | `WalletPaymentMethod::OFFLINE` → « Offline », `::WALLET` → « Wallet » |
-    | `WalletStatus.php` | **3** | `WalletStatus::PENDING` → « Pending », `::APPROVED` → « **Confirm** » (sic), `::REJECTED` → « Rejected » |
-    | `addon.php` | **18** | écran Addons : `title`, `name`, `version`, `purchase_code`, `zip_file`, `install_update`, messages d'erreur… |
-    ⇒ Les deux premiers **portent les libellés d'état du wallet** que le chantier
-    FedaPay va afficher : à créer **avant** de brancher la recharge, sinon les statuts
-    s'affichent en anglais dans une interface française. Volume dérisoire (5 chaînes).
-    `addon.php` concerne un écran d'administration technique, pas le parcours métier.
-  - 🚩 **Le compte de fichiers masque le vrai trou : les fichiers présents sont
-    incomplets.** Sur les 76 fichiers communs, **13 sont incomplets** et **149 clés de
-    `lang/en/` n'ont pas d'équivalent dans `lang/fr/`** (sur 2 008 au total) :
+    | `WalletPaymentMethod.php` | **2** | `OFFLINE` → « Hors ligne », `WALLET` → « Portefeuille » |
+    | `WalletStatus.php` | **3** | `PENDING` → « En attente », `APPROVED` → « **Approuvé** », `REJECTED` → « Rejeté » |
+    | `addon.php` | **18** | écran Addons rendu par « modules complémentaires », pour ne pas confondre avec l'**extension PHP** ZipArchive citée par `error_msg_install_extension` |
+    ⚠️ Écart assumé avec l'anglais : `WalletStatus::APPROVED` y est libellé
+    « **Confirm** », ce qui ne correspond ni à la constante ni à
+    `WalletRepository::approved()` — le français dit « Approuvé ».
+    ⇒ Ces libellés d'état du wallet sont ceux que le chantier FedaPay affichera ;
+    ils sont désormais disponibles. `addon.php` ne concerne qu'un écran
+    d'administration technique, hors parcours métier.
+  - 🚩 **La parité de fichiers ne règle rien : les fichiers présents restent
+    incomplets.** Sur les 76 fichiers qui existaient des deux côtés, **13 sont
+    incomplets** et **149 clés de `lang/en/` n'ont pas d'équivalent dans `lang/fr/`**
+    (sur 2 008 au total) :
     | Fichier | EN | FR | Clés absentes |
     |---|---|---|---|
     | `levels.php` | 370 | 322 | **48** |
@@ -594,8 +599,9 @@ aucune passerelle existante ne servant de modèle.
     `parcel.php` touche le métier **et le wallet** (`priority`, `normal`, `high`, `map`,
     `my_wallet`, `wallet_history`, `wallet_request`, `are_you_approve_this_request`…),
     et `levels.php` les écrans de réglages (`map_key`, `razorpay_*`, `franch` (sic)…).
-  - **Volume réel de la francisation : ~172 chaînes** (23 des fichiers absents + 149 des
-    fichiers incomplets), dont une part à supprimer plutôt qu'à traduire.
+  - **Volume réel de la francisation : ~172 chaînes**, dont **23 faites** (fichiers
+    créés) et **149 restantes**, une part de ces dernières étant à supprimer plutôt
+    qu'à traduire.
   - **Pas de `lang/fr.json`** ⇒ toute chaîne passant par `__('texte libre')`
     retombera sur l'anglais quelle que soit la locale. Portée limitée : `lang/en.json`
     ne contient que **5 clés** — le socle passe presque partout par des fichiers PHP.
@@ -641,8 +647,8 @@ aucune passerelle existante ne servant de modèle.
 
 ### ⇒ Conséquences pour le chantier 1 (francisation + FCFA)
 1. **Langue** : basculer `config/app.php` sur `fr`, puis traiter `lang/fr/` en trois
-   temps — (a) créer les **3 fichiers absents**, en commençant par les **5 chaînes**
-   `WalletStatus`/`WalletPaymentMethod` dont le chantier FedaPay a besoin ; (b) combler
+   temps — (a) ~~créer les 3 fichiers absents~~ **fait le 2026-08-15** (23 chaînes,
+   dont les 5 libellés wallet attendus par FedaPay) ; (b) combler
    les **149 clés manquantes** des 13 fichiers incomplets, en **triant ce qui doit être
    supprimé** (les 29 banques bangladaises de `merchant.php`) de ce qui doit être
    traduit (`parcel.php`, `levels.php`, `permissions.php`) ; (c) créer `lang/fr.json`
