@@ -83,6 +83,7 @@ return [
     'value'                  =>  'Valeur',
     'contact_no'             =>  'N° de contact',
     'email'                  =>   'Email',
-    'password'               =>   'Mot de passe'
+    'password'               =>   'Mot de passe',
+    'parcel'                 =>   'Colis'
 
 ];

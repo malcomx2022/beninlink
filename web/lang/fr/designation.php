@@ -8,4 +8,6 @@ return array (
   'update_msg'          => 'Département mis à jour avec succès.',
   'delete_msg'          => 'Département supprimé avec succès.',
   'error_msg'           => 'Quelque chose s\'est mal passé.',
+  'create_designation'  => 'Créer une fonction',
+  'edit_designation'    => 'Modifier la fonction',
 );

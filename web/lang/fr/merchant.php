@@ -51,18 +51,18 @@ return array (
   'account_no'                  =>  'Numéro de compte',
   'routing_no'                  =>  'Numéro de routage',
 
-  // banks
-    "arab_bank_maroc" => "ARAB BANK MAROC",
-    "attijariwafa_bank" => "ATTIJARIWAFA BANK",
-    "al_barid_bank" => "AL BARID BANK",
-    "banque_centrale_populaire" => "BANQUE CENTRALE POPULAIRE",
-    "bank_of_africa" => "BANK OF AFRICA",
-    "banque_marocaine_commerce_industrie" => "BANQUE MAROCAINE POUR LE COMMERCE ET L’INDUSTRIE",
-    "credit_agricole_du_maroc" => "CRÉDIT AGRICOLE DU MAROC",
-    "cfg_bank" => "CFG BANK",
-    "credit_immobilier_hotelier_cih" => "CRÉDIT IMMOBILIER ET HÔTELIER CIH",
-    "credit_du_maroc" => "CREDIT DU MAROC",
-    "societe_generale_marocaine_banques" => "SOCIETE GENERALE MAROCAINE DE BANQUES",
+  // banks (Bénin — clés alignées sur config/merchantpayment.php)
+  "boa_benin"                 => "Bank of Africa (BOA) Bénin",
+  "ecobank_benin"             => "Ecobank Bénin",
+  "societe_generale_benin"    => "Société Générale Bénin",
+  "uba_benin"                 => "United Bank for Africa (UBA) Bénin",
+  "nsia_banque_benin"         => "NSIA Banque Bénin",
+  "banque_atlantique_benin"   => "Banque Atlantique Bénin",
+  "orabank_benin"             => "Orabank Bénin",
+  "bsic_benin"                => "BSIC Bénin",
+  "coris_bank_benin"          => "Coris Bank International Bénin",
+  "bgfibank_benin"            => "BGFIBank Bénin",
+  "autre_banque"              => "Autre banque",
 
 
 'select_mobile_company' => 'Sélectionnez la compagnie',
@@ -91,6 +91,7 @@ return array (
 'payble_amount' => 'Montant payable',
 'payment_request' => 'Demande de paiement',
 'invalid_otp' => 'OTP invalide',
-'cash' => 'Espèces'
+'cash' => 'Espèces',
+    'wallet' => 'Portefeuille',
 
 );

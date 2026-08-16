@@ -8,6 +8,7 @@ return [
     UserType::DELIVERYMAN => 'Livreur',
     UserType::INCHARGE => 'Responsable',
     UserType::HUB => 'Hub',
+    UserType::SUPER_ADMIN => 'Super administrateur',
 ];
 
 ?>

@@ -1,10 +1,10 @@
 <?php
 
 return [
-    'received_warehouse_deliveryman_statement' => 'Revenus : colis reçu à l'entrepôt par le livreur',
-    'received_warehouse_deliveryman_statement_cancel' => 'Dépenses : annulation de colis reçu à l'entrepôt par le livreur',
-    'received_warehouse_courier_statement' => 'Dépenses : colis reçu à l'entrepôt par le coursier',
-    'received_warehouse_courier_statement_cancel' => 'Revenus : annulation de colis reçu à l'entrepôt par le coursier',
+    'received_warehouse_deliveryman_statement' => 'Revenus : colis reçu à l\'entrepôt par le livreur',
+    'received_warehouse_deliveryman_statement_cancel' => 'Dépenses : annulation de colis reçu à l\'entrepôt par le livreur',
+    'received_warehouse_courier_statement' => 'Dépenses : colis reçu à l\'entrepôt par le coursier',
+    'received_warehouse_courier_statement_cancel' => 'Revenus : annulation de colis reçu à l\'entrepôt par le coursier',
     'delivered_deliveryman_statement' => 'Revenus : colis livré au livreur',
     'delivered_deliveryman_statement_cancel' => 'Revenus : annulation de colis livré au livreur',
     'delivered_courier_statement' => 'Dépenses : colis livré par le coursier',

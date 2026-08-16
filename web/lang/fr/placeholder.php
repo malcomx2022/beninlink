@@ -74,4 +74,6 @@ return [
     'app_secret'                    => 'Entrer le secret de l\'application',
     'client_id'                     => 'Entrer l\'ID client',
     'client_secret'                 => 'Entrer le secret client',
+    'Enter_company_name' => 'Entrer le nom de la société',
+    'Enter_domain' => 'Entrer le domaine',
 ];

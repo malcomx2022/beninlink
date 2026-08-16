@@ -80,6 +80,10 @@ return [
     'deliver'                      => 'Livré',
     'par_deliver'                  => 'Livraison partielle',
     'return'                       => 'Retour',
+    'total_company'                => 'Total des sociétés',
+    'total_plans'                  => 'Total des forfaits',
+    'total_subscription'           => 'Total des abonnements',
+    'total_subscription_price'     => 'Montant total des abonnements',
 
 ];
 
