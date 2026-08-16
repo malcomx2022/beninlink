@@ -147,7 +147,7 @@
                                     @endif
                                 </td>
                                 <td>{{dateFormat($fund_transfer->date)}}</td>
-                                <td>{{settings()->currency}}{{$fund_transfer->amount}}</td>
+                                <td>{{ formatAmount($fund_transfer->amount) }}</td>
                             </tr>
                             @endforeach
                         </tbody>

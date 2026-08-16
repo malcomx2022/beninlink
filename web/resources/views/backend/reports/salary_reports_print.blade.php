@@ -81,13 +81,13 @@
                                         <span> {{@$salary->user->mobile}}</span><br>
                                     </td>
                                     <td>{{\Carbon\Carbon::createFromFormat('Y-m',$key)->format('M Y')}}</td>
-                                    <td> {{ settings()->currency }}{{$salary->amount}}</td>
+                                    <td> {{ formatAmount($salary->amount) }}</td>
                                     @if(!blank($salaryPayments)  && isset($salaryPayments[$key]))
                                         @php($status = true)
                                         @foreach($salaryPayments[$key] as $payment)
                                             @if($payment->user_id == $salary->user_id && $payment->amount>0)
                                                 @php($status = false)
-                                                <td> {{ settings()->currency }}{{$payment->amount}}</td>
+                                                <td> {{ formatAmount($payment->amount) }}</td>
                                                 @if($salary->amount <=$payment->amount )
                                                     <td><span class="badge badge-success" style="color: white">{{ __('SalaryStatus.'.App\Enums\SalaryStatus::PAID) }}</span></td>
                                                 @else
@@ -96,11 +96,11 @@
                                             @endif
                                         @endforeach
                                         @if($status)
-                                            <td> {{ settings()->currency }}{{number_format(0,2)}}</td>
+                                            <td> {{formatAmount(0)}}</td>
                                             <td><span class="badge badge-danger" style="color: white">{{ __('SalaryStatus.'.App\Enums\SalaryStatus::UNPAID) }}</span></td>
                                         @endif
                                     @else
-                                        <td> {{ settings()->currency }}{{number_format(0,2)}}</td>
+                                        <td> {{formatAmount(0)}}</td>
                                         <td><span class="badge badge-danger">{{ __('SalaryStatus.'.App\Enums\SalaryStatus::UNPAID) }}</span></td>
                                     @endif
                                 </tr>

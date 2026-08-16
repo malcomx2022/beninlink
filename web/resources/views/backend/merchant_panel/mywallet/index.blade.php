@@ -91,7 +91,7 @@
                         <div class="card">
                             <div class="card-body">
                                 <p>Total Wallet Balance</p>
-                                <h3 class="mb-0">{{ settings()->currency }} {{ Auth::user()->merchant->wallet_balance }}
+                                <h3 class="mb-0">{{ formatAmount(Auth::user()->merchant->wallet_balance) }}
                                 </h3>
                                 @if (Auth::user()->merchant->wallet_balance <= 10)
                                     <p class="text-danger"> You are low on balance. Please recharge</p>
@@ -106,13 +106,13 @@
                                     <div class="col-lg-6">
                                         <p>Total Recharge</p>
                                         <h3 class="mb-0">
-                                           {{ settings()->currency }} {{ number_format(\App\Models\Backend\Wallet::where(['user_id'=>Auth::user()->id,'type'=>App\Enums\Wallet\WalletType::INCOME])->sum('amount'),2) }}
+                                           {{ formatAmount(\App\Models\Backend\Wallet::where(['user_id'=>Auth::user()->id,'type'=>App\Enums\Wallet\WalletType::INCOME])->sum('amount')) }}
                                         </h3>
                                     </div>
                                     <div class="col-lg-6">
                                         <p>Total Deducations</p>
                                         <h3 class="mb-0">
-                                            {{ settings()->currency }} {{ number_format(\App\Models\Backend\Wallet::where(['user_id'=>Auth::user()->id,'type'=>App\Enums\Wallet\WalletType::EXPENSE])->sum('amount'),2) }}
+                                            {{ formatAmount(\App\Models\Backend\Wallet::where(['user_id'=>Auth::user()->id,'type'=>App\Enums\Wallet\WalletType::EXPENSE])->sum('amount')) }}
                                         </h3>
                                     </div>
                                 </div>

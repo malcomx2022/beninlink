@@ -71,7 +71,7 @@
                                         <span class="badge badge-pill badge-success">{{trans('approvalstatus.'.\App\Enums\ApprovalStatus::PROCESSED) }}</span>
                                         @endif
                                     </td>
-                                    <td>{{ settings()->currency }} {{ $payment->amount }}</td>
+                                    <td>{{ formatAmount($payment->amount) }}</td>
                                     @if(  hasPermission('hub_payment_request_update') == true || hasPermission('hub_payment_request_delete') == true )
                                         <td>
                                             @if($payment->status == \App\Enums\ApprovalStatus::PENDING)

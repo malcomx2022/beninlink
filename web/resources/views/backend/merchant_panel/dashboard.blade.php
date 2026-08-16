@@ -121,18 +121,18 @@
                                 <li class="list-group-item profile-list-group-item">
                                     <span class="float-left font-weight-bold">{{ __('dashboard.total_cash_collection') }}
                                     </span>
-                                    <span class="float-right"> {{ settings()->currency }}{{ $t_cash_collection }}</span>
+                                    <span class="float-right"> {{ formatAmount($t_cash_collection) }}</span>
                                 </li>
                                 <li class="list-group-item profile-list-group-item">
                                     <span
                                         class="float-left font-weight-bold">{{ __('dashboard.total_selling_price') }}</span>
-                                    <span class="float-right"> {{ settings()->currency }}{{ $t_selling_price }}</span>
+                                    <span class="float-right"> {{ formatAmount($t_selling_price) }}</span>
                                 </li>
                                 <li class="list-group-item profile-list-group-item">
                                     <span class="float-left font-weight-bold">
                                         {{ __('dashboard.net_profit_ammount') }}</span>
                                     <span class="float-right">
-                                        {{ settings()->currency }}{{ $t_cash_collection - $t_selling_price }}</span>
+                                        {{ formatAmount($t_cash_collection - $t_selling_price) }}</span>
                                 </li>
                             </ul>
                         </div>
@@ -141,16 +141,16 @@
                                 <li class="list-group-item profile-list-group-item">
                                     <span
                                         class="float-left font-weight-bold">{{ __('dashboard.total_liquid_fragile_amount') }}</span>
-                                    <span class="float-right">{{ settings()->currency }}{{ $t_liquid_fragile }}</span>
+                                    <span class="float-right">{{ formatAmount($t_liquid_fragile) }}</span>
                                 </li>
                                 <li class="list-group-item profile-list-group-item">
                                     <span
                                         class="float-left font-weight-bold">{{ __('dashboard.total_packaging_amount') }}</span>
-                                    <span class="float-right">{{ settings()->currency }}{{ $t_packaging }}</span>
+                                    <span class="float-right">{{ formatAmount($t_packaging) }}</span>
                                 </li>
                                 <li class="list-group-item profile-list-group-item">
                                     <span class="float-left font-weight-bold">{{ __('dashboard.total_vat_amount') }}</span>
-                                    <span class="float-right">{{ settings()->currency }}{{ $t_vat_amount }}</span>
+                                    <span class="float-right">{{ formatAmount($t_vat_amount) }}</span>
                                 </li>
                             </ul>
                         </div>
@@ -160,18 +160,18 @@
                                 <li class="list-group-item profile-list-group-item">
                                     <span
                                         class="float-left font-weight-bold">{{ __('dashboard.total_delivery_charge') }}</span>
-                                    <span class="float-right">{{ settings()->currency }}{{ $t_delivery_charge }}</span>
+                                    <span class="float-right">{{ formatAmount($t_delivery_charge) }}</span>
                                 </li>
                                 <li class="list-group-item profile-list-group-item">
                                     <span
                                         class="float-left font-weight-bold">{{ __('dashboard.total_cod_amount') }}</span>
-                                    <span class="float-right">{{ settings()->currency }}{{ $t_cod_amount }}</span>
+                                    <span class="float-right">{{ formatAmount($t_cod_amount) }}</span>
                                 </li>
 
                                 <li class="list-group-item profile-list-group-item">
                                     <span
                                         class="float-left font-weight-bold">{{ __('dashboard.total_total_delivery_amount') }}</span>
-                                    <span class="float-right">{{ settings()->currency }}{{ $t_delivery_amount }}</span>
+                                    <span class="float-right">{{ formatAmount($t_delivery_amount) }}</span>
                                 </li>
                             </ul>
                         </div>
@@ -208,7 +208,7 @@
                                 <p class="h3"><i class="fa fa-hand-holding-usd text-primary"></i></p>
                                 <div>
                                     <h5 class=" text-primary m-0">{{ __('dashboard.total_sales_amount') }} </h5>
-                                    <p class="h3  text-primary">{{ settings()->currency }}{{ number_format($t_sale, 2) }}
+                                    <p class="h3  text-primary">{{ formatAmount($t_sale) }}
                                     </p>
                                 </div>
                             </div>
@@ -223,7 +223,7 @@
                                 <div>
                                     <h5 class=" text-primary m-0">{{ __('dashboard.total_delivery_fees_paid') }}</h5>
                                     <p class="h3  text-primary">
-                                        {{ settings()->currency }}{{ number_format($t_delivery_fee, 2) }}</p>
+                                        {{ formatAmount($t_delivery_fee) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -236,7 +236,7 @@
                                 <p class="h3"><i class="fa fa-dna text-primary"></i></p>
                                 <div>
                                     <h5 class=" text-primary m-0">{{ __('levels.total_vat') }}</h5>
-                                    <p class="h3 text-primary">{{ settings()->currency }}{{ number_format($ts_vat, 2) }}
+                                    <p class="h3 text-primary">{{ formatAmount($ts_vat) }}
                                     </p>
                                 </div>
                             </div>
@@ -251,7 +251,7 @@
                                 <div>
                                     <h5 class=" text-primary m-0">{{ __('dashboard.net_profit_ammount') }}</h5>
                                     <p class="h3  text-primary">
-                                        {{ settings()->currency }}{{ number_format($t_sale - $t_delivery_fee - $ts_vat, 2) }}
+                                        {{ formatAmount($t_sale - $t_delivery_fee - $ts_vat) }}
                                     </p>
                                 </div>
                             </div>
@@ -266,7 +266,7 @@
                                 <div>
                                     <h5 class=" text-primary m-0">{{ __('dashboard.current_balance') }}</h5>
                                     <p class="h3 text-primary">
-                                        {{ settings()->currency }}{{ number_format($merchant->current_balance, 2) }}</p>
+                                        {{ formatAmount($merchant->current_balance) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -280,7 +280,7 @@
                                 <div>
                                     <h5 class=" text-primary m-0">{{ __('dashboard.opening_balance') }}</h5>
                                     <p class="h3 text-primary">
-                                        {{ settings()->currency }}{{ number_format($merchant->opening_balance, 2) }}</p>
+                                        {{ formatAmount($merchant->opening_balance) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -306,7 +306,7 @@
                                 <p class="h3"><i class="fa fa-hourglass-half text-primary"></i></p>
                                 <div>
                                     <h5 class=" text-primary m-0">{{ __('dashboard.payment_processing') }}</h5>
-                                    <p class="h3 text-primary">{{ settings()->currency }}{{ $t_balance_proc }}</p>
+                                    <p class="h3 text-primary">{{ formatAmount($t_balance_proc) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -319,7 +319,7 @@
                                 <p class="h3"><i class="fa fa-database text-primary"></i></p>
                                 <div>
                                     <h5 class=" text-primary m-0">{{ __('dashboard.paid_amount') }}</h5>
-                                    <p class="h3 text-primary">{{ settings()->currency }}{{ $t_balance_paid }}</p>
+                                    <p class="h3 text-primary">{{ formatAmount($t_balance_paid) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -361,7 +361,7 @@
                                 <p class="h3"><i class="fa fa-history text-primary"></i></p>
                                 <div>
                                     <h5 class=" text-primary m-0">{{ __('dashboard.total_payment_request') }}</h5>
-                                    <p class="h3 text-primary">{{ settings()->currency }}{{ $t_request }}</p>
+                                    <p class="h3 text-primary">{{ formatAmount($t_request) }}</p>
                                 </div>
                             </div>
                         </div>

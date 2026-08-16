@@ -60,9 +60,9 @@
                                         <td>{{++$i}}</td>
                                         <td>{{@$invoice->invoice_id}}</td>
                                         <td>{{@$invoice->invoice_date}}</td>
-                                        <td>{{ settings()->currency }}{{@$invoice->cash_collection}}</td>
-                                        <td>{{ settings()->currency }}{{@$invoice->total_charge}}</td>
-                                        <td>{{ settings()->currency }}{{@$invoice->current_payable}}</td>
+                                        <td>{{ formatAmount(@$invoice->cash_collection) }}</td>
+                                        <td>{{ formatAmount(@$invoice->total_charge) }}</td>
+                                        <td>{{ formatAmount(@$invoice->current_payable) }}</td>
                                         <td>{!! $invoice->my_status !!}</td>
                                         @if(hasPermission('invoice_status_update') == true)
                                             <td>

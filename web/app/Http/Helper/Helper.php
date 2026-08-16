@@ -976,3 +976,51 @@ if (!function_exists('singleUser')) {
             return preg_replace('/[^A-Za-z0-9\-]/', '', $string);
         }
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Montants — XOF (FCFA)
+    |--------------------------------------------------------------------------
+    | Le franc CFA n'a pas de subdivision : tout montant est un entier.
+    | Ces trois fonctions sont le SEUL endroit où un montant est mis en forme.
+    | Pour changer la position du symbole ou le séparateur, modifier ici.
+    */
+
+    if (!function_exists('amountValue')) {
+        /**
+         * Valeur numérique d'un montant : entier, sans mise en forme.
+         * À utiliser pour l'API et tout ce qui doit rester analysable.
+         */
+        function amountValue($amount = 0){
+            return (int) round((float) $amount);
+        }
+    }
+
+    if (!function_exists('currencySymbol')) {
+        /**
+         * Symbole de la société courante (colonne general_settings.currency),
+         * avec repli sur FCFA tant qu'aucune valeur n'est enregistrée.
+         */
+        function currencySymbol(){
+            $symbol = settings()->currency ?? null;
+            return blank($symbol) ? 'FCFA' : $symbol;
+        }
+    }
+
+    if (!function_exists('formatAmount')) {
+        /**
+         * Montant destiné à l'affichage : entier, milliers séparés par une
+         * espace insécable, symbole suffixé selon l'usage francophone
+         * (« 1 500 FCFA »).
+         *
+         * @param  mixed $amount
+         * @param  bool  $withCurrency  false pour n'obtenir que le nombre.
+         */
+        function formatAmount($amount = 0, $withCurrency = true){
+            $formatted = number_format(amountValue($amount), 0, ',', "\xC2\xA0");
+            if($withCurrency):
+                return $formatted . "\xC2\xA0" . currencySymbol();
+            endif;
+            return $formatted;
+        }
+    }

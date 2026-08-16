@@ -29,7 +29,7 @@ class GeneralSettingsSeeder extends Seeder
         $row->phone        = "20022002";
         $row->email        = "info@wecourier.com";
         $row->address      = "Mirpur 10, Dhaka, Bangladesh";
-        $row->currency     = "$";
+        $row->currency     = "FCFA";
         $row->copyright    = "Copyright © All rights reserved. Development by WemaxDevs.";
         $row->logo         = 8;
         $row->favicon      = 9;
@@ -48,7 +48,7 @@ class GeneralSettingsSeeder extends Seeder
         $row->phone        = "20022002";
         $row->email        = "info@company.com";
         $row->address      = "Mirpur 10, Dhaka, Bangladesh";
-        $row->currency     = "$";
+        $row->currency     = "FCFA";
         $row->copyright    = "Copyright © All rights reserved. Development by Company Name.";
         $row->logo         = 8;
         $row->favicon      = 9;

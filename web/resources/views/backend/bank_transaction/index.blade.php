@@ -245,7 +245,7 @@
                                         </td>
 
                                         <td>{!! $transaction->account_type !!}</td>
-                                        <td>{{settings()->currency}}{{$transaction->amount}}</td>
+                                        <td>{{ formatAmount($transaction->amount) }}</td>
                                         <td>{{dateFormat($transaction->date)}}</td>
                                         <td>{{$transaction->note}}</td>
                                     </tr>

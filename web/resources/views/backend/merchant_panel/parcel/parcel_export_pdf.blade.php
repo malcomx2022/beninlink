@@ -101,7 +101,7 @@
                 <td style=" padding: 2px 10px;"  >{{ @$parcel->customer_name }}<br/>{{ @$parcel->customer_phone }}<br/>{{ @$parcel->customer_address }}</td>
                 <td style=" padding: 2px 10px;"  >{{ @$parcel->status_name }}</td>
 
-                <td>{{ number_format(@$parcel->cash_collection,2) }}</td>
+                <td>{{ formatAmount(@$parcel->cash_collection) }}</td>
                 <td style="background-color: rgb(73 73 73 / 7%); padding: 2px 10px;">{{$parcel->delivery_charge }}</td>
                 <td style="background-color: rgb(73 73 73 / 7%); padding: 2px 10px;">{{@$parcel->vat_amount}}</td>
                 <td style="background-color: rgb(73 73 73 / 7%); padding: 2px 10px;">{{@$parcel->cod_amount}}</td>
@@ -111,12 +111,12 @@
             @endforeach
             <tr style="background-color: #7e0095;color:white">
                 <th style="text-transform: uppercase; padding: 2px 10px;" colspan="5">Total</th>
-                <th style=" padding: 2px 10px;"> {{ number_format($parcels->sum('cash_collection'),2) }} </th>
-                <th style=" padding: 2px 10px;"> {{ number_format($parcels->sum('delivery_charge'),2) }} </th>
-                <th style=" padding: 2px 10px;"> {{ number_format($parcels->sum('vat_amount'),2) }} </th>
-                <th style=" padding: 2px 10px;"> {{ number_format($parcels->sum('cod_amount'),2) }} </th>
-                <th style=" padding: 2px 10px;"> {{ number_format($parcels->sum('total_delivery_amount') + $parcels->sum('vat_amount'),2) }}  </th>
-                <th style=" padding: 2px 10px;"> {{ number_format($parcels->sum('current_payable'),2) }}  </th>
+                <th style=" padding: 2px 10px;"> {{ formatAmount($parcels->sum('cash_collection')) }} </th>
+                <th style=" padding: 2px 10px;"> {{ formatAmount($parcels->sum('delivery_charge')) }} </th>
+                <th style=" padding: 2px 10px;"> {{ formatAmount($parcels->sum('vat_amount')) }} </th>
+                <th style=" padding: 2px 10px;"> {{ formatAmount($parcels->sum('cod_amount')) }} </th>
+                <th style=" padding: 2px 10px;"> {{ formatAmount($parcels->sum('total_delivery_amount') + $parcels->sum('vat_amount')) }}  </th>
+                <th style=" padding: 2px 10px;"> {{ formatAmount($parcels->sum('current_payable')) }}  </th>
             </tr>
     </table>
 </body>

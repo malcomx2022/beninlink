@@ -69,18 +69,18 @@
                                         <span>{{$parcel->merchant->business_name}}</span><br>
                                         <span><b>Customer :</b> </span>
                                         <span>{{$parcel->customer_name}}</span><br>
-                                        <td> {{ settings()->currency }} {{ $parcel->total_delivery_amount }}</td>
+                                        <td> {{ formatAmount($parcel->total_delivery_amount) }}</td>
                                     </td>
-                                    <td> {{ settings()->currency }} {{ parcelExpense($parcel->id) }}</td>
-                                    <td>{{ settings()->currency }} {{  ($parcel->total_delivery_amount - parcelExpense($parcel->id)) }}    </td>
+                                    <td> {{ formatAmount(parcelExpense($parcel->id)) }}</td>
+                                    <td>{{ formatAmount(($parcel->total_delivery_amount - parcelExpense($parcel->id))) }}    </td>
                                 </tr>
                                 @endforeach
                                 <tr   class="totalCalculationHead bg-primary" style="background-color:#5969ff">
                                     <td ></td>
                                     <td class="">{{ __('reports.total') }}    : </td>
-                                    <td> {{ settings()->currency }}  {{ $parcels->sum('total_delivery_amount') }} </td>
-                                    <td> {{ settings()->currency }}  {{ parcelExpenseTotal($parcels->pluck('id')) }} </td>
-                                    <td >  {{ settings()->currency }}  {{ ($parcels->sum('total_delivery_amount') - parcelExpenseTotal($parcels->pluck('id')) ) }}</td>
+                                    <td> {{ formatAmount($parcels->sum('total_delivery_amount')) }} </td>
+                                    <td> {{ formatAmount(parcelExpenseTotal($parcels->pluck('id'))) }} </td>
+                                    <td >  {{ formatAmount(($parcels->sum('total_delivery_amount') - parcelExpenseTotal($parcels->pluck('id')) )) }}</td>
                                 </tr>
                             </tbody>
                         </table>

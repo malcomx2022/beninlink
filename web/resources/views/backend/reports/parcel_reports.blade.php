@@ -116,7 +116,7 @@
                                     <tr   class="totalCalculationHead bg-primary"  >
                                         <td> </td>
                                         <td> <span class="text-white font-weight-bold">{{ __('reports.total_cash_collection') }}</span></td>
-                                        <td class="text-white font-weight-bold"> {{ settings()->currency }} {{ totalParcelsCashcollection($parcels) }}  </td>
+                                        <td class="text-white font-weight-bold"> {{ formatAmount(totalParcelsCashcollection($parcels)) }}  </td>
                                     </tr>
                                 </tbody>
                             </table>

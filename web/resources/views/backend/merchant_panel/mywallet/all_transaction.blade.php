@@ -26,10 +26,10 @@
                     <td>
                         @if ($wallet->type == App\Enums\Wallet\WalletType::INCOME)
                             <span class="text-success font-weight-bold"> +
-                                {{ settings()->currency }}{{ @$wallet->amount }}</span>
+                                {{ formatAmount(@$wallet->amount) }}</span>
                         @elseif($wallet->type == App\Enums\Wallet\WalletType::EXPENSE)
                             <span
-                                class="text-danger font-weight-bold"> - {{ settings()->currency }}{{ @$wallet->amount }}</span>
+                                class="text-danger font-weight-bold"> - {{ formatAmount(@$wallet->amount) }}</span>
                         @endif
                     </td>
                     <td>

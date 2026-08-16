@@ -193,7 +193,7 @@
                                         <td>
                                             <img src="{{$income->image}}" alt="user" class="rounded" width="45" height="65">
                                         </td>
-                                        <td>{{settings()->currency}}{{$income->amount}}</td>
+                                        <td>{{ formatAmount($income->amount) }}</td>
                                         @if(
                                             hasPermission('income_update') == true ||
                                             hasPermission('income_delete') == true

@@ -111,11 +111,11 @@
                                         </div>
                                     </td>
                                     <td>{{$deliveryman->user->hub->name}}</td>
-                                    <td>{{settings()->currency}}{{$deliveryman->delivery_charge}}</td>
-                                    <td>{{settings()->currency}}{{$deliveryman->pickup_charge}}</td>
-                                    <td>{{settings()->currency}}{{$deliveryman->return_charge}}</td>
-                                    <td>{{settings()->currency}}{{$deliveryman->current_balance}}</td>
-                                    <td>{{settings()->currency}}{{$deliveryman->opening_balance}}</td>
+                                    <td>{{ formatAmount($deliveryman->delivery_charge) }}</td>
+                                    <td>{{ formatAmount($deliveryman->pickup_charge) }}</td>
+                                    <td>{{ formatAmount($deliveryman->return_charge) }}</td>
+                                    <td>{{ formatAmount($deliveryman->current_balance) }}</td>
+                                    <td>{{ formatAmount($deliveryman->opening_balance) }}</td>
 
                                     <td>
                                         {!! $deliveryman->user->my_status !!}

@@ -76,7 +76,7 @@
                                                 </tr>
                                                 <tr>
                                                     <td style="border-bottom:none!important;border-right:1px solid rgba(73, 73, 73, 0.226);padding:5px!important;"><b>Total paid out</b></td>
-                                                    <td style="border-bottom:none!important;padding:5px!important;">{{ number_format($invoice->TotalPayable ,2) }}</td>
+                                                    <td style="border-bottom:none!important;padding:5px!important;">{{ formatAmount($invoice->TotalPayable) }}</td>
                                                 </tr>
                                             </table>
                                         </td>
@@ -137,12 +137,12 @@
 
                         )  
                          @if($parcel->partial_delivered == \App\Enums\BooleanStatus::YES)
-                            {{ number_format(@$parcel->cash_collection,2) }}
+                            {{ formatAmount(@$parcel->cash_collection) }}
                          @else
-                            - {{ number_format(@$parcel->cash_collection,2) }}
+                            - {{ formatAmount(@$parcel->cash_collection) }}
                          @endif  
                     @else
-                        {{ number_format(@$parcel->cash_collection,2) }}
+                        {{ formatAmount(@$parcel->cash_collection) }}
                     @endif
 
                 </td>
@@ -186,13 +186,13 @@
            
             <tr style="background-color: #7e0095;color:white">
                 <th style="text-transform: uppercase; padding: 2px 10px;" colspan="4">Total</th>
-                <th style=" padding: 2px 10px;"> {{ number_format($invoice->TotalCashCollectedAmount,2) }} </th>
-                <th style=" padding: 2px 10px;"> {{ number_format($invoice->parcels->sum('delivery_charge'),2) }} </th>
-                <th style=" padding: 2px 10px;"> {{ number_format($invoice->parcels->sum('vat_amount'),2) }} </th>
-                <th style=" padding: 2px 10px;"> {{ number_format($invoice->parcels->sum('cod_amount'),2) }}   </th>
-                <th style=" padding: 2px 10px;">   {{ number_format($invoice->TotalDeliverChargeAmount,2) }}  </th>
+                <th style=" padding: 2px 10px;"> {{ formatAmount($invoice->TotalCashCollectedAmount) }} </th>
+                <th style=" padding: 2px 10px;"> {{ formatAmount($invoice->parcels->sum('delivery_charge')) }} </th>
+                <th style=" padding: 2px 10px;"> {{ formatAmount($invoice->parcels->sum('vat_amount')) }} </th>
+                <th style=" padding: 2px 10px;"> {{ formatAmount($invoice->parcels->sum('cod_amount')) }}   </th>
+                <th style=" padding: 2px 10px;">   {{ formatAmount($invoice->TotalDeliverChargeAmount) }}  </th>
                 <th style=" padding: 2px 10px;">
-                    {{ number_format($invoice->TotalPayable,2) }}
+                    {{ formatAmount($invoice->TotalPayable) }}
                 </th>
                 
             </tr>

@@ -72,7 +72,7 @@ class ReportController extends Controller
                 }
             }
 
-            $parcelProfit['total_profit']       = number_format($parcelsTotal['totalCashCollection'] - $parcelsTotal['totalSellingPrice'],2); 
+            $parcelProfit['total_profit']       = amountValue($parcelsTotal['totalCashCollection'] - $parcelsTotal['totalSellingPrice']); 
             $cashCollectionInfo['totalCashCollection'] =  $parcelsTotal['totalCashCollection'];
             $cashCollectionInfo['totalSellingPrice']   = $parcelsTotal['totalSellingPrice'];
      

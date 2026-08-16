@@ -52,7 +52,7 @@ class DeliverymanController extends Controller
             $data['user']                 = new  DeliverymanUserResource(Auth::user());
             $data['current_balance']      = $data['user']->deliveryman->current_balance;
             $data['deliveryman_earn']     = $this->deliveryman->deliverymanEarn(StatementType::INCOME)->sum('amount');
-            $data['total_cod']            = number_format($this->deliveryman->totalCOD(StatementType::EXPENSE)->sum('amount') - $this->deliveryman->totalCOD(StatementType::INCOME)->sum('amount'),2) ;
+            $data['total_cod']            = amountValue($this->deliveryman->totalCOD(StatementType::EXPENSE)->sum('amount') - $this->deliveryman->totalCOD(StatementType::INCOME)->sum('amount')) ;
             $data['delivery_in_progress'] = $this->parcel->deliverymanStatusParcel(ParcelStatus::DELIVERY_MAN_ASSIGN)->count();
             $data['completed_delivered']  = $this->parcel->deliverymanStatusParcel(ParcelStatus::DELIVERED)->count();
             $data['canceled_delivered']   = $this->deliveryman->totalCOD(StatementType::INCOME)->groupBy('parcel_id')->count();

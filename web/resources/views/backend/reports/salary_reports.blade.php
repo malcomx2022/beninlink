@@ -110,10 +110,10 @@
                                                 <span> {{@$salary->user->mobile}}</span><br>
                                             </td>
                                             <td>{{\Carbon\Carbon::createFromFormat('Y-m',$key)->format('M Y')}}</td>
-                                            <td> {{ settings()->currency }}{{$salary->amount}}</td>
+                                            <td> {{ formatAmount($salary->amount) }}</td>
                                             @if(!blank($salaryPayments)  && isset($salaryPayments[$key]))
                                                 @php($status = true)
-                                                    <td> {{ settings()->currency }}{{salaryPayments($salary->user_id, $salaryPayments[$key])}}</td>
+                                                    <td> {{ formatAmount(salaryPayments($salary->user_id, $salaryPayments[$key])) }}</td>
                                                 @if (salaryPayments($salary->user_id, $salaryPayments[$key]) > 0 && $salary->amount > salaryPayments($salary->user_id, $salaryPayments[$key]) )
                                                     <td><span class="badge badge-warning">{{ __('SalaryStatus.'.App\Enums\SalaryStatus::PARTIAL_PAID) }}</span></td>
                                                 @elseif(salaryPayments($salary->user_id, $salaryPayments[$key]) == 0)
@@ -122,7 +122,7 @@
                                                     <td><span class="badge badge-success">{{ __('SalaryStatus.'.App\Enums\SalaryStatus::PAID) }}</span></td>
                                                 @endif
                                             @else
-                                                <td> {{ settings()->currency }}{{number_format(0,2)}}</td>
+                                                <td> {{formatAmount(0)}}</td>
                                                 <td><span class="badge badge-danger">{{ __('SalaryStatus.'.App\Enums\SalaryStatus::UNPAID) }}</span></td>
                                             @endif
                                         </tr>

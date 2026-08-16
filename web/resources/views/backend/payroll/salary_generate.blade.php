@@ -64,7 +64,7 @@
                                         {{ $salary->user->email }}
                                     </td>
                                     <td>{{\Carbon\Carbon::parse($salary->month)->format('M Y')}}</td>
-                                    <td>{{settings()->currency}}{{$salary->amount}}</td>
+                                    <td>{{ formatAmount($salary->amount) }}</td>
                                     <td>
                                         {!! $salary->my_status !!}
                                     </td>

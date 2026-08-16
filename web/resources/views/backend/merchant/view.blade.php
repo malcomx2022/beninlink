@@ -71,7 +71,7 @@
 
                                 <div class="col-md-6 pr-0 pt-2">
                                     <div class="metric btn btn-primary w-100">
-                                        <h6 class="metric-value text-white"> {{ settings()->currency }}  {{ $singleMerchant->parcels->sum('cash_collection') }} </h6>
+                                        <h6 class="metric-value text-white"> {{ formatAmount($singleMerchant->parcels->sum('cash_collection')) }} </h6>
                                         <p class="metric-label font-size-12 text-white"> {{ __('merchant.amount') }} </p>
                                     </div>
 
@@ -84,7 +84,7 @@
                                 </div>
                                 <div class="col-md-6 pr-0 pt-2 ">
                                     <div class="metric btn btn-primary w-100">
-                                        <h6 class="metric-value text-white">{{ settings()->currency }} {{ $singleMerchant->current_balance }}</h6>
+                                        <h6 class="metric-value text-white">{{ formatAmount($singleMerchant->current_balance) }}</h6>
                                         <p class="metric-label font-size-12 text-white">{{ __('merchant.payble_amount') }} </p>
                                     </div>
                                 </div>

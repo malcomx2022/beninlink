@@ -93,7 +93,7 @@
                                     <td>
                                         {!! $merchant->WalletStatus !!} 
                                     </td>
-                                    <td>{{settings()->currency}}{{$merchant->current_balance}}</td>
+                                    <td>{{ formatAmount($merchant->current_balance) }}</td>
                                     @if(
                                         hasPermission('merchant_view') == true ||
                                         hasPermission('merchant_update') == true ||

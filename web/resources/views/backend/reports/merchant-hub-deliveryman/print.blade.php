@@ -193,25 +193,25 @@
                                         <div class="card-body mhd">
                                             <dl class="row card-header pt-0">
                                                 <dt class="col-9 font-16 font-weight-bold"> {{ __('reports.total_payable_to_merchant') }}</dt>
-                                                <dd class="col-3 text-right font-16 font-weight-bold">{{ settings()->currency }} {{ @$MHDreports['parcels']->sum('current_payable') }}</dd>
+                                                <dd class="col-3 text-right font-16 font-weight-bold">{{ formatAmount(@$MHDreports['parcels']->sum('current_payable')) }}</dd>
                                             </dl>
 
                                             <dl class="row card-header">
                                                 <dt class="col-9 font-16 font-weight-bold">{{ __('reports.total_delivery_charge') }}</dt>
-                                                <dd class="col-3 text-right font-16 font-weight-bold">{{ settings()->currency }} {{ @$MHDreports['parcels']->sum('total_delivery_amount') }}</dd>
+                                                <dd class="col-3 text-right font-16 font-weight-bold">{{ formatAmount(@$MHDreports['parcels']->sum('total_delivery_amount')) }}</dd>
                                             </dl>
                                             <dl class="row card-header">
                                                 <dt class="col-9 font-16 font-weight-bold">{{ __('reports.total_vat') }}</dt>
-                                                <dd class="col-3 text-right font-16 font-weight-bold">{{ settings()->currency }} {{ @$MHDreports['parcels']->sum('vat_amount') }}</dd>
+                                                <dd class="col-3 text-right font-16 font-weight-bold">{{ formatAmount(@$MHDreports['parcels']->sum('vat_amount')) }}</dd>
                                             </dl>
                                             <dl class="row card-header">
                                                 <dt class="col-9 font-16 font-weight-bold">{{ __('reports.merchant_balance') }}</dt>
-                                                <dd class="col-3 text-right font-16 font-weight-bold">{{ settings()->currency }} {{ @$MHDreports['merchant']->current_balance }} </dd>
+                                                <dd class="col-3 text-right font-16 font-weight-bold">{{ formatAmount(@$MHDreports['merchant']->current_balance) }} </dd>
                                             </dl>
 
                                             <dl class="row card-header">
                                                 <dt class="col-9 font-16 font-weight-bold">{{ __('reports.total_paid_to_merchant') }}</dt>
-                                                <dd class="col-3 text-right font-16 font-weight-bold">{{ settings()->currency }}  {{ @$MHDreports['total_paid_to_merchant'] }}</dd>
+                                                <dd class="col-3 text-right font-16 font-weight-bold">{{ formatAmount(@$MHDreports['total_paid_to_merchant']) }}</dd>
                                             </dl>
                                         </div>
 
@@ -260,7 +260,7 @@
                                                         <span class="col-6 mt-2">
                                                             <div class="row">
                                                                 <span class="col-3">Current Balance</span>
-                                                                <span class="col-9">: {{ settings()->currency }} {{ @$MHDreports['hub']->current_balance }}</span>
+                                                                <span class="col-9">: {{ formatAmount(@$MHDreports['hub']->current_balance) }}</span>
                                                             </div>
                                                         </span>
                                                     </div>
@@ -294,7 +294,7 @@
                                                     {{ __('AccountHeads.'.$h_statement->type) }}
                                                 </dd>
                                                 <dd class="col-3 text-right font-16 font-weight-bold">
-                                                    {{ settings()->currency }} {{ $h_statement->amount }}
+                                                    {{ formatAmount($h_statement->amount) }}
                                                 </dd>
                                             </dl>
                                         @endforeach
@@ -315,16 +315,15 @@
                                     <div class="card-body  mhd">
                                         <dl class="row card-header pt-0">
                                             <dt class="col-9 font-16 font-weight-bold"> {{ __('reports.income') }}</dt>
-                                            <dd class="col-3 text-right font-16 font-weight-bold">{{ settings()->currency }} {{ @$MHDreports['hub_statements']->where('type',\App\Enums\AccountHeads::INCOME)->sum('amount') }}</dd>
+                                            <dd class="col-3 text-right font-16 font-weight-bold">{{ formatAmount(@$MHDreports['hub_statements']->where('type',\App\Enums\AccountHeads::INCOME)->sum('amount')) }}</dd>
                                         </dl>
                                         <dl class="row card-header ">
                                             <dt class="col-9 font-16 font-weight-bold"> {{ __('reports.expense') }}</dt>
-                                            <dd class="col-3 text-right font-16 font-weight-bold">{{ settings()->currency }} {{ @$MHDreports['hub_statements']->where('type',\App\Enums\AccountHeads::EXPENSE)->sum('amount') }}</dd>
+                                            <dd class="col-3 text-right font-16 font-weight-bold">{{ formatAmount(@$MHDreports['hub_statements']->where('type',\App\Enums\AccountHeads::EXPENSE)->sum('amount')) }}</dd>
                                         </dl>
                                         <dl class="row card-header ">
                                             <dt class="col-9 font-16 font-weight-bold"> {{ __('reports.hub_payable') }}</dt>
-                                            <dd class="col-3 text-right font-16 font-weight-bold">{{ settings()->currency }}
-                                                {{ @$MHDreports['hub_statements']->where('type',\App\Enums\AccountHeads::INCOME)->sum('amount') -   @$MHDreports['hub_statements']->where('type',\App\Enums\AccountHeads::EXPENSE)->sum('amount') }}
+                                            <dd class="col-3 text-right font-16 font-weight-bold">{{ formatAmount(@$MHDreports['hub_statements']->where('type',\App\Enums\AccountHeads::INCOME)->sum('amount') -   @$MHDreports['hub_statements']->where('type',\App\Enums\AccountHeads::EXPENSE)->sum('amount')) }}
                                             </dd>
                                         </dl>
                                     </div>
@@ -369,7 +368,7 @@
                                                         <span class="col-6 mt-2">
                                                             <div class="row">
                                                                 <span class="col-3">Current Balance</span>
-                                                                <span class="col-9">: {{ settings()->currency }}  {{ @$MHDreports['deliveryman']->current_balance }}</span>
+                                                                <span class="col-9">: {{ formatAmount(@$MHDreports['deliveryman']->current_balance) }}</span>
                                                             </div>
                                                         </span>
                                                     </div>
@@ -407,7 +406,7 @@
                                                         {{ __('AccountHeads.'.$d_statement->type) }}
                                                 </dd>
                                                 <dd class="col-3 text-right font-16 font-weight-bold">
-                                                    {{ settings()->currency }} {{ $d_statement->amount }}
+                                                    {{ formatAmount($d_statement->amount) }}
                                                 </dd>
                                             </dl>
                                         @endforeach
@@ -426,16 +425,15 @@
                                     <div class="card-body mhd">
                                         <dl class="row card-header pt-0">
                                             <dt class="col-9 font-16 font-weight-bold"> {{ __('reports.income') }}</dt>
-                                            <dd class="col-3 text-right font-16 font-weight-bold">{{ settings()->currency }} {{ @$MHDreports['deliveryman_statements']->where('type',\App\Enums\AccountHeads::INCOME)->sum('amount') }}</dd>
+                                            <dd class="col-3 text-right font-16 font-weight-bold">{{ formatAmount(@$MHDreports['deliveryman_statements']->where('type',\App\Enums\AccountHeads::INCOME)->sum('amount')) }}</dd>
                                         </dl>
                                         <dl class="row card-header ">
                                             <dt class="col-9 font-16 font-weight-bold"> {{ __('reports.expense') }}</dt>
-                                            <dd class="col-3 text-right font-16 font-weight-bold">{{ settings()->currency }} {{ @$MHDreports['deliveryman_statements']->where('type',\App\Enums\AccountHeads::EXPENSE)->sum('amount') }}</dd>
+                                            <dd class="col-3 text-right font-16 font-weight-bold">{{ formatAmount(@$MHDreports['deliveryman_statements']->where('type',\App\Enums\AccountHeads::EXPENSE)->sum('amount')) }}</dd>
                                         </dl>
                                         <dl class="row card-header ">
                                             <dt class="col-9 font-16 font-weight-bold"> {{ __('reports.balance') }}</dt>
-                                            <dd class="col-3 text-right font-16 font-weight-bold">{{ settings()->currency }}
-                                                {{ @$MHDreports['deliveryman_statements']->where('type',\App\Enums\AccountHeads::INCOME)->sum('amount') -   @$MHDreports['deliveryman_statements']->where('type',\App\Enums\AccountHeads::EXPENSE)->sum('amount') }}
+                                            <dd class="col-3 text-right font-16 font-weight-bold">{{ formatAmount(@$MHDreports['deliveryman_statements']->where('type',\App\Enums\AccountHeads::INCOME)->sum('amount') -   @$MHDreports['deliveryman_statements']->where('type',\App\Enums\AccountHeads::EXPENSE)->sum('amount')) }}
                                             </dd>
                                         </dl>
                                     </div>

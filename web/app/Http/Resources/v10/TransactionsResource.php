@@ -19,7 +19,7 @@ class TransactionsResource extends JsonResource
             "merchant_id"       => (string) $this->merchant_id,
             "transaction_id"    => (string) $this->transaction_id,
             "merchantAccount"   => new PaymentAccountResource ($this->merchantAccount),
-            "amount"            =>  number_format($this->amount,2),
+            "amount"            =>  amountValue($this->amount),
             "currency"          => (string) settings()->currency,
             "status"            => (int)$this->status,
             "statusName"        => trans("approvalstatus.".$this->status),

@@ -82,7 +82,7 @@
                                     <label class="icon  p-10px"><i class="fa fa fa-donate text-primary"></i></label>
                                     <div class="pl-2 w-100">
                                         <h5 class=" m-0 text-primary">{{ __('dashboard.total_subscription_price') }}</h5>
-                                        <h1 class="mb-1 m-0 text-primary">{{ settings()->currency }} {{ $total_subscription_amount }}</h1>
+                                        <h1 class="mb-1 m-0 text-primary">{{ formatAmount($total_subscription_amount) }}</h1>
                                     </div>
                                 </div>
                             </div>
@@ -181,7 +181,7 @@
                                                 <td>{{ $subscription->plan->name }}</td>
                                                 <td>{{ $subscription->parcel_count }}</td>
                                                 <td>{{ $subscription->deliveryman_count }}</td>
-                                                <td>{{ settings()->currency }} {{ $subscription->price }}</td>
+                                                <td>{{ formatAmount($subscription->price) }}</td>
                                                 <td>{{ $subscription->start_date }}</td>
                                                 <td>{{ $subscription->expired_date }}</td>  
                                             </tr>

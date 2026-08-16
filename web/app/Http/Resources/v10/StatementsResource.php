@@ -18,7 +18,7 @@ class StatementsResource extends JsonResource
             "id"                => $this->id,
             "note"              => $this->note,
             "date"              => (string) dateFormat($this->date),
-            "amount"            => (string) number_format($this->amount,2),
+            "amount"            => amountValue($this->amount),
             "currency"          => (string) settings()->currency,
             "type"              => (int)$this->type,
             "typeName"          => trans("AccountHeads.".$this->type),
