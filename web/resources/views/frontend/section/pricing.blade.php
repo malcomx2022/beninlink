@@ -29,7 +29,7 @@
                                     <div class="text-center charge-item">
                                         <div class="row align-items-center"> 
                                             <p class="mb-0">{{ __('levels.up_to') }} {{ $samedayPrice->weight }} ( {{ @$samedayPrice->category->title }} )</p> 
-                                            <h3 class="font-weight-bold ">{{ settings()->currency }} {{ $samedayPrice->same_day }}</h3> 
+                                            <h3 class="font-weight-bold ">{{ formatAmount($samedayPrice->same_day) }}</h3> 
                                         </div>
                                     </div>
                                 </div>    
@@ -44,7 +44,7 @@
                                     <div class="text-center charge-item">
                                         <div class="row align-items-center"> 
                                             <p class="mb-0">{{ __('levels.up_to') }} {{ $nextdayPrice->weight }} ( {{ @$nextdayPrice->category->title }} )</p> 
-                                            <h3 class="font-weight-bold ">{{ settings()->currency }} {{ $nextdayPrice->next_day }}</h3> 
+                                            <h3 class="font-weight-bold ">{{ formatAmount($nextdayPrice->next_day) }}</h3> 
                                         </div>
                                     </div>
                                 </div>    
@@ -58,7 +58,7 @@
                                     <div class="text-center charge-item">
                                         <div class="row align-items-center"> 
                                             <p class="mb-0">{{ __('levels.up_to') }} {{ $subcityPrice->weight }} ( {{ @$subcityPrice->category->title }} )</p> 
-                                            <h3 class="font-weight-bold ">{{ settings()->currency }} {{ $subcityPrice->sub_city }}</h3> 
+                                            <h3 class="font-weight-bold ">{{ formatAmount($subcityPrice->sub_city) }}</h3> 
                                         </div>
                                     </div>
                                 </div>    
@@ -72,7 +72,7 @@
                                     <div class="text-center charge-item">
                                         <div class="row align-items-center"> 
                                             <p class="mb-0">{{ __('levels.up_to') }} {{ $outsidecityPrice->weight }} ( {{ @$outsidecityPrice->category->title }} )</p> 
-                                            <h3 class="font-weight-bold ">{{ settings()->currency }} {{ $outsidecityPrice->outside_city }}</h3> 
+                                            <h3 class="font-weight-bold ">{{ formatAmount($outsidecityPrice->outside_city) }}</h3> 
                                         </div>
                                     </div>
                                 </div>    

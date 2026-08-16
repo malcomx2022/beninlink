@@ -82,7 +82,7 @@
                     <div class="card">
                         <div class="card-body">
                             <p>Total Recharge</p>
-                            <h3 class="mb-0">{{ settings()->currency }} {{ number_format(\App\Models\Backend\Wallet::companywise()->where('type',App\Enums\Wallet\WalletType::INCOME)->sum('amount'),2)}}</h3>
+                            <h3 class="mb-0">{{ formatAmount(\App\Models\Backend\Wallet::companywise()->where('type',App\Enums\Wallet\WalletType::INCOME)->sum('amount'))}}</h3>
                         </div>
                     </div>
                 </div>
@@ -90,7 +90,7 @@
                     <div class="card">
                         <div class="card-body">
                             <p>Total Deducations</p>
-                            <h3 class="mb-0">{{ settings()->currency }} {{ number_format(\App\Models\Backend\Wallet::companywise()->where('type',App\Enums\Wallet\WalletType::EXPENSE)->sum('amount'),2)}}</h3>
+                            <h3 class="mb-0">{{ formatAmount(\App\Models\Backend\Wallet::companywise()->where('type',App\Enums\Wallet\WalletType::EXPENSE)->sum('amount'))}}</h3>
                         </div>
                     </div>
                 </div>

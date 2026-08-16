@@ -225,7 +225,7 @@
                                         <span class="badge badge-pill badge-success">{{trans('approvalstatus.'.\App\Enums\ApprovalStatus::PROCESSED) }}</span>
                                         @endif
                                     </td>
-                                    <td>{{settings()->currency}}{{$payment->amount}}</td>
+                                    <td>{{ formatAmount($payment->amount) }}</td>
                                     @if(
                                         hasPermission('payment_reject') == true ||
                                         hasPermission('payment_process') == true ||

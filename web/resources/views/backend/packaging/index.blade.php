@@ -64,7 +64,7 @@
                                     <td>
                                         {!! $packaging->my_status !!}
                                     </td>
-                                    <td>{{settings()->currency}}{{$packaging->price}}</td>
+                                    <td>{{ formatAmount($packaging->price) }}</td>
                                     <td>
                                         <img src="{{$packaging->image}}" alt="user" class="rounded" width="50" height="50">
                                     </td>

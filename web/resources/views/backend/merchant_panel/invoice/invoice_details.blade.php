@@ -83,13 +83,13 @@
                                             <span>{{@$invoiceParcel->parcel->customer_name}}</span><br/>
                                             <span>{{ @$invoiceParcel->parcel->customer_phone }}</span>
                                         </td> 
-                                        <td>{{ settings()->currency }}{{@$invoiceParcel->collected_amount}}  </td>
-                                        <td>{{ settings()->currency }}{{@$invoiceParcel->total_delivery_amount}}  </td>
-                                        <td>{{ settings()->currency }}{{@$invoiceParcel->return_charge}}  </td>
-                                        <td>{{ settings()->currency }}{{@$invoiceParcel->cod_amount}} </td>
-                                        <td>{{ settings()->currency }}{{@$invoiceParcel->vat_amount}} </td>
-                                        <td>{{ settings()->currency }}{{ @$invoiceParcel->total_charge_amount }}</td>
-                                        <td>{{ settings()->currency }}{{ @$invoiceParcel->current_payable }}</td>
+                                        <td>{{ formatAmount(@$invoiceParcel->collected_amount) }}  </td>
+                                        <td>{{ formatAmount(@$invoiceParcel->total_delivery_amount) }}  </td>
+                                        <td>{{ formatAmount(@$invoiceParcel->return_charge) }}  </td>
+                                        <td>{{ formatAmount(@$invoiceParcel->cod_amount) }} </td>
+                                        <td>{{ formatAmount(@$invoiceParcel->vat_amount) }} </td>
+                                        <td>{{ formatAmount(@$invoiceParcel->total_charge_amount) }}</td>
+                                        <td>{{ formatAmount(@$invoiceParcel->current_payable) }}</td>
 
                                     </tr>
                                 @endforeach

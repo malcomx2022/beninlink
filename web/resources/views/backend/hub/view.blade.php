@@ -89,23 +89,23 @@
                         </li>
                         <li class="list-group-item profile-list-group-item">
                             <span class="float-left font-weight-bold">{{ __('levels.cash_collection') }}</span>
-                            <span class="float-right">{{ settings()->currency }} {{ number_format($data['total_cash_collection'],2) }}</span>
+                            <span class="float-right">{{ formatAmount($data['total_cash_collection']) }}</span>
                         </li>
                         <li class="list-group-item profile-list-group-item">
                             <span class="float-left font-weight-bold">{{ __('parcelStatus.'.\App\Enums\ParcelStatus::DELIVERED) }}  {{ __('levels.cash_collection') }} </span>
-                            <span class="float-right">{{ settings()->currency }} {{ number_format($data['total_delivered_cash_collection'],2) }}</span>
+                            <span class="float-right">{{ formatAmount($data['total_delivered_cash_collection']) }}</span>
                         </li>
                         <li class="list-group-item profile-list-group-item">
                             <span class="float-left font-weight-bold">{{ __('parcelStatus.'.\App\Enums\ParcelStatus::PARTIAL_DELIVERED) }}  {{ __('levels.cash_collection') }} </span>
-                            <span class="float-right">{{ settings()->currency }} {{ number_format($data['total_partials_delivered_cash_collection'],2) }}</span>
+                            <span class="float-right">{{ formatAmount($data['total_partials_delivered_cash_collection']) }}</span>
                         </li>
                         <li class="list-group-item profile-list-group-item">
                             <span class="float-left font-weight-bold">{{ __('levels.delivery_charge') }}</span>
-                            <span class="float-right">{{ settings()->currency }} {{ number_format($data['total_delivery_charges'],2) }}</span>
+                            <span class="float-right">{{ formatAmount($data['total_delivery_charges']) }}</span>
                         </li>
                         <li class="list-group-item profile-list-group-item">
                             <span class="float-left font-weight-bold">{{ __('levels.vat_amount') }}</span>
-                            <span class="float-right">{{ settings()->currency }} {{ number_format($data['total_vat_amount'],2) }}</span>
+                            <span class="float-right">{{ formatAmount($data['total_vat_amount']) }}</span>
                         </li>
                     </div>
                 </div>
@@ -162,13 +162,13 @@
                                     </td>
                                     <td>
                                         <div class="w250">
-                                                {{__('levels.cod')}}: <span class="text-dark">{{settings()->currency}}{{$parcel->cash_collection}}</span>
+                                                {{__('levels.cod')}}: <span class="text-dark">{{ formatAmount($parcel->cash_collection) }}</span>
                                             <br>
-                                                {{__('levels.total_delivery_amount')}}: <span class="text-dark">{{settings()->currency}}{{$parcel->total_delivery_amount}}</span>
+                                                {{__('levels.total_delivery_amount')}}: <span class="text-dark">{{ formatAmount($parcel->total_delivery_amount) }}</span>
                                             <br>
-                                                {{__('levels.vat_amount')}}: <span class="text-dark">{{settings()->currency}}{{$parcel->vat_amount}}</span>
+                                                {{__('levels.vat_amount')}}: <span class="text-dark">{{ formatAmount($parcel->vat_amount) }}</span>
                                             <br>
-                                                {{__('levels.current_payable')}}: <b>{{settings()->currency}}{{$parcel->current_payable}}</b>
+                                                {{__('levels.current_payable')}}: <b>{{ formatAmount($parcel->current_payable) }}</b>
                                             <br>
                                         </div>
                                     </td>

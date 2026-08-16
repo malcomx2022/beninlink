@@ -60,7 +60,7 @@ class DeliveryManIncomeExpenseController extends Controller
         $parcelsTotal['totalPaybleAmount']              = 0;
         $parcelsTotal['totalCashCollection']            = 0;
         $parcelsTotal['totalDeliveryIncome']            = $totalIncome;
-        $parcelsTotal['totalDeliveryExpense']           = number_format($totalExpenses,2);
+        $parcelsTotal['totalDeliveryExpense']           = amountValue($totalExpenses);
 
         $totalCommissionDeliveryMan                     = Expense::where(['account_head_id'=>5,'delivery_man_id'=>auth()->user()->deliveryman->id])->get();
         $totalCashReceivedDeliveryman                   = CashReceivedFromDeliveryman::where(['delivery_man_id'=>auth()->user()->deliveryman->id])->get();
@@ -68,12 +68,12 @@ class DeliveryManIncomeExpenseController extends Controller
         $parcelsDelivered                               = $totalParcels->where('status',ParcelStatus::DELIVERED);
         $parcelsPartialDelivered                        = $totalParcels->where('partial_delivered',1);
 
-        $parcelsTotal['totalCashCollection']           = number_format( $parcelsDelivered->sum('cash_collection')+$parcelsPartialDelivered->sum('cash_collection'),2);
+        $parcelsTotal['totalCashCollection']           = amountValue($parcelsDelivered->sum('cash_collection')+$parcelsPartialDelivered->sum('cash_collection'));
 
 
-        $parcelsTotal['totalCashReceivedDeliveryman']  = number_format($totalCashReceivedDeliveryman->sum('amount'),2);
+        $parcelsTotal['totalCashReceivedDeliveryman']  = amountValue($totalCashReceivedDeliveryman->sum('amount'));
         $parcelsTotal['totalDeliveryIncome']           += $totalCommissionDeliveryMan->sum('amount');
-        $parcelsTotal['totalDeliveryIncome']           = number_format($parcelsTotal['totalDeliveryIncome'] ,2);
+        $parcelsTotal['totalDeliveryIncome']           = amountValue($parcelsTotal['totalDeliveryIncome']);
         return $parcelsTotal;
     }
 

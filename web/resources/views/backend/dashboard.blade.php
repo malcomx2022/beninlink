@@ -236,15 +236,15 @@
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold"> {{ __('income.title') }} </span>
-                                <span class="float-right"> {{ settings()->currency }}{{ $d_income }}</span>
+                                <span class="float-right"> {{ formatAmount($d_income) }}</span>
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('expense.title') }} </span>
-                                <span class="float-right"> {{ settings()->currency }}{{ $d_expense }}</span>
+                                <span class="float-right"> {{ formatAmount($d_expense) }}</span>
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold"> {{ __('dashboard.balance') }}</span>
-                                <span class="float-right"> {{ settings()->currency }}{{ $d_income - $d_expense }}</span>
+                                <span class="float-right"> {{ formatAmount($d_income - $d_expense) }}</span>
                             </li>
                         </ul>
                     </div>
@@ -256,15 +256,15 @@
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold"> {{ __('income.title') }} </span>
-                                <span class="float-right"> {{ settings()->currency }}{{ $m_income }}</span>
+                                <span class="float-right"> {{ formatAmount($m_income) }}</span>
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('expense.title') }} </span>
-                                <span class="float-right"> {{ settings()->currency }}{{ $m_expense }}</span>
+                                <span class="float-right"> {{ formatAmount($m_expense) }}</span>
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold"> {{ __('dashboard.balance') }}</span>
-                                <span class="float-right"> {{ settings()->currency }}{{ $m_income - $m_expense }}</span>
+                                <span class="float-right"> {{ formatAmount($m_income - $m_expense) }}</span>
                             </li>
                         </ul>
                     </div>
@@ -276,15 +276,15 @@
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold"> {{ __('income.title') }} </span>
-                                <span class="float-right"> {{ settings()->currency }}{{ $h_income }}</span>
+                                <span class="float-right"> {{ formatAmount($h_income) }}</span>
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('expense.title') }} </span>
-                                <span class="float-right"> {{ settings()->currency }}{{ $h_expense }}</span>
+                                <span class="float-right"> {{ formatAmount($h_expense) }}</span>
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold"> {{ __('dashboard.balance') }}</span>
-                                <span class="float-right"> {{ settings()->currency }}{{ $h_income - $h_expense }}</span>
+                                <span class="float-right"> {{ formatAmount($h_income - $h_expense) }}</span>
                             </li>
                         </ul>
                     </div>
@@ -300,10 +300,8 @@
                             </div>
                             <div class="card-footer">
                                 <p class="display-7 font-weight-bold">
-                                    <span class="legend-text text-primary d-inline-block">{{ settings()->currency }}
-                                        {{ $data['income'] }}</span>
-                                    <span class="text-secondary float-right">{{ settings()->currency }}
-                                        {{ $data['expense'] }}</span>
+                                    <span class="legend-text text-primary d-inline-block">{{ formatAmount($data['income']) }}</span>
+                                    <span class="text-secondary float-right">{{ formatAmount($data['expense']) }}</span>
                                 </p>
                             </div>
                         </div>
@@ -318,10 +316,8 @@
                             </div>
                             <div class="card-footer">
                                 <p class="display-7 font-weight-bold">
-                                    <span class="text-primary d-inline-block">{{ settings()->currency }}
-                                        {{ $data['courier_income'] }}</span>
-                                    <span class="text-secondary float-right">{{ settings()->currency }}
-                                        {{ $data['courier_expense'] }}</span>
+                                    <span class="text-primary d-inline-block">{{ formatAmount($data['courier_income']) }}</span>
+                                    <span class="text-secondary float-right">{{ formatAmount($data['courier_expense']) }}</span>
                                 </p>
                             </div>
                         </div>

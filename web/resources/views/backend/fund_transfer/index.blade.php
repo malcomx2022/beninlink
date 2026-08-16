@@ -182,11 +182,11 @@
                                         @endif
                                         <div class="row width300px">
                                             <div class="col-4">{{__('levels.balance')}}</div>
-                                            <div class="col-8">: {{settings()->currency}}{{$fund_transfer->fromAccount->balance}}</div>
+                                            <div class="col-8">: {{ formatAmount($fund_transfer->fromAccount->balance) }}</div>
                                         </div>
                                         <div class="row width300px">
                                             <div class="col-4">{{__('levels.opening_balance')}}</div>
-                                            <div class="col-8">: {{settings()->currency}}{{$fund_transfer->fromAccount->opening_balance}}</div>
+                                            <div class="col-8">: {{ formatAmount($fund_transfer->fromAccount->opening_balance) }}</div>
                                         </div>
                                     </td>
                                     <td>
@@ -246,15 +246,15 @@
                                         @endif
                                         <div class="row width300px">
                                             <div class="col-4">{{__('levels.balance')}}</div>
-                                            <div class="col-8">: {{settings()->currency}}{{$fund_transfer->toAccount->balance}}</div>
+                                            <div class="col-8">: {{ formatAmount($fund_transfer->toAccount->balance) }}</div>
                                         </div>
                                         <div class="row width300px">
                                             <div class="col-4">{{__('levels.opening_balance')}}</div>
-                                            <div class="col-8">: {{settings()->currency}}{{$fund_transfer->toAccount->opening_balance}}</div>
+                                            <div class="col-8">: {{ formatAmount($fund_transfer->toAccount->opening_balance) }}</div>
                                         </div>
                                     </td>
                                     <td>{{dateFormat($fund_transfer->date)}}</td>
-                                    <td>{{settings()->currency}}{{$fund_transfer->amount}}</td>
+                                    <td>{{ formatAmount($fund_transfer->amount) }}</td>
                                     @if(hasPermission('fund_transfer_update') == true || hasPermission('fund_transfer_delete') == true )
                                     <td>
                                         <div class="row">

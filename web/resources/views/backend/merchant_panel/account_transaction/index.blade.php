@@ -133,7 +133,7 @@
                                         <span class="badge badge-pill badge-success">{{trans('approvalstatus.'.\App\Enums\ApprovalStatus::PROCESSED) }}</span>
                                         @endif
                                     </td>
-                                    <td>{{settings()->currency}}{{$transaction->amount}}</td>
+                                    <td>{{ formatAmount($transaction->amount) }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>

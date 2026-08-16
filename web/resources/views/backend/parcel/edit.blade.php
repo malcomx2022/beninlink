@@ -288,7 +288,7 @@
                                             <option data-packagingamount="{{ $packaging->price }}"
                                                 value="{{ $packaging->id }}"
                                                 {{ old('packaging_id', $parcel->packaging_id) == $packaging->id ? 'selected' : '' }}>
-                                                {{ $packaging->name }} ( {{ number_format($packaging->price, 2) }} Tk)
+                                                {{ $packaging->name }} ( {{ formatAmount($packaging->price) }} Tk)
                                             </option>
                                         @endforeach
                                     </select>

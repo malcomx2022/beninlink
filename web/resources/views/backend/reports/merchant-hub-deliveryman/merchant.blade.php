@@ -48,27 +48,27 @@
                     </li>
                     <li class="list-group-item profile-list-group-item">
                         <span class="float-left font-weight-bold">{{ __('reports.Total_Delivery_Charge')  }}</span>
-                        <span class="float-right" id="totalCashCollection">{{settings()->currency}} {{ number_format($parcelProfit['totalDeliveryCharge'],2) }}</span>
+                        <span class="float-right" id="totalCashCollection">{{ formatAmount($parcelProfit['totalDeliveryCharge']) }}</span>
                     </li>
                     <li class="list-group-item profile-list-group-item">
                         <span class="float-left font-weight-bold">{{ __('reports.COD_Charge')  }}</span>
-                        <span class="float-right" id="totalCashCollection">{{settings()->currency}} {{ number_format($parcelProfit['totalCOD'],2) }}</span>
+                        <span class="float-right" id="totalCashCollection">{{ formatAmount($parcelProfit['totalCOD']) }}</span>
                     </li>
                     <li class="list-group-item profile-list-group-item">
                         <span class="float-left font-weight-bold">{{ __('reports.Total_Vat')  }}</span>
-                        <span class="float-right" id="totalCashCollection">{{settings()->currency}} {{ number_format($parcelProfit['totalVat'],2) }}</span>
+                        <span class="float-right" id="totalCashCollection">{{ formatAmount($parcelProfit['totalVat']) }}</span>
                     </li>
                     <li class="list-group-item profile-list-group-item">
                         <span class="float-left font-weight-bold">{{ __('reports.F./L.Charge')  }}</span>
-                        <span class="float-right" id="totalCashCollection">{{settings()->currency}} {{ number_format($parcelProfit['totalLiquidFragileAmount'],2) }}</span>
+                        <span class="float-right" id="totalCashCollection">{{ formatAmount($parcelProfit['totalLiquidFragileAmount']) }}</span>
                     </li>
                     <li class="list-group-item profile-list-group-item">
                         <span class="float-left font-weight-bold">{{ __('reports.P.Charge')  }}</span>
-                        <span class="float-right" id="totalCashCollection">{{settings()->currency}} {{ number_format($parcelProfit['packagingAmount'],2) }}</span>
+                        <span class="float-right" id="totalCashCollection">{{ formatAmount($parcelProfit['packagingAmount']) }}</span>
                     </li>
                     <li class="list-group-item profile-list-group-item">
                         <span class="float-left font-weight-bold">{{ __('reports.Total_Profit')  }}</span>
-                        <span class="float-right" id="totalCashCollection">{{settings()->currency}} {{ number_format($parcelProfit['totalDeliveryChargeVat'] - $parcelsTotal['totalDeliveryIncome'],2) }}</span>
+                        <span class="float-right" id="totalCashCollection">{{ formatAmount($parcelProfit['totalDeliveryChargeVat'] - $parcelsTotal['totalDeliveryIncome']) }}</span>
                     </li>
                 </ul>
             </div>
@@ -87,23 +87,23 @@
                         </li>
                         <li class="list-group-item profile-list-group-item">
                             <span class="float-left font-weight-bold">{{ __('reports.Total_payable_merchant(COD)')  }}</span>
-                            <span class="float-right" id="totalCashCollection">{{settings()->currency}} {{ number_format($parcelsTotal['totalPaybleAmount'],2) }}</span>
+                            <span class="float-right" id="totalCashCollection">{{ formatAmount($parcelsTotal['totalPaybleAmount']) }}</span>
                         </li>
                         <li class="list-group-item profile-list-group-item">
                             <span class="float-left font-weight-bold">{{ __('reports.Total_paid_to_merchant(with Pending)')  }}</span>
-                            <span class="float-right" id="totalCashCollection">{{settings()->currency}} {{ number_format(0,2) }}</span>
+                            <span class="float-right" id="totalCashCollection">{{ formatAmount(0) }}</span>
                         </li>
                         <li class="list-group-item profile-list-group-item">
                             <span class="float-left font-weight-bold">{{ __('reports.Total_paid_by_Merchant')  }}</span>
-                            <span class="float-right" id="totalCashCollection">{{settings()->currency}} {{ number_format($merchantTotalPayment['paidAmount'],2) }}</span>
+                            <span class="float-right" id="totalCashCollection">{{ formatAmount($merchantTotalPayment['paidAmount']) }}</span>
                         </li>
                         <li class="list-group-item profile-list-group-item">
                             <span class="float-left font-weight-bold">{{ __('reports.Total_Delivery_Charge(Including VAT)')  }}</span>
-                            <span class="float-right" id="totalCashCollection">{{settings()->currency}} {{ number_format($parcelProfit['totalDeliveryChargeVat'],2) }}</span>
+                            <span class="float-right" id="totalCashCollection">{{ formatAmount($parcelProfit['totalDeliveryChargeVat']) }}</span>
                         </li>
                         <li class="list-group-item profile-list-group-item">
                             <span class="float-left font-weight-bold">{{ __('reports.Pending_Payments')  }}</span>
-                            <span class="float-right" id="totalCashCollection">{{settings()->currency}} {{ number_format($merchantTotalPayment['pendingAmount'],2) }}</span>
+                            <span class="float-right" id="totalCashCollection">{{ formatAmount($merchantTotalPayment['pendingAmount']) }}</span>
                         </li>
                     </ul>
                 </div>

@@ -50,7 +50,7 @@
                         <div class="list-group-item ">
                             <div class="d-flex">
                                 <span class="w-25">{{ __('levels.salary') }} : </span>
-                                <span>{{ @settings()->currency }} {{ @$user->salary }}</span>
+                                <span>{{ formatAmount(@$user->salary) }}</span>
                             </div>
                         </div>
                         <div class="list-group-item ">

@@ -99,7 +99,7 @@
                                     <td>@if(isset($payment->referencefile))<a href="{{ static_asset($payment->referencefile->original) }}" download="">Download</a>@endif</td>
 
                                     <td>{{\Str::limit($payment->description,100,' ...')}}</td>
-                                    <td>{{settings()->currency}}{{$payment->amount}}</td>
+                                    <td>{{ formatAmount($payment->amount) }}</td>
                                     <td>
                                         @if($payment->status == \App\Enums\ApprovalStatus::REJECT)
                                         <span class="badge badge-pill badge-danger">{{trans('approvalstatus.'.\App\Enums\ApprovalStatus::REJECT) }}</span>

@@ -2,9 +2,9 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-08-16 (bloc H : `lang/fr/` complété — 116 chaînes
-> traduites, banques bangladaises remplacées par les béninoises).
-> Antérieurement : blocs J — tarifs et K — notifications ; 3 fichiers `lang/fr/` créés.
+> Dernière mise à jour : 2026-08-16 (chantier 1 : volet langue **et** volet devise
+> — helpers XOF, 278 affichages et 32 sorties d'API basculés en FCFA entier).
+> Antérieurement : blocs J — tarifs et K — notifications ; `lang/fr/` complété.
 
 ---
 
@@ -657,16 +657,26 @@ aucune passerelle existante ne servant de modèle.
   - ⚠️ `LanguageManager` appelle `Schema::hasTable('settings')` **à chaque requête**
     (`app/Http/Middleware/LanguageManager.php:22`) : une requête SQL par appel, juste
     pour tester l'existence d'une table.
-- Helper de formatage monétaire : **IL N'Y EN A AUCUN.**
-  `grep` sur `app/Http/Helper/Helper.php` pour une fonction contenant `currency`,
-  `money`, `amount`, `price` ou un `number_format` → **zéro résultat**. Ni helper,
-  ni directive Blade, ni cast Eloquent, ni `Illuminate\Support\Number`.
+- Helper de formatage monétaire : ✅ **créé le 2026-08-16.** Il n'en existait aucun —
+  ni helper, ni directive Blade, ni cast Eloquent, ni `Illuminate\Support\Number`.
+  Trois fonctions en fin de `app/Http/Helper/Helper.php`, **seul endroit où un montant
+  est mis en forme** :
+  | Fonction | Rôle |
+  |---|---|
+  | `amountValue($m)` | entier brut (`(int) round`) — **API et tout ce qui doit rester analysable** |
+  | `currencySymbol()` | `general_settings.currency`, repli sur `FCFA` |
+  | `formatAmount($m, $avecDevise = true)` | affichage : entier, milliers séparés par une **espace insécable**, symbole **suffixé** (« 1 500 FCFA ») |
+  - **Choix à connaître** : le socle affichait le symbole **avant** le montant
+    (`$ 1,234.56`) ; l'usage francophone le place **après**. Le helper étant le point
+    unique, revenir en arrière est une ligne à changer.
   - **Devise = une chaîne libre, pas un code ISO** : colonne
     `general_settings.currency` (`string` nullable,
-    `…2014_05_31_094551_create_general_settings_table.php`). Le seeder y met **le
-    symbole** : `$row->currency = "$";` (`database/seeders/GeneralSettingsSeeder.php:32,51`).
-    Lue **263 fois** via `settings()->currency`, toujours par simple concaténation :
-    `{{ settings()->currency }} {{ number_format($x, 2) }}`.
+    `…2014_05_31_094551_create_general_settings_table.php`) — inchangé. Le seeder y
+    mettait **le symbole** `"$"`, désormais `"FCFA"`
+    (`database/seeders/GeneralSettingsSeeder.php:32,51`).
+  - ✅ **XOF ajouté au `CurrencySeeder`** (ligne 142 : `Benin`, `Franc CFA (UEMOA)`,
+    `XOF`, symbole `FCFA`). La table `currencies` reste **décorative** : ni `position`
+    ni `exchange_rate` ne sont consultés à l'affichage (voir plus bas).
   - **Table `currencies` existe mais ne sert pas**
     (`…2022_12_08_104319_create_currencies_table.php` : `country`, `name`, `symbol`,
     `code`, `exchange_rate`, `position`, `status` ; modèle
@@ -674,16 +684,27 @@ aucune passerelle existante ne servant de modèle.
     **`position` (préfixe/suffixe) n'est jamais consulté à l'affichage**,
     `exchange_rate` non plus. Lien avec `general_settings.currency` = **recopie
     manuelle du symbole**, sans clé étrangère.
-  - ⚠️ **Le franc CFA n'est pas dans le jeu de données** :
-    `grep -niE "xof|benin|cfa"` sur `database/seeders/CurrencySeeder.php` → **rien**.
-    Le seeder livre USD, BDT (Taka) et ~100 autres. **Ligne XOF à ajouter.**
-- Endroits supposant 2 décimales (à neutraliser) : **oui, partout, à 3 niveaux.**
-  | Niveau | Manifestation |
+- Endroits supposant 2 décimales : ✅ **traités le 2026-08-16 aux deux premiers
+  niveaux**, le troisième reste ouvert.
+  | Niveau | État |
   |---|---|
-  | **Affichage** | **110** `number_format(…, 2)` dans `resources/views/**/*.blade.php` |
-  | **API** | **32** dans `app/`, dont `Api/V10/DashboardController.php:126-135` : `(string) number_format($x, 2, '.', '')` ⇒ montants renvoyés en `"1234.00"`, **format parsé par les apps Flutter** |
-  | **Base** | tous les montants en `decimal(…,2)` : `merchants.wallet_balance(16,2)`, `wallets.amount(22,2)`, `parcels.vat_amount(13,2)`, `invoices.*(16,2)`, `plans.price(22,2)`, `subscriptions.price(16,2)`… |
-  **Total : 142 appels à `number_format` avec `2` codé en dur.**
+  | **Affichage** | **109** `number_format(…, 2)` des vues remplacés par `formatAmount()` |
+  | **Affichage (2ᵉ famille)** | **169** montants qui n'étaient **pas formatés du tout** — `{{ settings()->currency }}{{ $x }}` sortait la valeur brute de la colonne `decimal(16,2)`, donc « 1500.00 ». Encapsulés dans `formatAmount()`. Ce gisement n'apparaissait pas dans le relevé initial, qui ne comptait que les `number_format`. |
+  | **API** | **32** `(string) number_format($x, 2, '.', '')` remplacés par `amountValue($x)` ⇒ les montants ne sont plus des chaînes `"1234.00"` mais des **entiers JSON** `1234`. |
+  | **Base** | ⏳ **inchangé** : tous les montants restent en `decimal(…,2)` — `merchants.wallet_balance(16,2)`, `wallets.amount(22,2)`, `parcels.vat_amount(13,2)`, `invoices.*(16,2)`, `plans.price(22,2)`… Les décimales sont donc encore stockées, seulement plus affichées. Migration à décider séparément. |
+  **Bilan : 278 sites d'affichage passent par le helper ; 82 fichiers modifiés.**
+  - ✅ **Moment favorable pour le changement de contrat d'API** : le passage de
+    `"1234.00"` à `1234` casserait les apps Flutter — mais elles sont **dépréciées**, et
+    `mobile/` comme `mobile-livreur/` **ne consomment encore rien**. Fait maintenant,
+    c'est gratuit ; fait plus tard, c'est une migration.
+  - ⚠️ **Deux exclusions volontaires**, non monétaires malgré leur mise en forme :
+    - `currencies.exchange_rate` (`setting/currency/index.blade.php`) — un taux de
+      change garde ses décimales, il conserve donc `number_format(…, 2)`.
+    - `merchants.vat` — c'est un **taux en pourcentage**, pas un montant. 🐞 Le socle
+      l'affiche pourtant précédé du symbole monétaire (`{{ settings()->currency }}{{
+      $merchant->vat }}` ⇒ « FCFA 5.00 » pour un taux de 5 %). **Laissé en l'état :
+      c'est un bug d'affichage à corriger avec le chantier 4 (SYSCOHADA)**, pas un
+      formatage de montant.
 
 ### ⇒ Conséquences pour le chantier 1 (francisation + FCFA)
 1. **Langue** : ~~(a) créer les 3 fichiers absents~~ **fait le 2026-08-15** (23 chaînes,
@@ -696,17 +717,25 @@ aucune passerelle existante ne servant de modèle.
    locale ; (f) remplacer `account_methods` (bKash/Nagad/Rocket) par MTN MoMo et
    Moov Money ; (g) arbitrer le stockage des dates (UTC ou heure locale) **avant**
    d'accumuler des données.
-   ⇒ **Le volet « langue » du chantier 1 est terminé ; le volet « devise » n'est pas
-   commencé** (point 2 ci-dessous).
-2. **Devise — aucun point unique à modifier.** L'absence de helper = 142 sites.
-   ⇒ **Introduire d'abord un helper** (ex. `formatAmount($n)` dans `Helper.php` :
-   zéro décimale, séparateur de milliers espace insécable, symbole positionné),
-   **puis** remplacer les appels — plutôt que d'éditer 142 sites indépendamment.
-3. **Ajouter XOF** au `CurrencySeeder` et brancher `general_settings.currency`
-   dessus (aujourd'hui un symbole recopié à la main).
-4. ⚠️ **Point de rupture avec les apps Flutter** : passer l'API de `"1234.00"` à
-   `"1234"` change le contrat client. Respecter l'ordre des dépendances du CLAUDE.md
-   racine — **`web/` d'abord, les apps suivent**.
+   ⇒ **Le volet « langue » du chantier 1 est terminé.**
+2. **Devise** : ~~introduire un helper puis remplacer les appels~~ **fait le
+   2026-08-16** — `amountValue()` / `currencySymbol()` / `formatAmount()` créés,
+   278 sites d'affichage et 32 sorties d'API basculés, XOF ajouté au `CurrencySeeder`,
+   devise par défaut passée de `"$"` à `"FCFA"`. ~~Point de rupture avec les apps~~ :
+   saisi maintenant, tant qu'aucune app ne consomme l'API.
+   ⇒ **Le volet « devise » est terminé côté affichage et API.** **Restent** :
+   (a) migrer les colonnes `decimal(…,2)` vers des entiers — ou décider de les
+   conserver et d'arrondir à l'écriture ; (b) **rapatrier le calcul des montants côté
+   serveur** (S2), sans quoi le client continue de poster ses propres décimales ;
+   (c) corriger l'affichage de `merchants.vat`, un taux affiché comme un montant ;
+   (d) vérifier les écrans en conditions réelles — **aucune vue n'a pu être rendue
+   ici**, `vendor/` étant incomplet (voir ci-dessous).
+3. 🚩 **Vérification impossible dans l'environnement actuel** : `php artisan` ne
+   démarre pas (paquet `nunomaduro/collision` amputé dans `vendor/`), donc ni les vues
+   ni les tests n'ont pu être exécutés. Les 82 fichiers modifiés ont été contrôlés par
+   `php -l` (fichiers PHP) et par équilibre des `{{ }}` (vues). **Un `composer install`
+   puis une passe de recette sur les écrans de montants sont nécessaires avant de
+   considérer le chantier clos.**
 
 ## Bloc I — API & routes (OpenAPI / apps Flutter)
 **Structure de `routes/api.php`** — 177 lignes, trois niveaux imbriqués :

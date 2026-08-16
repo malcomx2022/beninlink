@@ -44,7 +44,7 @@
                                     <tbody>
                                         <tr>
                                             <td>{{__('levels.delivery_fee')}}</td>
-                                            <td>{{ settings()->currency }} {{@number_format(($parcel->total_delivery_amount - $parcel->cod_amount),2)}}</td>
+                                            <td>{{@formatAmount(($parcel->total_delivery_amount - $parcel->cod_amount))}}</td>
                                         </tr>
                                         <tr>
                                             <td>{{__('levels.cod')}}</td>
@@ -52,7 +52,7 @@
                                         </tr>
                                         <tr>
                                             <td  ><strong>{{__('levels.total_cost')}}</strong></td>
-                                            <td  ><strong>{{ settings()->currency }} {{@$parcel->total_delivery_amount}}</strong></td>
+                                            <td  ><strong>{{ formatAmount(@$parcel->total_delivery_amount) }}</strong></td>
                                         </tr>
                                     </tbody>
                                 </table>

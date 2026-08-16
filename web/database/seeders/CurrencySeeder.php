@@ -162,7 +162,8 @@ class CurrencySeeder extends Seeder
         (138, 'Tanzania', 'Tanzanian shilling', 'TZS', 'TSh', NULL, 1, NULL, '2022-12-14 08:30:09', '2022-12-14 08:30:09'),
         (139, 'Angola', 'Kwanza', 'AOA', 'Kz', NULL, 1, NULL, '2022-12-14 08:30:09', '2022-12-14 08:30:09'),
         (140, 'Kuwait', 'Kuwaiti dinar', 'KWD', 'KD', NULL, 1, NULL, '2022-12-14 08:30:09', '2022-12-14 08:30:09'),
-        (141, 'Bahrain', 'Bahraini dinar', 'BHD', 'BD', NULL, 1, NULL, '2022-12-14 08:30:09', '2022-12-14 08:30:09');");
+        (141, 'Bahrain', 'Bahraini dinar', 'BHD', 'BD', NULL, 1, NULL, '2022-12-14 08:30:09', '2022-12-14 08:30:09'),
+        (142, 'Benin', 'Franc CFA (UEMOA)', 'XOF', 'FCFA', NULL, 1, NULL, '2026-08-16 00:00:00', '2026-08-16 00:00:00');");
 
       
     }

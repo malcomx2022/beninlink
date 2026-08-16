@@ -88,7 +88,7 @@
                                         <span class="badge badge-pill badge-success">{{trans('approvalstatus.'.\App\Enums\ApprovalStatus::PROCESSED) }}</span>
                                         @endif
                                     </td>
-                                    <td>{{settings()->currency}}{{$payment->amount}}</td>
+                                    <td>{{ formatAmount($payment->amount) }}</td>
                                     <td>
                                         @if($payment->created_by == \App\Enums\UserType::MERCHANT && $payment->status == \App\Enums\ApprovalStatus::PENDING)
                                             <div class="row">

@@ -26,10 +26,10 @@
                     <td>
                         @if ($recharge_wallet->type == App\Enums\Wallet\WalletType::INCOME)
                             <span class="text-success font-weight-bold"> +
-                                {{ settings()->currency }}{{ @$recharge_wallet->amount }}</span>
+                                {{ formatAmount(@$recharge_wallet->amount) }}</span>
                         @elseif($recharge_wallet->type == App\Enums\Wallet\WalletType::EXPENSE)
                             <span
-                                class="text-danger font-weight-bold">{{ settings()->currency }}{{ @$recharge_wallet->amount }}</span>
+                                class="text-danger font-weight-bold">{{ formatAmount(@$recharge_wallet->amount) }}</span>
                         @endif
                     </td>
                     <td>

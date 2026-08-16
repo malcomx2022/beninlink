@@ -100,7 +100,7 @@
                                         <td>
                                             <a href="{{ static_asset($statement->upload->original) }}" download="" >Download</a>
                                         </td>
-                                        <td>{{settings()->currency}}{{$statement->amount}}</td>
+                                        <td>{{ formatAmount($statement->amount) }}</td>
                                         @if(
                                             hasPermission('cash_received_from_delivery_man_update') == true ||
                                             hasPermission('cash_received_from_delivery_man_delete') == true

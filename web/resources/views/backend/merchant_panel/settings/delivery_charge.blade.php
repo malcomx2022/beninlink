@@ -54,10 +54,10 @@
                                     <td>{{$i++}}</td>
                                     <td>{{$delivery_charge->deliveryCharge->category->title}}</td>
                                     <td>{{$delivery_charge->deliveryCharge->weight ?? 0}}</td>
-                                    <td>{{settings()->currency}}{{$delivery_charge->same_day}}</td>
-                                    <td>{{settings()->currency}}{{$delivery_charge->next_day}}</td>
-                                    <td>{{settings()->currency}}{{$delivery_charge->sub_city}}</td>
-                                    <td>{{settings()->currency}}{{$delivery_charge->outside_city}}</td>
+                                    <td>{{ formatAmount($delivery_charge->same_day) }}</td>
+                                    <td>{{ formatAmount($delivery_charge->next_day) }}</td>
+                                    <td>{{ formatAmount($delivery_charge->sub_city) }}</td>
+                                    <td>{{ formatAmount($delivery_charge->outside_city) }}</td>
                                     <td>{!! $delivery_charge->my_status !!}</td>
                                 </tr>
                                 @endforeach
