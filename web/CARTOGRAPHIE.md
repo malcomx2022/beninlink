@@ -627,9 +627,9 @@ aucune passerelle existante ne servant de modèle.
     **chantier SYSCOHADA** (bloc G) va reprendre.
     ⇒ Contrôle à ajouter au fil de la francisation : `php -l` sur chaque fichier de
     `lang/fr/` — la syntaxe n'est vérifiée par rien aujourd'hui.
-  - **Pas de `lang/fr.json`** ⇒ toute chaîne passant par `__('texte libre')`
-    retombera sur l'anglais quelle que soit la locale. Portée limitée : `lang/en.json`
-    ne contient que **5 clés** — le socle passe presque partout par des fichiers PHP.
+  - ✅ **`lang/fr.json` créé le 2026-08-16** (5 clés, en regard de `lang/en.json`) :
+    les chaînes passant par `__('texte libre')` ne retombent plus sur l'anglais.
+    Portée limitée de toute façon — le socle passe presque partout par des fichiers PHP.
   - **Bascule de langue** : `routes/web.php:137` → `GET localization/{language}` →
     `LocalizationController::setLocalization` (`App::setLocale()` +
     `session()->put('locale', …)`), réappliquée à chaque requête par
@@ -638,10 +638,25 @@ aucune passerelle existante ne servant de modèle.
   - ⚠️ `LanguageManager` n'est monté que sur le groupe `web` (`app/Http/Kernel.php`)
     ⇒ **l'API `/api/v10` n'a aucune gestion de locale**, elle répond toujours dans
     la locale par défaut.
-- Locale par défaut (config/app.php) : **`'locale' => 'en'`** (l.85),
-  `'fallback_locale' => 'en'` (l.98), `'faker_locale' => 'en_US'` (l.111).
-  **Rien n'est encore basculé en français.**
-  ⚠️ `'timezone' => 'UTC'` (l.72) — à revoir pour le Bénin (**UTC+1, sans heure d'été**).
+- Locale par défaut (`config/app.php`) : ✅ **basculée le 2026-08-16** —
+  `'locale' => env('APP_LOCALE', 'fr')` (l.86) et
+  `'timezone' => env('APP_TIMEZONE', 'Africa/Porto-Novo')` (l.73, **UTC+1 sans heure
+  d'été**). `'fallback_locale' => 'en'` est **conservé volontairement** : il sert de
+  repli aux langues restées incomplètes (`ar`, `bn`, `es`, `in`, `zh`).
+  `'faker_locale' => 'en_US'` (l.111) inchangé — ne concerne que les factories.
+  Le `.env` ne définissant ni `APP_LOCALE` ni `APP_TIMEZONE`, ces valeurs s'appliquent.
+  - ⚠️ **Les sessions ouvertes gardent leur langue** : `LanguageManager` n'écrase la
+    locale que si `session('locale')` existe ⇒ un utilisateur ayant choisi l'anglais
+    reste en anglais jusqu'à expiration de sa session. Comportement normal, à connaître
+    lors d'une recette.
+  - 🚩 **Décision à prendre avant la mise en production** : les enregistrements déjà
+    écrits l'ont été en **UTC**, les suivants le seront en **UTC+1**. Sur une base
+    vierge, sans effet ; sur une base contenant déjà des données, cela crée un mélange.
+    L'alternative classique est de **stocker en UTC et convertir à l'affichage** — mais
+    le socle affiche les dates directement, sans couche de présentation.
+  - ⚠️ `LanguageManager` appelle `Schema::hasTable('settings')` **à chaque requête**
+    (`app/Http/Middleware/LanguageManager.php:22`) : une requête SQL par appel, juste
+    pour tester l'existence d'une table.
 - Helper de formatage monétaire : **IL N'Y EN A AUCUN.**
   `grep` sur `app/Http/Helper/Helper.php` pour une fonction contenant `currency`,
   `money`, `amount`, `price` ou un `number_format` → **zéro résultat**. Ni helper,
@@ -674,12 +689,15 @@ aucune passerelle existante ne servant de modèle.
 1. **Langue** : ~~(a) créer les 3 fichiers absents~~ **fait le 2026-08-15** (23 chaînes,
    dont les 5 libellés wallet attendus par FedaPay) ; ~~(b) combler les clés
    manquantes~~ **fait le 2026-08-16** (116 traduites, 28 banques bangladaises
-   supprimées et remplacées par 11 béninoises). **Restent** : (c) basculer
-   `config/app.php` sur `fr` et `timezone` sur UTC+1 ; (d) créer `lang/fr.json`
-   (5 clés côté `en.json`) ; (e) décider si la locale doit être persistée **par
+   supprimées et remplacées par 11 béninoises) ; ~~(c) basculer `config/app.php` sur
+   `fr` et le fuseau sur UTC+1~~ et ~~(d) créer `lang/fr.json`~~ **faits le
+   2026-08-16**. **Restent** : (e) décider si la locale doit être persistée **par
    société** plutôt qu'en session — question ouverte pour l'API, aujourd'hui sans
    locale ; (f) remplacer `account_methods` (bKash/Nagad/Rocket) par MTN MoMo et
-   Moov Money.
+   Moov Money ; (g) arbitrer le stockage des dates (UTC ou heure locale) **avant**
+   d'accumuler des données.
+   ⇒ **Le volet « langue » du chantier 1 est terminé ; le volet « devise » n'est pas
+   commencé** (point 2 ci-dessous).
 2. **Devise — aucun point unique à modifier.** L'absence de helper = 142 sites.
    ⇒ **Introduire d'abord un helper** (ex. `formatAmount($n)` dans `Helper.php` :
    zéro décimale, séparateur de milliers espace insécable, symbole positionné),
