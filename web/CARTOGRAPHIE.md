@@ -2,8 +2,9 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-08-15 (blocs J — tarifs et K — notifications ; bloc H
-> détaillé, et les 3 fichiers `lang/fr/` manquants créés).
+> Dernière mise à jour : 2026-08-16 (bloc H : `lang/fr/` complété — 116 chaînes
+> traduites, banques bangladaises remplacées par les béninoises).
+> Antérieurement : blocs J — tarifs et K — notifications ; 3 fichiers `lang/fr/` créés.
 
 ---
 
@@ -576,32 +577,56 @@ aucune passerelle existante ne servant de modèle.
     ⇒ Ces libellés d'état du wallet sont ceux que le chantier FedaPay affichera ;
     ils sont désormais disponibles. `addon.php` ne concerne qu'un écran
     d'administration technique, hors parcours métier.
-  - 🚩 **La parité de fichiers ne règle rien : les fichiers présents restent
-    incomplets.** Sur les 76 fichiers qui existaient des deux côtés, **13 sont
-    incomplets** et **149 clés de `lang/en/` n'ont pas d'équivalent dans `lang/fr/`**
-    (sur 2 008 au total) :
-    | Fichier | EN | FR | Clés absentes |
-    |---|---|---|---|
-    | `levels.php` | 370 | 322 | **48** |
-    | `parcel.php` | 175 | 137 | **38** |
-    | `merchant.php` | 97 | 79 | **29** |
-    | `permissions.php` | 123 | 111 | **12** |
-    | `dashboard.php` · `menus.php` | 74 · 81 | 70 · 77 | 4 · 4 |
-    | `to_do.php` · `validation.php` | 24 · 105 | 24 · 104 | 3 · 3 |
-    | `delete.php` · `designation.php` · `placeholder.php` | | | 2 chacun |
-    | `ActivityLogs.php` · `userType.php` | | | 1 chacun |
-    ⚠️ `to_do.php` et `designation.php` ont **autant de clés des deux côtés mais pas les
-    mêmes** ⇒ divergences de nommage, pas seulement des oublis.
-  - ⚠️ **Toutes ces clés ne sont pas à traduire.** Les 29 de `merchant.php` sont des
-    **noms de banques bangladaises** (`ab_bank_ltd`, `agrani_bank_ltd`, `brac_bank_ltd`,
-    `dbbl_agent_banking`…) — à **supprimer et remplacer** par les banques et opérateurs
-    béninois, pas à franciser (cf. `config/merchantpayment.php`). À l'inverse,
-    `parcel.php` touche le métier **et le wallet** (`priority`, `normal`, `high`, `map`,
-    `my_wallet`, `wallet_history`, `wallet_request`, `are_you_approve_this_request`…),
-    et `levels.php` les écrans de réglages (`map_key`, `razorpay_*`, `franch` (sic)…).
-  - **Volume réel de la francisation : ~172 chaînes**, dont **23 faites** (fichiers
-    créés) et **149 restantes**, une part de ces dernières étant à supprimer plutôt
-    qu'à traduire.
+  - ✅ **Les 12 fichiers incomplets ont été complétés le 2026-08-16.** Le relevé initial
+    annonçait « 149 clés manquantes sur 13 fichiers » ; **le compte exact est 144 sur
+    12 fichiers**. Deux corrections de méthode :
+    - `to_do.php` **était déjà complet** : l'écart venait d'un espace côté anglais
+      (`TodoStatus:: PENDING` contre `TodoStatus::PENDING`) que la comparaison des clés
+      lisait comme trois entrées différentes.
+    - Deux « manquantes » de `validation.php` (`attribute-name`, `rule-name`) sont les
+      **placeholders d'exemple de Laravel**, que le français avait simplement traduits
+      en `nom-de-l-attribut` : rien à combler.
+
+    Répartition réelle et traitement appliqué :
+    | Fichier | Clés absentes | Traitement |
+    |---|---|---|
+    | `levels.php` | **48** | traduites (écrans superadmin : forfaits, abonnements, clés API) |
+    | `parcel.php` | **38** | traduites (métier **et wallet** : `my_wallet`, `wallet_request`, `wallet_recharge`…) |
+    | `merchant.php` | **29** | **28 banques supprimées**, `wallet` traduit |
+    | `permissions.php` | **12** | traduites |
+    | `dashboard.php` · `menus.php` | 4 · 4 | traduites |
+    | `delete.php` · `designation.php` · `placeholder.php` | 2 chacun | traduites |
+    | `ActivityLogs.php` · `userType.php` · `validation.php` | 1 chacun | traduites (`UserType::SUPER_ADMIN` était absent) |
+    ⇒ **116 chaînes traduites**, 28 supprimées. Reste **1 écart théorique**
+    (`rule-name`, le placeholder d'exemple) : `lang/fr/` est **aligné sur `lang/en/`**.
+  - 🐞 **Les banques : trois listes incohérentes, découvertes en traduisant.**
+    - `lang/en/merchant.php` listait **28 banques bangladaises** (`ab_bank_ltd`,
+      `brac_bank_ltd`, `dbbl_agent_banking`…), reprises telles quelles dans
+      `config/merchantpayment.php`.
+    - `lang/fr/merchant.php` contenait, lui, **11 banques marocaines**
+      (`attijariwafa_bank`, `al_barid_bank`, `credit_du_maroc`…) — des clés **mortes** :
+      absentes de la config, elles n'étaient **jamais affichées**, et la liste déroulante
+      servait en réalité les banques bangladaises via le repli `fallback_locale = en`.
+    - ⇒ Les deux listes ont été remplacées par **11 établissements béninois**
+      (BOA, Ecobank, Société Générale, UBA, NSIA, Banque Atlantique, Orabank, BSIC,
+      Coris Bank, BGFIBank, « Autre banque »), avec les clés alignées entre
+      `config/merchantpayment.php`, `lang/en/` et `lang/fr/`. **Liste indicative, à
+      valider avec le métier.**
+    - 🚨 Défaut de conception à corriger séparément :
+      `resources/views/backend/merchant/payment/add_payment.blade.php:78` écrit
+      `<option value="{{ __('merchant.'.$value) }}">` ⇒ **c'est le libellé traduit, et
+      non la clé, qui est enregistré** dans `merchant_payments.bank_name`. Le contenu de
+      la colonne dépend donc de la langue de l'utilisateur au moment de la saisie.
+  - ⚠️ **Reste bangladais non traité** : `config/merchantpayment.php` conserve
+    `account_methods` = `bkash`, `nogod`, `rocket` — les mobile money du Bangladesh,
+    à remplacer par **MTN MoMo** et **Moov Money** (chantier FedaPay, bloc C).
+  - 🐞 **`lang/fr/statementNote.php` ne se chargeait pas** : apostrophes non échappées
+    dans « l'entrepôt » (l.4-7) ⇒ **erreur fatale de parsing** dès qu'un libellé de
+    relevé était demandé en français. Corrigé le 2026-08-16. Ce fichier porte les
+    intitulés comptables des mouvements (revenus/dépenses par statut de colis) que le
+    **chantier SYSCOHADA** (bloc G) va reprendre.
+    ⇒ Contrôle à ajouter au fil de la francisation : `php -l` sur chaque fichier de
+    `lang/fr/` — la syntaxe n'est vérifiée par rien aujourd'hui.
   - **Pas de `lang/fr.json`** ⇒ toute chaîne passant par `__('texte libre')`
     retombera sur l'anglais quelle que soit la locale. Portée limitée : `lang/en.json`
     ne contient que **5 clés** — le socle passe presque partout par des fichiers PHP.
@@ -646,15 +671,15 @@ aucune passerelle existante ne servant de modèle.
   **Total : 142 appels à `number_format` avec `2` codé en dur.**
 
 ### ⇒ Conséquences pour le chantier 1 (francisation + FCFA)
-1. **Langue** : basculer `config/app.php` sur `fr`, puis traiter `lang/fr/` en trois
-   temps — (a) ~~créer les 3 fichiers absents~~ **fait le 2026-08-15** (23 chaînes,
-   dont les 5 libellés wallet attendus par FedaPay) ; (b) combler
-   les **149 clés manquantes** des 13 fichiers incomplets, en **triant ce qui doit être
-   supprimé** (les 29 banques bangladaises de `merchant.php`) de ce qui doit être
-   traduit (`parcel.php`, `levels.php`, `permissions.php`) ; (c) créer `lang/fr.json`
-   (5 clés côté `en.json`). Décider aussi si la locale doit être persistée **par
+1. **Langue** : ~~(a) créer les 3 fichiers absents~~ **fait le 2026-08-15** (23 chaînes,
+   dont les 5 libellés wallet attendus par FedaPay) ; ~~(b) combler les clés
+   manquantes~~ **fait le 2026-08-16** (116 traduites, 28 banques bangladaises
+   supprimées et remplacées par 11 béninoises). **Restent** : (c) basculer
+   `config/app.php` sur `fr` et `timezone` sur UTC+1 ; (d) créer `lang/fr.json`
+   (5 clés côté `en.json`) ; (e) décider si la locale doit être persistée **par
    société** plutôt qu'en session — question ouverte pour l'API, aujourd'hui sans
-   locale. Passer `timezone` à UTC+1.
+   locale ; (f) remplacer `account_methods` (bKash/Nagad/Rocket) par MTN MoMo et
+   Moov Money.
 2. **Devise — aucun point unique à modifier.** L'absence de helper = 142 sites.
    ⇒ **Introduire d'abord un helper** (ex. `formatAmount($n)` dans `Helper.php` :
    zéro décimale, séparateur de milliers espace insécable, symbole positionné),

@@ -84,5 +84,9 @@ return [
     'invoice_generate_menually'=> 'Générer une facture manuellement',
     'push_notification'      => 'Notification Push',
     'notification_settings'  => 'Paramètres de notification',
+    'addons' => 'Modules complémentaires',
+    'google_map_settings' => 'Paramètres Google Maps',
+    'plans' => 'Forfaits',
+    'company' => 'Société',
 ];
 

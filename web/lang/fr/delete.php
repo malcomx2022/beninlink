@@ -32,6 +32,8 @@ return [
     'delivery_category'    => 'Voulez-vous supprimer la catégorie de livraison ?',
     'delivery_charge'      => 'Voulez-vous supprimer les frais de livraison ?',
     'category'             => 'Voulez-vous supprimer la catégorie ?',
+    'plan'                 => 'Voulez-vous supprimer le forfait ?',
+    'company'              => 'Voulez-vous supprimer la société ?',
     'yes'                  => 'Oui',
     'cancel'               => 'Annuler',
 ];

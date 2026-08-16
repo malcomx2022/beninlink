@@ -183,6 +183,7 @@ return [
         'user' => 'Utilisateur',
         'category' => 'catégorie',
         'delivery_category' => 'La catégorie a déjà été prise.',
+        'weight' => 'Le poids a déjà été pris.',
         'user_assigned' => 'L\'utilisateur est déjà assigné.',
         'user_exists' => 'L\'utilisateur existe déjà.',
     ],
