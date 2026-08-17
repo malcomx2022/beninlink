@@ -6,7 +6,7 @@
 # /public/uploads
 /storage/*.key
 /vendor
-# .env
+.env
 
 /v1.3-wecourier.zip
 .env.backup
