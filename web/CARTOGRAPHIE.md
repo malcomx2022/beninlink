@@ -33,6 +33,35 @@
     au sens du projet.
   - Pas de `package.json` : `vite.config.js` est un vestige, les assets sont
     livrés compilés dans `public/`. Ne pas lancer `npm`.
+  - 🚩 **Version de PHP : `composer.json` annonce `^8.1`, mais `composer.lock`
+    n'accepte en pratique que PHP 8.2.** Vérifié le 2026-08-16 :
+    | PHP | Résultat de `composer install` |
+    |---|---|
+    | 8.4 | refus — `htmlpurifier`, `laminas-diactoros`, `nette/schema`, `nette/utils`, `lcobucci/clock`, `league/config` |
+    | 8.3 | refus — `lcobucci/clock 2.3.0` exige `~8.1.0 \|\| ~8.2.0` |
+    | **8.2** | **installation complète** |
+    ⚠️ **Le gabarit de production vise `php8.3-fpm`**
+    (`docs/guides/infra/nginx/beninlink.conf:17`) : un `composer install` y échouerait
+    comme ci-dessus. À trancher — aligner la production sur 8.2, ou lancer un
+    `composer update` (qui fait bouger les versions du socle et demande une recette).
+  - ⚠️ **Poste de développement** : WAMP sert Apache **et** le CLI en **8.4.0**
+    (`wampmanager.conf`, `LoadModule php_module …/php8.4.0/…`). Les commandes
+    `artisan`/`composer` doivent donc être lancées explicitement avec
+    `bin/php/php8.2.26/php.exe` tant que WAMP n'est pas basculé sur 8.2.
+  - 🐞 **Incident rencontré (pour mémoire)** : le cache Composer local était corrompu
+    et produisait des paquets **extraits partiellement** — `nunomaduro/collision`
+    (dossier `Subscribers/` amputé), `laravel/framework`
+    (`ConsoleSupportServiceProvider.php` absent), `phpunit/phpunit`
+    (`DataProviderMethodFinishedSubscriber` absent). Symptôme : `artisan` refuse de
+    démarrer. Remède : `composer clear-cache`, puis suppression complète de `vendor/`
+    et réinstallation.
+  - ✅ **Tests isolés de la base de développement** (2026-08-16) : les lignes
+    `DB_CONNECTION=sqlite` / `DB_DATABASE=:memory:` de `phpunit.xml` (l.24-25),
+    livrées **commentées**, sont désormais actives — les tests visaient sinon la vraie
+    base MySQL `we-courier-saas` du `.env`. `pdo_sqlite` est présent en 8.2.
+    ⚠️ Conséquence : la base de test est **vide**. Toute Feature test devra utiliser
+    `RefreshDatabase` (commenté dans `tests/Feature/ExampleTest.php`) pour jouer les
+    migrations — préalable à écrire avant les tests du webhook FedaPay.
 - Organisation de app/ (notes) : découpage **par couche**, puis **par domaine
   métier** à l'intérieur de chaque couche.
   - `Http/Controllers/` : `Api/V10/` (21 contrôleurs, les 2 apps Flutter),
