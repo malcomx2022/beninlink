@@ -21,7 +21,7 @@
     </li>
     <li class="list-group-item profile-list-group-item">
         <span class="float-left font-weight-bold">{{ __('merchant.vat') }}</span>
-        <span class="float-right">{{ $singleMerchant->vat }}</span>
+        <span class="float-right">{{ formatRate($singleMerchant->vat) }}</span>
     </li>
     <li class="list-group-item profile-list-group-item">
         <span class="float-left font-weight-bold">{{ __('merchant.cod_charges') }}</span>

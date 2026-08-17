@@ -51,7 +51,7 @@
                         <div class="list-group-item ">
                             <div class="d-flex">
                                 <span class="w-25">{{ __('levels.vat') }} : </span>
-                                <span>{{@$merchat->vat}}</span>
+                                <span>{{ formatRate(@$merchat->vat) }}</span>
                             </div>
                         </div>
                         <div class="list-group-item ">

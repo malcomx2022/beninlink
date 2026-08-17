@@ -293,7 +293,7 @@
                                 <p class="h3"><i class="fa fa-dna text-primary"></i></p>
                                 <div>
                                     <h5 class=" text-primary m-0 text-left">{{ __('dashboard.vat') }}</h5>
-                                    <p class="h3 text-primary">{{ settings()->currency }}{{ $merchant->vat }}</p>
+                                    <p class="h3 text-primary">{{ formatRate($merchant->vat) }}</p>
                                 </div>
                             </div>
                         </div>

@@ -1007,6 +1007,22 @@ if (!function_exists('singleUser')) {
         }
     }
 
+    if (!function_exists('formatRate')) {
+        /**
+         * Taux en pourcentage (ex. merchants.vat) : « 5 % » ou « 5,5 % ».
+         * À ne pas confondre avec formatAmount() — un taux n'est pas un montant
+         * et ne porte jamais de symbole monétaire.
+         *
+         * Les décimales inutiles sont retirées, la colonne étant en decimal(16,2)
+         * alors que les taux sont presque toujours entiers.
+         */
+        function formatRate($rate = 0){
+            $rate = (float) $rate;
+            $decimals = ($rate == (int) $rate) ? 0 : 2;
+            return number_format($rate, $decimals, ',', "\xC2\xA0") . "\xC2\xA0%";
+        }
+    }
+
     if (!function_exists('formatAmount')) {
         /**
          * Montant destiné à l'affichage : entier, milliers séparés par une
