@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } fr
 import { Link } from 'expo-router';
 
 import { ApiError } from '../../src/api/client';
+import { API_BASE_URL } from '../../src/api/config';
 import { useSession } from '../../src/session/SessionProvider';
 import { Button, ErrorText, Field } from '../../src/components/ui';
 import { colors } from '../../src/theme/colors';
@@ -85,6 +86,11 @@ export default function LoginScreen() {
         <Link href="/(auth)/forgot-password" style={styles.link}>
           {t('auth.forgotPassword')}
         </Link>
+
+        {/* Repère de développement : affiche l'API réellement visée par le bundle
+            chargé. Évite de confondre un backend injoignable avec un bundle
+            périmé encore servi par le cache du navigateur. Retiré en production. */}
+        {__DEV__ && <Text style={styles.debug}>API : {API_BASE_URL}</Text>}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -108,5 +114,11 @@ const styles = StyleSheet.create({
     color: colors.primary,
     textAlign: 'center',
     paddingVertical: spacing.sm,
+  },
+  debug: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    color: colors.disabled,
+    textAlign: 'center',
   },
 });
