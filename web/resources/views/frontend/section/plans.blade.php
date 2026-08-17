@@ -16,7 +16,7 @@
                                 @php
                                     $settings = App\Models\Backend\GeneralSettings::find(1); 
                                 @endphp
-                                <h3 class="mt-2px font-weight-bold">{{ @$settings->currency }} {{ @$plan->price }} </h3>
+                                <h3 class="mt-2px font-weight-bold">{{ formatAmount(@$plan->price) }} </h3>
                                 <div class="mx-2 text-start">
                                     <p class="mb-2 font-weight-bold "> / {{ @$plan->intval_name }}</p>
                                     <p>when billed annually</p>

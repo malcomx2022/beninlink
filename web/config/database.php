@@ -57,7 +57,10 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => false,
-            'engine' => null,
+            // InnoDB explicite : le MySQL de WAMP a MyISAM par défaut, qui ignore
+            // silencieusement les clés étrangères (le socle en dépend partout) et
+            // plafonne les index à 1000 octets — incompatible avec utf8mb4.
+            'engine' => env('DB_ENGINE', 'InnoDB'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],

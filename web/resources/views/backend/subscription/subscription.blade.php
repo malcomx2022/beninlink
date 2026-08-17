@@ -20,7 +20,7 @@
                                         ->where('key', 'stripe_status')
                                         ->first();
                                 @endphp
-                                <h3 class="mt-2px">{{ @$settings->currency }} {{ @$plan->price }} </h3>
+                                <h3 class="mt-2px">{{ formatAmount(@$plan->price) }} </h3>
                                 <div class="mx-2 text-left">
                                     <p class="mb-2 font-weight-bold"> / {{ @$plan->intval_name }}</p>
                                     <p>when billed annually</p>
