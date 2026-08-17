@@ -78,6 +78,64 @@ export type DashboardData = {
 };
 
 /**
+ * Colis tel que le renvoie `GET parcel/index` et `parcel/details/{id}`.
+ *
+ * `statusName` et `deliveryType` arrivent **déjà traduits** par le backend : on
+ * les affiche tels quels plutôt que de maintenir un second jeu de libellés.
+ * `status` (entier) sert au regroupement en onglets (voir domain/parcelStatus).
+ */
+export type Parcel = {
+  id: number;
+  tracking_id: string;
+  customer_name: string;
+  customer_phone: string | null;
+  customer_address: string | null;
+  invoice_no: string | null;
+  /** Chaîne déjà formatée, ex. « 1 KG ». */
+  weight: string | null;
+  total_delivery_amount: Amount;
+  cod_amount: Amount;
+  vat_amount: Amount;
+  current_payable: Amount;
+  cash_collection: Amount;
+  delivery_type_id: number;
+  deliveryType: string | null;
+  status: number;
+  statusName: string | null;
+  pickup_date: string | null;
+  delivery_date: string | null;
+  /** Dates déjà mises en forme par le backend (« 17 Aug 2026, 09:29 PM »). */
+  created_at: string | null;
+  parcel_date: string | null;
+  parcel_time: string | null;
+};
+
+/** Étape du suivi. Vide sur un colis neuf : les événements naissent des transitions. */
+export type ParcelEvent = {
+  id: number;
+  parcel_id: number;
+  status?: number;
+  statusName?: string;
+  note?: string | null;
+  created_at?: string | null;
+};
+
+/** `GET parcel/all/status` — liste **nue** des 10 statuts marchand, traduits. */
+export type ParcelStatusOption = {
+  id: number;
+  status: string;
+};
+
+export type Shop = {
+  id: number;
+  name: string;
+  contact_no: string | null;
+  address: string | null;
+  default_shop: string | number;
+  statusName: string | null;
+};
+
+/**
  * `GET /dashboard/balance-details` — le relevé de règlement.
  * ⚠️ Cet endpoint renvoie l'objet **nu**, sans enveloppe `data`.
  */

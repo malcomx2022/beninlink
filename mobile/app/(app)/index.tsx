@@ -80,9 +80,17 @@ export default function DashboardScreen() {
         <StatTile label={t('invoices.fees')} value={dashboard?.t_delivery_fee} />
       </View>
 
-      <Link href="/(app)/profile" style={styles.link}>
-        {t('profile.title')}
-      </Link>
+      <View style={styles.nav}>
+        <Link href="/(app)/parcels" style={styles.link}>
+          {t('parcels.title')}
+        </Link>
+        <Link href="/(app)/shops" style={styles.link}>
+          {t('shops.title')}
+        </Link>
+        <Link href="/(app)/profile" style={styles.link}>
+          {t('profile.title')}
+        </Link>
+      </View>
     </ScrollView>
   );
 }
@@ -108,6 +116,7 @@ const styles = StyleSheet.create({
   rowLabel: { fontFamily: fonts.body, fontSize: fontSizes.sm, color: colors.textMuted },
   rowValue: { fontFamily: fonts.numeric, fontSize: fontSizes.sm, color: colors.text },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  nav: { gap: spacing.xs },
   link: {
     fontFamily: fonts.bodyMedium,
     fontSize: fontSizes.sm,

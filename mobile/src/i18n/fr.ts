@@ -68,6 +68,16 @@ export const fr = {
     empty: 'Aucun colis pour le moment.',
     newParcel: 'Nouveau colis',
     timeline: 'Suivi',
+    detail: 'Détail du colis',
+    recipient: 'Destinataire',
+    name: 'Nom',
+    address: 'Adresse de livraison',
+    deliveryType: 'Type de livraison',
+    weight: 'Poids',
+    amounts: 'Montants',
+    cashCollection: 'À encaisser (COD)',
+    codFee: 'Frais COD',
+    currentPayable: 'Net à reverser',
   },
   /** Les 7 étapes marchand (voir src/domain/parcelStatus.ts). */
   parcelStage: {
@@ -99,6 +109,8 @@ export const fr = {
   },
   shops: {
     title: 'Mes boutiques',
+    empty: 'Aucune boutique enregistrée.',
+    default: 'Par défaut',
   },
   rates: {
     title: 'Tarifs de livraison',
