@@ -35,6 +35,12 @@ export const fr = {
     password: 'Mot de passe',
     signIn: 'Se connecter',
     forgotPassword: 'Mot de passe oublié ?',
+    /** Le backend identifie par users.unique_id, pas par téléphone. */
+    merchantId: 'Identifiant marchand',
+    merchantIdHint: "L'identifiant figure sur votre contrat, ce n'est pas votre numéro de téléphone.",
+    resetIntro: 'Indiquez votre adresse e-mail : un lien de réinitialisation vous sera envoyé.',
+    resetSent: 'Si un compte existe pour cette adresse, un message vient de partir.',
+    sendResetLink: 'Envoyer le lien',
     signUpTitle: 'Créer un compte PME',
     companyName: "Nom de l'entreprise",
     managerName: 'Nom du gérant',
@@ -51,6 +57,8 @@ export const fr = {
     balanceToSettle: 'Net à reverser',
     clearableParcels: 'Colis à régler',
     recentParcels: 'Colis récents',
+    totalParcels: 'Colis au total',
+    totalSales: 'Ventes encaissées',
   },
   parcels: {
     title: 'Mes colis',
@@ -73,10 +81,12 @@ export const fr = {
   },
   wallet: {
     title: 'Portefeuille',
-    balance: 'Solde',
+    balance: 'Solde du portefeuille',
     recharge: 'Recharger',
     withdraw: 'Retrait',
     history: 'Historique',
+    /** Tant que FedaPay n'est pas branché, ce solde ne bouge pas. */
+    prepaidNotice: 'Le rechargement Mobile Money sera disponible prochainement.',
   },
   invoices: {
     title: 'Factures',
@@ -96,6 +106,10 @@ export const fr = {
   profile: {
     title: 'Profil',
     signOut: 'Se déconnecter',
+    address: 'Adresse',
+    hub: 'Agence',
+    billingTerms: 'Conditions de facturation',
+    returnCharges: 'Frais de retour',
   },
 } as const;
 

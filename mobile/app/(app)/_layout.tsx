@@ -1,0 +1,21 @@
+import { Stack } from 'expo-router';
+
+import { colors } from '../../src/theme/colors';
+import { fonts } from '../../src/theme/typography';
+import { t } from '../../src/i18n';
+
+export default function AppLayout() {
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.primary },
+        headerTintColor: colors.textOnPrimary,
+        headerTitleStyle: { fontFamily: fonts.heading },
+        contentStyle: { backgroundColor: colors.background },
+      }}
+    >
+      <Stack.Screen name="index" options={{ title: t('dashboard.title') }} />
+      <Stack.Screen name="profile" options={{ title: t('profile.title') }} />
+    </Stack>
+  );
+}
