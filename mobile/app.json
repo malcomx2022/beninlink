@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "BeninLink Marchand",
+    "slug": "beninlink-marchand",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "beninlink",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#12503A"
+    },
+    "locales": {
+      "fr": "./src/i18n/expo-fr.json"
+    },
+    "android": {
+      "package": "app.beninlink.marchand",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png",
+        "backgroundColor": "#12503A"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "ios": {
+      "bundleIdentifier": "app.beninlink.marchand",
+      "supportsTablet": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
