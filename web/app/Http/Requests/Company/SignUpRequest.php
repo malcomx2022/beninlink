@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Company;
 
+use App\Rules\LegalIdentifier;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SignUpRequest extends FormRequest
@@ -29,7 +30,12 @@ class SignUpRequest extends FormRequest
             'email'          => ['required','string','unique:users'],
             'password'       => ['required','string'],
             'mobile'         => ['required','numeric','unique:users'], 
-            'address'        => ['string','max:191'] 
+            'address'        => ['string','max:191'],
+            // Identifiants legaux du transporteur (chantier 2).
+            // Format verifie, jamais exige : ils se completent dans les reglages.
+            'ifu'   => ['nullable', new LegalIdentifier(LegalIdentifier::IFU)],
+            'rccm'  => ['nullable', new LegalIdentifier(LegalIdentifier::RCCM)],
+            'cnss'  => ['nullable', new LegalIdentifier(LegalIdentifier::CNSS)],
         ];
     }
 }

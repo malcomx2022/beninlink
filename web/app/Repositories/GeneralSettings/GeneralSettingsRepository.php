@@ -31,6 +31,11 @@ class GeneralSettingsRepository implements GeneralSettingsInterface{
             endif;
         })->first();
         $row->name         = $request->name;
+        // Identifiants légaux du transporteur (chantier 2). Renseignés seulement
+        // s'ils arrivent, pour ne pas les effacer depuis un écran qui ne les porte pas.
+        if($request->filled('ifu')):  $row->ifu  = trim($request->ifu);  endif;
+        if($request->filled('rccm')): $row->rccm = trim($request->rccm); endif;
+        if($request->filled('cnss')): $row->cnss = trim($request->cnss); endif;
         $row->phone        = $request->phone;
         $row->email        = $request->email;
         $row->address      = $request->address;

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Company;
 
+use App\Rules\LegalIdentifier;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 
@@ -42,6 +43,11 @@ class StoreRequest extends FormRequest
             'joining_date'   => ['required'], 
             'address'        => ['required','string','max:191'],
             'status'         => ['required','numeric'],
+            // Identifiants legaux du transporteur (chantier 2).
+            // Format verifie, jamais exige : ils se completent dans les reglages.
+            'ifu'   => ['nullable', new LegalIdentifier(LegalIdentifier::IFU)],
+            'rccm'  => ['nullable', new LegalIdentifier(LegalIdentifier::RCCM)],
+            'cnss'  => ['nullable', new LegalIdentifier(LegalIdentifier::CNSS)],
         ];
     }
 }

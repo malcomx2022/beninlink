@@ -68,6 +68,11 @@ class CompanyRepository implements CompanyInterface
                 $company                       = new GeneralSettings();
             endif;
             $company->name                 = $request->company_name;
+            // Identifiants légaux du locataire (chantier 2), destinés aux mentions
+            // de facture. Sous filled() : une modification partielle ne les efface pas.
+            if($request->filled('ifu')):  $company->ifu  = trim($request->ifu);  endif;
+            if($request->filled('rccm')): $company->rccm = trim($request->rccm); endif;
+            if($request->filled('cnss')): $company->cnss = trim($request->cnss); endif;
             $company->phone                = $request->mobile;
             $company->email                = $request->email;
             $company->address              = $request->address;

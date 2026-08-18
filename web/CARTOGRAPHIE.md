@@ -477,9 +477,21 @@ aucune passerelle existante ne servant de modèle.
 - Vérifié bout en bout par appels réels : IFU à 9 chiffres → refusé (« L'IFU doit
   comporter exactement 13 chiffres. »), inscription sans IFU → refusée, inscription
   complète → marchand créé avec ses identifiants en base. `php artisan test` : 2 passed.
-- **Reste à faire** : formulaire d'inscription publique (`merchant/sign_up.blade.php`),
-  formulaire d'édition marchand, et les 3 formulaires **société** (`general_settings`
-  a ses colonnes mais aucun champ ne les alimente encore).
+- ✅ **Les 5 formulaires sont complétés** (2026-08-18) :
+  | Formulaire | Champs | Obligation |
+  |---|---|---|
+  | `merchant/sign_up` (inscription en ligne) | IFU · RCCM · CNSS | IFU + RCCM **requis** |
+  | `merchant/create` · `merchant/edit` (admin) | IFU · RCCM · CNSS | facultatifs |
+  | `general_settings/index` (transporteur) | IFU · RCCM · CNSS | facultatifs |
+  | `super-admin/company/company_signup` | IFU · RCCM | facultatifs |
+  Persistance ajoutée à `GeneralSettingsRepository::update` et
+  `CompanyRepository` (création du locataire), sous `filled()`.
+  Validation ajoutée aux 3 `Company/*Request` via la même règle `LegalIdentifier`.
+- ⚠️ **Le formulaire marchand n'est pas testable depuis `localhost`** : c'est un
+  **domaine central** (`config/tenancy.php`), il sert `routes/superadmin.php` et
+  renvoie une page « Page Not Found » (en HTTP 200) pour les routes locataires de
+  `routes/web.php`. Vérifier l'inscription marchand exige un sous-domaine locataire ;
+  l'API `/api/v10/register`, elle, reste joignable et a servi aux contrôles.
 
 ### ⇒ Conséquences initiales relevées pour le chantier 2 (IFU / RCCM / CNSS)
 1. **Ce qui s'en rapproche existe déjà mais ne convient pas** : `merchants.trade_license`

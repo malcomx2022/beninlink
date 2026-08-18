@@ -39,6 +39,32 @@
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
                                 </div>
+
+                                {{-- Identifiants légaux du TRANSPORTEUR (chantier 2).
+                                     Distincts de ceux du marchand : une facture SYSCOHADA
+                                     doit porter ceux des deux parties (DAT §2.6). --}}
+                                <div class="form-group">
+                                    <label for="ifu">{{ __('merchant.ifu') }}</label>
+                                    <input id="ifu" type="text" name="ifu" inputmode="numeric" maxlength="13" placeholder="{{ __('placeholder.enter_ifu') }}" autocomplete="off" class="form-control @error('ifu') is-invalid @enderror" value="{{ old('ifu', $settings->ifu) }}">
+                                    @error('ifu')
+                                        <small class="text-danger mt-2">{{ $message }}</small>
+                                    @enderror
+                                </div>
+                                <div class="form-group">
+                                    <label for="rccm">{{ __('merchant.rccm') }}</label>
+                                    <input id="rccm" type="text" name="rccm" maxlength="50" placeholder="{{ __('placeholder.enter_rccm') }}" autocomplete="off" class="form-control @error('rccm') is-invalid @enderror" value="{{ old('rccm', $settings->rccm) }}">
+                                    @error('rccm')
+                                        <small class="text-danger mt-2">{{ $message }}</small>
+                                    @enderror
+                                </div>
+                                <div class="form-group">
+                                    <label for="cnss">{{ __('merchant.cnss') }}</label>
+                                    <input id="cnss" type="text" name="cnss" maxlength="30" placeholder="{{ __('placeholder.enter_cnss') }}" autocomplete="off" class="form-control @error('cnss') is-invalid @enderror" value="{{ old('cnss', $settings->cnss) }}">
+                                    @error('cnss')
+                                        <small class="text-danger mt-2">{{ $message }}</small>
+                                    @enderror
+                                </div>
+
                                 <div class="form-group">
                                     <label for="phone">{{ __('levels.phone') }}</label>
                                     <input id="phone" type="text" name="phone" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_phone') }}" autocomplete="off" class="form-control @error('phone') is-invalid @enderror" value="{{ $settings->phone }}" require>

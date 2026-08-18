@@ -28,6 +28,36 @@
                             @enderror
                         </div>
 
+                        {{-- Identifiants légaux béninois (chantier 2). IFU et RCCM sont
+                             exigés à l'inscription en ligne ; la CNSS ne concerne que les
+                             entreprises ayant des salariés. --}}
+                        <div class="form-group">
+                            <input id="ifu" type="text" inputmode="numeric" maxlength="13" class="form-control form-control-lg @error('ifu') is-invalid @enderror" name="ifu" value="{{ old('ifu') }}" autocomplete="off" placeholder="{{ __('merchant.ifu') }} * — {{ __('placeholder.enter_ifu') }}">
+                            @error('ifu')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <input id="rccm" type="text" maxlength="50" class="form-control form-control-lg @error('rccm') is-invalid @enderror" name="rccm" value="{{ old('rccm') }}" autocomplete="off" placeholder="{{ __('merchant.rccm') }} * — {{ __('placeholder.enter_rccm') }}">
+                            @error('rccm')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <input id="cnss" type="text" maxlength="30" class="form-control form-control-lg @error('cnss') is-invalid @enderror" name="cnss" value="{{ old('cnss') }}" autocomplete="off" placeholder="{{ __('merchant.cnss') }} — {{ __('placeholder.enter_cnss') }}">
+                            @error('cnss')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
+                        </div>
+
                         <div class="form-group">
                             <input id="full_name" type="text" class="form-control form-control-lg @error('full_name') is-invalid @enderror" name="full_name" value="{{ old('first_name') }}"  autocomplete="first_name" autofocus placeholder="Full Name*">
                             @error('full_name')

@@ -28,6 +28,28 @@
                             @enderror
                         </div>
 
+                        {{-- Identifiants légaux du transporteur (chantier 2). Facultatifs
+                             ici : l'inscription d'un locataire précède souvent la
+                             transmission de ses pièces ; ils se complètent ensuite dans
+                             les réglages généraux. --}}
+                        <div class="form-group">
+                            <input id="ifu" type="text" name="ifu" inputmode="numeric" maxlength="13"
+                                placeholder="{{ __('merchant.ifu') }} — {{ __('placeholder.enter_ifu') }}" autocomplete="off"
+                                class="form-control @error('ifu') is-invalid @enderror" value="{{ old('ifu') }}">
+                            @error('ifu')
+                                <small class="text-danger mt-2">{{ $message }}</small>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <input id="rccm" type="text" name="rccm" maxlength="50"
+                                placeholder="{{ __('merchant.rccm') }} — {{ __('placeholder.enter_rccm') }}" autocomplete="off"
+                                class="form-control @error('rccm') is-invalid @enderror" value="{{ old('rccm') }}">
+                            @error('rccm')
+                                <small class="text-danger mt-2">{{ $message }}</small>
+                            @enderror
+                        </div>
+
                         <div class="mb-2" > 
                             <div class="input-group  ">
                                 <span class="input-group-text start-domain" >{{ scheme_name() }}</span>
