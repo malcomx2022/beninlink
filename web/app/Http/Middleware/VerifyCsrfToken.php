@@ -12,6 +12,10 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
+        // FedaPay appelle ce webhook de serveur à serveur : aucun jeton CSRF
+        // n'existe dans ce contexte. La protection vient de la signature
+        // X-FEDAPAY-SIGNATURE, vérifiée avant tout traitement.
+        'fedapay/webhook',
         '/success',
         '/cancel',
         '/fail',

@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V10\StatementsController;
 use App\Http\Controllers\Api\V10\SupportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Payment\FedaPayController;
 use App\Http\Controllers\Api\V10\AuthController;
 use App\Http\Controllers\Api\V10\DeliverymanController;
 use App\Http\Controllers\Api\V10\GeneralSettingCotroller;
@@ -161,6 +162,13 @@ Route::prefix('v10')->group(function() {
 
             Route::get('deliveryman/parcel-status',                     [DeliverymanController::class,'parcelStatus']);
             Route::post('deliveryman/parcel-status-update',              [DeliverymanController::class,'parcelStatusUpdate']);
+
+            // FedaPay — recharge du wallet marchand (chantier 3).
+            // Sous auth:sanctum : seul un marchand connecté initie une recharge.
+            // Le webhook, lui, est PUBLIC (FedaPay n'a pas de jeton) et se
+            // protège par la signature — voir routes/web.php.
+            Route::post('fedapay/initiate',                              [FedaPayController::class, 'initiate']);
+            Route::get('fedapay/status/{reference}',                     [FedaPayController::class, 'status']);
 
         });
         Route::post('deliveryman/parcel-location-update',            [DeliverymanController::class, 'parcelLocationUpdate']);

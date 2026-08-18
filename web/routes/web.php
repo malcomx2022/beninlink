@@ -997,3 +997,13 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
         Route::post('/store-token', [WebNotificationController::class, 'store'])->name('notification-store.token');
     });
 });
+
+/*
+| FedaPay (chantier 3).
+| Le webhook est PUBLIC : FedaPay ne porte aucun jeton. Il se protege par
+| la signature X-FEDAPAY-SIGNATURE, verifiee dans le controleur. Il est
+| hors du groupe tenant : l'appel vient de FedaPay, sans sous-domaine.
+| Exclu de la protection CSRF (voir VerifyCsrfToken::$except).
+*/
+Route::post('fedapay/webhook',   [\App\Http\Controllers\Payment\FedaPayController::class, 'webhook'])->name('fedapay.webhook')->withoutMiddleware(['web']);
+Route::get('fedapay/callback',   [\App\Http\Controllers\Payment\FedaPayController::class, 'callback'])->name('fedapay.callback');
