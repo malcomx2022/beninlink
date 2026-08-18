@@ -1160,11 +1160,11 @@ vestige du squelette Laravel.
 | ~~S3~~ | I | ~~Clé API en dur~~ — ✅ **corrigé le 2026-08-18** : lue via `env('API_KEY')`, propre à chaque installation. ⚠️ Reste une porte d'entrée, pas une authentification : elle voyage dans chaque requête | `config/rxcourier.php` |
 | ~~S4~~ | I | ~~`parcel-location-update` hors `auth:sanctum`~~ — ✅ **corrigé le 2026-08-18** : rentrée dans le groupe authentifié, vérifié 401 sans jeton | `routes/api.php` |
 | S5 | I | **Aucune séparation marchand/livreur** : jetons sans `abilities`, pas de garde `user_type` | `routes/api.php:60-165` |
-| S6 | C | **`Setting::where('key')` non scopé par `company_id`** : une société écrase les clés de passerelle d'une autre | `PayoutSetupRepository:46` |
+| ~~S6~~ | C | ~~`Setting::where('key')` non scopé~~ — ✅ **corrigé le 2026-08-18** : recherche scopée par `company_id`. Démontré : deux sociétés portant la même clé, la requête d'origine renvoyait celle de la société 1 | `PayoutSetupRepository` |
 | S7 | B | **Aucun filet contre les fuites inter-locataires** : un oubli de `companywise()` suffit | transverse (47/51 modèles) |
 | S8 | J | **Repli de tarif non scopé par société** : `DeliveryCharge::where(…)` sans `companywise()` | `ParcelController:432,438` |
 | S9 | J | **Repli de tarif ignorant le poids** ⇒ sous-facturation silencieuse | `ParcelController:432,438` · `MerchantParcelController:283,288` |
-| S10 | J | **`GET /api/v10/delivery-charges` hors `auth:sanctum`** : sert les tarifs de `company_id = 1` sur tous les sous-domaines | `routes/api.php:174` |
+| ~~S10~~ | J | ~~`delivery-charges` hors `auth:sanctum`~~ — ✅ **corrigé le 2026-08-18** : placée sous authentification, le locataire se résout par `Auth::user()->company_id`. Vérifié 401 sans jeton, 200 avec | `routes/api.php` |
 | S11 | K | **Topic FCM dérivé de l'e-mail** : `fcmSubscribe()` permet de s'abonner aux notifications d'autrui | `PushNotificationService:94-124` |
 | S12 | K | **TLS non vérifié** sur les appels sortants SMS et push (`CURLOPT_SSL_VERIFYPEER=false`) | `SmsService:67` · `PushNotificationService:43,83,239` |
 | S13 | K | **Expéditeur d'e-mail contrôlé par le visiteur** (`->from($data['email'])`) | `ContactMail:34` |

@@ -184,7 +184,20 @@ Route::prefix('v10')->group(function() {
     Route::get('parcel/tracking/{tracking_id}',                         [ParcelController::class,'parcelTrackingLogs']);
     Route::post('/contact-us',                                          [ParcelController::class,'ContactUs']);
     Route::post('/subscribe',                                           [ParcelController::class,'subscribe']);
-    Route::get('/delivery-charges',                                     [ParcelController::class, 'DeliveryCharges']);
+
+    /*
+    | S10 — `/delivery-charges` était PUBLIQUE. Sans utilisateur authentifié,
+    | `settings()` retombe sur la société 1 (bloc A) et l'API n'initialise aucune
+    | tenancy (bloc I) : la route servait donc les tarifs de la société
+    | « plateforme » à n'importe quel appelant, quel que soit le sous-domaine.
+    |
+    | Placée sous `auth:sanctum` : le locataire se résout alors par
+    | `Auth::user()->company_id` et chacun obtient SES tarifs. Un appelant qui
+    | s'y fiait reçoit désormais un 401 — préférable à des prix silencieusement
+    | faux. Aucun appelant n'a été trouvé dans les vues, le JS ni les apps ;
+    | `/settings/delivery-charges` couvre déjà le besoin authentifié.
+    */
+    Route::middleware('auth:sanctum')->get('/delivery-charges',         [ParcelController::class, 'DeliveryCharges']);
 });
 
 

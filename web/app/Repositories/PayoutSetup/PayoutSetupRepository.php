@@ -43,7 +43,12 @@ class PayoutSetupRepository implements PayoutSetupInterface{
 
             $requestData = $request->except(['_method','_token']);
             foreach ($requestData as $key => $value) {
-                $setting          = Setting::where('key',$key)->first();
+                // S6 — la recherche n'était PAS scopée par société : une société
+                // qui enregistrait ses clés de passerelle retrouvait la ligne
+                // d'une autre (la première portant cette clé) et l'écrasait.
+                // Fuite et écrasement inter-locataires sur des clés de paiement.
+                $setting          = Setting::where('company_id', settings()->id)
+                                            ->where('key',$key)->first();
                 if($setting){
                     $setting->value   = $value;
                     $setting->save();
