@@ -97,6 +97,15 @@
         @endif
 
 
+        {{-- Chantier 5 — alertes douanieres --}}
+        @if (hasPermission('parcel_read') == true)
+            <li class="nav-item ">
+                <a class="nav-link {{ request()->is('admin/customs*') ? 'active' : '' }}"
+                    href="{{ route('customs.alerts') }}"><i
+                        class="fa fa-passport"></i>{{ __('menus.customs') }}</a>
+            </li>
+        @endif
+
         @if (hasPermission('news_offer_read') == true)
             <li class="nav-item ">
                 <a class="nav-link {{ request()->is('admin/news-offer*') ? 'active' : '' }}"

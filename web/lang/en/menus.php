@@ -88,4 +88,5 @@ return [
    'company'                     => 'Company',
 
 
+  'customs'              => 'Customs alerts',
 ];

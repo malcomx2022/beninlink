@@ -88,5 +88,6 @@ return [
     'google_map_settings' => 'Paramètres Google Maps',
     'plans' => 'Forfaits',
     'company' => 'Société',
+  'customs'              => 'Alertes douanières',
 ];
 

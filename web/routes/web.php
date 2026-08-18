@@ -38,6 +38,7 @@ use App\Http\Controllers\Backend\MerchantProfileController;
 use App\Http\Controllers\Backend\MerchantController;
 use App\Http\Controllers\Backend\ParcelController;
 use App\Http\Controllers\Backend\ParcelQuoteController;
+use App\Http\Controllers\Backend\CustomsController;
 use App\Http\Controllers\Backend\DeliverycategoryController;
 use App\Http\Controllers\Backend\DeliveryChargeController;
 use App\Http\Controllers\Backend\MerchantShopsController;
@@ -450,6 +451,13 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::post('parcel/delivery-category',                 [ParcelController::class, 'deliveryWeight'])->name('parcel.deliveryCategory.deliveryWeight');
                         Route::post('parcel/delivery-charge',                   [ParcelController::class, 'deliveryCharge'])->name('parcel.deliveryCharge.get');
                         Route::post('parcel/quote',                             ParcelQuoteController::class)->name('parcel.quote');
+                        // Chantier 5 — douane. Les ecrans empruntent les permissions
+                        // parcel_* : PermissionSeeder n'est pas rejouable, voir le controleur.
+                        Route::get('customs/alerts',              [CustomsController::class, 'alerts'])->name('customs.alerts')->middleware('hasPermission:parcel_read');
+                        Route::put('customs/alerts/{id}/resolve', [CustomsController::class, 'resolve'])->name('customs.alerts.resolve')->middleware('hasPermission:parcel_update');
+                        Route::get('customs/rules',               [CustomsController::class, 'rules'])->name('customs.rules')->middleware('hasPermission:parcel_read');
+                        Route::get('customs/rules/edit/{id}',     [CustomsController::class, 'edit'])->name('customs.rules.edit')->middleware('hasPermission:parcel_update');
+                        Route::put('customs/rules/update/{id}',   [CustomsController::class, 'update'])->name('customs.rules.update')->middleware('hasPermission:parcel_update');
                         //import
                         Route::get('parcel/import-parcel',                      [ParcelController::class, 'parcelImportExport'])->name('parcel.parcel-import')->middleware('hasPermission:parcel_create');
                         Route::post('parcel/file-import',                       [ParcelController::class, 'parcelImport'])->name('parcel.file-import')->middleware('hasPermission:parcel_create');
