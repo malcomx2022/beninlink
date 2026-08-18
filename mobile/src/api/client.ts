@@ -121,7 +121,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: controller.signal,
     });
-  } catch (cause) {
+  } catch {
     clearTimeout(timeout);
     if (controller.signal.aborted) {
       throw new ApiError('La requête a expiré. Vérifiez votre connexion.', 0);
