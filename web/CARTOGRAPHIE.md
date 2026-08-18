@@ -1168,6 +1168,9 @@ vestige du squelette Laravel.
 | S11 | K | **Topic FCM dérivé de l'e-mail** : `fcmSubscribe()` permet de s'abonner aux notifications d'autrui | `PushNotificationService:94-124` |
 | S12 | K | **TLS non vérifié** sur les appels sortants SMS et push (`CURLOPT_SSL_VERIFYPEER=false`) | `SmsService:67` · `PushNotificationService:43,83,239` |
 | S13 | K | **Expéditeur d'e-mail contrôlé par le visiteur** (`->from($data['email'])`) | `ContactMail:34` |
+| ~~S14~~ | G | ~~`invoice-details/{id}` lisait la facture de n'importe quel marchand~~ — ✅ **corrigé le 2026-08-18** : `InvoiceRepository::getFind()` faisait `Invoice::find($id)` sans filtre ; il scope désormais par société **et** par marchand connecté, et le contrôleur répond 404 hors périmètre. Relevé en branchant l'écran `invoices` de `mobile/` | `InvoiceRepository:234` · `Api\V10\InvoiceController:28` |
+| ~~S15~~ | A | ~~`Handler::render()` renvoyait **HTTP 200 + une page HTML** pour chaque HttpException~~ — ✅ **corrigé le 2026-08-18** : les sept branches `response()->view('errors.<code>')` (sans code de statut) sont supprimées ; Laravel choisit déjà la même vue **en conservant le statut** et répond en JSON aux clients d'API. Avant : un 404 d'API arrivait en 200 sur `mobile/`, indistinguable d'un succès | `app/Exceptions/Handler.php` |
+| ~~S16~~ | G | ~~`getInvoiceStatusAttribute()` laissait `$status` indéfini~~ — ✅ **corrigé le 2026-08-18** : un statut hors des trois connus faisait lever une `ErrorException` sous PHP 8 et l'API répondait **500 sur une simple lecture de facture**. Initialisé à `''` | `Merchantpanel/Invoice.php:95` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
 
@@ -1197,10 +1200,35 @@ plus bas) et reste scopée par société côté administration.
 falsifiées sont ignorées. Avec `merchants.vat = 18` : `vat_amount=100,80` et
 `net=49 339,20`, exact au centime.
 
+✅ **Endpoint de devis livré le 2026-08-18** : `POST /api/v10/parcel/quote`
+(`Api\V10\ParcelController::quote`) rend les montants du même `ChargeCalculator`
+**sans rien écrire**, marchand résolu par le jeton. Vérifié : à entrées égales, le devis
+et ce qu'enregistre `store()` coïncident au centime. Il porte une clé de plus,
+`total_payable_charges` = sous-total + TVA, pour qu'aucun client n'ait à décider si
+`total_delivery_amount` porte la TVA (il ne la porte pas).
+
 ⏳ **Reste** : les vues Blade continuent d'envoyer `chargeDetails` (désormais ignoré) et
 d'afficher un total calculé en JavaScript. Tant que les deux calculs coïncident l'écran
-reste juste, mais **l'affichage devrait être remplacé par un endpoint de devis** pour
-éviter qu'ils divergent silencieusement.
+reste juste, mais **cet affichage devrait passer par `parcel/quote`** pour éviter qu'ils
+divergent silencieusement.
+
+## ✅ Harnais de tests (2026-08-18)
+
+`RefreshDatabase` fonctionne : les 86 migrations passent sur SQLite en mémoire. Deux
+contraintes découvertes :
+
+- **`DatabaseSeeder` en entier échoue** — `CurrencySeeder` envoie du SQL MySQL brut que
+  SQLite refuse. Le trait `tests/Concerns/SeedsTenant` appelle donc son **préfixe utile**
+  (société, plans, uploads, hub, rôles, utilisateurs, catégories, barème, marchand,
+  boutique, config, emballages), dans le même ordre — les clés étrangères en dépendent.
+- **PHP 8.4 déprécie du code vendor de Laravel 10** ; Laravel convertit ces avis en
+  `ErrorException` et le test qui les déclenche s'arrête. `phpunit.xml` les tait
+  (`error_reporting`), ce qui ne masque rien de notre code.
+
+Couverts à ce jour : signature du webhook FedaPay, **S14** (facture d'un autre marchand →
+404) et **`parcel/quote`** — dont le test central : le devis annonce exactement ce que
+`parcel/store` enregistre, même quand la requête porte un `chargeDetails` mensonger
+(c'est S2 vérifié de bout en bout).
 
 ## Routes mortes repérées
 | Route | Méthode cible | Statut |
