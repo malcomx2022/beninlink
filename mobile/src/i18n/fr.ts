@@ -113,8 +113,19 @@ export const fr = {
     recharge: 'Recharger',
     withdraw: 'Retrait',
     history: 'Historique',
-    /** Tant que FedaPay n'est pas branché, ce solde ne bouge pas. */
-    prepaidNotice: 'Le rechargement Mobile Money sera disponible prochainement.',
+    prepaidNotice: 'Rechargeable par Mobile Money.',
+    prepaidExplanation:
+      'Ce solde sert à régler vos frais de livraison. Il est distinct du net à reverser.',
+    amountToAdd: 'Montant à recharger (FCFA)',
+    rechargeAction: 'Payer par Mobile Money',
+    operators: 'MTN MoMo et Moov Money — vous choisirez votre opérateur à l\'étape suivante.',
+    invalidAmount: 'Saisissez un montant entier supérieur à zéro.',
+    rechargeApproved: 'Paiement confirmé. Votre solde a été mis à jour.',
+    /** Le crédit dépend du webhook signé : ne jamais annoncer un solde à jour trop tôt. */
+    rechargePending:
+      'Paiement en cours de confirmation par votre opérateur. Votre solde sera mis à jour automatiquement.',
+    confirmationNotice:
+      'Le solde n\'est crédité qu\'après confirmation de l\'opérateur, jamais au retour de la page de paiement.',
   },
   invoices: {
     title: 'Factures',

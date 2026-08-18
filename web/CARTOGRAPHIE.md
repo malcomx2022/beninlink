@@ -1155,10 +1155,10 @@ vestige du squelette Laravel.
 
 | # | Bloc | Constat | Fichier |
 |---|---|---|---|
-| S1 | E | **Abonnement activable sans paiement** : le retour Stripe n'est jamais vérifié ; `plan_id` et `user_id` viennent de l'URL | `PlanController::StripePaymentSuccess:137` |
+| ~~S1~~ | E | ~~Abonnement activable sans paiement~~ — ✅ **corrigé le 2026-08-18** : la session Stripe est relue et 4 contrôles exigés (payée, même utilisateur, montant du plan, session présente) | `PlanController::StripePaymentSuccess` |
 | ~~S2~~ | G | ~~**TVA et frais de livraison calculés côté client**~~ — ✅ **corrigé le 2026-08-18** : `App\Services\Parcel\ChargeCalculator` recalcule tout côté serveur, `chargeDetails` n'alimente plus aucun montant (voir §S2 ci-dessous) | `ParcelRepository` · `MerchantParcelRepository` |
-| S3 | I | **Clé API en dur dans le dépôt**, partagée par toutes les installations et embarquée dans les APK | `config/rxcourier.php:90` |
-| S4 | I | **`deliveryman/parcel-location-update` hors `auth:sanctum`** | `routes/api.php:167` |
+| ~~S3~~ | I | ~~Clé API en dur~~ — ✅ **corrigé le 2026-08-18** : lue via `env('API_KEY')`, propre à chaque installation. ⚠️ Reste une porte d'entrée, pas une authentification : elle voyage dans chaque requête | `config/rxcourier.php` |
+| ~~S4~~ | I | ~~`parcel-location-update` hors `auth:sanctum`~~ — ✅ **corrigé le 2026-08-18** : rentrée dans le groupe authentifié, vérifié 401 sans jeton | `routes/api.php` |
 | S5 | I | **Aucune séparation marchand/livreur** : jetons sans `abilities`, pas de garde `user_type` | `routes/api.php:60-165` |
 | S6 | C | **`Setting::where('key')` non scopé par `company_id`** : une société écrase les clés de passerelle d'une autre | `PayoutSetupRepository:46` |
 | S7 | B | **Aucun filet contre les fuites inter-locataires** : un oubli de `companywise()` suffit | transverse (47/51 modèles) |

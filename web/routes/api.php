@@ -170,8 +170,13 @@ Route::prefix('v10')->group(function() {
             Route::post('fedapay/initiate',                              [FedaPayController::class, 'initiate']);
             Route::get('fedapay/status/{reference}',                     [FedaPayController::class, 'status']);
 
+            // S4 — remontée de position du livreur. Était HORS du groupe
+            // auth:sanctum : protégée par la seule clé API statique et publique,
+            // n'importe qui pouvait donc écrire la position d'un colis.
+            // Rentrée dans le groupe authentifié.
+            Route::post('deliveryman/parcel-location-update',            [DeliverymanController::class, 'parcelLocationUpdate']);
+
         });
-        Route::post('deliveryman/parcel-location-update',            [DeliverymanController::class, 'parcelLocationUpdate']);
 
     });
     Route::get('customer/installation',                               [InstallerController::class,'customerInstallation']);

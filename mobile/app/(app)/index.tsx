@@ -84,6 +84,9 @@ export default function DashboardScreen() {
         <Link href="/(app)/parcels" style={styles.link}>
           {t('parcels.title')}
         </Link>
+        <Link href="/(app)/wallet" style={styles.link}>
+          {t('wallet.title')}
+        </Link>
         <Link href="/(app)/shops" style={styles.link}>
           {t('shops.title')}
         </Link>

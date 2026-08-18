@@ -18,6 +18,7 @@ use App\Repositories\Superadmin\Plan\PlanInterface;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class PlanController extends Controller
 {
@@ -128,13 +129,72 @@ class PlanController extends Controller
             'mode' => 'payment',
             'payment_method_types' => ['card'],
             'client_reference_id' => Auth::user()->id,  
-            'success_url' => route('subscription.success',['plan_id'=>$plan->id,'user_id'=>Auth::user()->id]),
+            // S1 — `{CHECKOUT_SESSION_ID}` est remplacé par Stripe au moment de la
+            // redirection. C'est lui qui permet de VÉRIFIER le paiement au retour ;
+            // `plan_id` et `user_id` seuls ne prouvent rien, ils viennent de l'URL.
+            'success_url' => route('subscription.success',['plan_id'=>$plan->id,'user_id'=>Auth::user()->id]).'&session_id={CHECKOUT_SESSION_ID}',
             'cancel_url'  => route('subscription.cancel'),
         ]);  
         return redirect()->to($session->url);
     }
  
-    public function StripePaymentSuccess(Request $request){ 
+    /**
+     * S1 — Retour de Stripe après paiement d'un abonnement.
+     *
+     * Le socle activait l'abonnement dès l'appel de cette URL : `plan_id` et
+     * `user_id` venant de la chaîne de requête, un simple
+     * `GET /subscription/success?plan_id=X&user_id=Y` suffisait à s'attribuer
+     * n'importe quel plan, gratuitement.
+     *
+     * Le paiement est désormais **vérifié auprès de Stripe** avant toute
+     * activation. Quatre contrôles, chacun fermant une porte :
+     *   1. la session existe chez Stripe ;
+     *   2. elle est réellement payée (`payment_status = paid`) ;
+     *   3. elle appartient à l'utilisateur connecté (`client_reference_id`) —
+     *      sans quoi une session payée par un tiers serait réutilisable ;
+     *   4. le montant payé correspond au plan demandé — sans quoi on paierait
+     *      le plan le moins cher pour activer le plus cher.
+     */
+    public function StripePaymentSuccess(Request $request){
+        $sessionId = $request->query('session_id');
+        if(blank($sessionId)):
+            Toastr::error(__('account.error_msg'),__('message.error'));
+            return redirect()->route('dashboard.index');
+        endif;
+
+        $plan = Plan::find($request->plan_id);
+        if(!$plan):
+            Toastr::error(__('account.error_msg'),__('message.error'));
+            return redirect()->route('dashboard.index');
+        endif;
+
+        try {
+            $stripe_secret_key = Setting::where('company_id',1)->where('key','stripe_secret_key')->first();
+            \Stripe\Stripe::setApiKey($stripe_secret_key->value);
+            $session = \Stripe\Checkout\Session::retrieve($sessionId);
+        } catch (\Throwable $e) {
+            Log::warning('Abonnement : session Stripe illisible', ['message' => $e->getMessage()]);
+            Toastr::error(__('account.error_msg'),__('message.error'));
+            return redirect()->route('dashboard.index');
+        }
+
+        $paid       = ($session->payment_status ?? null) === 'paid';
+        $sameUser   = (string) ($session->client_reference_id ?? '') === (string) Auth::id();
+        // Stripe raisonne en centimes ; le plan est en unités.
+        $expected   = (int) round(((float) $plan->price) * 100);
+        $sameAmount = (int) ($session->amount_total ?? 0) === $expected;
+
+        if(!$paid || !$sameUser || !$sameAmount):
+            Log::warning('Abonnement : activation refusée', [
+                'session'   => $sessionId,
+                'payé'      => $paid,
+                'même_user' => $sameUser,
+                'montant_ok'=> $sameAmount,
+            ]);
+            Toastr::error(__('account.error_msg'),__('message.error'));
+            return redirect()->route('dashboard.index');
+        endif;
+
         $this->companyRepo->switchPlan($request);
         Toastr::success('Subscribed successfully.','Success');
         return redirect()->route('dashboard.index');

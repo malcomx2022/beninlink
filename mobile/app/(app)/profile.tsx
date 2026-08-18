@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Link } from 'expo-router';
 
 import { useSession } from '../../src/session/SessionProvider';
 import { Button, Card, ErrorText, Muted, Title } from '../../src/components/ui';
@@ -44,6 +45,9 @@ export default function ProfileScreen() {
         <Line label={t('profile.returnCharges')} value={formatAmount(merchant?.return_charges)} />
         <Line label={t('wallet.balance')} value={formatAmount(merchant?.wallet_balance)} />
         <Muted>{t('wallet.prepaidNotice')}</Muted>
+        <Link href="/(app)/wallet" style={styles.link}>
+          {t('wallet.recharge')}
+        </Link>
       </Card>
 
       <ErrorText>{error}</ErrorText>
@@ -71,5 +75,11 @@ const styles = StyleSheet.create({
     color: colors.text,
     flexShrink: 1,
     textAlign: 'right',
+  },
+  link: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: fontSizes.sm,
+    color: colors.primary,
+    paddingVertical: spacing.xs,
   },
 });

@@ -87,6 +87,22 @@ return [
             '10' => 500,
         ],
     ],
-    'api_key' => '123456rx-ecourier123456'
+    /*
+    | S3 — Clé d'API des applications mobiles.
+    |
+    | Le socle We Courier livrait ici une valeur EN DUR, identique pour toutes
+    | les installations du produit et embarquée en clair dans les APK. Elle est
+    | désormais lue dans le .env : chaque installation a la sienne, et une clé
+    | compromise se remplace sans toucher au code.
+    |
+    | ⚠️ Cette clé reste une simple porte d'entrée, pas une authentification :
+    | elle voyage dans chaque requête et se retrouve dans le bundle mobile. Les
+    | données du marchand restent protégées par `auth:sanctum`. Ne jamais s'en
+    | servir pour autoriser une écriture (cf. S4).
+    |
+    | La valeur de repli est celle du socle : sans elle, toute installation
+    | existante casserait au déploiement. À remplacer par API_KEY dans le .env.
+    */
+    'api_key' => env('API_KEY', '123456rx-ecourier123456'),
 
 ];
