@@ -126,6 +126,24 @@ export type ParcelStatusOption = {
   status: string;
 };
 
+/**
+ * `GET parcel/create` — référentiels du formulaire.
+ *
+ * ⚠️ `deliveryTypes` n'est **pas** une liste d'identifiants : ce sont des
+ * interrupteurs de configuration (`{key, value}` où `value = "1"` signifie
+ * activé). Les identifiants à poster viennent de `App\Enums\DeliveryType`,
+ * repris dans `domain/deliveryType.ts`.
+ */
+export type ParcelFormData = {
+  shops: Shop[];
+  /** Objet indexé par identifiant, pas un tableau. */
+  deliveryCategories: Record<string, { id: number; title: string }>;
+  deliveryTypes: { key: string; value: string }[];
+  packagings: { id: number; name: string; price: Amount }[];
+  codCharges: { name: string; charge: string }[];
+  fragileLiquid: Amount;
+};
+
 export type Shop = {
   id: number;
   name: string;

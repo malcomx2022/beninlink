@@ -73,6 +73,13 @@ export default function ParcelsScreen() {
         })}
       </View>
 
+      <Pressable
+        onPress={() => router.push('/(app)/parcel/new')}
+        style={({ pressed }) => [styles.newButton, pressed && styles.rowPressed]}
+      >
+        <Text style={styles.newButtonLabel}>+ {t('parcels.newParcel')}</Text>
+      </Pressable>
+
       <FlatList
         data={visible}
         keyExtractor={(p) => String(p.id)}
@@ -115,6 +122,19 @@ const styles = StyleSheet.create({
   tabActive: { borderBottomColor: colors.primary },
   tabLabel: { fontFamily: fonts.body, fontSize: fontSizes.sm, color: colors.textMuted },
   tabLabelActive: { fontFamily: fonts.bodyMedium, color: colors.primary },
+  newButton: {
+    margin: spacing.md,
+    marginBottom: 0,
+    paddingVertical: spacing.md,
+    borderRadius: radii.md,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+  },
+  newButtonLabel: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: fontSizes.md,
+    color: colors.textOnPrimary,
+  },
   list: { padding: spacing.md, gap: spacing.sm },
   empty: { padding: spacing.xl, alignItems: 'center' },
   row: {

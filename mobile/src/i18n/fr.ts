@@ -86,6 +86,16 @@ export const fr = {
     cashCollection: 'À encaisser (COD)',
     codFee: 'Frais COD',
     currentPayable: 'Net à reverser',
+    shop: "Boutique d'expédition",
+    category: 'Catégorie',
+    sellingPrice: 'Prix de vente',
+    invoiceNo: 'N° de facture',
+    create: 'Créer le colis',
+    chooseAllOptions: 'Choisissez la boutique, la catégorie et le type de livraison.',
+    invalidAmount: 'Montant invalide.',
+    /** Rappel du principe posé par la correction de S2. */
+    amountsComputedByServer:
+      'Les frais, la TVA et le net à reverser sont calculés par BeninLink après création.',
   },
   /** Les 7 étapes marchand (voir src/domain/parcelStatus.ts). */
   parcelStage: {

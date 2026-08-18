@@ -110,6 +110,48 @@ export function StatTile({
   );
 }
 
+/**
+ * Choix parmi quelques options, en pastilles.
+ * Préféré à un `Picker` natif : pas de dépendance supplémentaire, et les listes
+ * du formulaire de colis (boutiques, catégories, types) restent courtes.
+ */
+export function ChoiceGroup<T extends string | number>({
+  label,
+  options,
+  value,
+  onChange,
+  error,
+}: {
+  label: string;
+  options: { value: T; label: string }[];
+  value: T | null;
+  onChange: (value: T) => void;
+  error?: string;
+}) {
+  return (
+    <View style={styles.field}>
+      <Label>{label}</Label>
+      <View style={styles.choices}>
+        {options.map((option) => {
+          const active = option.value === value;
+          return (
+            <Pressable
+              key={String(option.value)}
+              onPress={() => onChange(option.value)}
+              style={[styles.choice, active && styles.choiceActive]}
+            >
+              <Text style={[styles.choiceLabel, active && styles.choiceLabelActive]}>
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <ErrorText>{error}</ErrorText>
+    </View>
+  );
+}
+
 /** Compteur sans unité monétaire (nombre de colis, de boutiques…). */
 export function CountTile({ label, value }: { label: string; value: number }) {
   return (
@@ -172,6 +214,18 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.xs,
   },
+  choices: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  choice: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  choiceActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  choiceLabel: { fontFamily: fonts.body, fontSize: fontSizes.sm, color: colors.text },
+  choiceLabelActive: { fontFamily: fonts.bodyMedium, color: colors.textOnPrimary },
   tileLabel: { fontFamily: fonts.body, fontSize: fontSizes.xs, color: colors.textMuted },
   tileValue: { fontFamily: fonts.numeric, fontSize: fontSizes.lg, color: colors.text },
   tileValueHighlight: { color: colors.accent, fontSize: fontSizes.xl },
