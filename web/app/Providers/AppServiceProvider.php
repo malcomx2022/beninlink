@@ -124,5 +124,9 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrapFive();
         Paginator::useBootstrapFour();
         Schema::defaultStringLength(191);
+
+        // Chantier 5 — l'alerte douaniere suit le colis, quel que soit le chemin
+        // qui l'ecrit (six repositories differents). Voir l'observer.
+        \App\Models\Backend\Parcel::observe(\App\Observers\ParcelCustomsObserver::class);
     }
 }

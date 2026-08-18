@@ -362,6 +362,10 @@ class ParcelRepository implements ParcelInterface {
             $parcel->customer_name          = $request->customer_name;
             $parcel->customer_phone         = $request->customer_phone;
             $parcel->customer_address       = $request->customer_address;
+            // Chantier 5 — vide ou BJ : colis domestique. L'alerte douaniere
+            // eventuelle est emise par ParcelCustomsObserver a l'enregistrement.
+            $parcel->destination_country    = $request->destination_country;
+            $parcel->customs_category       = $request->customs_category;
             $parcel->customer_lat           = $request->lat;
             $parcel->customer_long          = $request->long;
             $parcel->delivery_type_id       = $request->delivery_type_id;
@@ -540,6 +544,10 @@ class ParcelRepository implements ParcelInterface {
             $parcel->customer_name          = $request->customer_name;
             $parcel->customer_phone         = $request->customer_phone;
             $parcel->customer_address       = $request->customer_address;
+            // Chantier 5 — vide ou BJ : colis domestique. L'alerte douaniere
+            // eventuelle est emise par ParcelCustomsObserver a l'enregistrement.
+            $parcel->destination_country    = $request->destination_country;
+            $parcel->customs_category       = $request->customs_category;
             $parcel->customer_lat           = $request->lat;
             $parcel->customer_long          = $request->long;
             $parcel->delivery_type_id       = $request->delivery_type_id;
@@ -703,6 +711,10 @@ class ParcelRepository implements ParcelInterface {
             $parcel->customer_lat           = $request->lat;
             $parcel->customer_long          = $request->long;
             $parcel->customer_address       = $request->customer_address;
+            // Chantier 5 — vide ou BJ : colis domestique. L'alerte douaniere
+            // eventuelle est emise par ParcelCustomsObserver a l'enregistrement.
+            $parcel->destination_country    = $request->destination_country;
+            $parcel->customs_category       = $request->customs_category;
             $parcel->delivery_type_id       = $request->delivery_type_id;
             // Pickup & Delivery Time
             if($request->delivery_type_id == DeliveryType::SAMEDAY){

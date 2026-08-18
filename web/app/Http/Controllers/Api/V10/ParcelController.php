@@ -170,6 +170,20 @@ class ParcelController extends Controller
             // le sous-total porte la TVA ou non.
             $charges['total_payable_charges'] = $charges['total_delivery_amount'] + $charges['vat_amount'];
 
+            // Chantier 5 — l'ecran de creation appelle deja ce devis a chaque
+            // changement : il y trouve donc aussi la reponse douaniere, sans un
+            // second aller-retour. `customs` vaut null pour un colis domestique.
+            $customs = app(\App\Services\Customs\CustomsService::class)
+                ->ruleFor($request->destination_country, $request->customs_category);
+
+            $charges['customs'] = $customs ? [
+                'level' => $customs->level,
+                'level_name' => $customs->level_name,
+                'blocking' => $customs->isBlocking(),
+                'required_document' => $customs->required_document,
+                'message' => $customs->message,
+            ] : null;
+
             return $this->responseWithSuccess(__('parcel.quote'), $charges, 200);
         } catch (\Exception $exception) {
             return $this->responseWithError(__('parcel.error_msg'), [], 500);

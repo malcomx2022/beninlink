@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V10\FraudController;
 use App\Http\Controllers\Api\V10\HubController;
 use App\Http\Controllers\Api\V10\NewsOfferController;
 use App\Http\Controllers\Api\V10\ParcelController;
+use App\Http\Controllers\Api\V10\CustomsController;
 use App\Http\Controllers\Api\V10\PaymentAccountController;
 use App\Http\Controllers\Api\V10\PaymentRequestController;
 use App\Http\Controllers\Api\V10\PushNotificationController;
@@ -127,6 +128,12 @@ Route::prefix('v10')->group(function() {
             Route::get('parcel/create',                                 [ParcelController::class,'create']);
             Route::post('parcel/store',                                 [ParcelController::class,'store']);
             Route::post('parcel/quote',                                 [ParcelController::class,'quote']);
+
+            // Chantier 5 — alertes douanieres. Le controle « ce colis passe-t-il »
+            // est rendu par parcel/quote, que l'ecran de creation appelle deja.
+            Route::get('customs/reference',                              [CustomsController::class,'reference']);
+            Route::get('customs/alerts',                                 [CustomsController::class,'alerts']);
+            Route::put('customs/alerts/{id}/resolve',                    [CustomsController::class,'resolve']);
             Route::get('parcel/details/{id}',                           [ParcelController::class,'details']);
             Route::get('parcel/edit/{id}',                              [ParcelController::class,'edit']);
             Route::put('parcel/update/{id}',                            [ParcelController::class,'update']);

@@ -46,6 +46,7 @@ class DatabaseSeeder extends Seeder
         // $this->call(PaymentAccountSeeder::class);
         $this->call(ConfigSeeder::class);
         $this->call(PackagingSeeder::class);
+        $this->call(CustomsRuleSeeder::class);
         // $this->call(ParcelSeeder::class);
         $this->call(AccountHeadSeeder::class);
         // $this->call(ExpenseSeeder::class);

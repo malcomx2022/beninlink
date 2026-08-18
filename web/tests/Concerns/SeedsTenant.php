@@ -4,6 +4,7 @@ namespace Tests\Concerns;
 
 use Database\Seeders\Backend\SuperAdmin\PlanSeeder;
 use Database\Seeders\ConfigSeeder;
+use Database\Seeders\CustomsRuleSeeder;
 use Database\Seeders\DeliveryChargeSeeder;
 use Database\Seeders\DeliverycategorySeeder;
 use Database\Seeders\DepartmentSeeder;
@@ -47,6 +48,7 @@ trait SeedsTenant
             MerchantshopsSeeder::class,
             ConfigSeeder::class,
             PackagingSeeder::class,
+            CustomsRuleSeeder::class,
         ]);
     }
 }
