@@ -85,6 +85,9 @@ class Invoice extends Model
     }
 
     public function getInvoiceStatusAttribute(){
+        // Un statut hors des trois connus laissait $status indefini : PHP 8 leve
+        // alors une ErrorException et l'API repondait 500 sur une simple lecture.
+        $status = '';
         if($this->status     == InvoiceStatus::PAID):
             $status = __('invoice.'.InvoiceStatus::PAID);
         elseif($this->status == InvoiceStatus::UNPAID):

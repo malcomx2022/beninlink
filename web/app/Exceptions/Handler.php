@@ -43,44 +43,17 @@ class Handler extends ExceptionHandler
     }
 
 
-    public function render($request, Throwable $e)
-    {
-
-        // dd($e->getPrevious());
-
-
-        if($this->isHttpException($e)){
-
-            if($e->getStatusCode()       == 401){
-
-                return response()->view('errors.401');
-            }elseif($e->getStatusCode()   == 404){
-
-                return response()->view('errors.404');
-
-            }elseif($e->getStatusCode()  == 403){
-
-                return response()->view('errors.403');
-
-            }elseif($e->getStatusCode() == 405){
-
-                return response()->view('errors.405');
-
-            }elseif($e->getStatusCode() == 419){
-
-                return response()->view('errors.419');
-
-            }elseif($e->getStatusCode() == 429){
-
-                return response()->view('errors.429');
-
-            }elseif($e->getStatusCode() == 500){
-
-                return response()->view('errors.500');
-
-            }
-        }else{
-           return  parent::render($request,$e);
-        }
-    }
+    /**
+     * S15 — le socle rendait ici `errors.<code>` pour CHAQUE HttpException...
+     * avec un statut HTTP 200 (`response()->view()` sans code). Consequences :
+     *
+     *   - une API qui repond 200 + une page HTML sur un 404, un 403 ou un 405 ;
+     *     un client mobile ne pouvait plus distinguer un succes d'un echec ;
+     *   - des erreurs invisibles pour toute supervision qui compte les 5xx.
+     *
+     * Laravel choisit deja `resources/views/errors/<code>.blade.php` quand la vue
+     * existe, en conservant le vrai code, et repond en JSON aux requetes d'API.
+     * Les sept branches d'origine ne faisaient donc qu'ajouter un bug : elles sont
+     * supprimees, le comportement du framework suffit.
+     */
 }
