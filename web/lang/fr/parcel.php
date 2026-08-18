@@ -187,4 +187,5 @@ return array (
     'expired_date' => 'Date d\'expiration',
 
     'quote' => 'Devis',
+    'not_found' => 'Colis introuvable.',
 );

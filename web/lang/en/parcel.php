@@ -201,4 +201,5 @@ return array (
   'start_date' => 'Start Date',
   'expired_date' => 'Expired Date',
     'quote' => 'Quote',
+    'not_found' => 'Parcel not found.',
 );

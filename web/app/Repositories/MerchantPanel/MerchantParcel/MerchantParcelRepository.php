@@ -86,20 +86,42 @@ class MerchantParcelRepository implements MerchantParcelInterface {
         })->paginate(10);
     }
 
+    /**
+     * S17 — les colis du marchand connecte, et eux seuls.
+     *
+     * Ce repository sert le panneau marchand et l'API marchand. Le socle y
+     * travaillait sur `Parcel::find($id)` nu : n'importe quel marchand
+     * authentifie lisait le colis d'un autre en changeant l'identifiant dans
+     * l'URL — nom, telephone et adresse du destinataire, montants — et pouvait
+     * le modifier ou le supprimer.
+     *
+     * Toute lecture et toute ecriture de ce fichier passent desormais par ici.
+     * Seule exception legitime : `parcelTrack()`, le suivi public par numero de
+     * suivi, qui n'a pas d'utilisateur authentifie.
+     */
+    private function ownedParcels() {
+        return Parcel::companywise()->where('merchant_id', Auth::user()->merchant?->id);
+    }
+
     public function parcelEvents($id){
-        return ParcelEvent::where('parcel_id',$id)->orderBy('created_at','desc')->get();
+        return ParcelEvent::where('parcel_id',$id)
+            ->whereIn('parcel_id', $this->ownedParcels()->select('id'))
+            ->orderBy('created_at','desc')->get();
     }
 
     public function get($id) {
-        return Parcel::find($id);
+        return $this->ownedParcels()->find($id);
     }
 
     public function details($id) {
-        return Parcel::where('id', $id)->with('merchant', 'merchant.user','merchantShop','deliveryCategory','packaging')->first();
+        return $this->ownedParcels()->with('merchant', 'merchant.user','merchantShop','deliveryCategory','packaging')->find($id);
     }
 
     public function statusUpdate($id, $status_id) {
-        $parcel         = Parcel::find($id);
+        $parcel         = $this->ownedParcels()->find($id);
+        if(blank($parcel)){
+            return false;
+        }
         $parcel->status = $status_id;
         $parcel->save();
         return true;
@@ -452,9 +474,14 @@ class MerchantParcelRepository implements MerchantParcelInterface {
 
         try {
 
-            $parcel                         = Parcel::find($id);
+            $parcel                         = $this->ownedParcels()->find($id);
+            if(blank($parcel)){
+                return false;
+            }
             $parcel->company_id             = settings()->id;
-            $parcel->merchant_id            = $request->merchant_id;
+            // S17 — le marchand n'est jamais relu dans la requete : le socle
+            // prenait `$request->merchant_id`, ce qui permettait de reaffecter le
+            // colis a un autre marchand (et plantait quand le champ manquait).
             $parcel->category_id            = $request->category_id;
             if($request->weight !==""){
                 $parcel->weight                 = $request->weight;
@@ -565,7 +592,7 @@ class MerchantParcelRepository implements MerchantParcelInterface {
     }
 
     public function delete($id,$merchant_id) {
-        return Parcel::destroy($id);
+        return $this->ownedParcels()->where('id', $id)->delete();
     }
 
 

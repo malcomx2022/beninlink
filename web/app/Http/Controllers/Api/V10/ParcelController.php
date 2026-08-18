@@ -182,6 +182,11 @@ class ParcelController extends Controller
     {
         try {
             $parcel       = $this->repo->get($id);
+            // S17 — le repository ne rend que les colis du marchand connecte ;
+            // hors de son perimetre on repond 404, jamais les donnees d'un autre.
+            if (blank($parcel)) {
+                return $this->responseWithError(__('parcel.not_found'), [], 404);
+            }
             $parcelevents = $this->repo->parcelEvents($id);
             return $this->responseWithSuccess(__('parcel.parcel_logs'), ['parcel'=> new ParcelResource ($parcel),'parcelEvents'=>ParcelLogsResource::collection($parcelevents) ], 200);
         }catch (\Exception $exception){
@@ -196,6 +201,9 @@ class ParcelController extends Controller
 
         try {
             $parcel       = $this->repo->details($id);
+            if (blank($parcel)) {
+                return $this->responseWithError(__('parcel.not_found'), [], 404);
+            }
             $parcelEvents = $this->repo->parcelEvents($id);
             return $this->responseWithSuccess(__('parcel.parcel_details'), ['parcel'=> new ParcelResource ($parcel),'parcelEvents'=>ParcelLogsResource::collection($parcelEvents) ], 200);
         }catch (\Exception $exception){
@@ -209,6 +217,9 @@ class ParcelController extends Controller
     {
         $userID = auth()->user()->id;
         $parcel = $this->repo->get($id);
+        if (blank($parcel)) {
+            return $this->responseWithError(__('parcel.not_found'), [], 404);
+        }
         if($parcel->status == ParcelStatus::PENDING){
 
             $merchant = $this->repo->getMerchant($userID);
@@ -240,7 +251,9 @@ class ParcelController extends Controller
     public function statusUpdate($id, $statusId)
     {
         try {
-            $this->repo->statusUpdate($id, $statusId);
+            if (!$this->repo->statusUpdate($id, $statusId)) {
+                return $this->responseWithError(__('parcel.not_found'), [], 404);
+            }
             return $this->responseWithSuccess(__('parcel.update_msg'), [], 200);
         }catch (\Exception $exception) {
             return $this->responseWithError(__('parcel.error_msg'), [], 500);
@@ -256,6 +269,11 @@ class ParcelController extends Controller
         if ($validator->fails()) {
             return $this->responseWithError(__('parcel.title'), ['message' => $validator->errors()], 422);
         }
+        // Meme reponse que les autres routes hors perimetre : 404, et pas le 500
+        // generique que rendrait le `false` du repository.
+        if (blank($this->repo->get($id))) {
+            return $this->responseWithError(__('parcel.not_found'), [], 404);
+        }
         if($this->repo->update($id, $request,auth()->user()->id)){
             return $this->responseWithSuccess(__('parcel.update_msg'), [], 200);
         }else{
@@ -270,6 +288,9 @@ class ParcelController extends Controller
         try {
             $userID = auth()->user()->id;
             $parcel = $this->repo->get($id);
+            if (blank($parcel)) {
+                return $this->responseWithError(__('parcel.not_found'), [], 404);
+            }
             if($parcel->status == ParcelStatus::PENDING){
                 $this->repo->delete($id,$userID);
                 return $this->responseWithSuccess(__('parcel.delete_msg'), [], 200);
