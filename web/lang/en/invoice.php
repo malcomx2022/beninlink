@@ -17,7 +17,8 @@ return [
             'invoice_generated_successfully' => 'Invoice Generated successfully',
             'invoice_generate_menually' => 'Invoice Generate',
             'generate'                 => 'Generate',
-            'invoice_description'     =>'After clicking the Generate button, the invoice will be generated depending on the payment period of the merchant.'
+            'invoice_description'     =>'After clicking the Generate button, the invoice will be generated depending on the payment period of the merchant.',
 
 
-       ];
+           'not_found' => 'Invoice not found',
+];

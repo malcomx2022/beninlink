@@ -17,4 +17,5 @@ return [
     'invoice_generate_menually' => 'Générer une facture',
     'generate' => 'Générer',
     'invoice_description' => 'Après avoir cliqué sur le bouton Générer, la facture sera générée en fonction de la période de paiement du marchand.',
+    'not_found' => 'Facture introuvable',
 ];

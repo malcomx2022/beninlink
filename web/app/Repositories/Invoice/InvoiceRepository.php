@@ -231,11 +231,23 @@ class InvoiceRepository implements InvoiceInterface
     }
 
     //get invoice
+    /**
+     * Facture du marchand connecte, par identifiant.
+     *
+     * Le socle faisait `Invoice::find($id)` sans aucun filtre : un marchand
+     * authentifie lisait la facture d'un autre en changeant l'identifiant dans
+     * `GET /invoice-details/{id}` (nom commercial, telephone, adresse et
+     * montants). Le scoping reprend celui de `invoiceLists()` : societe + le
+     * marchand de l'utilisateur courant.
+     *
+     * Seul appelant : `Api\V10\InvoiceController::invoiceDetails`.
+     */
     public function getFind($id)
     {
         try {
-            $invoice  = Invoice::find($id);
-            return $invoice;
+            return Invoice::companywise()
+                ->where('merchant_id', Auth::user()->merchant?->id)
+                ->find($id);
         } catch (\Throwable $th) {
             return false;
         }
