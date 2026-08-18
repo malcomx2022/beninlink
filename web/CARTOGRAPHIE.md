@@ -1213,6 +1213,37 @@ d'afficher un total calculé en JavaScript. Tant que les deux calculs coïnciden
 reste juste, mais **cet affichage devrait passer par `parcel/quote`** pour éviter qu'ils
 divergent silencieusement.
 
+## ✅ Chantier 5 — alertes douanières (2026-08-19)
+
+Le bloc « rien n'existe » de la revue fonctionnelle §3.4 est comblé : ni table, ni
+endpoint, ni règle → **deux tables, quatre endpoints, deux écrans**.
+
+| Élément | Où |
+|---|---|
+| Référentiel pays × catégorie | `customs_rules` (scopé société) · `CustomsRuleSeeder` |
+| Alertes émises | `customs_alerts` (règle **recopiée**, pour survivre à sa modification) |
+| Colis d'export | `parcels.destination_country` + `parcels.customs_category`, nullables |
+| Règle métier | `App\Services\Customs\CustomsService` — seule source, comme `ChargeCalculator` |
+| Refus BLOQUANT | `App\Rules\CustomsAllowed` dans `StoreRequest` — **le seul point commun aux 3 chemins de création** |
+| Écriture de l'alerte | `ParcelCustomsObserver` sur `Parcel::saved` — 6 chemins écrivent un colis |
+| API | `customs/reference` · `customs/alerts` · `customs/alerts/{id}/resolve` · bloc `customs` dans `parcel/quote` |
+| Back-office | `admin/customs/alerts` · `admin/customs/rules` |
+
+**Un colis est un export** dès que `destination_country` est renseigné et différent
+de `BJ`. Sinon rien ne change — c'est ce qui rend les colonnes rétrocompatibles avec
+les colis existants.
+
+⚠️ **Le référentiel livré est une base de travail, pas un avis douanier.** 8 pays ×
+6 catégories, dont les 3 exemples de la maquette. À faire relire par un transitaire :
+une règle BLOQUANTE erronée empêche un marchand de créer son colis.
+
+⏳ **Reste au chantier** : la notification à la création, demandée par
+`.claude/rules/customs.md`. Le push est hors service (API FCM legacy arrêtée, bloc K),
+l'e-mail demande un Mailable et un gabarit. L'alerte est enregistrée et visible dans
+les deux écrans, mais rien n'est envoyé.
+
+⏳ L'écran `customs` de `mobile/` suit — le chantier a été mené « backend d'abord ».
+
 ## ✅ Harnais de tests (2026-08-18)
 
 `RefreshDatabase` fonctionne : les 86 migrations passent sur SQLite en mémoire. Deux
