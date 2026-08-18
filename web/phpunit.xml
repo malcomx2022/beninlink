@@ -18,6 +18,11 @@
         </include>
     </source>
     <php>
+        <!-- PHP 8.4 signale des depreciations dans le code vendor de Laravel 10.
+             Laravel les convertit en ErrorException et le test qui les declenche
+             s'arrete, alors que rien de NOTRE code n'est en cause. On les tait ici
+             uniquement pour les tests ; la mise a jour du framework est un autre sujet. -->
+        <ini name="error_reporting" value="E_ALL &amp; ~E_DEPRECATED &amp; ~E_USER_DEPRECATED"/>
         <env name="APP_ENV" value="testing"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_DRIVER" value="array"/>
