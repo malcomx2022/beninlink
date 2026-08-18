@@ -64,7 +64,7 @@ class SmsService
 
                     $url = $api_url . '?' . http_build_query($params);
                     $ch = curl_init();
-                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // S12 : certificat verifie
                     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
                     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
                     curl_setopt($ch, CURLOPT_URL, $url);

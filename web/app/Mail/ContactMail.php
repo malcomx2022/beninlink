@@ -31,6 +31,16 @@ class ContactMail extends Mailable
     {
         $data = $this->data;
         $logoImage = settings()->LogoImage;
-        return $this->view('backend.contact.contact_mail',compact('data','logoImage'))->from($data['email'])->to(settings()->email)->subject($data['subject']);
+        // S13 — l'expéditeur était l'adresse SAISIE PAR LE VISITEUR : usurpation
+        // possible, et rejets SPF/DKIM puisque le serveur n'est pas autorisé à
+        // écrire au nom d'un domaine tiers.
+        // L'expéditeur est désormais celui de la plateforme ; l'adresse du
+        // visiteur devient l'adresse de réponse, ce qui préserve l'usage
+        // (répondre au message) sans mentir sur l'origine.
+        return $this->view('backend.contact.contact_mail',compact('data','logoImage'))
+            ->from(settings()->email, settings()->name)
+            ->replyTo($data['email'], $data['name'] ?? null)
+            ->to(settings()->email)
+            ->subject($data['subject']);
     }
 }
