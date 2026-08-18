@@ -37,6 +37,7 @@ use App\Http\Controllers\Backend\ProfileController;
 use App\Http\Controllers\Backend\MerchantProfileController;
 use App\Http\Controllers\Backend\MerchantController;
 use App\Http\Controllers\Backend\ParcelController;
+use App\Http\Controllers\Backend\ParcelQuoteController;
 use App\Http\Controllers\Backend\DeliverycategoryController;
 use App\Http\Controllers\Backend\DeliveryChargeController;
 use App\Http\Controllers\Backend\MerchantShopsController;
@@ -448,6 +449,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::post('parcel/merchant/shops',                    [ParcelController::class, 'merchantShops'])->name('parcel.merchant.shops');
                         Route::post('parcel/delivery-category',                 [ParcelController::class, 'deliveryWeight'])->name('parcel.deliveryCategory.deliveryWeight');
                         Route::post('parcel/delivery-charge',                   [ParcelController::class, 'deliveryCharge'])->name('parcel.deliveryCharge.get');
+                        Route::post('parcel/quote',                             ParcelQuoteController::class)->name('parcel.quote');
                         //import
                         Route::get('parcel/import-parcel',                      [ParcelController::class, 'parcelImportExport'])->name('parcel.parcel-import')->middleware('hasPermission:parcel_create');
                         Route::post('parcel/file-import',                       [ParcelController::class, 'parcelImport'])->name('parcel.file-import')->middleware('hasPermission:parcel_create');
@@ -862,6 +864,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::post('parcel/merchant/shops',    [MerchantParcelController::class, 'merchantShops'])->name('merchant-panel.parcel.merchant.shops');
                         Route::post('parcel/delivery-category', [MerchantParcelController::class, 'deliveryWeight'])->name('merchant-panel.parcel.deliveryCategory.deliveryWeight');
                         Route::post('parcel/delivery-charge',   [MerchantParcelController::class, 'deliveryCharge'])->name('merchant-panel.parcel.deliveryCharge.get');
+                        Route::post('parcel/quote',             ParcelQuoteController::class)->name('merchant-panel.parcel.quote');
                         //import
                         Route::get('parcel/import-parcel',  [MerchantParcelController::class, 'parcelImportExport'])->name('merchant-panel.parcel.parcel-import');
                         Route::post('parcel/file-import',   [MerchantParcelController::class, 'parcelImport'])->name('merchant-panel.parcel.file-import');

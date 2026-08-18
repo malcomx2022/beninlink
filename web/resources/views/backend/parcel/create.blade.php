@@ -441,6 +441,7 @@
     <script>
         var deliverChargeUrl = '{{ route('parcel.deliveryCharge.get') }}';
         var merchantUrl = '{{ route('parcel.merchant.get') }}';
+        var quoteUrl = '{{ route('parcel.quote') }}';
     </script>
     <script src="{{ static_asset('backend/js/parcel/create.js') }}"></script>
 @endpush

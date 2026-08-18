@@ -451,6 +451,7 @@
     <script>
         var deliverChargeUrl = '{{ route('parcel.deliveryCharge.get') }}';
         var merchantUrl = '{{ route('parcel.merchant.get') }}';
+        var quoteUrl = '{{ route('parcel.quote') }}';
         var category_id = '{{ $parcel->category_id }}';
         var packaging_id = '{{ $parcel->packaging_id }}';
         var liquid_fragile_amount = '{{ $parcel->liquid_fragile_amount }}';

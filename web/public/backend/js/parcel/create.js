@@ -44,32 +44,15 @@ $(document).on('change', '#merchant_id', function () {
         success : function (data) {
             $('#shopID').html(data);
             shop(url);
-            deliveryCharge();
+            refreshQuote();
 
         }
     });
 
-    cod();
 });
 
 
-//cod charge dynamic
- function cod() {
-
-    $.ajax({
-        type : 'POST',
-        url : $('#merchanturl').data('url'),
-        data : {'merchant_id': $('#merchant_id').val()},
-        dataType : "json",
-        success : function (data) {
-            $('#inside_city').val(data.inside_city);
-            $('#sub_city').val(data.sub_city);
-            $('#outside_city').val(data.outside_city);
-
-        }
-    });
- }
- //end cod charge dynamic
+// Les taux COD ne sont plus lus ici : ils entrent dans le devis, cote serveur.
 
 $(document).on('change', '#shopID', function () {
     var url = $(this).data('url');
@@ -114,182 +97,83 @@ $(document).on('change', '#category_id', function () {
                     $('#categoryWeight').hide();
                     $('#weightID').hide();
                 }
-                deliveryCharge();
+                refreshQuote();
             }
         });
 
     }
 });
 
-$(document).on('change', '#delivery_type_id', function () {
-    deliveryCharge();
+/**
+ * Devis : c'est le SERVEUR qui calcule, l'ecran se contente d'afficher.
+ *
+ * Le socle recalculait ici frais de livraison, frais COD, TVA et net a reverser
+ * en JavaScript, puis postait le tout dans `chargeDetails` — c'etait la faille
+ * S2. Depuis que `ChargeCalculator` fait foi cote serveur, ce calcul local
+ * n'etait plus qu'un SECOND bareme : juste tant qu'il coincidait, faux le jour
+ * ou il divergeait, et personne ne l'aurait vu. Il est remplace par un appel a
+ * `parcel/quote`, qui rend exactement les montants qui seront enregistres.
+ *
+ * `#chargeDetails` n'est donc plus alimente : le serveur l'ignore.
+ */
+var quoteTimer = null;
 
-    //cod charge calculation
-    var delivery_type   = $(this).val();
-    var cash_collection =  parseFloat($("#cash_collection").val());
-    if(cash_collection == '' || isNaN(cash_collection)){
-        cash_collection = 0;
+function refreshQuote() {
+    var merchantId     = $('#merchant_id').val();
+    var categoryId     = $('#category_id').val();
+    var deliveryTypeId = $('#delivery_type_id').val();
+
+    // Ici l'admin choisit le marchand : sans lui, aucun bareme applicable.
+    if (!merchantId || !categoryId || !deliveryTypeId) {
+        return;
     }
 
-        var type = 0;
-        if(delivery_type == 1 || delivery_type == 2){
-            type = $("#inside_city").val();
-        }else if(delivery_type == 3){
-            type = $("#sub_city").val();
-        }else if(delivery_type == 4){
-            type = $("#outside_city").val();
-        }else{
-            type = 0;
-        }
-        var codAmount       = percentage(cash_collection,type);
-        $('#codChargeAmount').text(codAmount.toFixed(2));
-    //end cod charge calculation
-});
+    // La frappe dans le montant declenche cette fonction : on la laisse retomber.
+    clearTimeout(quoteTimer);
+    quoteTimer = setTimeout(function () {
+        $.ajax({
+            type: 'POST',
+            url: quoteUrl,
+            dataType: 'json',
+            data: {
+                merchant_id: merchantId,
+                category_id: categoryId,
+                delivery_type_id: deliveryTypeId,
+                weight: $('#weightID').val(),
+                cash_collection: $('#cash_collection').val(),
+                packaging_id: $('#packaging_id').val(),
+                fragileLiquid: $('#fragileLiquid').is(':checked')
+            },
+            success: function (response) {
+                var amount = response.display;
+                $('#totalCashCollection').text(amount.cash_collection);
+                $('#deliveryChargeAmount').text(amount.delivery_charge);
+                $('#codChargeAmount').text(amount.cod_amount);
+                $('#liquidFragileAmount').text(amount.liquid_fragile_amount);
+                $('#packagingAmount').text(amount.packaging_amount);
+                $('#totalDeliveryChargeAmount').text(amount.total_delivery_amount);
+                $('#VatAmount').text(amount.vat_amount);
+                $('#netPayable').text(amount.total_payable_charges);
+                $('#currentPayable').text(amount.current_payable);
+            }
+        });
+    }, 300);
+}
 
-$(document).on('change', '#weightID', function () {
-    deliveryCharge();
+$(document).on('change', '#delivery_type_id', refreshQuote);
+$(document).on('change', '#weightID', refreshQuote);
+$(document).on('keyup change', '#cash_collection', refreshQuote);
 
-});
 $('#packagingShow').hide();
 $(document).on('change', '#packaging_id', function () {
-    var amount = parseFloat($("select#packaging_id option").filter(":selected").data('packagingamount'));
-    console.log(amount);
-    if(isNaN(amount) || amount === ''){
-        $('#packagingShow').hide();
-        amount = 0;
-    }else{
-        $('#packagingShow').show();
-    }
-
-    $('#packagingAmount').text(amount);
-    totalSum();
-
+    // Le montant de l'emballage vient du devis ; ici on ne fait qu'afficher la ligne.
+    var selected = $('select#packaging_id option').filter(':selected').data('packagingamount');
+    $('#packagingShow').toggle(!isNaN(parseFloat(selected)));
+    refreshQuote();
 });
 
 $('.hideShowLiquidFragile').hide();
 function processCheck(event) {
-    var liquidFragileAmount = 0;
-    if($('#fragileLiquid').is(':checked')) {
-        $('.hideShowLiquidFragile').show();
-        liquidFragileAmount = parseFloat($('#fragileLiquid').data('amount'));
-        $('#liquidFragileAmount').text(liquidFragileAmount.toFixed(2));
-    } else {
-        $('.hideShowLiquidFragile').hide();
-        liquidFragileAmount = 0;
-        $('#liquidFragileAmount').text(liquidFragileAmount.toFixed(2));
-    }
-    totalSum();
+    $('.hideShowLiquidFragile').toggle($('#fragileLiquid').is(':checked'));
+    refreshQuote();
 }
-
-
-function percentage(totalAmount,percentageAmount) {
-
-     return totalAmount * (percentageAmount / 100);
-}
-
-$(document).on('keyup change', '#cash_collection', function () {
-    var cash_collection =  parseFloat($(this).val());
-    if(cash_collection === '' || isNaN(cash_collection)){
-        $('#totalCashCollection').text('0.00');
-        $('#codChargeAmount').text('0.00');
-
-    }else {
-        var codAmount = percentage(cash_collection, 0);
-        $('#codChargeAmount').text(codAmount.toFixed(2));
-        $('#totalCashCollection').text(cash_collection);
-
-
-
-    }
-
-    totalSum();
-
-});
-
-function deliveryCharge() {
-    var merchant_id            = $("select#merchant_id option").filter(":selected").val();
-    var category_id        = $("select#category_id option").filter(":selected").val();
-    var weight             = $("select#weightID option").filter(":selected").val();
-    var delivery_type_id   = $("select#delivery_type_id option").filter(":selected").val();
-
-    if(merchant_id !=='' && category_id !=='' && delivery_type_id !==''){
-
-        $.ajax({
-            type : 'POST',
-            url : deliverChargeUrl,
-            data : {'merchant_id': merchant_id,'category_id':category_id,'weight':weight,'delivery_type_id':delivery_type_id},
-            dataType : "json",
-            success : function (data) {
-
-                $('#deliveryChargeAmount').text(data);
-                totalSum();
-            }
-        });
-    }
-
-}
-
-function totalSum() {
-    merchant();
-   var totalCashCollection          =  parseFloat($('#totalCashCollection').text());
-   var deliveryChargeAmount         =  parseFloat($('#deliveryChargeAmount').text());
-   var codChargeAmount              =  parseFloat($('#codChargeAmount').text());
-   var vatTex                       = parseFloat($('#merchantVat').val());
-   var merchantCodCharge            = parseFloat( $('#merchantCodCharge').val());
-   var liquidFragileAmount          =  parseFloat($('#liquidFragileAmount').text());
-   var packagingAmount              =  parseFloat($('#packagingAmount').text());
-   var totalAmount = (codChargeAmount+deliveryChargeAmount+liquidFragileAmount+packagingAmount);
-   var vat = percentage(totalAmount, vatTex);
-    $('#VatAmount').text(vat.toFixed(2));
-    $('#totalDeliveryChargeAmount').text(totalAmount.toFixed(2));
-    totalAmount +=vat;
-   var totalCurrentAmount = (totalCashCollection-totalAmount);
-   $('#netPayable').text(totalAmount.toFixed(2));
-   $('#currentPayable').text(totalCurrentAmount.toFixed(2));
-   var totalDeliveryChargeAmount     =  parseFloat($('#totalDeliveryChargeAmount').text());
-   var currentPayable                =  parseFloat($('#currentPayable').text());
-   var VatAmount                    =  parseFloat($('#VatAmount').text());
-   var obj = {'vatTex':vatTex,'merchantCodCharge':merchantCodCharge,'totalCashCollection':totalCashCollection,'deliveryChargeAmount':deliveryChargeAmount,'codChargeAmount':codChargeAmount,'VatAmount':VatAmount,'liquidFragileAmount':liquidFragileAmount,'packagingAmount':packagingAmount,'totalDeliveryChargeAmount':totalDeliveryChargeAmount,'currentPayable':currentPayable}
-   $('#chargeDetails').val(JSON.stringify(obj));
-
-}
-
-function merchant(){
-    var merchant_id            = $("select#merchant_id option").filter(":selected").val();
-    var delivery_type_id       = $("select#delivery_type_id option").filter(":selected").val();
-
-    if(merchant_id !== ''){
-        $.ajax({
-            type : 'POST',
-            url : merchantUrl,
-            data : {'search': merchant_id,'searchQuery': false},
-            dataType : "json",
-            success : function (data) {
-                var cash_collection =  parseFloat($('#cash_collection').val());
-                if(isNaN(cash_collection)){
-                    cash_collection = 0;
-                }
-                var merchantCodCharge = 0;
-                var codAmount         = 0;
-                if(delivery_type_id !=='' && delivery_type_id ==='1' || delivery_type_id ==='2'){
-                    merchantCodCharge = data[0].cod_charges.inside_city;
-                     codAmount = parseFloat(percentage(cash_collection, data[0].cod_charges.inside_city));
-                }else if(delivery_type_id !=='' && delivery_type_id ==='3'){
-                    merchantCodCharge = data[0].cod_charges.sub_city;
-                     codAmount = parseFloat(percentage(cash_collection, data[0].cod_charges.sub_city));
-                }else if(delivery_type_id !=='' && delivery_type_id ==='4') {
-                    merchantCodCharge = data[0].cod_charges.outside_city;
-                     codAmount = parseFloat(percentage(cash_collection, data[0].cod_charges.outside_city));
-                }
-                else {
-                    merchantCodCharge = 0;
-                    codAmount         = parseFloat(percentage(cash_collection, 0));
-                }
-                $('#merchantVat').val(data[0].vat);
-                document.getElementById('#merchantCodCharge').value = merchantCodCharge;
-            }
-        });
-    }
-}
-
-
