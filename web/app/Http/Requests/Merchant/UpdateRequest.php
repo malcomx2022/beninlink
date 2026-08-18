@@ -4,6 +4,7 @@ namespace App\Http\Requests\Merchant;
 
 use App\Models\Backend\Merchant;
 use App\Models\User;
+use App\Rules\LegalIdentifier;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateRequest extends FormRequest
@@ -34,7 +35,12 @@ class UpdateRequest extends FormRequest
             'hub'                   => ['required','numeric'],
             'status'                => ['required','numeric'], 
             'address'               => ['required','string','max:191'],
-            'payment_period'        => ['numeric']
+            'payment_period'        => ['numeric'],
+            // Mise à jour : format vérifié, non exigé — permet de régulariser un
+            // marchand existant sans bloquer toute autre modification de sa fiche.
+            'ifu'                   => ['nullable', new LegalIdentifier(LegalIdentifier::IFU)],
+            'rccm'                  => ['nullable', new LegalIdentifier(LegalIdentifier::RCCM)],
+            'cnss'                  => ['nullable', new LegalIdentifier(LegalIdentifier::CNSS)]
         ];
     }
  

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Merchant;
 
 use App\Models\User;
+use App\Rules\LegalIdentifier;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreRequest extends FormRequest
@@ -32,7 +33,13 @@ class StoreRequest extends FormRequest
             'status'                => ['required','numeric'],
             'password'              => ['required','min:6'],
             'address'               => ['required','string','max:191'],
-            'payment_period'        => ['numeric']
+            'payment_period'        => ['numeric'],
+            // Création par un administrateur : le format est vérifié, mais rien
+            // n'est exigé — un admin enregistre parfois une PME avant d'avoir ses
+            // pièces. L'obligation ne porte que sur l'inscription en ligne.
+            'ifu'                   => ['nullable', new LegalIdentifier(LegalIdentifier::IFU)],
+            'rccm'                  => ['nullable', new LegalIdentifier(LegalIdentifier::RCCM)],
+            'cnss'                  => ['nullable', new LegalIdentifier(LegalIdentifier::CNSS)]
 
         ];
     }

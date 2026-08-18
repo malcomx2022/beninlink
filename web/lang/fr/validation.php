@@ -147,6 +147,11 @@ return [
         ],
     ],
 
+    // Identifiants légaux béninois (App\Rules\LegalIdentifier).
+    'ifu' => 'L\'IFU doit comporter exactement 13 chiffres.',
+    'rccm' => 'Le RCCM n\'est pas dans un format valide (ex. RB/COT/24 B 1234).',
+    'cnss' => 'Le numéro CNSS n\'est pas dans un format valide.',
+
     /*
     |--------------------------------------------------------------------------
     | Attributs de validation personnalisés

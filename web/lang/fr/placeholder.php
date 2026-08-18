@@ -76,4 +76,7 @@ return [
     'client_secret'                 => 'Entrer le secret client',
     'Enter_company_name' => 'Entrer le nom de la société',
     'Enter_domain' => 'Entrer le domaine',
+    'enter_ifu' => '13 chiffres',
+    'enter_rccm' => 'Ex. RB/COT/24 B 1234',
+    'enter_cnss' => 'N° employeur',
 ];

@@ -147,6 +147,11 @@ return [
         ],
     ],
 
+    // Benin legal identifiers (App\Rules\LegalIdentifier).
+    'ifu' => 'The IFU must contain exactly 13 digits.',
+    'rccm' => 'The RCCM format is invalid (e.g. RB/COT/24 B 1234).',
+    'cnss' => 'The CNSS number format is invalid.',
+
     /*
     |--------------------------------------------------------------------------
     | Custom Validation Attributes

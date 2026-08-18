@@ -93,6 +93,9 @@ return array (
   'invalid_otp'              =>  'Invalid OTP',
   'cash'                     => 'Cash',
   'wallet' => 'Wallet',
+    'ifu' => 'IFU',
+    'rccm' => 'RCCM',
+    'cnss' => 'CNSS number',
   
 
 );

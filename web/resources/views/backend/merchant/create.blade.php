@@ -42,6 +42,33 @@
                                     @enderror
                                 </div>
 
+                                {{-- Identifiants légaux béninois (chantier 2). Non requis ici :
+                                     un administrateur enregistre parfois une PME avant d'avoir
+                                     ses pièces. L'obligation porte sur l'inscription en ligne. --}}
+                                <div class="form-group">
+                                    <label for="ifu">{{ __('merchant.ifu') }}</label>
+                                    <input id="ifu" type="text" name="ifu" inputmode="numeric" maxlength="13" placeholder="{{ __('placeholder.enter_ifu') }}" autocomplete="off" class="form-control" value="{{ old('ifu') }}">
+                                    @error('ifu')
+                                        <small class="text-danger mt-2">{{ $message }}</small>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="rccm">{{ __('merchant.rccm') }}</label>
+                                    <input id="rccm" type="text" name="rccm" maxlength="50" placeholder="{{ __('placeholder.enter_rccm') }}" autocomplete="off" class="form-control" value="{{ old('rccm') }}">
+                                    @error('rccm')
+                                        <small class="text-danger mt-2">{{ $message }}</small>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="cnss">{{ __('merchant.cnss') }}</label>
+                                    <input id="cnss" type="text" name="cnss" maxlength="30" placeholder="{{ __('placeholder.enter_cnss') }}" autocomplete="off" class="form-control" value="{{ old('cnss') }}">
+                                    @error('cnss')
+                                        <small class="text-danger mt-2">{{ $message }}</small>
+                                    @enderror
+                                </div>
+
                                 <div class="form-group ">
                                     <label for="email">{{ __('levels.email') }}</label>
                                     <input id="email" type="text" name="email" data-parsley-trigger="change" placeholder="{{ __('placeholder.enter_email') }}" autocomplete="off" class="form-control" value="{{old('email')}}">

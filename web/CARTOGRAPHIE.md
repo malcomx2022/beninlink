@@ -453,7 +453,35 @@ aucune passerelle existante ne servant de modèle.
   - ⚠️ `mobile: digits_between:11,14` — calibré sur le format BD, **à revoir pour
     le Bénin** (numéros à 8 chiffres, +229 → 11 avec indicatif).
 
-### ⇒ Conséquences pour le chantier 2 (IFU / RCCM / CNSS)
+### ✅ Chantier 2 réalisé le 2026-08-17
+- **Migration additive** `2026_08_17_120000_add_legal_identifiers_…` — la **première
+  du dépôt** : tout le socle tient dans ses migrations de création. Colonnes `ifu(13)`,
+  `rccm(50)`, `cnss(30)` sur **`merchants`** (la PME cliente) **et sur
+  `general_settings`** (le transporteur), une facture SYSCOHADA devant porter les
+  identifiants des deux parties.
+- **Nullable au schéma, obligatoire à la validation** : une colonne `NOT NULL` aurait
+  fait échouer la migration sur une base peuplée, et empêché de régulariser un marchand
+  déjà enregistré. L'exigence vit dans les FormRequest.
+- **`App\Rules\LegalIdentifier`** centralise les trois formats — IFU 13 chiffres, RCCM
+  et CNSS tolérants — parce qu'ils sont demandés à **4 formulaires**. Volontairement
+  permissifs : ils écartent l'absurde sans prétendre valider l'existence d'un numéro.
+- **Obligation graduée** : `ifu` + `rccm` **requis à l'inscription en ligne**
+  (`Merchant/SignUpRequest`), `cnss` optionnel (elle ne concerne que les employeurs) ;
+  les trois **facultatifs** côté admin (`Store`/`UpdateRequest`) — un administrateur
+  enregistre parfois une PME avant d'avoir ses pièces.
+- **Persistance aux 3 points d'écriture** de `MerchantRepository` (`store`,
+  `signUpStore`, `update`), sous `filled()` : une mise à jour partielle n'efface pas un
+  IFU déjà saisi.
+- **Aucune modification d'API nécessaire** : le modèle `Merchant` étant sérialisé en
+  entier, les trois champs apparaissent d'office dans `/signin` et `/profile`.
+- Vérifié bout en bout par appels réels : IFU à 9 chiffres → refusé (« L'IFU doit
+  comporter exactement 13 chiffres. »), inscription sans IFU → refusée, inscription
+  complète → marchand créé avec ses identifiants en base. `php artisan test` : 2 passed.
+- **Reste à faire** : formulaire d'inscription publique (`merchant/sign_up.blade.php`),
+  formulaire d'édition marchand, et les 3 formulaires **société** (`general_settings`
+  a ses colonnes mais aucun champ ne les alimente encore).
+
+### ⇒ Conséquences initiales relevées pour le chantier 2 (IFU / RCCM / CNSS)
 1. **Ce qui s'en rapproche existe déjà mais ne convient pas** : `merchants.trade_license`
    et `merchants.nid_id` sont des **`foreignId` vers `uploads`** — des scans, pas des
    numéros exploitables. Seul `users.nid_number` est un numéro texte, côté personne

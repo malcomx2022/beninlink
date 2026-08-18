@@ -80,6 +80,12 @@ class MerchantRepository implements MerchantInterface{
             $merchant->company_id           = settings()->id;
             $merchant->user_id              = $merchantUser->id;
             $merchant->business_name        = $request->business_name;
+            // Identifiants légaux béninois (chantier 2). Renseignés seulement s'ils
+            // arrivent : la mise à jour d'une fiche ne doit pas effacer un IFU déjà
+            // saisi parce que le formulaire courant ne le porte pas.
+            if($request->filled('ifu')){  $merchant->ifu  = trim($request->ifu);  }
+            if($request->filled('rccm')){ $merchant->rccm = trim($request->rccm); }
+            if($request->filled('cnss')){ $merchant->cnss = trim($request->cnss); }
             // $merchant->merchant_unique_id   = $this->generateUniqueID();
             $merchant->merchant_unique_id   = $uniqueID;
 
@@ -177,6 +183,12 @@ class MerchantRepository implements MerchantInterface{
             $merchant->company_id               = settings()->id;
             $merchant->user_id                  = $merchantUser->id;
             $merchant->business_name            = $request->business_name;
+            // Identifiants légaux béninois (chantier 2). Renseignés seulement s'ils
+            // arrivent : la mise à jour d'une fiche ne doit pas effacer un IFU déjà
+            // saisi parce que le formulaire courant ne le porte pas.
+            if($request->filled('ifu')){  $merchant->ifu  = trim($request->ifu);  }
+            if($request->filled('rccm')){ $merchant->rccm = trim($request->rccm); }
+            if($request->filled('cnss')){ $merchant->cnss = trim($request->cnss); }
             $merchant->merchant_unique_id       = $uniqueID;
             $merchant->cod_charges              = array(
                 'inside_city'    => "0",
@@ -305,6 +317,12 @@ class MerchantRepository implements MerchantInterface{
 
             // Merchant row
             $merchant->business_name        = $request->business_name;
+            // Identifiants légaux béninois (chantier 2). Renseignés seulement s'ils
+            // arrivent : la mise à jour d'une fiche ne doit pas effacer un IFU déjà
+            // saisi parce que le formulaire courant ne le porte pas.
+            if($request->filled('ifu')){  $merchant->ifu  = trim($request->ifu);  }
+            if($request->filled('rccm')){ $merchant->rccm = trim($request->rccm); }
+            if($request->filled('cnss')){ $merchant->cnss = trim($request->cnss); }
             if($request->opening_balance !==""){
                 $merchant->current_balance      = $request->opening_balance;
                 $merchant->opening_balance      = $request->opening_balance;
