@@ -93,9 +93,12 @@ un écart est journalisé pour rapprochement manuel.
   premier essai en sandbox reste indispensable.
 - **Seule la recharge de wallet est branchée.** L'abonnement SaaS
   (`purpose = subscription`) est prévu dans le schéma mais pas encore câblé :
-  il passe aujourd'hui par Stripe codé en dur (bloc E), et la faille S1
-  — activation sans vérification du paiement — reste ouverte.
-- **Tests d'idempotence à compléter** : `phpunit.xml` pointe sur une SQLite en
+  il passe aujourd'hui par Stripe codé en dur (bloc E). La faille S1 qui
+  l'accompagnait — activation sans vérification du paiement — est corrigée.
+- ✅ **Idempotence vérifiée en conditions réelles le 2026-08-18** : deux webhooks
+  `transaction.approved` identiques et signés — le premier crédite 7 500 FCFA, le
+  second répond `already processed` et le solde reste inchangé.
+- **Tests d'idempotence automatisés à compléter** : `phpunit.xml` pointe sur une SQLite en
   mémoire vide ; il faut y ajouter `RefreshDatabase` pour couvrir le double
   webhook. Les 8 tests actuels couvrent la vérification de signature.
 - **Clés par locataire** : `FedaPayGateway::credentialsFor()` lit

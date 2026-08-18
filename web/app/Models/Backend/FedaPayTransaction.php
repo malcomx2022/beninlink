@@ -21,6 +21,13 @@ class FedaPayTransaction extends Model
     public const PURPOSE_WALLET = 'wallet_recharge';
     public const PURPOSE_SUBSCRIPTION = 'subscription';
 
+    /**
+     * Nom de table fixé explicitement. Laravel déduirait `feda_pay_transactions`
+     * du nom de classe — il coupe entre « Feda » et « Pay » — alors que la table
+     * créée par la migration est `fedapay_transactions`.
+     */
+    protected $table = 'fedapay_transactions';
+
     protected $guarded = ['id'];
 
     protected $casts = [
