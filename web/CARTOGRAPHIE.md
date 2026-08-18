@@ -1156,7 +1156,7 @@ vestige du squelette Laravel.
 | # | Bloc | Constat | Fichier |
 |---|---|---|---|
 | S1 | E | **Abonnement activable sans paiement** : le retour Stripe n'est jamais vérifié ; `plan_id` et `user_id` viennent de l'URL | `PlanController::StripePaymentSuccess:137` |
-| S2 | G | **TVA et frais de livraison calculés côté client** : `json_decode($request->chargeDetails)` enregistré tel quel | `ParcelRepository:340,516,710` · `MerchantParcelRepository:225,370,554` |
+| ~~S2~~ | G | ~~**TVA et frais de livraison calculés côté client**~~ — ✅ **corrigé le 2026-08-18** : `App\Services\Parcel\ChargeCalculator` recalcule tout côté serveur, `chargeDetails` n'alimente plus aucun montant (voir §S2 ci-dessous) | `ParcelRepository` · `MerchantParcelRepository` |
 | S3 | I | **Clé API en dur dans le dépôt**, partagée par toutes les installations et embarquée dans les APK | `config/rxcourier.php:90` |
 | S4 | I | **`deliveryman/parcel-location-update` hors `auth:sanctum`** | `routes/api.php:167` |
 | S5 | I | **Aucune séparation marchand/livreur** : jetons sans `abilities`, pas de garde `user_type` | `routes/api.php:60-165` |
@@ -1168,6 +1168,39 @@ vestige du squelette Laravel.
 | S11 | K | **Topic FCM dérivé de l'e-mail** : `fcmSubscribe()` permet de s'abonner aux notifications d'autrui | `PushNotificationService:94-124` |
 | S12 | K | **TLS non vérifié** sur les appels sortants SMS et push (`CURLOPT_SSL_VERIFYPEER=false`) | `SmsService:67` · `PushNotificationService:43,83,239` |
 | S13 | K | **Expéditeur d'e-mail contrôlé par le visiteur** (`->from($data['email'])`) | `ContactMail:34` |
+
+## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
+
+**`App\Services\Parcel\ChargeCalculator`** est désormais la seule source des montants.
+Les 6 blocs des deux repositories (`store`, `signUpStore`-équivalent, `update` × 2 fichiers)
+et les 6 lignes de journal (`parcel_logs`) ont été convertis : **plus aucun montant ne
+provient de `chargeDetails`** (`grep chargeDetails->` → 0 occurrence).
+
+Règles reproduites **à l'identique** depuis `public/backend/js/parcel/create.js`, seule
+spécification existante :
+```
+frais COD      = encaissement × taux COD du marchand (selon la zone)
+sous-total     = frais livraison + frais COD + emballage + fragile
+TVA            = sous-total × taux de TVA du marchand
+net à reverser = encaissement − (sous-total + TVA)
+```
+⚠️ `total_delivery_amount` porte le **sous-total hors TVA** — comportement d'origine
+conservé, le changer modifierait les factures déjà émises.
+
+**Corrige au passage S8 et S9** : la recherche du barème filtre maintenant sur le poids
+(le socle servait la première ligne de la catégorie, un colis lourd passant au tarif le
+plus bas) et reste scopée par société côté administration.
+
+**Vérifié par l'attaque** : un `POST parcel/store` portant un `chargeDetails` mensonger
+(frais 0, TVA 0, net = encaissement entier sur 50 000) produit en base
+`delivery_charge=60`, `cod_amount=500` (1 %), `total=560`, `net=49 440` — les valeurs
+falsifiées sont ignorées. Avec `merchants.vat = 18` : `vat_amount=100,80` et
+`net=49 339,20`, exact au centime.
+
+⏳ **Reste** : les vues Blade continuent d'envoyer `chargeDetails` (désormais ignoré) et
+d'afficher un total calculé en JavaScript. Tant que les deux calculs coïncident l'écran
+reste juste, mais **l'affichage devrait être remplacé par un endpoint de devis** pour
+éviter qu'ils divergent silencieusement.
 
 ## Routes mortes repérées
 | Route | Méthode cible | Statut |

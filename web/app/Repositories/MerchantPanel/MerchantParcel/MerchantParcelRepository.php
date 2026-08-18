@@ -222,34 +222,34 @@ class MerchantParcelRepository implements MerchantParcelInterface {
             }
             // End Pickup & Delivery Time
 
-            $parcel->vat                    = $chargeDetails->vatTex;
-            $parcel->vat_amount             = $chargeDetails->VatAmount;
-            $parcel->delivery_charge        = $chargeDetails->deliveryChargeAmount;
-
-            //merchant cod charge
-            $Codmerchant  = Auth::user()->merchant;
-            $merchantCODCharge   = 0;
-            if($request->delivery_type_id == 1 || $request->delivery_type_id == 2):
-                $merchantCODCharge   = $Codmerchant->cod_charges['inside_city'];
-            elseif($request->delivery_type_id == 3):
-                $merchantCODCharge   = $Codmerchant->cod_charges['sub_city'];
-            elseif($request->delivery_type_id == 4):
-                $merchantCODCharge   = $Codmerchant->cod_charges['outside_city'];
-            endif;
-            //end merchant cod charge
-            $parcel->cod_charge             =  $merchantCODCharge;
-            $parcel->cod_amount             = $chargeDetails->codChargeAmount;
-            $parcel->total_delivery_amount  = $chargeDetails->totalDeliveryChargeAmount;
-            $parcel->current_payable        = $chargeDetails->currentPayable;
+            // S2 — montants calcules par le SERVEUR. Le socle enregistrait ici
+            // json_decode(chargeDetails), c'est-a-dire des frais, une TVA et un net
+            // a reverser fabriques par le navigateur : le client choisissait sa facture.
+            $charges = app(\App\Services\Parcel\ChargeCalculator::class)->calculate(
+                \App\Models\Backend\Merchant::find(Auth::user()->merchant->id),
+                (int) $request->delivery_type_id,
+                $request->category_id ? (int) $request->category_id : null,
+                $request->weight,
+                (float) $request->cash_collection,
+                $request->packaging_id ? (int) $request->packaging_id : null,
+                isset($request->fragileLiquid) && $request->fragileLiquid == 'on'
+            );
+            $parcel->vat                    = $charges['vat'];
+            $parcel->vat_amount             = $charges['vat_amount'];
+            $parcel->delivery_charge        = $charges['delivery_charge'];
+            $parcel->cod_charge             = $charges['cod_charge'];
+            $parcel->cod_amount             = $charges['cod_amount'];
+            $parcel->total_delivery_amount  = $charges['total_delivery_amount'];
+            $parcel->current_payable        = $charges['current_payable'];
             $parcel->note                   = $request->note;
             $parcel->parcel_bank            = $request->parcel_bank;
             $parcel->status                 = ParcelStatus::PENDING;
             if($request->packaging_id){
                 $parcel->packaging_id               = $request->packaging_id;
-                $parcel->packaging_amount           = $chargeDetails->packagingAmount;
+                $parcel->packaging_amount           = $charges['packaging_amount'];
             }
             if(isset($request->fragileLiquid) && $request->fragileLiquid=='on'){
-                $parcel->liquid_fragile_amount  = $chargeDetails->liquidFragileAmount;
+                $parcel->liquid_fragile_amount  = $charges['liquid_fragile_amount'];
             }
           
             $parcel->tracking_id             = $this->RandomTrackingID();
@@ -367,30 +367,31 @@ class MerchantParcelRepository implements MerchantParcelInterface {
             // End Pickup & Delivery Time
 
             if(!blank($chargeDetails)){
-                $parcel->vat                    = $chargeDetails->vatTex;
-                $parcel->vat_amount             = $chargeDetails->VatAmount;
-                $parcel->delivery_charge        = $chargeDetails->deliveryChargeAmount;
-                //merchant cod charge
-                $Codmerchant  = Auth::user()->merchant;
-                $merchantCODCharge   = 0;
-                if($request->delivery_type_id == 1 || $request->delivery_type_id == 2):
-                    $merchantCODCharge   = $Codmerchant->cod_charges['inside_city'];
-                elseif($request->delivery_type_id == 3):
-                    $merchantCODCharge   = $Codmerchant->cod_charges['sub_city'];
-                elseif($request->delivery_type_id == 4):
-                    $merchantCODCharge   = $Codmerchant->cod_charges['outside_city'];
-                endif;
-                //end merchant cod charge
-                $parcel->cod_charge             =  $merchantCODCharge;
-                $parcel->cod_amount             = $chargeDetails->codChargeAmount;
-                $parcel->total_delivery_amount  = $chargeDetails->totalDeliveryChargeAmount;
-                $parcel->current_payable        = $chargeDetails->currentPayable;
+                // S2 — montants calcules par le SERVEUR. Le socle enregistrait ici
+                // json_decode(chargeDetails), c'est-a-dire des frais, une TVA et un net
+                // a reverser fabriques par le navigateur : le client choisissait sa facture.
+                $charges = app(\App\Services\Parcel\ChargeCalculator::class)->calculate(
+                    \App\Models\Backend\Merchant::find(Auth::user()->merchant->id),
+                    (int) $request->delivery_type_id,
+                    $request->category_id ? (int) $request->category_id : null,
+                    $request->weight,
+                    (float) $request->cash_collection,
+                    $request->packaging_id ? (int) $request->packaging_id : null,
+                    isset($request->fragileLiquid) && $request->fragileLiquid == 'on'
+                );
+                $parcel->vat                    = $charges['vat'];
+                $parcel->vat_amount             = $charges['vat_amount'];
+                $parcel->delivery_charge        = $charges['delivery_charge'];
+                $parcel->cod_charge             = $charges['cod_charge'];
+                $parcel->cod_amount             = $charges['cod_amount'];
+                $parcel->total_delivery_amount  = $charges['total_delivery_amount'];
+                $parcel->current_payable        = $charges['current_payable'];
                 if($request->packaging_id){
                     $parcel->packaging_id           = $request->packaging_id;
-                    $parcel->packaging_amount       = $chargeDetails->packagingAmount;
+                    $parcel->packaging_amount       = $charges['packaging_amount'];
                 }
                 if(isset($request->fragileLiquid) && $request->fragileLiquid=='on'){
-                    $parcel->liquid_fragile_amount      = $chargeDetails->liquidFragileAmount;
+                    $parcel->liquid_fragile_amount      = $charges['liquid_fragile_amount'];
                 }else {
                     $parcel->liquid_fragile_amount      = null;
                 }
@@ -454,8 +455,8 @@ class MerchantParcelRepository implements MerchantParcelInterface {
                 $log->selling_price          = $request->selling_price;
             }
             if(!blank($chargeDetails)){
-                $log->total_delivery_amount  = $chargeDetails->totalDeliveryChargeAmount;
-                $log->current_payable        = $chargeDetails->currentPayable;
+                $log->total_delivery_amount  = $charges['total_delivery_amount'];
+                $log->current_payable        = $charges['current_payable'];
             }
             else{
                 $log->total_delivery_amount  = $duplicate_parcel->total_delivery_amount;
@@ -551,34 +552,34 @@ class MerchantParcelRepository implements MerchantParcelInterface {
                 $parcel->parcel_bank            = $request->parcel_bank;
 
             if(!blank($chargeDetails)){
-                    $parcel->vat                    = $chargeDetails->vatTex;
-                    $parcel->vat_amount             = $chargeDetails->VatAmount;
-                    $parcel->delivery_charge        = $chargeDetails->deliveryChargeAmount;
-
-                //merchant cod charge
-                $Codmerchant         = Auth::user()->merchant;
-                $merchantCODCharge   = 0;
-                if($request->delivery_type_id == 1 || $request->delivery_type_id == 2):
-                    $merchantCODCharge   = $Codmerchant->cod_charges['inside_city'];
-                elseif($request->delivery_type_id == 3):
-                    $merchantCODCharge   = $Codmerchant->cod_charges['sub_city'];
-                elseif($request->delivery_type_id == 4):
-                    $merchantCODCharge   = $Codmerchant->cod_charges['outside_city'];
-                endif;
-                //end merchant cod charge
-                $parcel->cod_charge             =  $merchantCODCharge;
-                $parcel->cod_amount             = $chargeDetails->codChargeAmount;
-                $parcel->total_delivery_amount  = $chargeDetails->totalDeliveryChargeAmount;
-                $parcel->current_payable        = $chargeDetails->currentPayable;
+                    // S2 — montants calcules par le SERVEUR. Le socle enregistrait ici
+                    // json_decode(chargeDetails), c'est-a-dire des frais, une TVA et un net
+                    // a reverser fabriques par le navigateur : le client choisissait sa facture.
+                    $charges = app(\App\Services\Parcel\ChargeCalculator::class)->calculate(
+                        \App\Models\Backend\Merchant::find(Auth::user()->merchant->id),
+                        (int) $request->delivery_type_id,
+                        $request->category_id ? (int) $request->category_id : null,
+                        $request->weight,
+                        (float) $request->cash_collection,
+                        $request->packaging_id ? (int) $request->packaging_id : null,
+                        isset($request->fragileLiquid) && $request->fragileLiquid == 'on'
+                    );
+                    $parcel->vat                    = $charges['vat'];
+                    $parcel->vat_amount             = $charges['vat_amount'];
+                    $parcel->delivery_charge        = $charges['delivery_charge'];
+                    $parcel->cod_charge             = $charges['cod_charge'];
+                    $parcel->cod_amount             = $charges['cod_amount'];
+                    $parcel->total_delivery_amount  = $charges['total_delivery_amount'];
+                    $parcel->current_payable        = $charges['current_payable'];
 
                 if(isset($request->fragileLiquid) && $request->fragileLiquid=='on'){
-                    $parcel->liquid_fragile_amount      = $chargeDetails->liquidFragileAmount;
+                    $parcel->liquid_fragile_amount      = $charges['liquid_fragile_amount'];
                 }else{
                     $parcel->liquid_fragile_amount      = null;
                 }
                 if($request->packaging_id){
                     $parcel->packaging_id               = $request->packaging_id;
-                    $parcel->packaging_amount           = $chargeDetails->packagingAmount;
+                    $parcel->packaging_amount           = $charges['packaging_amount'];
 
                 }
             }
