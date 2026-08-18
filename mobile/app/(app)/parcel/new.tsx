@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { ApiError } from '../../../src/api/client';
-import { createParcel, fetchParcelFormData } from '../../../src/api/parcels';
-import type { ParcelFormData } from '../../../src/api/types';
-import { Button, ChoiceGroup, ErrorText, Field, Muted } from '../../../src/components/ui';
-import { spacing } from '../../../src/theme/typography';
+import { createParcel, fetchParcelFormData, fetchQuote } from '../../../src/api/parcels';
+import type { ParcelFormData, ParcelQuote } from '../../../src/api/types';
+import { Button, Card, ChoiceGroup, ErrorText, Field, Muted, Title } from '../../../src/components/ui';
+import { colors } from '../../../src/theme/colors';
+import { fonts, fontSizes, spacing } from '../../../src/theme/typography';
 import { deliveryTypeId, deliveryTypeLabel } from '../../../src/domain/deliveryType';
+import { formatAmount, formatRate } from '../../../src/domain/money';
 import { t } from '../../../src/i18n';
 
 /**
@@ -20,6 +22,10 @@ import { t } from '../../../src/i18n';
  *
  * Reproduire le calcul ici — comme le faisait l'app Flutter dépréciée —
  * dupliquerait le barème et rouvrirait la faille.
+ *
+ * Le prix reste néanmoins visible **avant** la création : `POST parcel/quote`
+ * renvoie les montants qu'appliquera le serveur, sans rien enregistrer. L'app
+ * les affiche tels quels.
  */
 export default function NewParcelScreen() {
   const router = useRouter();
@@ -40,6 +46,8 @@ export default function NewParcelScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [quote, setQuote] = useState<ParcelQuote | null>(null);
+  const [quoting, setQuoting] = useState(false);
 
   const set = (key: keyof typeof values) => (value: string) =>
     setValues((v) => ({ ...v, [key]: value }));
@@ -65,6 +73,48 @@ export default function NewParcelScreen() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  /**
+   * Devis à chaque changement d'option ou de montant.
+   *
+   * Temporisé : on laisse la frappe retomber avant d'interroger le serveur. Le
+   * `AbortController` annule le devis devenu obsolète — sans lui, une réponse
+   * lente pourrait écraser une réponse plus récente.
+   */
+  useEffect(() => {
+    if (!categoryId || !typeId) {
+      setQuote(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setQuoting(true);
+      try {
+        const result = await fetchQuote(
+          {
+            category_id: categoryId,
+            delivery_type_id: typeId,
+            cash_collection: Number(values.cash_collection.replace(/\s/g, '')) || 0,
+            ...(values.weight ? { weight: values.weight } : {}),
+          },
+          controller.signal,
+        );
+        setQuote(result);
+      } catch {
+        // Devis abandonné ou serveur indisponible : on n'affiche aucun montant
+        // plutôt qu'un montant faux. La création reste possible.
+        if (!controller.signal.aborted) setQuote(null);
+      } finally {
+        if (!controller.signal.aborted) setQuoting(false);
+      }
+    }, 400);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [categoryId, typeId, values.cash_collection, values.weight]);
 
   const typeOptions = useMemo(() => {
     // `deliveryTypes` liste des interrupteurs de configuration : on ne garde que
@@ -217,9 +267,33 @@ export default function NewParcelScreen() {
           editable={!saving}
         />
 
-        {/* Les montants ne sont pas affichés avant l'envoi : ils appartiennent au
-            serveur. Les annoncer ici supposerait de les recalculer. */}
-        <Muted>{t('parcels.amountsComputedByServer')}</Muted>
+        {/* Devis : ces montants viennent du serveur, ce sont ceux qui seront
+            enregistrés. Rien n'est calculé ici. */}
+        <Card>
+          <Title>{t('parcels.quoteTitle')}</Title>
+          {quote ? (
+            <>
+              <QuoteLine label={t('invoices.fees')} value={quote.delivery_charge} />
+              <QuoteLine
+                label={`${t('parcels.codFee')} (${formatRate(quote.cod_charge)})`}
+                value={quote.cod_amount}
+              />
+              <QuoteLine
+                label={`${t('invoices.vat')} (${formatRate(quote.vat)})`}
+                value={quote.vat_amount}
+              />
+              <QuoteLine label={t('parcels.totalCharges')} value={quote.total_payable_charges} />
+              <QuoteLine
+                label={t('parcels.currentPayable')}
+                value={quote.current_payable}
+                highlight
+              />
+            </>
+          ) : (
+            <Muted>{quoting ? t('parcels.quotePending') : t('parcels.quoteHint')}</Muted>
+          )}
+          <Muted>{t('parcels.amountsComputedByServer')}</Muted>
+        </Card>
 
         <ErrorText>{error}</ErrorText>
         <Button title={t('parcels.create')} onPress={submit} loading={saving} variant="accent" />
@@ -228,7 +302,30 @@ export default function NewParcelScreen() {
   );
 }
 
+function QuoteLine({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: unknown;
+  highlight?: boolean;
+}) {
+  return (
+    <View style={styles.quoteLine}>
+      <Text style={styles.quoteLabel}>{label}</Text>
+      <Text style={[styles.quoteValue, highlight && styles.quoteValueHighlight]}>
+        {formatAmount(value)}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   page: { padding: spacing.md, gap: spacing.md },
+  quoteLine: { flexDirection: 'row', justifyContent: 'space-between' },
+  quoteLabel: { fontFamily: fonts.body, fontSize: fontSizes.sm, color: colors.textMuted },
+  quoteValue: { fontFamily: fonts.numeric, fontSize: fontSizes.sm, color: colors.text },
+  quoteValueHighlight: { color: colors.accent, fontSize: fontSizes.md },
 });

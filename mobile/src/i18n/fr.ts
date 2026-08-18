@@ -95,7 +95,11 @@ export const fr = {
     invalidAmount: 'Montant invalide.',
     /** Rappel du principe posé par la correction de S2. */
     amountsComputedByServer:
-      'Les frais, la TVA et le net à reverser sont calculés par BeninLink après création.',
+      'Les frais, la TVA et le net à reverser sont calculés par BeninLink, jamais par l\'application.',
+    quoteTitle: 'Devis',
+    quotePending: 'Calcul du devis…',
+    quoteHint: 'Choisissez la catégorie et le type de livraison pour obtenir le devis.',
+    totalCharges: 'Total des frais (TVA comprise)',
   },
   /** Les 7 étapes marchand (voir src/domain/parcelStatus.ts). */
   parcelStage: {
@@ -135,6 +139,13 @@ export const fr = {
     vat: 'TVA',
     netPayable: 'Net à reverser',
     totalParcels: 'Colis',
+    currentStatement: 'Relevé en cours',
+    issued: 'Relevés émis',
+    empty: 'Aucun relevé émis pour le moment.',
+    tapForDetail: 'Touchez un relevé pour voir sa ventilation.',
+    returnFees: 'Frais de retour',
+    /** Le PDF attend le chantier 4 côté web/ : ne rien promettre ici. */
+    exportNotice: 'Export PDF et CSV disponibles depuis votre espace web.',
   },
   shops: {
     title: 'Mes boutiques',
@@ -143,6 +154,13 @@ export const fr = {
   },
   rates: {
     title: 'Tarifs de livraison',
+    subtitle: 'Par poids et par zone (FCFA)',
+    empty: 'Aucun tarif défini pour votre compte.',
+    weight: 'Poids',
+    codTitle: "Frais d'encaissement (COD)",
+    codNotice: 'Pourcentage prélevé sur le montant encaissé auprès du destinataire.',
+    notice:
+      'Le tarif retenu dépend de la catégorie, du poids saisi et de la zone de destination. Le montant exact est calculé par BeninLink à la création du colis.',
   },
   profile: {
     title: 'Profil',

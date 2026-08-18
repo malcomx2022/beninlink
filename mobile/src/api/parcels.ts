@@ -11,7 +11,14 @@
  */
 import { api } from './client';
 import { endpoints } from './endpoints';
-import type { Parcel, ParcelEvent, ParcelFormData, ParcelStatusOption, Shop } from './types';
+import type {
+  Parcel,
+  ParcelEvent,
+  ParcelFormData,
+  ParcelQuote,
+  ParcelStatusOption,
+  Shop,
+} from './types';
 
 export async function fetchParcels(): Promise<Parcel[]> {
   const data = await api.get<{ parcels: Parcel[] }>(endpoints.parcelIndex);
@@ -75,4 +82,25 @@ export function createParcel(parcel: NewParcel): Promise<unknown> {
 export async function fetchShops(): Promise<Shop[]> {
   const data = await api.get<{ shops: Shop[] }>(endpoints.shopsIndex);
   return data?.shops ?? [];
+}
+
+export type QuoteInput = {
+  category_id: number;
+  delivery_type_id: number;
+  cash_collection: number;
+  weight?: string | number;
+  packaging_id?: number;
+};
+
+/**
+ * Devis : demande au serveur ce que coûtera le colis, sans rien créer.
+ *
+ * C'est la réponse à la question « combien ? » posée avant la création. Le
+ * calcul reste **entièrement** côté serveur — on affiche le devis, on ne le
+ * refait pas, sinon on rouvre S2 et les deux barèmes finissent par diverger.
+ *
+ * `signal` sert à abandonner un devis devenu obsolète pendant la saisie.
+ */
+export function fetchQuote(input: QuoteInput, signal?: AbortSignal): Promise<ParcelQuote> {
+  return api.post<ParcelQuote>(endpoints.parcelQuote, input, { signal });
 }

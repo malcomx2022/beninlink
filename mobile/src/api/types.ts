@@ -167,3 +167,93 @@ export type BalanceDetails = {
   available_balance: Amount;
   clearable_parcels: number;
 };
+
+/**
+ * `GET /invoice-list/index` — une ligne de la liste (`InvoiceResource`).
+ *
+ * ⚠️ Le backend pagine (10 par page) et renvoie l'enveloppe d'un paginateur ;
+ * le client ne conserve que `data`. Les 10 dernières factures suffisent au MVP.
+ */
+export type Invoice = {
+  id: number;
+  invoice_id: string;
+  /** Libellé déjà traduit (Payé / Impayé / En cours). */
+  status: string | null;
+  /** Net à reverser de la facture, retours déduits. */
+  amount: Amount;
+  /** Déjà mise en forme par le backend (« 14 Jul 2026 »). */
+  invoice_date: string | null;
+};
+
+/**
+ * `GET /invoice-details/{id}` — la ventilation d'une facture.
+ *
+ * ⚠️ `total_deliverd_amount` : la faute de frappe vient du backend, on garde la
+ * clé telle qu'elle arrive.
+ * ⚠️ La réponse porte aussi une clé `parcels`, **toujours nulle** : elle lit un
+ * accesseur `InvoiceParcelList` qui n'existe pas sur le modèle. Ne pas l'afficher
+ * tant que `web/` ne l'a pas ajouté.
+ */
+export type InvoiceDetails = Invoice & {
+  total_deliverd_amount: Amount;
+  delivery_charge: Amount;
+  cod_amount: Amount;
+  total_return_fee: Amount;
+  /** Net à reverser = encaissé − frais − COD − retours. */
+  payable_amount: Amount;
+  merchant_name: string | null;
+  merchant_phone: string | null;
+  merchant_address: string | null;
+  total_parcels: number;
+};
+
+/**
+ * `GET /settings/delivery-charges` — une ligne du barème (poids × zone).
+ *
+ * ⚠️ Tous les montants arrivent en **chaînes** (`(string)` explicite dans
+ * `DeliveryChargeResource`) : passer par `toAmount()` comme partout ailleurs.
+ * ⚠️ `weight` est une valeur de tranche **comparée à l'identique** par le
+ * calculateur serveur, pas un plafond : afficher « 1 kg », jamais « jusqu'à 1 kg ».
+ */
+export type DeliveryRate = {
+  id: number;
+  category: string | null;
+  weight: string | null;
+  same_day: string;
+  next_day: string;
+  sub_city: string;
+  outside_city: string;
+  status: string;
+  statusName: string | null;
+};
+
+/** `GET /settings/cod-charges` — taux d'encaissement en **pourcentage**, par zone. */
+export type CodCharge = {
+  /** Libellé déjà traduit par le backend (`__('merchant.inside_city')`…). */
+  name: string;
+  charge: string;
+};
+
+/**
+ * `POST parcel/quote` — les montants d'un colis **avant** sa création.
+ *
+ * Même `ChargeCalculator` que la création : ce que le devis annonce est ce que
+ * le serveur enregistrera. L'app affiche ces valeurs, elle n'en dérive aucune.
+ *
+ * ⚠️ `vat` et `cod_charge` sont des **taux en pourcentage** (`formatRate`), pas
+ * des montants. `total_delivery_amount` est le sous-total **hors TVA** ;
+ * `total_payable_charges` est le total que paie le marchand, TVA comprise.
+ */
+export type ParcelQuote = {
+  delivery_charge: Amount;
+  cod_charge: Amount;
+  cod_amount: Amount;
+  vat: Amount;
+  vat_amount: Amount;
+  packaging_amount: Amount;
+  liquid_fragile_amount: Amount;
+  total_delivery_amount: Amount;
+  total_payable_charges: Amount;
+  /** Net à reverser au marchand après déduction des frais. */
+  current_payable: Amount;
+};

@@ -38,6 +38,8 @@ export const endpoints = {
   parcelFilter: 'parcel/filter',
   parcelCreate: 'parcel/create',
   parcelStore: 'parcel/store',
+  /** Devis : montants du serveur AVANT création (voir web/ ParcelController::quote). */
+  parcelQuote: 'parcel/quote',
   parcelDetails: (id: number | string) => `parcel/details/${id}`,
   parcelLogs: (id: number | string) => `parcel/logs/${id}`,
   parcelEdit: (id: number | string) => `parcel/edit/${id}`,
