@@ -119,6 +119,63 @@ class ParcelController extends Controller
         }
     }
 
+    /**
+     * Devis d'un colis : les montants AVANT creation, rien n'est ecrit.
+     *
+     * Meme service que `store()` — `ChargeCalculator`, seule source des montants
+     * depuis la correction de S2 — avec les memes entrees. L'ecran de creation
+     * peut donc afficher le prix que le serveur appliquera vraiment, au lieu de
+     * le recalculer de son cote : c'etait exactement la faille S2, et un second
+     * bareme cote client finirait par diverger du premier.
+     *
+     * Le marchand vient du jeton, jamais de la requete : on ne devise pas au nom
+     * d'un autre.
+     *
+     * Attention : `vat` et `cod_charge` sont des TAUX en pourcentage, pas des
+     * montants. `total_delivery_amount` est le sous-total HORS TVA (comportement
+     * d'origine du socle, conserve) ; `total_payable_charges` ajoute la TVA,
+     * c'est ce que le marchand paie reellement.
+     */
+    public function quote(Request $request, \App\Services\Parcel\ChargeCalculator $calculator)
+    {
+        $validator = Validator::make($request->all(), [
+            'category_id'      => ['required','numeric'],
+            'delivery_type_id' => ['required','numeric'],
+            'cash_collection'  => ['nullable','numeric','min:0'],
+            'weight'           => ['nullable'],
+            'packaging_id'     => ['nullable','numeric'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->responseWithError(__('parcel.quote'), ['message' => $validator->errors()], 422);
+        }
+
+        try {
+            $merchant = $this->repo->getMerchant(auth()->user()->id);
+            if (blank($merchant)) {
+                return $this->responseWithError(__('parcel.error_msg'), [], 403);
+            }
+
+            $charges = $calculator->calculate(
+                $merchant,
+                (int) $request->delivery_type_id,
+                $request->category_id ? (int) $request->category_id : null,
+                $request->weight,
+                (float) $request->cash_collection,
+                $request->packaging_id ? (int) $request->packaging_id : null,
+                $request->fragileLiquid == 'on'
+            );
+
+            // Somme rendue par le serveur pour qu'aucun client n'ait a decider si
+            // le sous-total porte la TVA ou non.
+            $charges['total_payable_charges'] = $charges['total_delivery_amount'] + $charges['vat_amount'];
+
+            return $this->responseWithSuccess(__('parcel.quote'), $charges, 200);
+        } catch (\Exception $exception) {
+            return $this->responseWithError(__('parcel.error_msg'), [], 500);
+        }
+    }
+
 
 
     public function logs($id)

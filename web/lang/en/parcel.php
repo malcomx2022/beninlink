@@ -199,7 +199,6 @@ return array (
   'parcel_count' => 'Parcel Count',
   'days_count' => 'Days count',
   'start_date' => 'Start Date',
-  'expired_date' => 'Expired Date'
- 
-
+  'expired_date' => 'Expired Date',
+    'quote' => 'Quote',
 );

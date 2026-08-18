@@ -186,4 +186,5 @@ return array (
     'start_date' => 'Date de début',
     'expired_date' => 'Date d\'expiration',
 
+    'quote' => 'Devis',
 );

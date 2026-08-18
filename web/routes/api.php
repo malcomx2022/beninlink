@@ -126,6 +126,7 @@ Route::prefix('v10')->group(function() {
             Route::get('parcel/index',                                  [ParcelController::class,'index']);
             Route::get('parcel/create',                                 [ParcelController::class,'create']);
             Route::post('parcel/store',                                 [ParcelController::class,'store']);
+            Route::post('parcel/quote',                                 [ParcelController::class,'quote']);
             Route::get('parcel/details/{id}',                           [ParcelController::class,'details']);
             Route::get('parcel/edit/{id}',                              [ParcelController::class,'edit']);
             Route::put('parcel/update/{id}',                            [ParcelController::class,'update']);
