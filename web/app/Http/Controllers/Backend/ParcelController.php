@@ -119,9 +119,19 @@ class ParcelController extends Controller
 
         //wallet use checking
         $merchant      = Merchant::find($request->merchant_id);
+        // Meme remarque que dans le panneau marchand : le montant vient du
+        // serveur, `chargeDetails` n'est plus envoye par l'ecran.
         if ($merchant->wallet_use_activation == Status::ACTIVE) :
-            $chargeDetails = json_decode($request->chargeDetails);
-            if ($chargeDetails->totalDeliveryChargeAmount > $merchant->wallet_balance) :
+            $charges = app(\App\Services\Parcel\ChargeCalculator::class)->calculate(
+                $merchant,
+                (int) $request->delivery_type_id,
+                $request->category_id ? (int) $request->category_id : null,
+                $request->weight,
+                (float) $request->cash_collection,
+                $request->packaging_id ? (int) $request->packaging_id : null,
+                $request->fragileLiquid == 'on'
+            );
+            if ($charges['total_delivery_amount'] > $merchant->wallet_balance) :
                 Toastr::error('This merchant has a low balance.', 'Error');
                 return redirect()->back()->withInput($request->all());
             endif;

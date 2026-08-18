@@ -113,6 +113,41 @@ class ParcelQuoteTest extends TestCase
         $this->assertEquals($quote['current_payable'], (float) $parcel->current_payable);
     }
 
+    public function test_la_mise_a_jour_recalcule_sans_chargeDetails(): void
+    {
+        $merchant = Merchant::firstOrFail();
+        Sanctum::actingAs($merchant->user);
+
+        $create = $this->payload() + [
+            'shop_id' => MerchantShops::firstOrFail()->id,
+            'customer_name' => 'Aicha Kora',
+            'customer_phone' => '0022997000001',
+            'customer_address' => 'Cotonou, Akpakpa',
+        ];
+        $this->postJson('/api/v10/parcel/store', $create, ['apiKey' => self::API_KEY])->assertOk();
+        $parcel = Parcel::latest('id')->firstOrFail();
+
+        // Le montant a encaisser change ; aucun `chargeDetails` n'accompagne la
+        // requete, comme depuis que les ecrans affichent le devis au lieu de
+        // calculer. Les montants doivent quand meme etre recalcules.
+        // `merchant_id` est exige par le socle sur cette route (voir S17) ; les
+        // ecrans l'envoient, la valeur est celle du marchand connecte.
+        $this->putJson(
+            '/api/v10/parcel/update/' . $parcel->id,
+            array_merge($create, ['cash_collection' => 20000, 'merchant_id' => $merchant->id]),
+            ['apiKey' => self::API_KEY]
+        )->assertOk();
+
+        $attendu = $this->postJson('/api/v10/parcel/quote', array_merge($this->payload(), ['cash_collection' => 20000]), ['apiKey' => self::API_KEY])
+            ->assertOk()
+            ->json('data');
+
+        $parcel->refresh();
+        $this->assertEquals($attendu['cod_amount'], (float) $parcel->cod_amount);
+        $this->assertEquals($attendu['total_delivery_amount'], (float) $parcel->total_delivery_amount);
+        $this->assertEquals($attendu['current_payable'], (float) $parcel->current_payable);
+    }
+
     public function test_le_devis_exige_une_authentification(): void
     {
         $this->postJson('/api/v10/parcel/quote', $this->payload(), ['apiKey' => self::API_KEY])

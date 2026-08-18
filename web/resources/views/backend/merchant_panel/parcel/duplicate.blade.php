@@ -446,6 +446,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         var deliverChargeUrl = '{{ route('merchant-panel.parcel.deliveryCharge.get') }}';
+        var quoteUrl = '{{ route('merchant-panel.parcel.quote') }}';
         var merchantData = @json($merchant);
         var category_id = '{{ $parcel->category_id }}';
         var packaging_id = '{{ $parcel->packaging_id }}';

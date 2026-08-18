@@ -86,12 +86,24 @@ class MerchantParcelController extends Controller
     public function store(StoreRequest $request)
     {
 
+        // Le montant compare vient du serveur, plus de `chargeDetails` : ce champ
+        // etait rempli en JavaScript et n'est plus envoye depuis que l'ecran
+        // affiche le devis. On garde la comparaison d'origine, sur le
+        // sous-total HORS TVA.
         if(Auth::user()->merchant->wallet_use_activation == Status::ACTIVE):
-            $chargeDetails = json_decode($request->chargeDetails);
-            if($chargeDetails->totalDeliveryChargeAmount > Auth::user()->merchant->wallet_balance):
+            $charges = app(\App\Services\Parcel\ChargeCalculator::class)->calculate(
+                Auth::user()->merchant,
+                (int) $request->delivery_type_id,
+                $request->category_id ? (int) $request->category_id : null,
+                $request->weight,
+                (float) $request->cash_collection,
+                $request->packaging_id ? (int) $request->packaging_id : null,
+                $request->fragileLiquid == 'on'
+            );
+            if($charges['total_delivery_amount'] > Auth::user()->merchant->wallet_balance):
                 Toastr::error('You are low on balance. Please recharge', 'Error');
                 return redirect()->route('merchant-panel.my.wallet.index');
-            endif; 
+            endif;
         endif;
 
         
