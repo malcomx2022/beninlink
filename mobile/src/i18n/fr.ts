@@ -50,7 +50,15 @@ export const fr = {
     rccm: 'RCCM',
     cnss: 'CNSS',
     otpTitle: 'Code de vérification',
-    otpSent: 'Un code vous a été envoyé par SMS.',
+    otpSent: 'Un code vous a été envoyé par SMS au',
+    otpResent: 'Un nouveau code vient d\'être envoyé.',
+    resendOtp: 'Renvoyer le code',
+    verify: 'Vérifier',
+    createAccount: 'Créer mon compte',
+    forgotTitle: 'Mot de passe oublié',
+    noAccount: 'Pas encore de compte ? S\'inscrire',
+    /** Les identifiants légaux sont exigés par le backend depuis le chantier 2. */
+    legalSection: 'Identifiants légaux de l\'entreprise',
   },
   dashboard: {
     title: 'Tableau de bord',

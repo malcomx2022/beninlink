@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 
 import { colors } from '../../src/theme/colors';
 import { fonts } from '../../src/theme/typography';
+import { t } from '../../src/i18n';
 
 export default function AuthLayout() {
   return (
@@ -14,7 +15,9 @@ export default function AuthLayout() {
       }}
     >
       <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="forgot-password" options={{ title: 'Mot de passe oublié' }} />
+      <Stack.Screen name="signup" options={{ title: t('auth.signUpTitle') }} />
+      <Stack.Screen name="verify-otp" options={{ title: t('auth.otpTitle') }} />
+      <Stack.Screen name="forgot-password" options={{ title: t('auth.forgotTitle') }} />
     </Stack>
   );
 }

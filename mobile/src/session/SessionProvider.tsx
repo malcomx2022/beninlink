@@ -9,7 +9,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { signIn as apiSignIn, signOut as apiSignOut } from '../api/auth';
+import { signIn as apiSignIn, signOut as apiSignOut, verifyOtp as apiVerifyOtp } from '../api/auth';
 import { fetchProfile } from '../api/merchant';
 import { getToken } from '../api/session';
 import type { AuthUser } from '../api/types';
@@ -19,6 +19,8 @@ type SessionState = {
   loading: boolean;
   user: AuthUser | null;
   signIn: (merchantId: string, password: string) => Promise<void>;
+  /** Ouvre la session à partir du code SMS reçu après inscription. */
+  verifyOtp: (otp: string) => Promise<void>;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 };
@@ -56,6 +58,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       user,
       signIn: async (merchantId, password) => {
         setUser(await apiSignIn(merchantId, password));
+      },
+      verifyOtp: async (otp) => {
+        setUser(await apiVerifyOtp(otp));
       },
       signOut: async () => {
         await apiSignOut();

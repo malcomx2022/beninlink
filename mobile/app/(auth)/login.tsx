@@ -87,6 +87,10 @@ export default function LoginScreen() {
           {t('auth.forgotPassword')}
         </Link>
 
+        <Link href="/(auth)/signup" style={styles.link}>
+          {t('auth.noAccount')}
+        </Link>
+
         {/* Repère de développement : affiche l'API réellement visée par le bundle
             chargé. Évite de confondre un backend injoignable avec un bundle
             périmé encore servi par le cache du navigateur. Retiré en production. */}
