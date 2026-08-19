@@ -39,7 +39,14 @@ class StoreRequest extends FormRequest
              * interdits.
              */
             'destination_country' => ['nullable','string','size:2'],
-            'customs_category'    => ['required_with:destination_country','nullable','string','max:32', new \App\Rules\CustomsAllowed()],
+            'customs_category'    => [
+                // Exigee pour un EXPORT seulement : `required_with` aurait aussi
+                // reclame une categorie a un colis explicitement marque « BJ ».
+                \Illuminate\Validation\Rule::requiredIf(
+                    fn () => app(\App\Services\Customs\CustomsService::class)->isExport(request('destination_country'))
+                ),
+                'nullable','string','max:32', new \App\Rules\CustomsAllowed(),
+            ],
         ];
     }
 }

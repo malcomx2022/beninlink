@@ -70,6 +70,12 @@ export const endpoints = {
   fedapayInitiate: 'fedapay/initiate',
   fedapayStatus: (reference: string) => `fedapay/status/${reference}`,
 
+  // — Douane (chantier 5) : alertes UEMOA / CEDEAO
+  /** Pays et catégories couverts par les règles en vigueur. */
+  customsReference: 'customs/reference',
+  customsAlerts: 'customs/alerts',
+  customsResolve: (id: number | string) => `customs/alerts/${id}/resolve`,
+
   // — Profil
   profile: 'profile',
   profileUpdate: 'profile/update',
@@ -90,14 +96,13 @@ export const endpoints = {
  *   Historique du wallet : aucune route ne liste les mouvements de `wallets`.
  *                          `account-transaction/index` couvre les comptes, pas
  *                          le porte-monnaie prépayé.
- *   Alertes douanières   : Module 4, aucune table ni route (chantier 5).
  *   Notifications        : seul `news-offer/index` existe, ce sont des offres.
  *
- * ✅ La recharge FedaPay n'est plus dans cette liste depuis le chantier 3.
+ * ✅ La recharge FedaPay n'est plus dans cette liste depuis le chantier 3, ni
+ * les alertes douanières depuis le chantier 5.
  * Le solde du wallet, lui, arrive via `/profile` (`merchant.wallet_balance`).
  */
 export const MISSING = {
   walletHistory: null,
-  customsAlerts: null,
   notifications: null,
 } as const;

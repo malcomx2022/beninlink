@@ -256,4 +256,53 @@ export type ParcelQuote = {
   total_payable_charges: Amount;
   /** Net à reverser au marchand après déduction des frais. */
   current_payable: Amount;
+  /**
+   * Règle douanière applicable, ou `null` pour un colis domestique.
+   * Le devis répond aussi à « ce colis passe-t-il ? » : l'écran de création
+   * l'appelle déjà à chaque changement, inutile d'interroger une seconde route.
+   */
+  customs: CustomsRule | null;
+};
+
+/** Règle douanière telle que la rend `parcel/quote`. */
+export type CustomsRule = {
+  /** 1 info · 2 avertissement · 3 bloquant (App\Enums\CustomsLevel). */
+  level: number;
+  /** Libellé déjà traduit par le backend. */
+  level_name: string;
+  /** `true` : la création sera refusée tant que le document manque. */
+  blocking: boolean;
+  required_document: string | null;
+  message: string;
+};
+
+/** `GET customs/reference` — de quoi peupler les listes de l'écran de création. */
+export type CustomsReference = {
+  countries: { code: string; name: string }[];
+  categories: { slug: string; name: string }[];
+};
+
+/**
+ * `GET customs/alerts` — une alerte émise.
+ *
+ * ⚠️ Le backend pagine (20) mais la collection est imbriquée dans l'enveloppe :
+ * elle arrive donc en tableau nu, sans compteurs. Même règle que les factures —
+ * une page incomplète est la dernière.
+ */
+export type CustomsAlert = {
+  id: number;
+  parcel_id: number | null;
+  tracking_id: string | null;
+  country_code: string;
+  country_name: string;
+  goods_category: string;
+  category_name: string;
+  level: number;
+  level_name: string;
+  required_document: string | null;
+  message: string;
+  /** 1 en cours · 2 traitée. */
+  status: number;
+  status_name: string;
+  created_at: string | null;
 };

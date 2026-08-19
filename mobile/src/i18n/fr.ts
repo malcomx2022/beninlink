@@ -152,6 +152,28 @@ export const fr = {
     empty: 'Aucune boutique enregistrée.',
     default: 'Par défaut',
   },
+  customs: {
+    title: 'Alertes douanières',
+    subtitle: 'Export UEMOA / CEDEAO',
+    tabPending: 'En cours',
+    tabResolved: 'Traitées',
+    empty: 'Aucune alerte douanière.',
+    requiredDocument: 'Document requis',
+    markResolved: 'Marquer traitée',
+    resolvedOn: 'Traitée le',
+    /** Champs d'export sur l'écran de création. */
+    destination: 'Pays de destination',
+    goodsCategory: 'Catégorie de marchandise',
+    domestic: 'Bénin (national)',
+    exportNotice:
+      'Choisissez un pays pour un envoi à l\'export. Les règles douanières s\'appliquent alors.',
+    categoryRequired: 'Choisissez la catégorie de marchandise pour un envoi à l\'export.',
+    blockingTitle: 'Envoi interdit sans ce document',
+    /** Les trois niveaux du DAT, en repli : le backend les fournit traduits. */
+    level1: 'Info',
+    level2: 'Avertissement',
+    level3: 'Bloquant',
+  },
   rates: {
     title: 'Tarifs de livraison',
     subtitle: 'Par poids et par zone (FCFA)',

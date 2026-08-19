@@ -3,11 +3,12 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } fr
 import { useRouter } from 'expo-router';
 
 import { ApiError } from '../../../src/api/client';
+import { fetchCustomsReference } from '../../../src/api/customs';
 import { createParcel, fetchParcelFormData, fetchQuote } from '../../../src/api/parcels';
-import type { ParcelFormData, ParcelQuote } from '../../../src/api/types';
+import type { CustomsReference, ParcelFormData, ParcelQuote } from '../../../src/api/types';
 import { Button, Card, ChoiceGroup, ErrorText, Field, Muted, Title } from '../../../src/components/ui';
 import { colors } from '../../../src/theme/colors';
-import { fonts, fontSizes, spacing } from '../../../src/theme/typography';
+import { fonts, fontSizes, radii, spacing } from '../../../src/theme/typography';
 import { deliveryTypeId, deliveryTypeLabel } from '../../../src/domain/deliveryType';
 import { formatAmount, formatRate } from '../../../src/domain/money';
 import { t } from '../../../src/i18n';
@@ -48,6 +49,10 @@ export default function NewParcelScreen() {
   const [saving, setSaving] = useState(false);
   const [quote, setQuote] = useState<ParcelQuote | null>(null);
   const [quoting, setQuoting] = useState(false);
+  /** Douane : référentiel des pays et catégories, et choix du marchand. */
+  const [customs, setCustoms] = useState<CustomsReference | null>(null);
+  const [country, setCountry] = useState<string | null>(null);
+  const [goods, setGoods] = useState<string | null>(null);
 
   const set = (key: keyof typeof values) => (value: string) =>
     setValues((v) => ({ ...v, [key]: value }));
@@ -56,8 +61,14 @@ export default function NewParcelScreen() {
     setLoading(true);
     setError('');
     try {
-      const data = await fetchParcelFormData();
+      const [data, reference] = await Promise.all([
+        fetchParcelFormData(),
+        // Un référentiel vide (aucune règle) ne doit pas empêcher de créer un
+        // colis : on l'ignore alors, l'écran reste purement domestique.
+        fetchCustomsReference().catch(() => null),
+      ]);
       setForm(data);
+      setCustoms(reference);
       // Présélection quand il n'y a qu'un choix possible : autant d'étapes en moins.
       const shops = data?.shops ?? [];
       if (shops.length === 1 && shops[0]) setShopId(shops[0].id);
@@ -97,6 +108,8 @@ export default function NewParcelScreen() {
             delivery_type_id: typeId,
             cash_collection: Number(values.cash_collection.replace(/\s/g, '')) || 0,
             ...(values.weight ? { weight: values.weight } : {}),
+            ...(country ? { destination_country: country } : {}),
+            ...(goods ? { customs_category: goods } : {}),
           },
           controller.signal,
         );
@@ -114,7 +127,7 @@ export default function NewParcelScreen() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [categoryId, typeId, values.cash_collection, values.weight]);
+  }, [categoryId, typeId, values.cash_collection, values.weight, country, goods]);
 
   const typeOptions = useMemo(() => {
     // `deliveryTypes` liste des interrupteurs de configuration : on ne garde que
@@ -151,6 +164,8 @@ export default function NewParcelScreen() {
         ...(values.selling_price ? { selling_price: Number(values.selling_price) } : {}),
         ...(values.weight ? { weight: values.weight } : {}),
         ...(values.invoice_no ? { invoice_no: values.invoice_no.trim() } : {}),
+        ...(country ? { destination_country: country } : {}),
+        ...(goods ? { customs_category: goods } : {}),
       });
       router.replace('/(app)/parcels');
     } catch (e) {
@@ -205,6 +220,36 @@ export default function NewParcelScreen() {
           onChange={setTypeId}
           error={fieldErrors.delivery_type_id?.[0]}
         />
+
+        {/* Douane : listes servies par le backend (customs/reference). Le pays
+            vide reste le cas normal — un colis domestique n'a rien à déclarer. */}
+        {!!customs?.countries?.length && (
+          <>
+            <ChoiceGroup
+              label={t('customs.destination')}
+              options={[
+                { value: '', label: t('customs.domestic') },
+                ...customs.countries.map((c) => ({ value: c.code, label: c.name })),
+              ]}
+              value={country ?? ''}
+              onChange={(value) => {
+                setCountry(value === '' ? null : value);
+                if (value === '') setGoods(null);
+              }}
+              error={fieldErrors.destination_country?.[0]}
+            />
+
+            {!!country && (
+              <ChoiceGroup
+                label={t('customs.goodsCategory')}
+                options={customs.categories.map((c) => ({ value: c.slug, label: c.name }))}
+                value={goods}
+                onChange={setGoods}
+                error={fieldErrors.customs_category?.[0]}
+              />
+            )}
+          </>
+        )}
 
         <Field
           label={t('parcels.name')}
@@ -293,10 +338,43 @@ export default function NewParcelScreen() {
             <Muted>{quoting ? t('parcels.quotePending') : t('parcels.quoteHint')}</Muted>
           )}
           <Muted>{t('parcels.amountsComputedByServer')}</Muted>
+
+          {/* Règle douanière renvoyée par le même devis. Le serveur refusera la
+              création tant qu'un blocage s'applique : l'annoncer ici évite au
+              marchand de remplir le reste pour rien. */}
+          {!!quote?.customs && (
+            <View
+              style={[
+                styles.customs,
+                { borderColor: quote.customs.blocking ? colors.danger : colors.accent },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.customsLevel,
+                  { color: quote.customs.blocking ? colors.danger : colors.accentDark },
+                ]}
+              >
+                {quote.customs.blocking ? t('customs.blockingTitle') : quote.customs.level_name}
+              </Text>
+              <Text style={styles.customsMessage}>{quote.customs.message}</Text>
+              {!!quote.customs.required_document && (
+                <Text style={styles.customsDocument}>
+                  {t('customs.requiredDocument')} : {quote.customs.required_document}
+                </Text>
+              )}
+            </View>
+          )}
         </Card>
 
         <ErrorText>{error}</ErrorText>
-        <Button title={t('parcels.create')} onPress={submit} loading={saving} variant="accent" />
+        <Button
+          title={t('parcels.create')}
+          onPress={submit}
+          loading={saving}
+          disabled={quote?.customs?.blocking === true}
+          variant="accent"
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -328,4 +406,8 @@ const styles = StyleSheet.create({
   quoteLabel: { fontFamily: fonts.body, fontSize: fontSizes.sm, color: colors.textMuted },
   quoteValue: { fontFamily: fonts.numeric, fontSize: fontSizes.sm, color: colors.text },
   quoteValueHighlight: { color: colors.accent, fontSize: fontSizes.md },
+  customs: { borderWidth: 1, borderRadius: radii.md, padding: spacing.sm, gap: spacing.xs },
+  customsLevel: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.sm },
+  customsMessage: { fontFamily: fonts.body, fontSize: fontSizes.sm, color: colors.text },
+  customsDocument: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.sm, color: colors.textMuted },
 });

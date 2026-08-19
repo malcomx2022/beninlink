@@ -90,6 +90,9 @@ export default function DashboardScreen() {
         <Link href="/(app)/invoices" style={styles.link}>
           {t('invoices.title')}
         </Link>
+        <Link href="/(app)/customs" style={styles.link}>
+          {t('customs.title')}
+        </Link>
         <Link href="/(app)/shops" style={styles.link}>
           {t('shops.title')}
         </Link>
