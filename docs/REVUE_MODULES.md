@@ -1,0 +1,307 @@
+# Revue des modules — BeninLink (backend `web/` + apps mobiles)
+
+> Inventaire de **tous les modules du projet**, côté backend (`web/`, Laravel / socle
+> We Courier) et côté front (`mobile/` marchand, `mobile-livreur/` livreur, back-office
+> web Blade). Relevé sur le code réel, pas sur les intentions.
+> Sources : `web/routes/*.php`, `web/app/**`, `mobile/app/**`, `mobile/src/**`,
+> `web/CARTOGRAPHIE.md`, `docs/REVUE_FONCTIONNELLE_MOBILE.md`, `maquettes/*.html`.
+> Établie le 2026-09-04.
+
+## 0. Vue d'ensemble
+
+| Composante | Techno | Rôle | État |
+|---|---|---|---|
+| `web/` | Laravel 10 · PHP 8.2 | Backend We Courier + modules BeninLink. **Le contrat.** | Actif — chantiers 1, 2, 3, 5 livrés ; 4, 6, 7 à faire |
+| `web/` (back-office Blade) | Blade + JS compilé dans `public/` | Panneaux Admin, Marchand, Hub, Super-admin, site vitrine | Actif (socle) |
+| `mobile/` | React Native · Expo 57 · expo-router · TypeScript | App **marchand** (PME) | Actif — 14 des 15 écrans de la maquette codés |
+| `mobile-livreur/` | React Native · Expo | App **livreur** | **Pas une ligne de code** (seul `CLAUDE.md`) — fenêtre Création |
+| `courier_merchant_saas-main/` · `courier_delivery_saas-main/` | Flutter | Apps d'origine We Courier | **Dépréciées**, référence seulement |
+
+Volumétrie `web/` : 22 contrôleurs API, 89 contrôleurs back-office, 52 domaines de
+repositories, 78 modèles, 87 migrations, 37 seeders, 96 routes API, 625 routes web
+tenant, 136 routes super-admin, 81 fichiers `lang/fr/`.
+
+Volumétrie `mobile/` : 15 fichiers d'écran (expo-router), 10 modules d'API, 3 modules
+de domaine, environ 4 100 lignes TypeScript.
+
+---
+
+## 1. Backend `web/` — socle transverse
+
+| Module | Où | Notes |
+|---|---|---|
+| **Multi-tenancy** | `stancl/tenancy` en façade, `Tenant`, `CustomerDomain`, `config/tenancy.php`, `scopeCompanywise()` sur 47/51 modèles | Une seule base, isolation par `company_id`. Aucune tenancy sur `/api/v10` (scoping par `Auth::user()->company_id`). |
+| **Authentification web** | `Http/Controllers/Auth/*` (login, register, reset, verify), `SocialLoginController` (Google, Facebook) | Laravel UI + Socialite |
+| **Authentification API** | `Api/V10/AuthController`, Sanctum, `CheckApiKeyMiddleware` | Inscription, OTP SMS, reset, refresh. Jetons sans `abilities` (constat S5). |
+| **Rôles et permissions** | `RoleController`, `Permission`, `SuperAdminPermission`, middleware `hasPermission` | Permissions par clé (`parcel_read`…). |
+| **Abonnement SaaS** | `subscriptionCheck()`, middleware `subscriptionCheck`, `Subscription`, `Plan` | Paiement Stripe uniquement (S1 corrigé). FedaPay **non branché** sur l'abonnement. |
+| **Localisation** | `LocalizationController`, `LanguageManager`, `lang/{fr,en,ar,bn,es,in,zh}` | FR par défaut, `lang/fr/` complet (chantier 1). L'API ne négocie pas la locale. |
+| **Devise / montants** | `Helper.php` : `formatAmount()`, `amountValue()`, `currencySymbol()`, `formatRate()` | XOF entier (chantier 1). API sérialise en `number`. |
+| **Installeur** | `InstallerController`, `IsInstalledMiddleware` | Installation We Courier + `PurchaseVerify` (licence Envato). |
+| **Addons** | `AddonController`, `Addon` | Activation de modules We Courier. |
+| **Journal d'activité** | `ActiveLogController`, `spatie/laravel-activitylog` | |
+| **Sauvegarde BDD** | `DatabaseBackupController`, commande `database:autobackup` (quotidienne) | |
+| **Éditeur `.env`** | `geo-sot/laravel-env-editor`, `setEnv()` | Sensible : écrit `.env` depuis l'admin. |
+| **Sécurité HTTP** | `XSS`, `Cors`, `ModifyHeaderMiddleware`, `TrustProxies` | |
+| **Planificateur** | `Console/Kernel` : `database:autobackup` daily, `invoice:generate` daily 13:00 | |
+| **Notifications sortantes** | `SmsService` (Twilio, Vonage, REVE), `PushNotificationService` (FCM **legacy, arrêté**), `Mail/` (4 Mailables) | Envoi synchrone, non journalisé. Push à réécrire en HTTP v1. |
+| **Exports / imports** | `Exports/` (7 : rapports, factures, colis), `Imports/ParcelImport` | `maatwebsite/excel`. Export CSV/XLSX, pas de PDF. |
+| **Codes-barres** | `milon/barcode` | Étiquettes colis. |
+
+---
+
+## 2. Backend `web/` — panneau Admin (société locataire, préfixe `admin/`)
+
+Routes dans `routes/web.php` l.205-822, contrôleurs `Backend/*`, vues
+`resources/views/backend/*`.
+
+| Domaine | Module | Contrôleur(s) | Repository |
+|---|---|---|---|
+| **Colis** | Colis (CRUD, filtres, import, recherche, carte) | `ParcelController`, `MapParcelController`, `ParcelQuoteController` | `Parcel` |
+| | Statuts colis (33 transitions + annulations) | `ParcelController` (bloc `parcel status`) | `Parcel` |
+| | Demandes de ramassage | `PickupRequestController` | — (`PickupRequest`) |
+| | Liquide / fragile | `LiquidFragileController` | — |
+| | Emballages | `PackagingController` | `Packaging` |
+| | **Douane** (BeninLink, chantier 5) | `Backend/CustomsController` (alertes, règles) | `Services/Customs/CustomsService` |
+| **Tarification** | Barème poids × zone | `DeliveryChargeController` | `DeliveryCharge` |
+| | Catégories de livraison | `DeliverycategoryController` | `DeliveryCategory` |
+| | Types de livraison | `DeliveryTypeController` | `DeliveryType` |
+| | Tarif spécifique marchand | `MerchantDeliveryChargeController` | `MerchantDeliveryCharge` |
+| | **Calcul serveur des montants** (BeninLink, S2) | `Services/Parcel/ChargeCalculator` | — |
+| **Marchands** | Marchands (CRUD, inscription, OTP) | `MerchantController`, `MerchantProfileController` | `Merchant`, `MerchantProfile`, `MerchantManage` |
+| | Boutiques marchand | `MerchantShopsController` | `MerchantShops` |
+| | Comptes de paiement marchand | `MerchantPaymentAccountController` | `MerchantPayment` |
+| | Paiements marchand (règlement COD) | `MerchantmanagePaymentController` | `MerchantPayment` |
+| | Factures marchand | `MerchantInvoiceController`, commande `invoice:generate` | `Invoice` |
+| | Demandes de wallet (recharge manuelle) | `Backend/MerchantPanel/WalletController` (routes admin) | `Wallet` |
+| | **Identité légale IFU / RCCM / CNSS** (BeninLink, chantier 2) | formulaires marchand + `general_settings`, `Rules/LegalIdentifier` | — |
+| **Livreurs** | Livreurs (CRUD) | `DeliveryManController` | `DeliveryMan` |
+| **Hubs** | Hubs, responsables de hub | `HubController`, `HubInChargeController` | `Hub`, `HubInCharge`, `HubManage` |
+| | Paiements hub | `HubPaymentController` | `HubPaymentRequest` |
+| **Comptabilité** | Comptes bancaires / caisse | `AccountController`, `BankTransactionController` | `Account`, `BankTransaction` |
+| | Chapitres comptables | `AccountHeadsController` | `AccountHeads` |
+| | Revenus / dépenses | `IncomeController`, `ExpenseController` | `Income`, `Expense` |
+| | Transferts de fonds | `FundTransferController` | `FundTransfer` |
+| **RH / paie** | Utilisateurs (staff) | `UserController`, `ProfileController` | `User`, `Profile` |
+| | Départements, désignations | `DepartmentController`, `DesignationController` | `Department`, `Designation` |
+| | Salaires et génération de paie | `SalaryController`, `SalaryGenerateController` | `Salary` |
+| **Actifs** | Actifs et catégories d'actifs | `AssetController`, `AssetcategoryController` | `Asset`, `AssetCategory` |
+| **Relation** | Support (tickets + chat) | `SupportController` | `Support` |
+| | Fraude (liste noire de clients) | `FraudController` | `Fraud` |
+| | Actualités et offres | `NewsOfferController` | `NewsOffer` |
+| | To-do | `TodoController` | `Todo` |
+| | Notifications web | `WebNotificationController` | — |
+| | Push (rédaction manuelle) | `PushNotificationController` | `PushNotification` |
+| **Rapports** | Rapports (colis, marchand, livreur, hub, profit, TVA) | `ReportsController`, `TotalSummeryReportController` | `Reports` |
+| **Paramètres** | Généraux, devise, Google Maps, notifications, SMS, social login | `GeneralSettingsController`, `CurrencyController`, `GoogleMapSettingsController`, `NotificationSettingsController`, `SmsSettingsController`, `SmsSendSettingsController`, `SocialLoginController` | idem |
+| | Catégories génériques | `CategoryController` | — |
+| **Paiement en ligne (payout)** | Stripe, PayPal, SSLCommerz, Skrill, Aamarpay, bKash | `AdminSkrillController`, `AdminSslCommerzController`, `AdminAamarpayController`, `AdminBkashController`, `PayoutController` | — (un contrôleur par passerelle, sans interface commune) |
+| | Configuration payout | `PayoutSetupController` | `PayoutSetup` |
+| **CMS site vitrine** | Sections, services, « pourquoi nous », FAQ, partenaires, blogs, pages, liens sociaux | `Backend/FrontWeb/*` (8) | `FrontWeb` |
+
+---
+
+## 3. Backend `web/` — panneau Marchand (préfixe `merchant/`)
+
+Routes `routes/web.php` l.825-953, contrôleurs `Backend/MerchantPanel/*` (17).
+
+| Module | Contrôleur |
+|---|---|
+| Comptes et transactions | `PaymentAccountController`, `AccountTransactionController` |
+| Relevés (statements) | `StatementsController` |
+| Paramètres et profil marchand | `SettingsController`, `MerchantProfileController` |
+| Boutiques | `ShopsController` |
+| Colis (CRUD, import, statut) | `MerchantParcelController` |
+| Demandes de règlement (payout) | `PaymentRequestController` |
+| Actualités et offres | `NewsOfferController` |
+| Support | `SupportController` |
+| Fraude | `FraudController` |
+| Rapports | `MerchantReportsController`, `ReportsController` |
+| Demandes de ramassage | `PickupRequestController` |
+| Réception de paiements en ligne (Stripe, PayPal, SSLCommerz) | `MerchantOnlinePaymentSetupController`, `OnlinePaymentController` |
+| Factures | `InvoiceController` |
+| **Mon wallet et recharge** | `WalletController` (`rechargeStatus` inexistant — route morte) |
+
+## 4. Backend `web/` — panneau Hub
+
+| Module | Contrôleur |
+|---|---|
+| Demandes de paiement du hub | `HubPanel/HubPaymentRequestController` |
+| Encaissements reçus des livreurs | `HubPanel/ReceivedFromDeliverymanController` (`CashReceivedFromDeliveryman`) |
+
+## 5. Backend `web/` — Super-admin (`routes/superadmin.php`)
+
+| Module | Contrôleur |
+|---|---|
+| Plans SaaS et modules par plan | `Superadmin/PlanController` |
+| Sociétés locataires (CRUD, bascule d'abonnement, inscription + OTP) | `Superadmin/CompanyController` |
+| Historique d'abonnement, paiement Stripe | `PlanController::subscriptionPayment / StripePaymentSuccess` |
+| Support, rôles, désignations (mêmes contrôleurs que l'admin) | — |
+
+## 6. Backend `web/` — site vitrine public
+
+`Frontend/FrontendController` : accueil, suivi de colis, à propos, confidentialité,
+CGU, FAQ, blogs, services, contact, abonnement newsletter. Contenu piloté par le
+CMS `FrontWeb`.
+
+---
+
+## 7. Backend `web/` — API `/api/v10` (contrat des apps mobiles)
+
+Toutes les routes portent le header `apiKey` puis `auth:sanctum`, sauf le bloc public.
+
+| Bloc | Endpoints | Contrôleur | Consommé par |
+|---|---|---|---|
+| **Auth** | `register`, `signin`, `deliveryman/login`, `otp-verification`, `resend-otp`, `password/email`, `password/reset`, `refresh`, `sign-out`, `update-password` | `AuthController` | marchand + livreur |
+| **Référentiels** | `hub`, `general-settings`, `all-currencies`, `settings/cod-charges`, `settings/delivery-charges` | `HubController`, `GeneralSettingCotroller`, `SettingsController` | marchand |
+| **Tableau de bord** | `dashboard`, `dashboard/filter`, `dashboard/balance-details`, `dashboard/available-parcels`, `analytics` | `DashboardController`, `AnalyticsController` | marchand |
+| **Profil** | `profile`, `profile/update` | `AuthController` | marchand |
+| **Boutiques** | `shops/*` (index, store, edit, update, delete) | `ShopsController` | marchand |
+| **Colis** | `parcel/*` (index, create, store, **quote**, details, edit, update, logs, filter, status, delete, all/status), `status-wise/parcel/list/{status}` | `ParcelController` | marchand |
+| **Douane** (BeninLink) | `customs/reference`, `customs/alerts`, `customs/alerts/{id}/resolve` | `CustomsController` | marchand |
+| **FedaPay** (BeninLink) | `fedapay/initiate`, `fedapay/status/{reference}` (+ webhook et callback publics dans `web.php`) | `Payment/FedaPayController` | marchand |
+| **Argent** | `payment-accounts/*`, `account-transaction/*`, `statements/*`, `payment-request/*`, `invoice-list/index`, `invoice-details/{id}`, `statement-reports` | `PaymentAccountController`, `AccountTransactionController`, `StatementsController`, `PaymentRequestController`, `InvoiceController`, `ReportController` | marchand |
+| **Relation** | `fraud/*` (+ `fraud/check`), `news-offer/index`, `support/*` | `FraudController`, `NewsOfferController`, `SupportController` | marchand |
+| **Push** | `fcm-subscribe`, `fcm-unsubscribe` | `PushNotificationController` | marchand + livreur (hors service, S11) |
+| **Livreur** | `deliveryman/parcel/*` (index, details, delivered, partial-delivered), `deliveryman/income-expense`, `deliveryman/dashboard`, `deliveryman/profile`, `deliveryman/payment-logs`, `deliveryman/parcel-payment-logs`, `deliveryman/parcel-status`, `deliveryman/parcel-status-update`, `deliveryman/parcel-location-update` | `DeliveryManParcelController`, `DeliveryManIncomeExpenseController`, `DeliverymanController` | **livreur** (aucune app RN ne les consomme encore) |
+| **Public** | `parcel/tracking/{tracking_id}`, `contact-us`, `subscribe`, `customer/installation` | `ParcelController`, `InstallerController` | site / app |
+
+---
+
+## 8. Modules BeninLink ajoutés au socle (état des chantiers `web/`)
+
+| # | Chantier | État | Où dans le code |
+|---|---|---|---|
+| 1 | Francisation + FCFA | ✅ livré | `lang/fr/` (81 fichiers), `fr.json`, helpers `formatAmount()`… |
+| 2 | IFU / RCCM / CNSS | ✅ livré | migration `2026_08_17`, `Rules/LegalIdentifier`, 5 formulaires |
+| 3 | FedaPay (recharge wallet) | ✅ livré, **abonnement SaaS non branché** | `Services/Payments/FedaPayGateway`, `Payment/FedaPayController`, `FedaPayTransaction`, `config/fedapay.php`, migration `2026_08_18`, test `FedaPayWebhookTest` |
+| S2 | Calcul serveur des montants + devis | ✅ livré | `Services/Parcel/ChargeCalculator`, `POST parcel/quote`, `ParcelQuoteTest` |
+| 4 | Facturation SYSCOHADA + relevés PDF | ⏳ **non commencé** | rien dans `app/` (routes PDF mortes, aucune lib PDF) |
+| 5 | Alertes douanières UEMOA / CEDEAO | ✅ livré (notification à la création en reste) | `Services/Customs/CustomsService`, `Observers/ParcelCustomsObserver`, `Rules/CustomsAllowed`, `CustomsRule`, `CustomsAlert`, `CustomsRuleSeeder`, migration `2026_08_19`, `CustomsAlertTest` |
+| 6 | Reporting SaaS (MRR, ARR, Churn, LTV, CAC) | ⏳ **non commencé** | aucune occurrence |
+| 7 | OpenAPI / Swagger | ⏳ **non commencé** | aucun package ni annotation ; `mobile/src/api/endpoints.ts` fait office d'inventaire |
+
+**Tests** (`web/tests/Feature`) : `FedaPayWebhookTest`, `CustomsAlertTest`,
+`InvoiceScopeTest` (S14), `ParcelQuoteTest` (S2), `ParcelScopeTest` (S17), trait
+`Concerns/SeedsTenant`. Base SQLite en mémoire.
+
+---
+
+## 9. Front `mobile/` — app marchand (React Native / Expo)
+
+### 9.1 Écrans (expo-router, `mobile/app/`)
+
+| Groupe | Écran | Fichier | Écran maquette | Endpoints |
+|---|---|---|---|---|
+| Auth | Connexion | `(auth)/login.tsx` | `login` | `signin` |
+| | Inscription PME (IFU / RCCM / CNSS) | `(auth)/signup.tsx` | `signup` | `register` |
+| | Vérification OTP | `(auth)/verify-otp.tsx` | `login` (étape) | `otp-verification`, `resend-otp` |
+| | Mot de passe oublié | `(auth)/forgot-password.tsx` | `forgot` | `password/email` (la saisie du nouveau mot de passe via `password/reset` n'est pas codée) |
+| App | Tableau de bord | `(app)/index.tsx` | `home` | `dashboard`, `balance-details` (lien vers l'écran douane) |
+| | Colis (liste par statut) | `(app)/parcels.tsx` | `parcels` | `parcel/index`, `parcel/all/status` (filtrage local, pas `parcel/filter`) |
+| | Détail colis + timeline | `(app)/parcel/[id].tsx` | `parcel-detail` | `parcel/details`, `parcel/logs` |
+| | Nouveau colis (devis serveur, export douane) | `(app)/parcel/new.tsx` | `new-parcel` | `parcel/create`, `parcel/quote`, `parcel/store`, `customs/reference` |
+| | Portefeuille + recharge FedaPay (navigateur) | `(app)/wallet.tsx` | `wallet` + `recharge` | `profile`, `fedapay/initiate`, `fedapay/status` |
+| | Alertes douanières | `(app)/customs.tsx` | `customs` | `customs/alerts`, `customs/alerts/{id}/resolve` |
+| | Factures = relevés de règlement | `(app)/invoices.tsx` | `invoices` | `invoice-list/index`, `invoice-details`, `balance-details` |
+| | Tarifs (poids × zone, COD) | `(app)/rates.tsx` | `rates` | `settings/delivery-charges`, `settings/cod-charges` |
+| | Boutiques (lecture seule) | `(app)/shops.tsx` | `shops` | `shops/index` (création, modification, suppression non codées) |
+| | Profil (lecture + déconnexion) | `(app)/profile.tsx` | `profile` | `profile`, `sign-out` (`profile/update` et `update-password` non codés) |
+| — | **Notifications** | **absent** | `notifications` | aucune source côté `web/` (seul `news-offer/index`) |
+
+Bilan : **14 des 15 écrans** de la maquette existent. Manque l'écran `notifications`
+(bloqué backend). Quatre écrans sont **partiels** : le wallet n'a ni l'**historique** du
+porte-monnaie prépayé ni le **retrait** (endpoints `payment-request/*` inventoriés mais
+non branchés), les boutiques et le profil sont en lecture seule, le mot de passe oublié
+s'arrête à l'envoi du code.
+
+⚠️ `app.json` déclare `"locales": { "fr": "./src/i18n/expo-fr.json" }` mais **ce fichier
+n'existe pas** dans `src/i18n/` (seuls `fr.ts` et `index.ts`). À créer ou à retirer avant
+un build EAS.
+
+### 9.2 Modules techniques (`mobile/src/`)
+
+| Module | Fichiers | Rôle |
+|---|---|---|
+| Client d'API | `api/client.ts`, `api/config.ts`, `api/session.ts` | `apiKey` + Bearer Sanctum, URL en `EXPO_PUBLIC_API_URL`, jeton en `expo-secure-store` |
+| Inventaire d'endpoints | `api/endpoints.ts` | Liste des routes réellement servies + bloc `MISSING` |
+| Services d'API | `api/auth.ts`, `api/merchant.ts`, `api/parcels.ts`, `api/fedapay.ts`, `api/customs.ts`, `api/types.ts` | Un module par domaine |
+| Session | `session/SessionProvider.tsx` | Contexte utilisateur, garde des groupes `(auth)` / `(app)` |
+| Domaine | `domain/money.ts`, `domain/parcelStatus.ts`, `domain/deliveryType.ts` | FCFA entier, table 33 statuts backend → 7 statuts affichés, types de livraison |
+| i18n | `i18n/fr.ts`, `i18n/index.ts` | FR seul (`expo-fr.json` référencé par `app.json` mais absent) |
+| Thème | `theme/colors.ts`, `theme/typography.ts` | Vert `#12503A`, Ocre `#E0A63C`, Sora + DM Sans |
+| UI | `components/ui.tsx` | Composants partagés (boutons, cartes, champs) |
+
+---
+
+## 10. Front `mobile-livreur/` — app livreur
+
+**Aucun code** : le dossier ne contient que `CLAUDE.md`. Hors périmètre Idéation.
+
+Modules attendus (maquette `2_app_livreur.html`, 6 écrans) et leur couverture backend :
+
+| Écran maquette | Endpoints `/api/v10` existants | Prêt côté `web/` |
+|---|---|---|
+| `login` | `deliveryman/login`, `refresh`, `sign-out` | ✅ |
+| `parcels` (En cours / Retours / Livrés) | `deliveryman/parcel/index`, `deliveryman/parcel-status` | ✅ |
+| `detail` | `deliveryman/parcel/details/{id}` | ✅ |
+| `status` (Livré / partielle / Retour + montant) | `deliveryman/parcel/delivered/{id}`, `partial-delivered/{id}`, `parcel-status-update`, `parcel-location-update` | ✅ |
+| `earnings` | `deliveryman/income-expense`, `deliveryman/payment-logs`, `deliveryman/parcel-payment-logs` | ✅ |
+| `profile` | `deliveryman/dashboard`, `deliveryman/profile` | ✅ |
+
+Le backend couvre déjà les 6 écrans : l'app livreur est un chantier **purement front**
+quand la fenêtre Création s'ouvre. Réserve : les jetons ne distinguent pas marchand et
+livreur (S5).
+
+---
+
+## 11. Apps Flutter dépréciées (référence)
+
+| App | Modules (`lib/Screen/`) |
+|---|---|
+| `courier_merchant_saas-main` | Authentication, Home, Parcel, Shops, Payment (+ Statement), Frauds, Support, Profile, SplashScreen |
+| `courier_delivery_saas-main` | Authentication, Home, Payment, Profile, SplashScreen |
+
+Elles documentent la forme des réponses d'API (`lib/Models/`) et la liste des endpoints
+consommés (`services/api-list.dart`). Ne rien y coder.
+
+---
+
+## 12. Matrice front ↔ backend (chantiers transverses)
+
+| Chantier | `web/` | `mobile/` | `mobile-livreur/` | Back-office Blade |
+|---|---|---|---|---|
+| Francisation + FCFA | ✅ | ✅ (FR seul, entiers) | — | ✅ (`lang/fr`) |
+| IFU / RCCM / CNSS | ✅ | ✅ (inscription) | — | ✅ (5 formulaires) |
+| FedaPay recharge wallet | ✅ | ✅ (navigateur système) | — | ⏳ `my-wallet/recharge` toujours en flux manuel |
+| FedaPay abonnement SaaS | ⏳ | — | — | ⏳ (Stripe seul) |
+| Calcul serveur + devis | ✅ | ✅ | — | ✅ (affiche le devis) |
+| SYSCOHADA / relevés PDF | ⏳ | 🟡 relevé natif sans PDF | — | ⏳ |
+| Alertes douanières | ✅ | ✅ | — | ✅ (alertes + règles) |
+| Reporting SaaS (MRR…) | ⏳ | — | — | ⏳ |
+| OpenAPI / Swagger | ⏳ | 🟡 `endpoints.ts` | — | — |
+| Suivi / statuts colis | ✅ | ✅ (timeline) | ⏳ | ✅ |
+| Notifications | 🟡 SMS ok, push hors service, mail sync | ⏳ écran absent | — | ✅ |
+
+---
+
+## 13. Constats à retenir pour la suite
+
+1. **Trois chantiers `web/` restent à ouvrir** : 4 (SYSCOHADA + PDF), 6 (reporting SaaS),
+   7 (OpenAPI). L'ordre de la cartographie tient toujours : 2 → 4, 1 → 7.
+2. **FedaPay ne couvre que la recharge wallet.** L'abonnement SaaS passe encore par
+   Stripe en USD ; le brancher sur FedaPay est la seconde moitié du chantier 3.
+3. **Quatre écrans mobiles sont partiels** : wallet sans historique du porte-monnaie
+   (aucun endpoint ne liste `wallets`) ni retrait (endpoints existants, écran non
+   branché) ; boutiques et profil en lecture seule ; mot de passe oublié sans l'étape
+   `password/reset`. Les endpoints correspondants existent tous côté `web/`.
+4. **L'écran `notifications` attend une source** : `news-offer/index` sert des offres,
+   le push FCM legacy est mort, aucun endpoint de notifications n'existe.
+5. **Trois routes mortes** dans `web.php` (`my-wallet/recharge-status`, deux routes PDF
+   de facture) — à nettoyer ou à implémenter avec le chantier 4.
+6. **Constats de sécurité ouverts** : S5 (jetons marchand / livreur non séparés), S7
+   (aucun filet inter-locataires). Les autres (S1-S4, S6, S8-S17) sont corrigés.
+7. **`mobile-livreur/` n'est pas commencé** mais son backend est prêt : 6 écrans, 12
+   endpoints déjà en service.
+8. **`mobile/app.json` pointe un fichier de locale inexistant** (`src/i18n/expo-fr.json`) :
+   à corriger avant le premier build EAS pour les PME pilotes.
