@@ -55,18 +55,32 @@ class ParcelRepository implements ParcelInterface {
 
     }
 
+    /**
+     * Colis confiés au livreur connecté (livraison ou ramassage), et eux seuls.
+     */
+    private function deliveryManParcels(){
+        $deliverymanId = auth()->user()->deliveryman?->id;
+
+        return Parcel::companywise()->whereHas('parcelEvent', function ($queryParcelEvent) use ($deliverymanId) {
+            $queryParcelEvent->where(function ($q) use ($deliverymanId) {
+                $q->where('delivery_man_id', $deliverymanId)
+                  ->orWhere('pickup_man_id', $deliverymanId);
+            });
+        });
+    }
+
     public function deliveryManParcel(){
 
-        return Parcel::companywise()->orderBy('updated_at')->orderBy('priority_type_id')->where(function( $query ) {
-            if(auth()->user()->deliveryman){
-                $query->whereHas('parcelEvent', function ($queryParcelEvent) {
-                    if(auth()->user()->deliveryman->id) {
-                        $queryParcelEvent->where(['delivery_man_id' => auth()->user()->deliveryman->id]);
-                        $queryParcelEvent->orWhere(['pickup_man_id' => auth()->user()->deliveryman->id]);
-                    }
-                });
-            }
-        })->get();
+        return $this->deliveryManParcels()->orderBy('updated_at')->orderBy('priority_type_id')->get();
+    }
+
+    /**
+     * S7 — un livreur n'agit que sur les colis qui lui sont confiés. Le socle
+     * laissait `details`, `delivered` et `partial-delivered` travailler sur
+     * n'importe quel colis de la société (adresse, téléphone, montant COD).
+     */
+    public function deliveryManOwns($id){
+        return $this->deliveryManParcels()->whereKey($id)->exists();
     }
 
     public function deliveryTypes(){

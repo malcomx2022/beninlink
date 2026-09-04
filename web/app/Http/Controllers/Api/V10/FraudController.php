@@ -63,7 +63,11 @@ class FraudController extends Controller
 
     public function edit($id)
     {
-        return $this->responseWithSuccess(__('fraud.edit_fraud'), ['fraud'=> new FraudResource($this->repo->get($id))], 200);
+        $fraud = $this->repo->get($id);
+        if (blank($fraud)) {
+            return $this->responseWithError(__('fraud.error_msg'), [], 404);
+        }
+        return $this->responseWithSuccess(__('fraud.edit_fraud'), ['fraud'=> new FraudResource($fraud)], 200);
 
     }
 
@@ -76,6 +80,9 @@ class FraudController extends Controller
             return $this->responseWithError(__('fraud.title'), ['message' => $validator->errors()], 422);
         }
 
+        if (blank($this->repo->get($id))) {
+            return $this->responseWithError(__('fraud.error_msg'), [], 404);
+        }
         if ($this->repo->update($id, $request)) {
             return $this->responseWithSuccess(__('fraud.update_msg'), [], 200);
         } else {
@@ -88,6 +95,9 @@ class FraudController extends Controller
     {
 
         try {
+            if (blank($this->repo->get($id))) {
+                return $this->responseWithError(__('fraud.error_msg'), [], 404);
+            }
             $this->repo->delete($id);
             return $this->responseWithSuccess(__('fraud.delete_msg'), [], 200);
         }catch (\Exception $exception) {

@@ -101,7 +101,9 @@ class DeliverymanController extends Controller
     public function parcelLocationUpdate(Request $request){
         try {
 
-            $user = User::find($request->deliveryID)->deliveryman->id;
+            // S7 — le livreur ne met à jour que SES positions : `deliveryID`
+            // de la requête est ignoré au profit du compte authentifié.
+            $user = Auth::user()->deliveryman->id;
             $parcelEvents = ParcelEvent::where('delivery_man_id',$user)->get();
             if(!blank($parcelEvents)) {
                 foreach ($parcelEvents as $parcelEvent) {
@@ -117,6 +119,11 @@ class DeliverymanController extends Controller
         }
     }
     public function parcelStatusUpdate(Request $request){
+
+        // S7 — un livreur ne change le statut que d'un colis qui lui est confié.
+        if (!$this->parcel->deliveryManOwns($request->parcel_id)) {
+            return $this->responseWithError(__('parcel.error_msg'), [], 404);
+        }
 
         switch ($request->status_action) {
             //return to qourier

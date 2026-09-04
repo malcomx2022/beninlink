@@ -48,6 +48,7 @@ class FraudController extends Controller
     public function edit($id)
     {
         $fraud = $this->repo->get($id);
+        abort_if(blank($fraud), 404); // S7
         return view('backend.merchant_panel.fraud.edit',compact('fraud'));
     }
 

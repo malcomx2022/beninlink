@@ -5,6 +5,7 @@ interface ParcelInterface {
 
     public function all();
     public function deliveryManParcel();
+    public function deliveryManOwns($id);
     public function filter($request);
     public function get($id);
     public function parcelEvents($id);

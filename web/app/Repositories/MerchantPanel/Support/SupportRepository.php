@@ -9,20 +9,29 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use App\Models\Backend\SupportChat;
 
+/**
+ * S7 — un ticket n'est lisible et modifiable que par son auteur. Le socle
+ * lisait `Support::find($id)` nu : les échanges d'un autre compte (et d'une
+ * autre société) étaient accessibles en changeant l'identifiant.
+ */
 class SupportRepository implements SupportInterface {
     // get all rows in Department model
     public function departments(){
         return Department::active()->orderBy('title')->get();
     }
+    private function ownedSupports(){
+        return Support::where('user_id', Auth::user()->id);
+    }
     public function all(){
       
-        return Support::orderByDesc('id')->where('user_id',Auth::user()->id)->paginate(10);
+        return $this->ownedSupports()->orderByDesc('id')->paginate(10);
     }
     public function get($id){
-        return Support::find($id);
+        return $this->ownedSupports()->find($id);
     }
     public function chats($id){
-        return  SupportChat::orderByDesc('id')->where('support_id',$id)->get();
+        return  SupportChat::orderByDesc('id')->where('support_id',$id)
+            ->whereIn('support_id', $this->ownedSupports()->select('id'))->get();
     }
 
     public function store($request){
@@ -51,7 +60,10 @@ class SupportRepository implements SupportInterface {
     public function update($id,$request)
     {
         try {
-            $support                    =  Support::find($id);
+            $support                    =  $this->ownedSupports()->find($id);
+            if (blank($support)) {
+                return false;
+            }
             $support->user_id           = Auth::User()->id;
             $support->department_id     = $request->department_id;
             $support->service           = $request->service;
@@ -71,7 +83,7 @@ class SupportRepository implements SupportInterface {
         }
     }
     public function delete($id){
-        return Support::destroy($id);
+        return $this->ownedSupports()->whereKey($id)->delete();
     }
     public function file($image_id = '', $image)
     {
@@ -107,6 +119,9 @@ class SupportRepository implements SupportInterface {
 
     public function reply($request){
         try {
+            if (blank($this->get($request->support_id))) {
+                return false;
+            }
             $reply              = new SupportChat();
             $reply->support_id  = $request->support_id;
             $reply->user_id     = Auth::user()->id;

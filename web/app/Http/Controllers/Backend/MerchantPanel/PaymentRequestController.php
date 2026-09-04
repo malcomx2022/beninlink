@@ -52,6 +52,7 @@ class PaymentRequestController extends Controller
 
     public function edit($id){
             $singlePayment=$this->repo->get($id);
+            abort_if(blank($singlePayment), 404); // S7
             $merchantaccounts=MerchantPayment::where('merchant_id',Auth::user()->merchant->id)->get();
             return view('backend.merchant_panel.payment_request.edit',compact('singlePayment','merchantaccounts'));
     }
@@ -85,6 +86,7 @@ class PaymentRequestController extends Controller
 
     public function delete($id){
         $payment = $this->repo->get($id);
+        abort_if(blank($payment), 404); // S7
         if($payment->status == ApprovalStatus::PENDING){
             $this->repo->delete($id);
             Toastr::success(__('paymentrequest.deleted_msg'),__('message.success'));

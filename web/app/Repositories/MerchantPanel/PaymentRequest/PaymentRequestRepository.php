@@ -8,14 +8,23 @@ use App\Repositories\MerchantPanel\PaymentRequest\PaymentRequestInterface;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * S7 — une demande de retrait n'est lisible, modifiable et supprimable que
+ * par le marchand qui l'a déposée. Le socle lisait `Payment::where('id')`
+ * nu (montant, compte destinataire, statut d'un autre marchand).
+ */
 class PaymentRequestRepository implements PaymentRequestInterface {
+
+    private function ownedPayments(){
+        return Payment::companywise()->where('merchant_id', Auth::user()->merchant?->id);
+    }
 
     public function all(){
         //
     }
 
     public function get($id){
-        return Payment::where('id',$id)->first();
+        return $this->ownedPayments()->find($id);
     }
 
     public function store($request){
@@ -44,7 +53,11 @@ class PaymentRequestRepository implements PaymentRequestInterface {
     public function update($request){
         try {
             DB::beginTransaction();
-            $payment                   = Payment::where('id',$request->id)->first();
+            $payment                   = $this->ownedPayments()->find($request->id);
+            if (blank($payment)) {
+                DB::rollBack();
+                return false;
+            }
             $payment->merchant_id      = Auth::user()->merchant->id;
             $payment->amount           = $request->amount;
             $payment->merchant_account = $request->merchant_account;
@@ -62,11 +75,7 @@ class PaymentRequestRepository implements PaymentRequestInterface {
     }
 
     public function delete($id){
-        $payment                   = Payment::where('id',$id)->first();
-        if($payment->company_id == settings()->id):
-            return Payment::destroy($id);
-        endif;
-        return false;
+        return $this->ownedPayments()->whereKey($id)->delete();
     }
 
 }

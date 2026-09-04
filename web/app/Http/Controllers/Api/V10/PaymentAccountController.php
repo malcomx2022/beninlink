@@ -53,7 +53,11 @@ class PaymentAccountController extends Controller
     }
 
     public function edit($id){
-        return $this->responseWithSuccess(__('account.title'), ['account'=> new PaymentAccountResource($this->repo->edit($id))], 200);
+        $account = $this->repo->edit($id);
+        if (blank($account)) {
+            return $this->responseWithError(__('account.error_msg'), [], 404);
+        }
+        return $this->responseWithSuccess(__('account.title'), ['account'=> new PaymentAccountResource($account)], 200);
     }
 
 
@@ -68,6 +72,9 @@ class PaymentAccountController extends Controller
                 return $this->responseWithError(__('account.update_account'), ['message' => $validator->errors()], 422);
             }
 
+            if (blank($this->repo->edit($request->id))) {
+                return $this->responseWithError(__('account.error_msg'), [], 404);
+            }
             if ($this->repo->update($request)) {
                 return $this->responseWithSuccess(__('account.update_msg'), [], 200);
             } else {
@@ -79,6 +86,9 @@ class PaymentAccountController extends Controller
 
     public function delete($id){
         try {
+            if (blank($this->repo->edit($id))) {
+                return $this->responseWithError(__('account.error_msg'), [], 404);
+            }
             $this->repo->delete($id);
             return $this->responseWithSuccess(__('account.delete_msg'), [], 200);
         }catch (\Exception $exception) {

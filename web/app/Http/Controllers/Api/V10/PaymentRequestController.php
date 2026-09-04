@@ -75,6 +75,9 @@ class PaymentRequestController extends Controller
 
     public function edit($id){
         $singlePayment      = $this->repo->get($id);
+        if (blank($singlePayment)) {
+            return $this->responseWithError(__('paymentrequest.error_msg'), [], 404);
+        }
         $merchantAccounts   = MerchantPayment::where('merchant_id',auth()->user()->merchant->id)->get();
         return $this->responseWithSuccess(__('paymentrequest.title'), ['payment'=> new PaymentResource($singlePayment), 'merchantAccounts'=> $merchantAccounts], 200);
     }
@@ -89,6 +92,9 @@ class PaymentRequestController extends Controller
         }
 
         $payment            = $this->repo->get($id);
+        if (blank($payment)) {
+            return $this->responseWithError(__('paymentrequest.error_msg'), [], 404);
+        }
         if($payment->status == ApprovalStatus::PENDING){
             $account=auth()->user()->merchant;
             $balance=(double) $account->current_balance;
@@ -117,6 +123,9 @@ class PaymentRequestController extends Controller
         try {
 
             $payment = $this->repo->get($id);
+            if (blank($payment)) {
+                return $this->responseWithError(__('paymentrequest.error_msg'), [], 404);
+            }
             if($payment->status == ApprovalStatus::PENDING){
                 $this->repo->delete($id);
                 return $this->responseWithSuccess(__('paymentrequest.delete_msg'), [], 200);

@@ -41,6 +41,7 @@ class PaymentAccountController extends Controller
 
     public function edit($id){
         $editaccount=$this->repo->edit($id);
+        abort_if(blank($editaccount), 404); // S7
 
         return view('backend.merchant_panel.payment_account.edit',compact('editaccount'));
     }
