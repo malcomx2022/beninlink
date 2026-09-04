@@ -31,6 +31,14 @@
                     <div class="col-6">
                         <p class="h3">  {{ __('invoice.paid_invoice') }} {{ __('levels.list') }}</p>
                     </div>
+                    {{-- Chantier 4 : export journal SYSCOHADA des relevés d'une période. --}}
+                    <div class="col-6">
+                        <form method="GET" action="{{ route('paid.invoice.journal') }}" class="d-flex justify-content-end align-items-center gap-2">
+                            <input type="date" name="from" class="form-control form-control-sm" style="max-width: 160px" value="{{ now()->startOfMonth()->toDateString() }}">
+                            <input type="date" name="to" class="form-control form-control-sm" style="max-width: 160px" value="{{ now()->endOfMonth()->toDateString() }}">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="fa fa-book"></i> {{ __('statement.journal_period_button') }}</button>
+                        </form>
+                    </div>
                 </div>
                 <div class="card-body">
                     <nav>

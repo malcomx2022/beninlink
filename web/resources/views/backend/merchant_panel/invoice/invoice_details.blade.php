@@ -31,6 +31,9 @@
                         <div class="col-12 ">
                             <div class="d-flex justify-content-end mt-2 mt-md-0">
  
+                                {{-- Chantier 4 : relevé PDF (mentions IFU/RCCM) et journal SYSCOHADA. --}}
+                                <a href="{{ route('merchant.panel.invoice.pdf',[$invoice->merchant_id,$invoice->invoice_id]) }}" class="btn btn-primary btn-sm me-1"><i class="fa fa-file-pdf"></i> {{ __('statement.pdf_button') }}</a>
+                                <a href="{{ route('merchant.panel.invoice.journal',[$invoice->merchant_id,$invoice->invoice_id]) }}" class="btn btn-outline-secondary btn-sm me-1"><i class="fa fa-book"></i> {{ __('statement.journal_button') }}</a>
                                 <a href="{{ route('merchant.panel.invoice.csv',[$invoice->merchant_id,$invoice->invoice_id]) }}" class="btn btn-success btn-sm " data-toggle="tooltip" data-placement="top" title="Add"><i class="fa fa-download"></i> CSV</a>
                             </div>
                         </div>

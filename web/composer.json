@@ -12,6 +12,7 @@
         "ext-mysqli": "*",
         "ext-pdo": "*",
         "anandsiddharth/laravel-paytm-wallet": "^2.0",
+        "barryvdh/laravel-dompdf": "^2.0",
         "brian2694/laravel-toastr": "^5.57",
         "cartalyst/stripe-laravel": "^15.0",
         "components/flag-icon-css": "^3.5",

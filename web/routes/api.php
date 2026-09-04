@@ -157,6 +157,8 @@ Route::prefix('v10')->group(function() {
             Route::get('/dashboard/available-parcels',                  [DashboardController::class, 'availableParcels']);
             Route::get('/invoice-list/index',                           [InvoiceController::class,   'invoiceLists']);
             Route::get('/invoice-details/{id}',                         [InvoiceController::class,   'invoiceDetails']);
+            // Chantier 4 : lien signé (15 min) vers le relevé en PDF.
+            Route::get('/invoice-pdf-link/{id}',                        [InvoiceController::class,   'pdfLink']);
             Route::get('parcel/all/status',                             [ParcelController::class,    'parcelAllStatus']);
             Route::get('status-wise/parcel/list/{status}',              [ParcelController::class,    'statusWiseParcelList']);
             Route::get('analytics' ,                                    [AnalyticsController::class, 'index']);

@@ -372,9 +372,12 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                             Route::get('/{invoice_id}',          [MerchantInvoiceController::class, 'InvoiceDetails'])->name('details')->middleware('hasPermission:invoice_read');
                             Route::get('/status/update',         [MerchantInvoiceController::class, 'StatusUpdate'])->name('status.update')->middleware('hasPermission:invoice_status_update');
                             Route::get('/pdf/{invoice_id}',     [MerchantInvoiceController::class, 'InvoicePdf'])->name('pdf')->middleware('hasPermission:invoice_read');
+                            Route::get('/journal/{invoice_id}', [MerchantInvoiceController::class, 'InvoiceJournal'])->name('journal')->middleware('hasPermission:invoice_read');
                             Route::get('/csv/{invoice_id}',     [MerchantInvoiceController::class, 'InvoiceCSV'])->name('csv')->middleware('hasPermission:invoice_read');
                         });
                         Route::get('paid/invoice',               [MerchantInvoiceController::class, 'PaidInvoice'])->name('paid.invoice.index');
+                        // Chantier 4 — export journal SYSCOHADA des relevés d'une période.
+                        Route::get('paid/invoice/syscohada-journal', [MerchantInvoiceController::class, 'JournalPeriod'])->name('paid.invoice.journal')->middleware('hasPermission:invoice_read');
                         //liquid fragile
                         Route::get('liquid-fragile/index',  [LiquidFragileController::class, 'index'])->name('liquid-fragile.index')->middleware('hasPermission:liquid_fragile_read');
                         Route::get('liquid-fragile/edit',   [LiquidFragileController::class, 'edit'])->name('liquid.fragile.edit')->middleware('hasPermission:liquid_fragile_update');
@@ -924,6 +927,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                             Route::get('/{invoice_id}',                  [InvoiceController::class, 'InvoiceDetails'])->name('details');
                             Route::get('/pdf/{merchant_id}/{invoice_id}', [MerchantInvoiceController::class, 'InvoicePdf'])->name('pdf');
                             Route::get('/csv/{merchant_id}/{invoice_id}', [MerchantInvoiceController::class, 'InvoiceCSV'])->name('csv');
+                            Route::get('/journal/{merchant_id}/{invoice_id}', [MerchantInvoiceController::class, 'InvoiceJournal'])->name('journal');
                         });
                         //erchant online payment  received setup
                         Route::get('/settings/online-payment-setup',                            [MerchantOnlinePaymentSetupController::class, 'index'])->name('merchant.online.payment.setup.index');
@@ -1022,3 +1026,11 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
 */
 Route::post('fedapay/webhook',   [\App\Http\Controllers\Payment\FedaPayController::class, 'webhook'])->name('fedapay.webhook')->withoutMiddleware(['web']);
 Route::get('fedapay/callback',   [\App\Http\Controllers\Payment\FedaPayController::class, 'callback'])->name('fedapay.callback');
+
+/*
+| Chantier 4 — relevé de règlement en PDF par lien signé temporaire.
+| L'app mobile obtient le lien via l'API (jeton Sanctum), puis l'ouvre dans
+| le navigateur : la signature remplace la session. Hors du groupe tenant,
+| comme le rappel FedaPay ; la société vient de la facture, pas de l'hôte.
+*/
+Route::get('invoice/statement/{invoice}/pdf', [\App\Http\Controllers\Backend\MerchantInvoiceController::class, 'signedPdf'])->name('invoice.statement.pdf')->middleware('signed');
