@@ -1298,6 +1298,24 @@ Une mise à jour par query builder (`DB::table()->update()`) resterait muette ;
 aucune n'a été trouvée sur les statuts de colis, les wallets, les factures ni
 les retraits.
 
+## ✅ Chantier 6 — reporting SaaS (2026-09-04)
+
+Lecture seule des tables existantes (`subscriptions`, `plans`, `general_settings`,
+`expenses` + `account_heads`, `fedapay_transactions`) ; aucun schéma modifié.
+
+| Élément | Où |
+|---|---|
+| Formules | `App\Services\Reporting\SaasMetrics` : `snapshot(date)` (abonnement courant par société, MRR = prix × 30 / `days_count`, ARR = 12 × MRR), `month(mois)` (nouveaux = premier abonnement dans le mois, churn = actifs au 1er et plus au dernier jour, ARPA, LTV = ARPA / churn, CAC = dépenses d'acquisition / nouveaux, encaissé FedaPay, souscriptions), `trend(n)` |
+| Conventions | `config/saas_reporting.php` : société plateforme (1), 30 jours par mois, chapitres comptables du CAC (marketing, acquisition, publicité, communication, commercial) |
+| Page | `super-admin/reporting` → `Superadmin\ReportingController` (super-admin seul, `isSuperadmin()`), vue `backend/super-admin/reporting/index.blade.php` : six indicateurs, douze mois, détail par société, définitions affichées |
+| Menu | entrée « Reporting SaaS » dans la barre latérale, super-admin seul |
+| Tests | `SaasMetricsTest` : MRR/ARR/churn/LTV/CAC sur un jeu construit, ratios non disponibles sans churn ni dépense, plan gratuit, renouvellement ≠ churn, page réservée au super-admin |
+
+⚠️ Limites assumées : le CAC dépend de dépenses **saisies** par la plateforme sous un
+chapitre d'acquisition — sans saisie, il est « non disponible », jamais zéro ; le churn
+est mesuré sur l'expiration sans renouvellement (le socle n'a pas de résiliation
+explicite) ; les plans du seed ont des prix et durées aléatoires, sans valeur.
+
 ## ✅ Harnais de tests (2026-08-18)
 
 `RefreshDatabase` fonctionne : les 86 migrations passent sur SQLite en mémoire. Deux

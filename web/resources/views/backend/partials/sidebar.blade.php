@@ -163,6 +163,14 @@
             </li>
         @endif
 
+        {{-- Chantier 6 : reporting SaaS, super-admin seul. --}}
+        @if (isSuperadmin() && Route::has('saas.reporting'))
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('super-admin/reporting*') ? 'active' : '' }}"
+                    href="{{ route('saas.reporting') }}"><i class="fa-solid fa-chart-line"></i>{{ __('saas.title') }}</a>
+            </li>
+        @endif
+
 
 
         {{-- pickup request --}}
