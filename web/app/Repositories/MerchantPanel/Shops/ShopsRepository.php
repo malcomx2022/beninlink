@@ -4,6 +4,7 @@ namespace App\Repositories\MerchantPanel\Shops;
 use App\Models\MerchantShops;
 use App\Repositories\MerchantPanel\Shops\ShopsInterface;
 use App\Models\Backend\Merchant;
+use Illuminate\Support\Facades\Auth;
 
 class ShopsRepository implements ShopsInterface{
 
@@ -11,8 +12,22 @@ class ShopsRepository implements ShopsInterface{
         return MerchantShops::where('merchant_id',$id)->orderBy('id','desc')->paginate(10);
     }
 
+    /**
+     * Boutiques du marchand connecté, et rien d'autre.
+     *
+     * Le socle lisait `MerchantShops::where('id', $id)` sans filtre : depuis
+     * l'API comme depuis le panneau marchand, changer l'identifiant dans l'URL
+     * suffisait à lire, modifier ou supprimer la boutique d'un autre marchand
+     * (même schéma que S17 sur les colis). Toute lecture et toute écriture
+     * passent désormais par ce périmètre ; hors périmètre, on rend `null`.
+     */
+    private function ownedShops(){
+        $merchant = Auth::user() ? Auth::user()->merchant : null;
+        return MerchantShops::where('merchant_id', $merchant ? $merchant->id : 0);
+    }
+
     public function get($id){
-        return MerchantShops::where('id',$id)->first();
+        return $this->ownedShops()->where('id',$id)->first();
     }
 
     public function getMerchant($id){
@@ -40,7 +55,10 @@ class ShopsRepository implements ShopsInterface{
     public function update($id, $request){
 
         try {
-                $shop               = MerchantShops::where('id',$id)->first();
+                $shop               = $this->get($id);
+                if(!$shop){
+                    return false;
+                }
                 $shop->name         = $request->name;
                 $shop->contact_no   = $request->contact_no;
                 $shop->address      = $request->address;
@@ -56,7 +74,8 @@ class ShopsRepository implements ShopsInterface{
     }
 
     public function delete($id){
-        return MerchantShops::destroy($id);
+        $shop = $this->get($id);
+        return $shop ? $shop->delete() : false;
     }
 
 

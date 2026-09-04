@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\V10\SupportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Payment\FedaPayController;
+use App\Http\Controllers\Api\V10\WalletController;
 use App\Http\Controllers\Api\V10\AuthController;
 use App\Http\Controllers\Api\V10\DeliverymanController;
 use App\Http\Controllers\Api\V10\GeneralSettingCotroller;
@@ -177,6 +178,9 @@ Route::prefix('v10')->group(function() {
             // protège par la signature — voir routes/web.php.
             Route::post('fedapay/initiate',                              [FedaPayController::class, 'initiate']);
             Route::get('fedapay/status/{reference}',                     [FedaPayController::class, 'status']);
+            // Mouvements du porte-monnaie prépayé (recharges FedaPay, crédits
+            // manuels, dépenses). Le solde, lui, arrive avec `/profile`.
+            Route::get('wallet/history',                                 [WalletController::class, 'history']);
 
             // S4 — remontée de position du livreur. Était HORS du groupe
             // auth:sanctum : protégée par la seule clé API statique et publique,

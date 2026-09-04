@@ -70,6 +70,8 @@ return array (
 'bkash' => 'Bkash',
 'nogod' => 'Nagad',
 'rocket' => 'Rocket',
+'mtn_momo' => 'MTN MoMo',
+'moov_money' => 'Moov Money',
 
 'mobile_no' => 'Numéro de mobile',
 'account_type' => 'Type de compte',

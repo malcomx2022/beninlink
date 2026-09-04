@@ -41,6 +41,7 @@ class ShopsController extends Controller
 
     public function edit($id){ // shop id
         $shop = $this->repo->get($id);
+        abort_if(!$shop, 404); // boutique d'un autre marchand : introuvable
         return view('backend.merchant_panel.shops.edit', compact('shop'));
     }
 

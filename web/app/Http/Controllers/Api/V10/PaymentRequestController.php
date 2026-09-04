@@ -61,6 +61,9 @@ class PaymentRequestController extends Controller
         if((double) $request->amount > $balance){
             return $this->responseWithError(__('merchantmanage.not_enough_balance'), [], 422);
         }
+        if(!$this->ownsAccount($request->merchant_account)){
+            return $this->responseWithError(__('paymentrequest.title'), ['message' => ['merchant_account' => [__('validation.exists', ['attribute' => 'merchant_account'])]]], 422);
+        }
 
         if($this->repo->store($request)){
             return $this->responseWithSuccess(__('paymentrequest.added_msg'), [], 200);
@@ -93,6 +96,9 @@ class PaymentRequestController extends Controller
             if((double) $request->amount > $balance){
                 return $this->responseWithError(__('merchantmanage.not_enough_balance'), [], 422);
             }
+            if(!$this->ownsAccount($request->merchant_account)){
+                return $this->responseWithError(__('paymentrequest.title'), ['message' => ['merchant_account' => [__('validation.exists', ['attribute' => 'merchant_account'])]]], 422);
+            }
 
             if($this->repo->update($request)){
                 return $this->responseWithSuccess(__('paymentrequest.update_msg'), [], 200);
@@ -121,6 +127,20 @@ class PaymentRequestController extends Controller
             return $this->responseWithError(__('paymentrequest.error_msg'), [], 500);
 
         }
+    }
+
+    /**
+     * Le compte de règlement désigné doit appartenir au marchand connecté.
+     *
+     * Le socle enregistrait `merchant_account` tel quel : un marchand pouvait
+     * désigner le compte d'un autre, et `PaymentResource` lui en renvoyait
+     * ensuite le détail (banque, numéro, titulaire) dans sa propre liste.
+     */
+    private function ownsAccount($accountId): bool
+    {
+        return MerchantPayment::where('merchant_id', auth()->user()->merchant->id)
+            ->where('id', $accountId)
+            ->exists();
     }
 
 }

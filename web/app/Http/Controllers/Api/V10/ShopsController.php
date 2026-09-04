@@ -49,7 +49,13 @@ class ShopsController extends Controller
         }
     }
     public function edit($id){
+        // Le repository ne rend que les boutiques du marchand connecté : une
+        // boutique étrangère est introuvable, jamais « interdite » (on ne
+        // confirme pas son existence).
         $shop = $this->repo->get($id);
+        if(!$shop){
+            return $this->responseWithError(__('merchantshops.title'), [], 404);
+        }
         return $this->responseWithSuccess(__('merchantshops.title'), ['shop'=> new ShopResource($shop)], 200);
     }
 
@@ -62,6 +68,10 @@ class ShopsController extends Controller
             return $this->responseWithError(__('merchantshops.update_shops'), ['message' => $validator->errors()], 422);
         }
 
+        if(!$this->repo->get($id)){
+            return $this->responseWithError(__('merchantshops.title'), [], 404);
+        }
+
         if($this->repo->update($id, $request)){
             return $this->responseWithSuccess(__('merchantshops.update_msg'), [], 200);
         }else{
@@ -71,7 +81,9 @@ class ShopsController extends Controller
     public function delete($id){
 
         try {
-            $this->repo->delete($id);
+            if(!$this->repo->delete($id)){
+                return $this->responseWithError(__('merchantshops.title'), [], 404);
+            }
             return $this->responseWithSuccess(__('merchantshops.delete_msg'), [], 200);
         }catch (\Exception $exception) {
             return $this->responseWithError(__('merchantshops.error_msg'), [], 500);
