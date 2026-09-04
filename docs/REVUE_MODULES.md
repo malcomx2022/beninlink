@@ -168,7 +168,7 @@ Depuis S5 (2026-09-04), les routes marchand exigent `userType:merchant` et les r
 | **Notifications** (BeninLink, 2026-09-04) | `notifications/index`, `notifications/unread-count`, `notifications/{id}/read`, `notifications/read-all` | `NotificationController` | marchand |
 | **Argent** | `payment-accounts/*`, `account-transaction/*`, `statements/*`, `payment-request/*`, `invoice-list/index`, `invoice-details/{id}`, `invoice-pdf-link/{id}` (lien signé, chantier 4), `statement-reports` | `PaymentAccountController`, `AccountTransactionController`, `StatementsController`, `PaymentRequestController`, `InvoiceController`, `ReportController` | marchand |
 | **Relation** | `fraud/*` (+ `fraud/check`), `news-offer/index`, `support/*` | `FraudController`, `NewsOfferController`, `SupportController` | marchand |
-| **Push** | `fcm-subscribe`, `fcm-unsubscribe` | `PushNotificationController` | marchand + livreur (hors service, S11) |
+| **Push** | `fcm-subscribe`, `fcm-unsubscribe` | `PushNotificationController` | marchand + livreur (hors service : API FCM legacy arrêtée ; topic par compte authentifié depuis S11) |
 | **Livreur** | `deliveryman/parcel/*` (index, details, delivered, partial-delivered), `deliveryman/income-expense`, `deliveryman/dashboard`, `deliveryman/profile`, `deliveryman/payment-logs`, `deliveryman/parcel-payment-logs`, `deliveryman/parcel-status`, `deliveryman/parcel-status-update`, `deliveryman/parcel-location-update` | `DeliveryManParcelController`, `DeliveryManIncomeExpenseController`, `DeliverymanController` | **livreur** (aucune app RN ne les consomme encore) |
 | **Public** | `parcel/tracking/{tracking_id}`, `contact-us`, `subscribe`, `customer/installation` | `ParcelController`, `InstallerController` | site / app |
 | **Contrat** (BeninLink, 2026-09-04) | `openapi.json` (spec OpenAPI 3.0.3 générée depuis le routeur ; Swagger UI sur `/api/docs`) | `OpenApiController` | apps + intégrateurs |
@@ -326,10 +326,14 @@ consommés (`services/api-list.dart`). Ne rien y coder.
    FCM reste hors service : le fil est consulté, pas poussé.
 5. **Une route morte** reste dans `web.php` (`my-wallet/recharge-status`) ; les deux
    routes PDF de facture sont implémentées par le chantier 4.
-6. **Constats de sécurité ouverts** : S7 (aucun filet inter-locataires), S11-S13
-   (push, TLS, expéditeur). ~~S8-S9~~ ✅ **corrigés le 2026-09-04** : un seul
-   `DeliveryChargeResolver` (scopé société, par tranche de poids) sert le calculateur,
-   les deux AJAX des écrans et l'import CSV. ~~S5~~ ✅ **corrigé le
+6. **Constats de sécurité ouverts** : S7 (aucun filet inter-locataires) et S21
+   (TLS non vérifié dans les passerelles Aamarpay / SSLCommerz du socle, sans usage
+   au Bénin — à désactiver ou corriger, décision à prendre). ~~S8-S9~~ ✅ **corrigés
+   le 2026-09-04** : un seul `DeliveryChargeResolver` (scopé société, par tranche de
+   poids) sert le calculateur, les deux AJAX des écrans et l'import CSV. ~~S11-S13~~
+   ✅ **corrigés dans le code le 2026-08-18**, tests et cartographie complétés le
+   2026-09-04 (topic push non devinable, TLS vérifié, e-mail de contact au nom de
+   la plateforme, validation de `contact-us`). ~~S5~~ ✅ **corrigé le
    2026-09-04** : l'API est cloisonnée par `userType` (marchand / livreur → 403) et
    les jetons portent l'ability de leur type.
 7. **`mobile-livreur/` n'est pas commencé** mais son backend est prêt : 6 écrans, 12
