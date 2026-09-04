@@ -13,7 +13,7 @@
 |---|---|---|---|
 | `web/` | Laravel 10 · PHP 8.2 | Backend We Courier + modules BeninLink. **Le contrat.** | Actif — chantiers 1, 2, 3, 5 livrés ; 4, 6, 7 à faire |
 | `web/` (back-office Blade) | Blade + JS compilé dans `public/` | Panneaux Admin, Marchand, Hub, Super-admin, site vitrine | Actif (socle) |
-| `mobile/` | React Native · Expo 57 · expo-router · TypeScript | App **marchand** (PME) | Actif — 14 des 15 écrans de la maquette codés |
+| `mobile/` | React Native · Expo 57 · expo-router · TypeScript | App **marchand** (PME) | Actif — les 15 écrans de la maquette codés |
 | `mobile-livreur/` | React Native · Expo | App **livreur** | **Pas une ligne de code** (seul `CLAUDE.md`) — fenêtre Création |
 | `courier_merchant_saas-main/` · `courier_delivery_saas-main/` | Flutter | Apps d'origine We Courier | **Dépréciées**, référence seulement |
 
@@ -161,6 +161,7 @@ Toutes les routes portent le header `apiKey` puis `auth:sanctum`, sauf le bloc p
 | **Douane** (BeninLink) | `customs/reference`, `customs/alerts`, `customs/alerts/{id}/resolve` | `CustomsController` | marchand |
 | **FedaPay** (BeninLink) | `fedapay/initiate`, `fedapay/status/{reference}` (+ webhook et callback publics dans `web.php`) | `Payment/FedaPayController` | marchand |
 | **Wallet** (BeninLink, 2026-09-04) | `wallet/history` (mouvements du porte-monnaie prépayé, paginés par 10) | `WalletController` | marchand |
+| **Notifications** (BeninLink, 2026-09-04) | `notifications/index`, `notifications/unread-count`, `notifications/{id}/read`, `notifications/read-all` | `NotificationController` | marchand |
 | **Argent** | `payment-accounts/*`, `account-transaction/*`, `statements/*`, `payment-request/*`, `invoice-list/index`, `invoice-details/{id}`, `statement-reports` | `PaymentAccountController`, `AccountTransactionController`, `StatementsController`, `PaymentRequestController`, `InvoiceController`, `ReportController` | marchand |
 | **Relation** | `fraud/*` (+ `fraud/check`), `news-offer/index`, `support/*` | `FraudController`, `NewsOfferController`, `SupportController` | marchand |
 | **Push** | `fcm-subscribe`, `fcm-unsubscribe` | `PushNotificationController` | marchand + livreur (hors service, S11) |
@@ -213,12 +214,12 @@ Toutes les routes portent le header `apiKey` puis `auth:sanctum`, sauf le bloc p
 | | Profil (lecture + déconnexion) | `(app)/profile.tsx` | `profile` | `profile`, `sign-out` |
 | | Mes informations | `(app)/profile/edit.tsx` | `profile` | `profile/update` |
 | | Changer le mot de passe | `(app)/profile/password.tsx` | `profile` | `update-password` |
-| — | **Notifications** | **absent** | `notifications` | aucune source côté `web/` (seul `news-offer/index`) |
+| | Notifications (fil, marquage lu, ouverture du colis) | `(app)/notifications.tsx` | `notifications` | `notifications/*` |
 
-Bilan : **14 des 15 écrans** de la maquette existent, tous complets depuis le
+Bilan : **les 15 écrans** de la maquette existent, tous complets depuis le
 2026-09-04 (wallet avec historique et retrait, boutiques modifiables, profil
-modifiable, réinitialisation du mot de passe en deux étapes). Seul l'écran
-`notifications` manque, faute de source côté `web/`.
+modifiable, réinitialisation du mot de passe en deux étapes, fil de
+notifications servi par `web/`).
 
 Chaînes **natives** (hors JavaScript) : `app.json` déclare `"locales": { "fr":
 "./src/i18n/expo-fr.json" }`. Ce fichier fournit le nom d'app et la demande Face ID en
@@ -232,7 +233,7 @@ et iOS gardait la demande Face ID anglaise du plugin `expo-secure-store`.
 |---|---|---|
 | Client d'API | `api/client.ts`, `api/config.ts`, `api/session.ts` | `apiKey` + Bearer Sanctum, URL en `EXPO_PUBLIC_API_URL`, jeton en `expo-secure-store` |
 | Inventaire d'endpoints | `api/endpoints.ts` | Liste des routes réellement servies + bloc `MISSING` |
-| Services d'API | `api/auth.ts`, `api/merchant.ts`, `api/parcels.ts`, `api/shops.ts`, `api/wallet.ts`, `api/fedapay.ts`, `api/customs.ts`, `api/types.ts` | Un module par domaine |
+| Services d'API | `api/auth.ts`, `api/merchant.ts`, `api/parcels.ts`, `api/shops.ts`, `api/wallet.ts`, `api/fedapay.ts`, `api/customs.ts`, `api/notifications.ts`, `api/types.ts` | Un module par domaine |
 | Session | `session/SessionProvider.tsx` | Contexte utilisateur, garde des groupes `(auth)` / `(app)` |
 | Domaine | `domain/money.ts`, `domain/parcelStatus.ts`, `domain/deliveryType.ts` | FCFA entier, table 33 statuts backend → 7 statuts affichés, types de livraison |
 | i18n | `i18n/fr.ts`, `i18n/index.ts`, `i18n/expo-fr.json` | FR seul ; `expo-fr.json` = chaînes natives (`expo.locales`) |
@@ -289,7 +290,7 @@ consommés (`services/api-list.dart`). Ne rien y coder.
 | Reporting SaaS (MRR…) | ⏳ | — | — | ⏳ |
 | OpenAPI / Swagger | ⏳ | 🟡 `endpoints.ts` | — | — |
 | Suivi / statuts colis | ✅ | ✅ (timeline) | ⏳ | ✅ |
-| Notifications | 🟡 SMS ok, push hors service, mail sync | ⏳ écran absent | — | ✅ |
+| Notifications | ✅ fil marchand (`notifications` Laravel + 6 observers) · SMS ok · push FCM hors service · mail sync | ✅ écran + compteur | — | ✅ |
 
 ---
 
@@ -307,8 +308,11 @@ consommés (`services/api-list.dart`). Ne rien y coder.
    relevées et corrigées (voir `web/CARTOGRAPHIE.md`, S18 et S19) : les boutiques
    n'étaient pas scopées par marchand, et une demande de retrait pouvait désigner le
    compte bancaire d'un autre marchand.
-4. **L'écran `notifications` attend une source** : `news-offer/index` sert des offres,
-   le push FCM legacy est mort, aucun endpoint de notifications n'existe.
+4. ~~L'écran `notifications` attend une source~~ — ✅ **livré le 2026-09-04** : fil
+   Laravel (`notifications` table, canal `database`) alimenté par six observers
+   (statut colis, crédit wallet, relevé émis, alerte douane, message admin, retrait),
+   API `notifications/*`, écran mobile avec compteur sur le tableau de bord. Le push
+   FCM reste hors service : le fil est consulté, pas poussé.
 5. **Trois routes mortes** dans `web.php` (`my-wallet/recharge-status`, deux routes PDF
    de facture) — à nettoyer ou à implémenter avec le chantier 4.
 6. **Constats de sécurité ouverts** : S5 (jetons marchand / livreur non séparés), S7

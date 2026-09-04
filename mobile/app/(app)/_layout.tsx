@@ -21,6 +21,7 @@ export default function AppLayout() {
       <Stack.Screen name="wallet" options={{ title: t('wallet.title') }} />
       <Stack.Screen name="wallet/withdraw" options={{ title: t('wallet.withdrawTitle') }} />
       <Stack.Screen name="customs" options={{ title: t('customs.title') }} />
+      <Stack.Screen name="notifications" options={{ title: t('notifications.title') }} />
       <Stack.Screen name="invoices" options={{ title: t('invoices.title') }} />
       <Stack.Screen name="rates" options={{ title: t('rates.title') }} />
       <Stack.Screen name="shops" options={{ title: t('shops.title') }} />
