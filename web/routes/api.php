@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Payment\FedaPayController;
 use App\Http\Controllers\Api\V10\WalletController;
+use App\Http\Controllers\Api\V10\NotificationController;
 use App\Http\Controllers\Api\V10\AuthController;
 use App\Http\Controllers\Api\V10\DeliverymanController;
 use App\Http\Controllers\Api\V10\GeneralSettingCotroller;
@@ -115,6 +116,13 @@ Route::prefix('v10')->group(function() {
             Route::post('fraud/check',                                  [FraudController::class,'check']);
 
             Route::get('news-offer/index',                              [NewsOfferController::class,'index']);
+
+            // Fil de notifications du marchand (statuts colis, recharges,
+            // relevés, douane, messages de l'administration, retraits).
+            Route::get('notifications/index',                           [NotificationController::class,'index']);
+            Route::get('notifications/unread-count',                    [NotificationController::class,'unreadCount']);
+            Route::put('notifications/read-all',                        [NotificationController::class,'readAll']);
+            Route::put('notifications/{id}/read',                       [NotificationController::class,'read']);
 
             Route::get('support/index',                                 [SupportController::class,'index']);
             Route::get('support/create',                                [SupportController::class,'create']);

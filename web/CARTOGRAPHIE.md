@@ -1261,6 +1261,26 @@ les deux écrans, mais rien n'est envoyé.
 
 ⏳ L'écran `customs` de `mobile/` suit — le chantier a été mené « backend d'abord ».
 
+## ✅ Fil de notifications marchand (2026-09-04)
+
+L'écran `notifications` de `mobile/` n'avait aucune source : `news-offer/index`
+sert des offres, le push FCM legacy est arrêté (bloc K) et `push_notifications`
+stocke ce que l'admin rédige, pas ce qui arrive au marchand.
+
+| Élément | Où |
+|---|---|
+| Stockage | table `notifications` **standard Laravel** (canal `database`), `User` étant déjà `Notifiable` — migration `2026_09_04_110000` |
+| Une seule classe | `App\Notifications\MerchantNotification` (`kind`, `title`, `body`, extras) ; un canal e-mail ou push s'ajoutera dans `via()` sans toucher aux émetteurs |
+| Émetteur unique | `App\Services\Notifications\MerchantFeed` : textes FR, destinataires, tolérance aux pannes (une notification en échec ne fait jamais échouer l'écriture métier) |
+| Accroche | six observers `app/Observers/Feed/*` : statut colis (`updated` + `wasChanged('status')`), wallet approuvé, relevé créé, alerte douane créée (la « notification à la création » de `.claude/rules/customs.md`), message admin créé, retrait approuvé/traité/rejeté |
+| API | `notifications/index` (20 par page + `unread_count`), `unread-count`, `{id}/read`, `read-all` — périmètre inhérent à la relation `notifications()` de l'utilisateur |
+| Tests | `MerchantNotificationTest` : chaque événement rejoué par son écriture Eloquent, liste scopée, lecture, tout marquer lu |
+
+⚠️ Les observers ne voient que les écritures **Eloquent** (`save()`/`create()`).
+Une mise à jour par query builder (`DB::table()->update()`) resterait muette ;
+aucune n'a été trouvée sur les statuts de colis, les wallets, les factures ni
+les retraits.
+
 ## ✅ Harnais de tests (2026-08-18)
 
 `RefreshDatabase` fonctionne : les 86 migrations passent sur SQLite en mémoire. Deux
