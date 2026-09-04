@@ -83,6 +83,8 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('/modules/{plan_id}',   'modulesView')->name('modules.view')->middleware('hasPermission:plans_read');
                     });
                 Route::get('/subscription/history', [PlanController::class, 'subscriptionHistory'])->name('subscription.history');
+                // Chantier 6 — reporting SaaS (MRR, ARR, churn, LTV, CAC). Super-admin seul, lecture seule.
+                Route::get('/reporting', [\App\Http\Controllers\Backend\Superadmin\ReportingController::class, 'index'])->name('saas.reporting');
                 Route::prefix('company')
                     ->controller(CompanyController::class)
                     ->name('company.')
