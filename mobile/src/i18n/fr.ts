@@ -183,8 +183,9 @@ export const fr = {
     empty: 'Aucun relevé émis pour le moment.',
     tapForDetail: 'Touchez un relevé pour voir sa ventilation.',
     returnFees: 'Frais de retour',
-    /** Le PDF attend le chantier 4 côté web/ : ne rien promettre ici. */
-    exportNotice: 'Export PDF et CSV disponibles depuis votre espace web.',
+    downloadPdf: 'Télécharger le relevé (PDF)',
+    pdfOpening: 'Ouverture du relevé…',
+    exportNotice: 'Le relevé PDF porte les mentions légales (IFU, RCCM) des deux parties. L\'export CSV et le journal SYSCOHADA restent disponibles depuis votre espace web.',
   },
   shops: {
     title: 'Mes boutiques',

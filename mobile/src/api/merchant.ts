@@ -50,6 +50,15 @@ export function fetchInvoiceDetails(id: number): Promise<InvoiceDetails> {
   return api.get<InvoiceDetails>(endpoints.invoiceDetails(id));
 }
 
+/**
+ * Lien de téléchargement du relevé en PDF, signé et valable 15 minutes.
+ * L'app l'ouvre dans le navigateur : elle ne peut pas y joindre son jeton.
+ */
+export async function fetchInvoicePdfLink(id: number): Promise<string> {
+  const data = await api.get<{ url: string; expires_at: string }>(endpoints.invoicePdfLink(id));
+  return data.url;
+}
+
 /** Barème de livraison du marchand : une ligne par catégorie et par poids. */
 export async function fetchDeliveryRates(): Promise<DeliveryRate[]> {
   const data = await api.get<{ deliveryCharges: DeliveryRate[] }>(endpoints.deliveryCharges);

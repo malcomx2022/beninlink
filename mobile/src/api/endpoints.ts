@@ -58,6 +58,8 @@ export const endpoints = {
   // — Argent
   invoiceList: 'invoice-list/index',
   invoiceDetails: (id: number | string) => `invoice-details/${id}`,
+  /** Lien signé (15 min) vers le relevé en PDF — chantier 4. */
+  invoicePdfLink: (id: number | string) => `invoice-pdf-link/${id}`,
   statements: 'statements/index',
   accountTransactions: 'account-transaction/index',
   /** Retrait (payout) marchand. */

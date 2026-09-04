@@ -11,7 +11,7 @@
 
 | Composante | Techno | Rôle | État |
 |---|---|---|---|
-| `web/` | Laravel 10 · PHP 8.2 | Backend We Courier + modules BeninLink. **Le contrat.** | Actif — chantiers 1, 2, 3, 5 livrés ; 4, 6, 7 à faire |
+| `web/` | Laravel 10 · PHP 8.2 | Backend We Courier + modules BeninLink. **Le contrat.** | Actif — chantiers 1 à 5 livrés ; 6 et 7 à faire |
 | `web/` (back-office Blade) | Blade + JS compilé dans `public/` | Panneaux Admin, Marchand, Hub, Super-admin, site vitrine | Actif (socle) |
 | `mobile/` | React Native · Expo 57 · expo-router · TypeScript | App **marchand** (PME) | Actif — les 15 écrans de la maquette codés |
 | `mobile-livreur/` | React Native · Expo | App **livreur** | **Pas une ligne de code** (seul `CLAUDE.md`) — fenêtre Création |
@@ -45,7 +45,7 @@ de domaine, environ 5 400 lignes TypeScript (au 2026-09-04).
 | **Sécurité HTTP** | `XSS`, `Cors`, `ModifyHeaderMiddleware`, `TrustProxies` | |
 | **Planificateur** | `Console/Kernel` : `database:autobackup` daily, `invoice:generate` daily 13:00 | |
 | **Notifications sortantes** | `SmsService` (Twilio, Vonage, REVE), `PushNotificationService` (FCM **legacy, arrêté**), `Mail/` (4 Mailables) | Envoi synchrone, non journalisé. Push à réécrire en HTTP v1. |
-| **Exports / imports** | `Exports/` (7 : rapports, factures, colis), `Imports/ParcelImport` | `maatwebsite/excel`. Export CSV/XLSX, pas de PDF. |
+| **Exports / imports** | `Exports/` (7 : rapports, factures, colis), `Imports/ParcelImport`, `Services/Invoicing/*` | `maatwebsite/excel` (CSV/XLSX) ; **PDF** des relevés par `dompdf` et journal SYSCOHADA (CSV) depuis le 2026-09-04. |
 | **Codes-barres** | `milon/barcode` | Étiquettes colis. |
 
 ---
@@ -72,7 +72,7 @@ Routes dans `routes/web.php` l.205-822, contrôleurs `Backend/*`, vues
 | | Boutiques marchand | `MerchantShopsController` | `MerchantShops` |
 | | Comptes de paiement marchand | `MerchantPaymentAccountController` | `MerchantPayment` |
 | | Paiements marchand (règlement COD) | `MerchantmanagePaymentController` | `MerchantPayment` |
-| | Factures marchand | `MerchantInvoiceController`, commande `invoice:generate` | `Invoice` |
+| | Factures marchand = relevés de règlement (PDF, CSV, journal SYSCOHADA) | `MerchantInvoiceController`, commande `invoice:generate`, `Services/Invoicing/{InvoiceNumbering,SettlementStatement,SyscohadaJournal}` | `Invoice` |
 | | Demandes de wallet (recharge manuelle) | `Backend/MerchantPanel/WalletController` (routes admin) | `Wallet` |
 | | **Identité légale IFU / RCCM / CNSS** (BeninLink, chantier 2) | formulaires marchand + `general_settings`, `Rules/LegalIdentifier` | — |
 | **Livreurs** | Livreurs (CRUD) | `DeliveryManController` | `DeliveryMan` |
@@ -162,7 +162,7 @@ Toutes les routes portent le header `apiKey` puis `auth:sanctum`, sauf le bloc p
 | **FedaPay** (BeninLink) | `fedapay/initiate`, `fedapay/status/{reference}` (+ webhook et callback publics dans `web.php`) | `Payment/FedaPayController` | marchand |
 | **Wallet** (BeninLink, 2026-09-04) | `wallet/history` (mouvements du porte-monnaie prépayé, paginés par 10) | `WalletController` | marchand |
 | **Notifications** (BeninLink, 2026-09-04) | `notifications/index`, `notifications/unread-count`, `notifications/{id}/read`, `notifications/read-all` | `NotificationController` | marchand |
-| **Argent** | `payment-accounts/*`, `account-transaction/*`, `statements/*`, `payment-request/*`, `invoice-list/index`, `invoice-details/{id}`, `statement-reports` | `PaymentAccountController`, `AccountTransactionController`, `StatementsController`, `PaymentRequestController`, `InvoiceController`, `ReportController` | marchand |
+| **Argent** | `payment-accounts/*`, `account-transaction/*`, `statements/*`, `payment-request/*`, `invoice-list/index`, `invoice-details/{id}`, `invoice-pdf-link/{id}` (lien signé, chantier 4), `statement-reports` | `PaymentAccountController`, `AccountTransactionController`, `StatementsController`, `PaymentRequestController`, `InvoiceController`, `ReportController` | marchand |
 | **Relation** | `fraud/*` (+ `fraud/check`), `news-offer/index`, `support/*` | `FraudController`, `NewsOfferController`, `SupportController` | marchand |
 | **Push** | `fcm-subscribe`, `fcm-unsubscribe` | `PushNotificationController` | marchand + livreur (hors service, S11) |
 | **Livreur** | `deliveryman/parcel/*` (index, details, delivered, partial-delivered), `deliveryman/income-expense`, `deliveryman/dashboard`, `deliveryman/profile`, `deliveryman/payment-logs`, `deliveryman/parcel-payment-logs`, `deliveryman/parcel-status`, `deliveryman/parcel-status-update`, `deliveryman/parcel-location-update` | `DeliveryManParcelController`, `DeliveryManIncomeExpenseController`, `DeliverymanController` | **livreur** (aucune app RN ne les consomme encore) |
@@ -178,7 +178,7 @@ Toutes les routes portent le header `apiKey` puis `auth:sanctum`, sauf le bloc p
 | 2 | IFU / RCCM / CNSS | ✅ livré | migration `2026_08_17`, `Rules/LegalIdentifier`, 5 formulaires |
 | 3 | FedaPay (recharge wallet **et abonnement SaaS**) | ✅ livré (abonnement le 2026-09-04) | `Services/Payments/FedaPayGateway`, `Payment/FedaPayController`, `FedaPayTransaction`, `config/fedapay.php`, migrations `2026_08_18` et `2026_09_04`, tests `FedaPayWebhookTest`, `FedaPaySubscriptionTest` |
 | S2 | Calcul serveur des montants + devis | ✅ livré | `Services/Parcel/ChargeCalculator`, `POST parcel/quote`, `ParcelQuoteTest` |
-| 4 | Facturation SYSCOHADA + relevés PDF | ⏳ **non commencé** | rien dans `app/` (routes PDF mortes, aucune lib PDF) |
+| 4 | Facturation SYSCOHADA + relevés PDF | ✅ livré le 2026-09-04 (TVA au niveau entreprise non tranchée) | `Services/Invoicing/*`, `config/syscohada.php`, `statement_pdf.blade.php`, migration `2026_09_04_120000`, test `SettlementStatementTest` |
 | 5 | Alertes douanières UEMOA / CEDEAO | ✅ livré (notification à la création en reste) | `Services/Customs/CustomsService`, `Observers/ParcelCustomsObserver`, `Rules/CustomsAllowed`, `CustomsRule`, `CustomsAlert`, `CustomsRuleSeeder`, migration `2026_08_19`, `CustomsAlertTest` |
 | 6 | Reporting SaaS (MRR, ARR, Churn, LTV, CAC) | ⏳ **non commencé** | aucune occurrence |
 | 7 | OpenAPI / Swagger | ⏳ **non commencé** | aucun package ni annotation ; `mobile/src/api/endpoints.ts` fait office d'inventaire |
@@ -207,7 +207,7 @@ Toutes les routes portent le header `apiKey` puis `auth:sanctum`, sauf le bloc p
 | | Portefeuille : solde, recharge FedaPay (navigateur), historique | `(app)/wallet.tsx` | `wallet` + `recharge` | `profile`, `fedapay/initiate`, `fedapay/status`, `wallet/history` |
 | | Retrait du net à reverser (comptes Mobile Money, demandes et statuts) | `(app)/wallet/withdraw.tsx` | `wallet` (retrait) | `payment-accounts/index`, `payment-account/store`, `payment-request/index`, `payment-request/store` |
 | | Alertes douanières | `(app)/customs.tsx` | `customs` | `customs/alerts`, `customs/alerts/{id}/resolve` |
-| | Factures = relevés de règlement | `(app)/invoices.tsx` | `invoices` | `invoice-list/index`, `invoice-details`, `balance-details` |
+| | Factures = relevés de règlement (+ PDF par lien signé) | `(app)/invoices.tsx` | `invoices` | `invoice-list/index`, `invoice-details`, `balance-details`, `invoice-pdf-link` |
 | | Tarifs (poids × zone, COD) | `(app)/rates.tsx` | `rates` | `settings/delivery-charges`, `settings/cod-charges` |
 | | Boutiques (liste) | `(app)/shops.tsx` | `shops` | `shops/index` |
 | | Boutique : création, modification, suppression | `(app)/shop/[id].tsx` | `shops` | `shops/edit`, `shops/store`, `shops/update`, `shops/delete` |
@@ -285,7 +285,7 @@ consommés (`services/api-list.dart`). Ne rien y coder.
 | Retrait (payout) marchand | ✅ (propriété du compte vérifiée) | ✅ | — | ✅ |
 | FedaPay abonnement SaaS | ✅ | — | — | ✅ bouton sur la page des plans |
 | Calcul serveur + devis | ✅ | ✅ | — | ✅ (affiche le devis) |
-| SYSCOHADA / relevés PDF | ⏳ | 🟡 relevé natif sans PDF | — | ⏳ |
+| SYSCOHADA / relevés PDF | ✅ | ✅ relevé natif + PDF | — | ✅ PDF, CSV, journal SYSCOHADA |
 | Alertes douanières | ✅ | ✅ | — | ✅ (alertes + règles) |
 | Reporting SaaS (MRR…) | ⏳ | — | — | ⏳ |
 | OpenAPI / Swagger | ⏳ | 🟡 `endpoints.ts` | — | — |
@@ -296,8 +296,10 @@ consommés (`services/api-list.dart`). Ne rien y coder.
 
 ## 13. Constats à retenir pour la suite
 
-1. **Trois chantiers `web/` restent à ouvrir** : 4 (SYSCOHADA + PDF), 6 (reporting SaaS),
-   7 (OpenAPI). L'ordre de la cartographie tient toujours : 2 → 4, 1 → 7.
+1. **Deux chantiers `web/` restent à ouvrir** : 6 (reporting SaaS) et 7 (OpenAPI).
+   Le chantier 4 est livré le 2026-09-04 ; reste ouvert le choix d'un taux de TVA au
+   niveau entreprise (il est par marchand) et la validation du plan de comptes
+   `config/syscohada.php` par l'expert-comptable.
 2. ~~FedaPay ne couvre que la recharge wallet~~ — ✅ **abonnement branché le
    2026-09-04** : bouton Mobile Money sur la page des plans, activation par le webhook
    signé via `switchPlan()`. Stripe reste disponible en parallèle. Le renouvellement
@@ -313,8 +315,8 @@ consommés (`services/api-list.dart`). Ne rien y coder.
    (statut colis, crédit wallet, relevé émis, alerte douane, message admin, retrait),
    API `notifications/*`, écran mobile avec compteur sur le tableau de bord. Le push
    FCM reste hors service : le fil est consulté, pas poussé.
-5. **Trois routes mortes** dans `web.php` (`my-wallet/recharge-status`, deux routes PDF
-   de facture) — à nettoyer ou à implémenter avec le chantier 4.
+5. **Une route morte** reste dans `web.php` (`my-wallet/recharge-status`) ; les deux
+   routes PDF de facture sont implémentées par le chantier 4.
 6. **Constats de sécurité ouverts** : S5 (jetons marchand / livreur non séparés), S7
    (aucun filet inter-locataires). Les autres (S1-S4, S6, S8-S17) sont corrigés.
 7. **`mobile-livreur/` n'est pas commencé** mais son backend est prêt : 6 écrans, 12
