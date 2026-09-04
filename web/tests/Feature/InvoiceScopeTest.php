@@ -58,7 +58,7 @@ class InvoiceScopeTest extends TestCase
         $merchant = Merchant::firstOrFail();
         $invoice = $this->invoiceFor($merchant, 'FAC-SIENNE');
 
-        Sanctum::actingAs($merchant->user);
+        Sanctum::actingAs($merchant->user, ['merchant']);
 
         $this->getJson('/api/v10/invoice-details/' . $invoice->id, ['apiKey' => self::API_KEY])
             ->assertOk()
@@ -84,7 +84,7 @@ class InvoiceScopeTest extends TestCase
 
         $invoiceOfOther = $this->invoiceFor($other, 'FAC-VOISIN');
 
-        Sanctum::actingAs($merchant->user);
+        Sanctum::actingAs($merchant->user, ['merchant']);
 
         $this->getJson('/api/v10/invoice-details/' . $invoiceOfOther->id, ['apiKey' => self::API_KEY])
             ->assertNotFound();

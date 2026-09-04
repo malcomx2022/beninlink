@@ -1194,7 +1194,7 @@ vestige du squelette Laravel.
 | ~~S2~~ | G | ~~**TVA et frais de livraison calculés côté client**~~ — ✅ **corrigé le 2026-08-18** : `App\Services\Parcel\ChargeCalculator` recalcule tout côté serveur, `chargeDetails` n'alimente plus aucun montant (voir §S2 ci-dessous) | `ParcelRepository` · `MerchantParcelRepository` |
 | ~~S3~~ | I | ~~Clé API en dur~~ — ✅ **corrigé le 2026-08-18** : lue via `env('API_KEY')`, propre à chaque installation. ⚠️ Reste une porte d'entrée, pas une authentification : elle voyage dans chaque requête | `config/rxcourier.php` |
 | ~~S4~~ | I | ~~`parcel-location-update` hors `auth:sanctum`~~ — ✅ **corrigé le 2026-08-18** : rentrée dans le groupe authentifié, vérifié 401 sans jeton | `routes/api.php` |
-| S5 | I | **Aucune séparation marchand/livreur** : jetons sans `abilities`, pas de garde `user_type` | `routes/api.php:60-165` |
+| ~~S5~~ | I | ~~Aucune séparation marchand/livreur~~ — ✅ **corrigé le 2026-09-04** : un jeton marchand appelait `deliveryman/*` (lecture et changement de statut des colis du hub, remontée de position) et un jeton livreur sur une route marchand finissait en 500. Le groupe `auth:sanctum` est découpé en trois : routes communes (session, profil, mot de passe, push), espace marchand sous `userType:merchant`, espace livreur sous `userType:deliveryman` ; hors périmètre, 403. Le jeton porte désormais l'ability de son type dès la connexion (`merchant` / `deliveryman`), conservée par `refresh` ; les jetons antérieurs (`['*']`) restent cloisonnés par `user_type` | `Middleware/UserTypeMiddleware` · `routes/api.php` · `Api\V10\AuthController` |
 | ~~S6~~ | C | ~~`Setting::where('key')` non scopé~~ — ✅ **corrigé le 2026-08-18** : recherche scopée par `company_id`. Démontré : deux sociétés portant la même clé, la requête d'origine renvoyait celle de la société 1 | `PayoutSetupRepository` |
 | S7 | B | **Aucun filet contre les fuites inter-locataires** : un oubli de `companywise()` suffit | transverse (47/51 modèles) |
 | S8 | J | **Repli de tarif non scopé par société** : `DeliveryCharge::where(…)` sans `companywise()` | `ParcelController:432,438` |
@@ -1334,10 +1334,25 @@ elle ne peut donc pas s'écarter de `routes/api.php`.
 | Routes | `GET /api/v10/openapi.json` (public, hors `CheckApiKey`, régénéré à la demande) et `GET /api/docs` (Swagger UI, CDN jsdelivr) |
 | Tests | `OpenApiSpecTest` : chaque route est dans la spec, aucun orphelin ni route non documentée, sécurité conforme aux middlewares, **chaque endpoint de `mobile/src/api/endpoints.ts` existe dans la spec**, routes servies, `--check` passe |
 
-⚠️ La spec **décrit** l'API, elle ne la corrige pas : les points 1 et 2 du bloc I
-(livreur et marchand dans le même groupe `auth:sanctum`, `parcel-location-update`
-hors authentification) y apparaissent tels quels via `x-middleware` — ils restent à
-traiter (S5, S7).
+⚠️ La spec **décrit** l'API, elle ne la corrige pas. Le point 1 du bloc I (livreur et
+marchand dans le même groupe `auth:sanctum`) y apparaissait tel quel via
+`x-middleware` — ✅ corrigé le 2026-09-04 (S5, ci-dessous) : la spec porte désormais
+`x-user-type` et un 403 sur chaque route cloisonnée. Le point 2 (`parcel-location-update`)
+était S4, corrigé le 2026-08-18.
+
+## ✅ S5 — cloisonnement marchand / livreur de l'API (2026-09-04)
+
+| Élément | Où |
+|---|---|
+| Middleware | `App\Http\Middleware\UserTypeMiddleware` (alias `userType:merchant`, `userType:deliveryman`) : vérifie `user_type` du compte **puis** l'ability du jeton ; 403 dans l'enveloppe habituelle (`auth.forbidden_user_type`) |
+| Routes | `routes/api.php` : sous `auth:sanctum`, un bloc commun (`refresh`, `profile`, `profile/update`, `update-password`, `sign-out`, `fcm-*` — ceux que l'app livreur Flutter d'origine appelait aussi), puis `userType:merchant` (tableau de bord, boutiques, colis, argent, douane, FedaPay, wallet, notifications, support, fraude) et `userType:deliveryman` (`deliveryman/*`, dont `parcel-location-update`) |
+| Jetons | `AuthController` : `createToken(nom, UserTypeMiddleware::abilitiesFor($user))` à `signin`, `otp-verification`, `deliveryman/login` et `refresh` |
+| Spec | `SpecGenerator` ajoute `x-user-type` et la réponse 403 aux routes concernées ; `public/openapi/v10.json` régénéré |
+| Tests | `ApiUserTypeTest` (7) : marchand → `deliveryman/*` 403 ; livreur → routes marchand 403 (avant : 500) ; chacun atteint ses routes et les communes ; jeton `['*']` cloisonné par `user_type` ; jeton d'un autre type refusé ; connexion et `refresh` émettent un jeton portant l'ability. Les tests existants passent `['merchant']` à `Sanctum::actingAs`, comme un jeton réel |
+
+Non traité, volontairement : `profile` (GET) reste commun et renvoie `UserResource`
+(orienté marchand) à un livreur, comme avant ; `deliveryman/profile` est la route
+prévue pour lui.
 
 ## ✅ Harnais de tests (2026-08-18)
 

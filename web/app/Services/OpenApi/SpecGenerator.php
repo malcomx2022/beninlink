@@ -63,7 +63,7 @@ class SpecGenerator
                     'bearer' => [
                         'type' => 'http',
                         'scheme' => 'bearer',
-                        'description' => 'Jeton personnel Sanctum obtenu par `POST /signin`, `POST /otp-verification` ou `POST /deliveryman/login`.',
+                        'description' => 'Jeton personnel Sanctum obtenu par `POST /signin`, `POST /otp-verification` (marchand) ou `POST /deliveryman/login` (livreur). Le jeton porte l\'ability de son type (`merchant` ou `deliveryman`) : les routes marquées `x-user-type` répondent 403 à l\'autre type.',
                     ],
                 ],
                 'schemas' => $this->overlay['schemas'] ?? [],
@@ -141,6 +141,7 @@ class SpecGenerator
         $bearer = in_array('auth:sanctum', $middleware, true);
         $apiKey = in_array('CheckApiKey', $middleware, true);
         $throttle = collect($middleware)->first(fn ($m) => Str::startsWith($m, 'throttle:'));
+        $userType = collect($middleware)->first(fn ($m) => Str::startsWith($m, 'userType:'));
 
         $security = [];
         if ($bearer && $apiKey) {
@@ -172,6 +173,9 @@ class SpecGenerator
         if ($bearer) {
             $responses += ['401' => ['description' => 'Jeton absent, expiré ou révoqué']];
         }
+        if ($userType) {
+            $responses += ['403' => ['description' => 'Compte d\'un autre type (' . Str::after($userType, ':') . ' attendu) ou jeton émis pour un autre type']];
+        }
         if ($route->parameterNames() !== []) {
             $responses += ['404' => ['description' => 'Ressource introuvable ou hors du périmètre du compte connecté']];
         }
@@ -193,6 +197,7 @@ class SpecGenerator
             'responses' => $responses,
             'security' => $security,
             'x-middleware' => array_values($middleware),
+            'x-user-type' => $userType ? explode(',', Str::after($userType, ':')) : null,
             'x-documented' => isset($this->overlay['operations'][$key]),
         ];
 

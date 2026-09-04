@@ -56,7 +56,7 @@ class PaymentRequestScopeTest extends TestCase
         $this->monCompte = $this->compteMobileMoney($this->merchant, '22997000001');
         $this->compteDuVoisin = $this->compteMobileMoney($voisin, '22997000009');
 
-        Sanctum::actingAs($this->merchant->user);
+        Sanctum::actingAs($this->merchant->user, ['merchant']);
     }
 
     private function compteMobileMoney(Merchant $merchant, string $numero): MerchantPayment

@@ -32,7 +32,7 @@ de domaine, environ 5 400 lignes TypeScript (au 2026-09-04).
 |---|---|---|
 | **Multi-tenancy** | `stancl/tenancy` en façade, `Tenant`, `CustomerDomain`, `config/tenancy.php`, `scopeCompanywise()` sur 47/51 modèles | Une seule base, isolation par `company_id`. Aucune tenancy sur `/api/v10` (scoping par `Auth::user()->company_id`). |
 | **Authentification web** | `Http/Controllers/Auth/*` (login, register, reset, verify), `SocialLoginController` (Google, Facebook) | Laravel UI + Socialite |
-| **Authentification API** | `Api/V10/AuthController`, Sanctum, `CheckApiKeyMiddleware` | Inscription, OTP SMS, reset, refresh. Jetons sans `abilities` (constat S5). |
+| **Authentification API** | `Api/V10/AuthController`, Sanctum, `CheckApiKeyMiddleware` | Inscription, OTP SMS, reset, refresh. Jetons portant l'ability de leur type (`merchant` / `deliveryman`) et routes cloisonnées par `UserTypeMiddleware` (S5 corrigé le 2026-09-04). |
 | **Rôles et permissions** | `RoleController`, `Permission`, `SuperAdminPermission`, middleware `hasPermission` | Permissions par clé (`parcel_read`…). |
 | **Abonnement SaaS** | `subscriptionCheck()`, middleware `subscriptionCheck`, `Subscription`, `Plan` | Paiement Stripe (S1 corrigé) **ou FedaPay** (`POST /subscription/fedapay`, activation par webhook, depuis le 2026-09-04). |
 | **Localisation** | `LocalizationController`, `LanguageManager`, `lang/{fr,en,ar,bn,es,in,zh}` | FR par défaut, `lang/fr/` complet (chantier 1). L'API ne négocie pas la locale. |
@@ -150,6 +150,9 @@ CMS `FrontWeb`.
 ## 7. Backend `web/` — API `/api/v10` (contrat des apps mobiles)
 
 Toutes les routes portent le header `apiKey` puis `auth:sanctum`, sauf le bloc public.
+Depuis S5 (2026-09-04), les routes marchand exigent `userType:merchant` et les routes
+`deliveryman/*` `userType:deliveryman` (403 sinon) ; seules **Auth**, **Profil** et
+**Push** restent communes aux deux types de compte.
 
 | Bloc | Endpoints | Contrôleur | Consommé par |
 |---|---|---|---|
@@ -260,8 +263,9 @@ Modules attendus (maquette `2_app_livreur.html`, 6 écrans) et leur couverture b
 | `profile` | `deliveryman/dashboard`, `deliveryman/profile` | ✅ |
 
 Le backend couvre déjà les 6 écrans : l'app livreur est un chantier **purement front**
-quand la fenêtre Création s'ouvre. Réserve : les jetons ne distinguent pas marchand et
-livreur (S5).
+quand la fenêtre Création s'ouvre. ~~Réserve : les jetons ne distinguent pas marchand et
+livreur (S5)~~ — ✅ levée le 2026-09-04 : `deliveryman/login` émet un jeton `deliveryman`
+et les routes `deliveryman/*` sont réservées à ce type.
 
 ---
 
@@ -322,8 +326,10 @@ consommés (`services/api-list.dart`). Ne rien y coder.
    FCM reste hors service : le fil est consulté, pas poussé.
 5. **Une route morte** reste dans `web.php` (`my-wallet/recharge-status`) ; les deux
    routes PDF de facture sont implémentées par le chantier 4.
-6. **Constats de sécurité ouverts** : S5 (jetons marchand / livreur non séparés), S7
-   (aucun filet inter-locataires). Les autres (S1-S4, S6, S8-S17) sont corrigés.
+6. **Constats de sécurité ouverts** : S7 (aucun filet inter-locataires), S8-S9
+   (repli de tarif), S11-S13 (push, TLS, expéditeur). ~~S5~~ ✅ **corrigé le
+   2026-09-04** : l'API est cloisonnée par `userType` (marchand / livreur → 403) et
+   les jetons portent l'ability de leur type.
 7. **`mobile-livreur/` n'est pas commencé** mais son backend est prêt : 6 écrans, 12
    endpoints déjà en service.
 8. ~~`mobile/app.json` pointe un fichier de locale inexistant~~ — ✅ **corrigé le

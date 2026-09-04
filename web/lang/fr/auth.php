@@ -19,6 +19,7 @@ return [
     'throttle'          => 'Trop de tentatives de connexion. Veuillez réessayer dans :seconds secondes.',
     'token_refresh'     => 'Actualisation des jetons',
     'token_delete'      => 'Révocation des jetons',
+    'forbidden_user_type' => 'Ce compte n\'a pas accès à cette ressource.',
     'signin_msg'        => 'Connexion réussie !',
     'profile_msg'       => 'Profil réussi !',
     'credentials_msg'   => 'Les informations d\'identification ne correspondent pas',

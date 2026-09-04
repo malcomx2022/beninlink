@@ -50,7 +50,7 @@ class ParcelQuoteTest extends TestCase
     public function test_le_devis_reprend_le_calcul_du_serveur(): void
     {
         $merchant = Merchant::firstOrFail();
-        Sanctum::actingAs($merchant->user);
+        Sanctum::actingAs($merchant->user, ['merchant']);
 
         $payload = $this->payload();
         $response = $this->postJson('/api/v10/parcel/quote', $payload, ['apiKey' => self::API_KEY])
@@ -83,7 +83,7 @@ class ParcelQuoteTest extends TestCase
     public function test_le_devis_annonce_ce_que_la_creation_enregistre(): void
     {
         $merchant = Merchant::firstOrFail();
-        Sanctum::actingAs($merchant->user);
+        Sanctum::actingAs($merchant->user, ['merchant']);
 
         $payload = $this->payload();
         $quote = $this->postJson('/api/v10/parcel/quote', $payload, ['apiKey' => self::API_KEY])
@@ -116,7 +116,7 @@ class ParcelQuoteTest extends TestCase
     public function test_la_mise_a_jour_recalcule_sans_chargeDetails(): void
     {
         $merchant = Merchant::firstOrFail();
-        Sanctum::actingAs($merchant->user);
+        Sanctum::actingAs($merchant->user, ['merchant']);
 
         $create = $this->payload() + [
             'shop_id' => MerchantShops::firstOrFail()->id,
@@ -156,7 +156,7 @@ class ParcelQuoteTest extends TestCase
 
     public function test_une_demande_incomplete_est_refusee(): void
     {
-        Sanctum::actingAs(Merchant::firstOrFail()->user);
+        Sanctum::actingAs(Merchant::firstOrFail()->user, ['merchant']);
 
         // Sans type de livraison, aucun tarif n'est applicable.
         $this->postJson('/api/v10/parcel/quote', ['cash_collection' => 1000], ['apiKey' => self::API_KEY])

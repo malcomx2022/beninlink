@@ -200,7 +200,7 @@ class MerchantNotificationTest extends TestCase
         $autre->save();
         $autre->notify(new MerchantNotification(MerchantNotification::KIND_MESSAGE, 'Secret', 'du voisin'));
 
-        Sanctum::actingAs($this->merchant->user);
+        Sanctum::actingAs($this->merchant->user, ['merchant']);
         $entetes = ['apiKey' => self::API_KEY];
 
         $liste = $this->getJson('/api/v10/notifications/index', $entetes)->assertOk();

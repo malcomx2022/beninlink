@@ -76,6 +76,7 @@ class Kernel extends HttpKernel
         'IsInstalled'       =>\App\Http\Middleware\IsInstalledMiddleware::class,
         'IsNotInstalled'    =>\App\Http\Middleware\IsNotInstalledMiddleware::class,
         'subscriptionCheck'    =>\App\Http\Middleware\subscriptionCheckMiddleware::class,
+        'userType'          => \App\Http\Middleware\UserTypeMiddleware::class,
 
     ];
 }

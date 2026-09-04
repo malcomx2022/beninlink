@@ -19,6 +19,7 @@ return [
     'throttle'          => 'Too many login attempts. Please try again in :seconds seconds.',
     'token_refresh'     => 'Tokens Refresh',
     'token_delete'      => 'Tokens Revoked',
+    'forbidden_user_type' => 'This account cannot access this resource.',
     'signin_msg'        => 'Signin successfully!',
     'profile_msg'       => 'Profile successfully!',
     'credentials_msg'   => 'Credentials not match',

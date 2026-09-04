@@ -44,7 +44,7 @@ class CustomsAlertTest extends TestCase
         config(['rxcourier.api_key' => self::API_KEY]);
 
         $this->merchant = Merchant::firstOrFail();
-        Sanctum::actingAs($this->merchant->user);
+        Sanctum::actingAs($this->merchant->user, ['merchant']);
     }
 
     private function colis(array $extra = []): array

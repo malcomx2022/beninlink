@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V10;
 
 use App\Enums\UserType;
+use App\Http\Middleware\UserTypeMiddleware;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Merchant\OtpRequest;
 use App\Http\Requests\Profile\UpdatePasswordRequest;
@@ -61,7 +62,7 @@ class AuthController extends Controller
              $user = User::where('mobile',$result->mobile)->first();
              if($user){
                  Auth::login($user);
-                 return $this->responseWithSuccess(__('auth.signin_msg'), ['token' => auth()->user()->createToken($result->mobile)->plainTextToken,'user'=>new UserResource(auth()->user())], 200);
+                 return $this->responseWithSuccess(__('auth.signin_msg'), ['token' => auth()->user()->createToken($result->mobile, UserTypeMiddleware::abilitiesFor(auth()->user()))->plainTextToken,'user'=>new UserResource(auth()->user())], 200);
              }else{
                  return $this->responseWithSuccess(__('auth.invalid_otp'), [], 401);
              }
@@ -99,7 +100,7 @@ class AuthController extends Controller
             return $this->responseWithError(__('auth.credentials_msg'), [], 401);
         endif;
         
-        return $this->responseWithSuccess(__('auth.signin_msg'), ['token' => auth()->user()->createToken($request->merchant_id)->plainTextToken,'user'=>new UserResource(auth()->user())], 200);
+        return $this->responseWithSuccess(__('auth.signin_msg'), ['token' => auth()->user()->createToken($request->merchant_id, UserTypeMiddleware::abilitiesFor(auth()->user()))->plainTextToken,'user'=>new UserResource(auth()->user())], 200);
 
     }
 
@@ -125,7 +126,7 @@ class AuthController extends Controller
             return $this->responseWithError(__('auth.credentials_msg'), [], 401);
         endif;
 
-        return $this->responseWithSuccess(__('auth.signin_msg'), ['token' => auth()->user()->createToken($request->driver_id)->plainTextToken,'user'=>new  DeliverymanUserResource(auth()->user())], 200);
+        return $this->responseWithSuccess(__('auth.signin_msg'), ['token' => auth()->user()->createToken($request->driver_id, UserTypeMiddleware::abilitiesFor(auth()->user()))->plainTextToken,'user'=>new  DeliverymanUserResource(auth()->user())], 200);
 
     }
 
@@ -138,7 +139,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
         $user->tokens()->delete();
-        return $this->responseWithSuccess(__('auth.token_refresh'), ['token' =>  $user->createToken($user->mobile)->plainTextToken], 200);
+        return $this->responseWithSuccess(__('auth.token_refresh'), ['token' =>  $user->createToken($user->mobile, UserTypeMiddleware::abilitiesFor($user))->plainTextToken], 200);
     }
 
     public function logout()

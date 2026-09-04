@@ -59,7 +59,7 @@ class ParcelScopeTest extends TestCase
         $this->colisDuVoisin = $this->creerColisPour($this->voisin);
 
         // Toutes les requetes des tests partent du marchand, pas du voisin.
-        Sanctum::actingAs($this->merchant->user);
+        Sanctum::actingAs($this->merchant->user, ['merchant']);
     }
 
     private function creerColisPour(Merchant $merchant): Parcel
