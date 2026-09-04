@@ -286,38 +286,19 @@ class MerchantParcelController extends Controller
         return '';
     }
 
-    public function deliveryCharge(Request $request)
+    /**
+     * Devis AJAX du tarif de livraison (nombre brut, contrat des écrans).
+     * S9 : le repli ignorait le poids. Le marchand est celui du compte connecté,
+     * pas celui du formulaire : on ne consulte pas le barème négocié d'un autre.
+     */
+    public function deliveryCharge(Request $request, \App\Services\Parcel\DeliveryChargeResolver $resolver)
     {
-        if (request()->ajax()) {
-            if ($request->merchant_id && $request->category_id && $request->weight !='0' && $request->delivery_type_id) {
-                $charges = MerchantDeliveryCharge::where(['merchant_id'=>$request->merchant_id,'category_id'=>$request->category_id,'weight'=>$request->weight])->first();
-                if (blank($charges)) {
-                    $charges = DeliveryCharge::companywise()->where(['category_id'=>$request->category_id])->first();
-                }
-            } else {
-                $charges = MerchantDeliveryCharge::where(['merchant_id'=>$request->merchant_id,'category_id'=>$request->category_id,'weight'=>$request->weight])->first();
-                if (blank($charges)) {
-                    $charges = DeliveryCharge::companywise()->where(['category_id'=>$request->category_id])->first();
-                }
-            }
-
-            if (!blank($charges)) {
-                if($request->delivery_type_id == '1'){
-                    $chargeAmount = $charges->same_day;
-                }elseif ($request->delivery_type_id == '2') {
-                    $chargeAmount = $charges->next_day;
-                }elseif ($request->delivery_type_id == '3') {
-                    $chargeAmount = $charges->sub_city;
-                }elseif ($request->delivery_type_id == '4') {
-                    $chargeAmount = $charges->outside_city;
-                }else {
-                    $chargeAmount = 0;
-                }
-                return $chargeAmount;
-            }
+        $merchant = Auth::user()->merchant;
+        if (!request()->ajax() || !$merchant || !$request->category_id || !$request->delivery_type_id) {
             return 0;
         }
-        return 0;
+
+        return $resolver->resolve((int) $merchant->id, (int) $request->category_id, $request->weight, (int) $request->delivery_type_id);
     }
 
     public function deliveryWeight(Request $request)

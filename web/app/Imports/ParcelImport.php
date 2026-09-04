@@ -216,41 +216,11 @@ class ParcelImport implements ToModel, WithHeadingRow ,WithValidation , SkipsEmp
         ];
     }
 
+    /** Tarif de livraison par le résolveur unique (S8, S9). */
     private function deliveryCharge($merchant_id,$category_id,$weight,$delivery_type_id)
     {
-        if ($merchant_id && $category_id && $weight !='0' && $delivery_type_id) {
-            $charges = MerchantDeliveryCharge::where([
-                'merchant_id'=>$merchant_id,
-                'category_id'=>$category_id,
-                'weight'=>$weight
-            ])->first();
-            if (blank($charges)) {
-                $charges = DeliveryCharge::where(['category_id'=>$category_id])->first();
-            }
-
-        } else {
-            $charges = MerchantDeliveryCharge::where(['merchant_id'=>$merchant_id,'category_id'=>$category_id,'weight'=>$weight])->first();
-            if (blank($charges)) {
-                $charges = DeliveryCharge::where(['category_id'=>$category_id])->first();
-            }
-        }
-
-        if (!blank($charges)) {
-            if($delivery_type_id == '1'){
-                $chargeAmount = $charges->same_day;
-            }elseif ($delivery_type_id == '2') {
-                $chargeAmount = $charges->next_day;
-            }elseif ($delivery_type_id == '3') {
-                $chargeAmount = $charges->sub_city;
-            }elseif ($delivery_type_id == '4') {
-                $chargeAmount = $charges->outside_city;
-            }else {
-                $chargeAmount = 0;
-            }
-
-            return $chargeAmount;
-        }
-        return 0;
+        return app(\App\Services\Parcel\DeliveryChargeResolver::class)
+            ->resolve((int) $merchant_id, $category_id !== null && $category_id !== '' ? (int) $category_id : null, $weight, (int) $delivery_type_id);
     }
 
     private function codCharge($merchant,$cash_collection,$delivery_type_id)

@@ -1197,8 +1197,8 @@ vestige du squelette Laravel.
 | ~~S5~~ | I | ~~Aucune séparation marchand/livreur~~ — ✅ **corrigé le 2026-09-04** : un jeton marchand appelait `deliveryman/*` (lecture et changement de statut des colis du hub, remontée de position) et un jeton livreur sur une route marchand finissait en 500. Le groupe `auth:sanctum` est découpé en trois : routes communes (session, profil, mot de passe, push), espace marchand sous `userType:merchant`, espace livreur sous `userType:deliveryman` ; hors périmètre, 403. Le jeton porte désormais l'ability de son type dès la connexion (`merchant` / `deliveryman`), conservée par `refresh` ; les jetons antérieurs (`['*']`) restent cloisonnés par `user_type` | `Middleware/UserTypeMiddleware` · `routes/api.php` · `Api\V10\AuthController` |
 | ~~S6~~ | C | ~~`Setting::where('key')` non scopé~~ — ✅ **corrigé le 2026-08-18** : recherche scopée par `company_id`. Démontré : deux sociétés portant la même clé, la requête d'origine renvoyait celle de la société 1 | `PayoutSetupRepository` |
 | S7 | B | **Aucun filet contre les fuites inter-locataires** : un oubli de `companywise()` suffit | transverse (47/51 modèles) |
-| S8 | J | **Repli de tarif non scopé par société** : `DeliveryCharge::where(…)` sans `companywise()` | `ParcelController:432,438` |
-| S9 | J | **Repli de tarif ignorant le poids** ⇒ sous-facturation silencieuse | `ParcelController:432,438` · `MerchantParcelController:283,288` |
+| ~~S8~~ | J | ~~Repli de tarif non scopé par société~~ — ✅ **corrigé le 2026-09-04** : `ChargeCalculator` l'était depuis S2, mais l'AJAX de l'administration et l'import CSV lisaient encore `DeliveryCharge::where(…)` sans `companywise()`. Les quatre sites passent par `DeliveryChargeResolver`, scopé société | `Services/Parcel/DeliveryChargeResolver` |
+| ~~S9~~ | J | ~~Repli de tarif ignorant le poids~~ — ✅ **corrigé le 2026-09-04** : une ligne de barème vaut « jusqu'à N kg » ; poids exact, sinon la tranche immédiatement supérieure, sinon la plus lourde. Un colis n'est jamais facturé à une tranche plus légère que son poids (le socle servait la première ligne de la catégorie) | `Services/Parcel/DeliveryChargeResolver` |
 | ~~S10~~ | J | ~~`delivery-charges` hors `auth:sanctum`~~ — ✅ **corrigé le 2026-08-18** : placée sous authentification, le locataire se résout par `Auth::user()->company_id`. Vérifié 401 sans jeton, 200 avec | `routes/api.php` |
 | S11 | K | **Topic FCM dérivé de l'e-mail** : `fcmSubscribe()` permet de s'abonner aux notifications d'autrui | `PushNotificationService:94-124` |
 | S12 | K | **TLS non vérifié** sur les appels sortants SMS et push (`CURLOPT_SSL_VERIFYPEER=false`) | `SmsService:67` · `PushNotificationService:43,83,239` |
@@ -1354,6 +1354,25 @@ Non traité, volontairement : `profile` (GET) reste commun et renvoie `UserResou
 (orienté marchand) à un livreur, comme avant ; `deliveryman/profile` est la route
 prévue pour lui.
 
+## ✅ S8 / S9 — un seul résolveur de tarif, par tranche de poids (2026-09-04)
+
+Le socle répétait la même recherche à quatre endroits — `ChargeCalculator` (corrigé
+en S2), `ParcelController::deliveryCharge` (AJAX admin), `MerchantParcelController::deliveryCharge`
+(AJAX panneau marchand) et `ParcelImport::deliveryCharge` (import CSV) — les trois
+derniers avec le repli non scopé (S8) et sans poids (S9). C'est la conséquence 3 du
+bloc J (« un seul résolveur, côté serveur »), sans toucher au schéma (conséquences 1 et 2,
+zones en lignes et tranches min/max, restent des décisions métier).
+
+| Élément | Où |
+|---|---|
+| Résolveur | `App\Services\Parcel\DeliveryChargeResolver::resolve(marchand, catégorie, poids, type)` : barème négocié du marchand (poids exact, sinon tranche supérieure), sinon barème de la société scopé `companywise()` (poids exact, sinon tranche supérieure, sinon la plus lourde) ; colonne choisie par `delivery_type_id` |
+| Sites | `ChargeCalculator` délègue ; les deux AJAX gardent leur contrat (nombre brut, `0` hors AJAX) ; celui du panneau marchand prend le marchand **du compte connecté**, plus celui du formulaire (il consultait le barème négocié d'un autre) ; l'import CSV délègue |
+| Tests | `DeliveryChargeResolverTest` (9) : poids exact et colonne par type ; 2 kg → tranche 3 kg, jamais 1 kg ; 10 kg → tranche la plus lourde, pas la ligne 10 kg d'un autre locataire ; barème négocié prioritaire puis repli société ; sans barème → 0 ; `parcel/quote` cohérent ; AJAX admin scopé, AJAX marchand ignore un `merchant_id` étranger, refus hors AJAX |
+
+⚠️ Effet visible : un colis dont le poids dépassait le barème était facturé au tarif
+le plus léger ; il l'est désormais à la tranche la plus lourde. C'est le comportement
+voulu (sous-facturation silencieuse corrigée), à annoncer aux marchands pilotes.
+
 ## ✅ Harnais de tests (2026-08-18)
 
 `RefreshDatabase` fonctionne : les 86 migrations passent sur SQLite en mémoire. Deux
@@ -1391,8 +1410,9 @@ Couverts à ce jour : signature du webhook FedaPay, **S14** (facture d'un autre 
 4. **Chantier 1** : créer `formatAmount()` **d'abord**, sinon 142 sites à éditer
    indépendamment.
 5. **S2 et le bloc J vont ensemble** : rapatrier le calcul côté serveur et refaire le
-   barème (zones en lignes, poids en tranches) sont **le même chantier** — le repli de
-   tarif actuel ignore le poids et n'est pas scopé par société.
+   barème (zones en lignes, poids en tranches) sont **le même chantier** — ~~le repli de
+   tarif actuel ignore le poids et n'est pas scopé par société~~ ✅ résolveur unique le
+   2026-09-04 (S8, S9) ; la refonte du schéma (zones, tranches min/max) reste à décider.
 6. **Le push (bloc K) est hors service, pas mal configuré** : l'API d'envoi utilisée a
    été arrêtée par Google le 20 juin 2024 (extinction dès le 22 juillet 2024). Toute
    promesse de notification dans `mobile/` et `mobile-livreur/` suppose d'abord la
