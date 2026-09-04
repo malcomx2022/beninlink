@@ -326,8 +326,10 @@ consommés (`services/api-list.dart`). Ne rien y coder.
    FCM reste hors service : le fil est consulté, pas poussé.
 5. **Une route morte** reste dans `web.php` (`my-wallet/recharge-status`) ; les deux
    routes PDF de facture sont implémentées par le chantier 4.
-6. **Constats de sécurité ouverts** : S7 (aucun filet inter-locataires), S8-S9
-   (repli de tarif), S11-S13 (push, TLS, expéditeur). ~~S5~~ ✅ **corrigé le
+6. **Constats de sécurité ouverts** : S7 (aucun filet inter-locataires), S11-S13
+   (push, TLS, expéditeur). ~~S8-S9~~ ✅ **corrigés le 2026-09-04** : un seul
+   `DeliveryChargeResolver` (scopé société, par tranche de poids) sert le calculateur,
+   les deux AJAX des écrans et l'import CSV. ~~S5~~ ✅ **corrigé le
    2026-09-04** : l'API est cloisonnée par `userType` (marchand / livreur → 403) et
    les jetons portent l'ability de leur type.
 7. **`mobile-livreur/` n'est pas commencé** mais son backend est prêt : 6 écrans, 12

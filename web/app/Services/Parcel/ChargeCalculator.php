@@ -2,9 +2,7 @@
 
 namespace App\Services\Parcel;
 
-use App\Models\Backend\DeliveryCharge;
 use App\Models\Backend\Merchant;
-use App\Models\Backend\MerchantDeliveryCharge;
 use App\Models\Backend\Packaging;
 
 /**
@@ -36,6 +34,11 @@ class ChargeCalculator
     private const INSIDE_CITY_TYPES = [1, 2];
     private const SUB_CITY_TYPE = 3;
     private const OUTSIDE_CITY_TYPE = 4;
+
+    public function __construct(private ?DeliveryChargeResolver $resolver = null)
+    {
+        $this->resolver ??= new DeliveryChargeResolver();
+    }
 
     /**
      * @return array{
@@ -84,46 +87,12 @@ class ChargeCalculator
     }
 
     /**
-     * Tarif de livraison : barème propre au marchand, sinon barème de la société.
-     *
-     * Corrige deux défauts du socle relevés en S8 et S9 :
-     *   - le repli `DeliveryCharge::where(...)` **ignorait le poids**, servant la
-     *     première ligne de la catégorie — un colis lourd passait au tarif le plus bas ;
-     *   - côté administration il **n'était pas scopé par société**, exposant le
-     *     barème d'un autre locataire.
+     * Tarif de livraison : barème du marchand, sinon barème de la société,
+     * par tranche de poids — voir `DeliveryChargeResolver` (S8, S9).
      */
     private function deliveryCharge(Merchant $merchant, ?int $categoryId, $weight, int $deliveryTypeId): float
     {
-        $charges = MerchantDeliveryCharge::where('merchant_id', $merchant->id)
-            ->where('category_id', $categoryId)
-            ->where('weight', $weight)
-            ->first();
-
-        if (blank($charges)) {
-            $charges = DeliveryCharge::companywise()
-                ->where('category_id', $categoryId)
-                ->where('weight', $weight)
-                ->first();
-        }
-
-        // Dernier recours : la catégorie sans le poids, comme le socle le faisait
-        // toujours. Conservé pour ne pas facturer 0 sur un barème incomplet, mais
-        // le poids reste prioritaire.
-        if (blank($charges)) {
-            $charges = DeliveryCharge::companywise()->where('category_id', $categoryId)->first();
-        }
-
-        if (blank($charges)) {
-            return 0.0;
-        }
-
-        return (float) match ($deliveryTypeId) {
-            1 => $charges->same_day,
-            2 => $charges->next_day,
-            self::SUB_CITY_TYPE => $charges->sub_city,
-            self::OUTSIDE_CITY_TYPE => $charges->outside_city,
-            default => 0,
-        };
+        return $this->resolver->resolve($merchant->id, $categoryId, $weight, $deliveryTypeId);
     }
 
     /** Taux COD du marchand, en pourcentage, selon la zone de livraison. */
