@@ -638,6 +638,22 @@ décider avec le métier, hors de ce chantier.
 5. **Rapatrier le calcul des montants côté serveur** — préalable non négociable à
    une facture opposable.
 
+### ✅ Chantier 4 — relevés de règlement SYSCOHADA (2026-09-04)
+| Conséquence | Réponse |
+|---|---|
+| 1. Numérotation | `App\Services\Invoicing\InvoiceNumbering` : `PREFIXE-AAAA-NNNNNN`, séquence par société **et par exercice** (`invoice_sequences`, `lockForUpdate`), réservée dans la transaction qui crée la facture. `invoices.issued_on` (date), `fiscal_year`, `sequence` + index unique ; `invoice_date` (chaîne) conservée pour les vues du socle. Migration `2026_09_04_120000`, avec reprise des factures existantes (numéros inchangés). |
+| 2. PDF | `barryvdh/laravel-dompdf ^2.0` (dompdf 2, compatible PHP 8.2). Gabarit `backend/invoice/statement_pdf.blade.php`, rendu depuis **`SettlementStatement::for()`**, seule source des montants (lignes figées de `invoice_parcels`, entiers XOF). Les deux routes mortes (`merchant.invoice.pdf`, `merchant.panel.invoice.pdf`) pointent enfin sur `MerchantInvoiceController::InvoicePdf`. Pour l'app : `GET /api/v10/invoice-pdf-link/{id}` → lien **signé 15 min** vers `invoice/statement/{invoice}/pdf` (route publique `signed`, hors tenant). |
+| 3. Mentions légales | Transporteur (`general_settings`) et marchand (`merchants`) : raison sociale, **IFU, RCCM**, adresse, téléphone — lus par identifiant, jamais via `settings()`. |
+| 4. TVA au niveau entreprise | **Non tranché** : le taux reste par marchand (`merchants.vat`, comme `ChargeCalculator`). Le relevé affiche le ou les taux réellement appliqués. |
+| 5. Calcul serveur | Acquis par S2. |
+| Export SYSCOHADA | `App\Services\Invoicing\SyscohadaJournal` + `config/syscohada.php` (plan de comptes **à valider par l'expert-comptable**) : ventes (4111 / 7061 / 4431), compensation frais-COD (4712 / 4111), reversement à l'état PAYÉ (4712 / 521). CSV `;` + BOM, par relevé (`…/journal/…`) ou par période (`paid/invoice/syscohada-journal`). |
+| Transaction | `InvoiceRepository::store()` tourne sous `DB::transaction` : plus de facture à moitié remplie, et le numéro réservé est rendu au rollback. |
+| Tests | `SettlementStatementTest` : séquence par société/exercice, numéro et net du relevé généré (= `current_payable`), pas de second relevé le même jour, journal équilibré (5 puis 7 lignes), PDF par lien signé, refus sans signature et pour un autre marchand. |
+
+⚠️ Les gabarits orphelins du socle (`merchant/invoice/invoice_pdf.blade.php`,
+`Invoice_mail_pdf.blade.php`) restent en place, non branchés : `InvoicePDFSend`
+(expéditeur codé en dur) n'est pas réactivé.
+
 ## Bloc H — Localisation & devise (francisation/FCFA)
 - Dossier de langues (resources/lang) : ⚠️ **`resources/lang/` N'EXISTE PAS**
   (`ls` → *No such file or directory*). Laravel 10 a déplacé les traductions à la
@@ -1188,6 +1204,7 @@ vestige du squelette Laravel.
 | ~~S16~~ | G | ~~`getInvoiceStatusAttribute()` laissait `$status` indéfini~~ — ✅ **corrigé le 2026-08-18** : un statut hors des trois connus faisait lever une `ErrorException` sous PHP 8 et l'API répondait **500 sur une simple lecture de facture**. Initialisé à `''` | `Merchantpanel/Invoice.php:95` |
 | ~~S17~~ | I | ~~Tout `MerchantParcelRepository` travaillait sur `Parcel::find($id)` nu~~ — ✅ **corrigé le 2026-08-18** : un marchand authentifié lisait le colis d'un autre (destinataire, téléphone, adresse, montants) via `parcel/details/{id}` et `parcel/logs/{id}`, puis pouvait le **modifier**, en changer le statut ou le supprimer ; `update()` relisait `merchant_id` dans le corps de la requête, donc réaffectait le colis à un autre marchand. Toutes les lectures et écritures passent par un `ownedParcels()` scopé société + marchand connecté, et l'API répond 404 hors périmètre. Seul `parcelTrack()` (suivi public par numéro) reste non scopé, c'est sa raison d'être | `MerchantParcelRepository` · `Api\V10\ParcelController` |
 | ~~S18~~ | I | ~~`ShopsRepository` lisait, modifiait et supprimait `MerchantShops::where('id')` sans filtre~~ — ✅ **corrigé le 2026-09-04** : depuis l'API (`shops/edit`, `shops/update`, `shops/delete`) comme depuis le panneau marchand, changer l'identifiant suffisait à lire l'adresse et le téléphone de la boutique d'un concurrent, à la renommer ou à la supprimer. Toutes les lectures et écritures passent par un `ownedShops()` scopé sur le marchand connecté ; hors périmètre, 404. Relevé en branchant l'écran boutiques de `mobile/` | `MerchantPanel/Shops/ShopsRepository` · `Api\V10\ShopsController` |
+| ~~S20~~ | G | ~~Le panneau marchand servait le CSV d'un autre marchand~~ — ✅ **corrigé le 2026-09-04** : `merchant.panel.invoice.csv` (et désormais `pdf`, `journal`) portent `merchant_id` dans l'URL sans le recouper avec le compte connecté. `MerchantInvoiceController::ownsOrAbort()` répond 404 hors périmètre | `MerchantInvoiceController` |
 | ~~S19~~ | C | ~~Une demande de retrait acceptait n'importe quel `merchant_account`~~ — ✅ **corrigé le 2026-09-04** : le marchand pouvait désigner le compte d'un autre, puis `PaymentResource` lui en renvoyait le détail (titulaire, numéro, banque) dans sa propre liste. L'API vérifie désormais que le compte lui appartient (422 sinon). Le panneau web, qui propose une liste fermée, n'est pas modifié | `Api\V10\PaymentRequestController` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
@@ -1303,8 +1320,8 @@ Couverts à ce jour : signature du webhook FedaPay, **S14** (facture d'un autre 
 | Route | Méthode cible | Statut |
 |---|---|---|
 | `POST /my-wallet/recharge-status` (`routes/web.php:941`) | `WalletController::rechargeStatus` | **inexistante** |
-| `GET .../pdf/{invoice_id}` (`routes/web.php:368`) | `MerchantInvoiceController::InvoicePdf` | **inexistante** |
-| `GET .../pdf/{merchant_id}/{invoice_id}` (`routes/web.php:910`) | `MerchantInvoiceController::InvoicePdf` | **inexistante** |
+| ~~`GET .../pdf/{invoice_id}`~~ | `MerchantInvoiceController::InvoicePdf` | ✅ **implémentée le 2026-09-04** (chantier 4) |
+| ~~`GET .../pdf/{merchant_id}/{invoice_id}`~~ | `MerchantInvoiceController::InvoicePdf` | ✅ **implémentée le 2026-09-04** (chantier 4) |
 
 ⇒ Un passage `php artisan route:list` complet est recommandé avant d'ouvrir les chantiers.
 

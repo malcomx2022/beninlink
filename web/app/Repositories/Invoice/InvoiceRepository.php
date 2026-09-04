@@ -10,9 +10,12 @@ use App\Models\Backend\InvoiceParcel;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\Merchantpanel\Invoice;
 use App\Models\Backend\Parcel;
+use App\Services\Invoicing\InvoiceNumbering;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\Invoice\InvoiceInterface;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -44,9 +47,18 @@ class InvoiceRepository implements InvoiceInterface
     }
     
 
+    /**
+     * Génère le relevé de règlement d'un marchand, s'il est dû.
+     *
+     * Chantier 4 : la génération tourne désormais dans une transaction — le
+     * socle laissait une facture à moitié remplie si la boucle échouait — et
+     * le numéro vient d'une séquence par société et par exercice
+     * (`InvoiceNumbering`), réservée dans la même transaction.
+     */
     public function store($merchant_id){
             
         try {  
+            return DB::transaction(function () use ($merchant_id) {
                   
                 $merchantFind         = Merchant::find($merchant_id);
                 $merchant_date        = strtotime(\Carbon\Carbon::today()->subDays($merchantFind->payment_period)->format('d-m-Y'));
@@ -90,11 +102,17 @@ class InvoiceRepository implements InvoiceInterface
                         $total_current_payable        = ($parcel_currenct_payable - $return_charge); 
                         //end total current payable
                            
+                        $issuedOn                 = Carbon::today();
+                        $numbering                = app(InvoiceNumbering::class)->next((int) settings()->id, $issuedOn);
+
                         $invoice                  =  new Invoice();
                         $invoice->company_id      = settings()->id;
                         $invoice->merchant_id     =  $merchant_id;
-                        $invoice->invoice_id      =  $this->invoiceId($merchant_id);
-                        $invoice->invoice_date    =  Carbon::today()->format('d-m-Y');
+                        $invoice->invoice_id      =  $numbering['number'];
+                        $invoice->invoice_date    =  $issuedOn->format('d-m-Y');
+                        $invoice->issued_on       =  $issuedOn->toDateString();
+                        $invoice->fiscal_year     =  $numbering['fiscal_year'];
+                        $invoice->sequence        =  $numbering['sequence'];
                         $invoice->cash_collection =  $total_collected_amount?? 0;
                         $invoice->total_charge    =  $total_charges_amount?? 0;
                         $invoice->current_payable =  $total_current_payable?? 0;
@@ -155,23 +173,20 @@ class InvoiceRepository implements InvoiceInterface
                             $parcelFind->invoice_id   = $invoice->id;
                             $parcelFind->save();
                         }
- 
+
+                        return $invoice;
                     }
                 endif;  
+
+                return null;
+            });
         } catch (\Throwable $th) { 
+            Log::error('Relevé de règlement : génération en échec', [
+                'merchant_id' => $merchant_id,
+                'message' => $th->getMessage(),
+            ]);
             return false;
         }
-    }
-    
-
-    private function invoiceId($merchant_id)
-    {
-        $merchant          = Merchant::find($merchant_id);
-        $merchantId        = $merchant->id;
-        $prefix            = Str::upper(settings()->invoice_prefix) . '-';
-        $invoicecount      = Invoice::companywise()->get()->count();
-        $invoice_id        = $prefix . $merchantId . ($invoicecount + 1);
-        return $invoice_id;
     }
 
     //admin panel merchant invoice

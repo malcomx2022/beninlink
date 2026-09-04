@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 
 import { ApiError } from '../../src/api/client';
 import {
   fetchBalanceDetails,
   fetchInvoiceDetails,
+  fetchInvoicePdfLink,
   fetchInvoices,
   INVOICES_PER_PAGE,
 } from '../../src/api/merchant';
 import type { BalanceDetails, Invoice, InvoiceDetails } from '../../src/api/types';
-import { Card, ErrorText, Muted, Title } from '../../src/components/ui';
+import { Button, Card, ErrorText, Muted, Title } from '../../src/components/ui';
 import { colors } from '../../src/theme/colors';
 import { fonts, fontSizes, radii, spacing } from '../../src/theme/typography';
 import { formatAmount } from '../../src/domain/money';
@@ -28,9 +30,10 @@ import { t } from '../../src/i18n';
  * La ventilation se déplie sur place plutôt que dans un écran dédié : elle tient
  * en six lignes et l'aller-retour de navigation n'apporterait rien.
  *
- * ⚠️ Pas d'export PDF : les deux routes du socle pointent vers une méthode
- * inexistante et aucune bibliothèque n'est installée (chantier 4 de web/). On le
- * dit honnêtement plutôt que d'afficher un bouton mort.
+ * Export PDF (chantier 4 de web/) : l'app demande un **lien signé** valable
+ * 15 minutes puis l'ouvre dans le navigateur — elle ne peut pas joindre son
+ * jeton Bearer à un navigateur, la signature en tient lieu. Le relevé porte
+ * les mentions légales (IFU, RCCM) des deux parties.
  */
 export default function InvoicesScreen() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -44,6 +47,21 @@ export default function InvoicesScreen() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  /** Relevé dont le PDF est en cours d'ouverture. */
+  const [pdfBusyId, setPdfBusyId] = useState<number | null>(null);
+
+  const openPdf = useCallback(async (id: number) => {
+    setError('');
+    setPdfBusyId(id);
+    try {
+      const url = await fetchInvoicePdfLink(id);
+      await WebBrowser.openBrowserAsync(url);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
+    } finally {
+      setPdfBusyId(null);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setError('');
@@ -177,6 +195,11 @@ export default function InvoicesScreen() {
                   <Muted>
                     {t('invoices.totalParcels')} : {detail.total_parcels}
                   </Muted>
+                  <Button
+                    title={t('invoices.downloadPdf')}
+                    onPress={() => void openPdf(item.id)}
+                    loading={pdfBusyId === item.id}
+                  />
                 </View>
               ) : (
                 <Muted>{t('common.loading')}</Muted>
