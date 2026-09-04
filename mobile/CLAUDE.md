@@ -45,3 +45,6 @@ Vert `#12503A` · Ocre `#E0A63C` · rouge = incident. Sora (titres/chiffres) + D
 ## Conventions
 - Réutiliser les patterns de l'app (navigation, services d'API, i18n) ; repérer un écran
   existant avant d'en créer un. Toute chaîne visible passe par l'i18n FR.
+- Chaînes **natives** (nom d'app, demandes de permission iOS/Android) : `src/i18n/expo-fr.json`,
+  déclaré par `expo.locales` dans `app.json`. Sans ce fichier, Expo ne fait qu'avertir au
+  `prebuild` et les textes natifs restent en anglais.
