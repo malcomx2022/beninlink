@@ -56,9 +56,18 @@
                                 @if ($stripe_status->value)
                                     <a class="btn btn-primary "
                                         href="{{ route('subscription.payment', ['plan_id' => $plan->id]) }}">Subscribe</a>
-                                @else
+                                @elseif (empty($fedapayEnabled))
                                     <button class="btn btn-primary subscribe-btn" data-bs-toggle="modal"
                                         data-bs-target="#exampleModalToggle">Subscribe</button>
+                                @endif
+                                {{-- Chantier 3 : abonnement par Mobile Money (MTN MoMo / Moov Money).
+                                     L'activation vient du webhook signé, jamais du retour de page. --}}
+                                @if (!empty($fedapayEnabled) && (int) round((float) $plan->price) > 0)
+                                    <form method="POST" action="{{ route('subscription.fedapay') }}" class="d-inline mt-2">
+                                        @csrf
+                                        <input type="hidden" name="plan_id" value="{{ $plan->id }}">
+                                        <button type="submit" class="btn btn-warning">{{ __('fedapay.subscribe_button') }}</button>
+                                    </form>
                                 @endif
                             </div>
                         </div>

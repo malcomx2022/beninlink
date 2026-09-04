@@ -8,10 +8,13 @@ use App\Enums\Wallet\WalletType;
 use App\Http\Controllers\Controller;
 use App\Models\Backend\FedaPayTransaction;
 use App\Models\Backend\Merchant;
+use App\Models\Backend\Superadmin\Plan;
 use App\Models\Backend\Wallet;
+use App\Repositories\Superadmin\Company\CompanyInterface;
 use App\Repositories\Wallet\WalletInterface;
 use App\Services\Payments\FedaPayGateway;
 use App\Traits\ApiReturnFormatTrait;
+use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,17 +22,24 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
- * Recharge de wallet marchand par Mobile Money (FedaPay).
+ * Paiements Mobile Money (FedaPay) : recharge de wallet marchand et
+ * abonnement SaaS d'une société.
  *
  * Principe non négociable (`.claude/rules/payments.md`) : **le webhook signé est
  * la seule source de vérité**. Le retour du navigateur ou de la WebView ne
- * crédite jamais — un utilisateur peut l'ouvrir à la main.
+ * crédite ni n'active jamais — un utilisateur peut l'ouvrir à la main.
  *
- * Parcours :
+ * Parcours (recharge) :
  *   1. `initiate`  → crée une ligne `wallets` en PENDING + une transaction
  *                    FedaPay, renvoie `payment_url` ;
  *   2. le client   → paie sur la page FedaPay (choix MTN/Moov, validation USSD) ;
  *   3. `webhook`   → vérifie la signature, puis crédite **une seule fois**.
+ *
+ * Parcours (abonnement) : identique, `subscribe` remplaçant `initiate`, et le
+ * webhook activant le plan par `CompanyRepository::switchPlan()` — l'unique
+ * point d'activation du socle (bloc E), que le retour Stripe appelle aussi.
+ * Les clés utilisées sont celles de la **plateforme** (`.env`), jamais celles
+ * d'un locataire (`.claude/rules/multitenant.md`).
  */
 class FedaPayController extends Controller
 {
@@ -38,7 +48,84 @@ class FedaPayController extends Controller
     public function __construct(
         private FedaPayGateway $gateway,
         private WalletInterface $walletRepo,
+        private CompanyInterface $companyRepo,
     ) {
+    }
+
+    /**
+     * Paiement d'un abonnement SaaS par Mobile Money. Appelé depuis la page
+     * des plans du panneau (session web). N'active rien : redirige vers la
+     * page FedaPay, l'activation viendra du webhook.
+     */
+    public function subscribe(Request $request)
+    {
+        $request->validate(['plan_id' => ['required', 'integer']]);
+
+        $plan = Plan::find($request->plan_id);
+        if (blank($plan)) {
+            Toastr::error(__('fedapay.plan_not_found'), __('message.error'));
+
+            return redirect()->route('subscription.index');
+        }
+
+        // Prix en FCFA entier ; un plan gratuit n'a rien à payer ici.
+        $amount = (int) round((float) $plan->price);
+        if ($amount <= 0) {
+            Toastr::error(__('fedapay.free_plan'), __('message.error'));
+
+            return redirect()->route('subscription.index');
+        }
+
+        // Clés plateforme : `company_id` volontairement absent.
+        if (!$this->gateway->isConfigured()) {
+            Toastr::error(__('fedapay.not_configured'), __('message.error'));
+
+            return redirect()->route('subscription.index');
+        }
+
+        $user = Auth::user();
+        $reference = 'BL-SUB-' . Str::upper(Str::random(10));
+
+        $record = FedaPayTransaction::create([
+            'company_id' => $user->company_id,
+            'reference' => $reference,
+            'purpose' => FedaPayTransaction::PURPOSE_SUBSCRIPTION,
+            'amount' => $amount,
+            'status' => FedaPayTransaction::STATUS_PENDING,
+            'plan_id' => $plan->id,
+            'user_id' => $user->id,
+            'customer_phone' => $user->mobile,
+        ]);
+
+        $result = $this->gateway->initialize([
+            'amount' => $amount,
+            'description' => __('fedapay.subscription_description', ['plan' => $plan->name]),
+            // La référence dans l'URL de retour permet au rappel de retrouver
+            // l'opération et de renvoyer vers la page des plans.
+            'callback_url' => route('fedapay.callback', ['reference' => $reference]),
+            'reference' => $reference,
+            'purpose' => FedaPayTransaction::PURPOSE_SUBSCRIPTION,
+            'company_id' => null,
+            'customer' => [
+                'firstname' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->mobile,
+            ],
+        ]);
+
+        if (!($result['success'] ?? false)) {
+            $record->update(['status' => FedaPayTransaction::STATUS_DECLINED]);
+            Toastr::error($result['message'] ?? __('fedapay.error'), __('message.error'));
+
+            return redirect()->route('subscription.index');
+        }
+
+        $record->update([
+            'provider_transaction_id' => $result['provider_transaction_id'],
+            'payment_url' => $result['payment_url'],
+        ]);
+
+        return redirect()->away($result['payment_url']);
     }
 
     /**
@@ -172,13 +259,13 @@ class FedaPayController extends Controller
     }
 
     /**
-     * Crédite le wallet, **une seule fois**.
+     * Crédite le wallet ou active l'abonnement, **une seule fois**.
      *
      * L'idempotence repose sur un verrou de ligne : `lockForUpdate()` sérialise
      * deux webhooks simultanés, et le statut déjà `approved` fait ressortir le
-     * second sans créditer. La cartographie (bloc C) a établi que
-     * `WalletRepository::approved()` n'est ni transactionnelle ni idempotente :
-     * le garde-fou doit donc être ici.
+     * second sans agir. La cartographie a établi que ni
+     * `WalletRepository::approved()` (bloc C) ni `switchPlan()` (bloc E) ne
+     * sont idempotents : le garde-fou doit donc être ici.
      */
     private function approve(FedaPayTransaction $record, array $entity)
     {
@@ -210,6 +297,28 @@ class FedaPayController extends Controller
                 'attendu' => $record->amount,
                 'payé' => $paid,
             ]);
+        }
+
+        if ($record->purpose === FedaPayTransaction::PURPOSE_SUBSCRIPTION) {
+            // Activation par le point unique du socle : même chemin que Stripe,
+            // donc mêmes permissions, même ligne `subscriptions`, même
+            // `general_settings.plan_id`. `switchPlan()` lit `plan_id` et
+            // `user_id` sur une requête ; on lui en fabrique une.
+            $activated = $record->plan_id && $record->user_id
+                && $this->companyRepo->switchPlan(new Request([
+                    'plan_id' => $record->plan_id,
+                    'user_id' => $record->user_id,
+                ]));
+
+            if (!$activated) {
+                Log::error('FedaPay : activation de l\'abonnement en échec', [
+                    'reference' => $record->reference,
+                    'plan_id' => $record->plan_id,
+                    'user_id' => $record->user_id,
+                ]);
+            }
+
+            return response()->json(['message' => 'approved'], 200);
         }
 
         // Crédit par le service existant du socle : ne pas dupliquer l'incrément
@@ -248,11 +357,28 @@ class FedaPayController extends Controller
     /**
      * Retour du navigateur / de la WebView après paiement.
      * **N'accorde rien** : il informe, le webhook décide.
+     *
+     * Pour un abonnement, on ramène l'utilisateur sur la page des plans : si
+     * le webhook est déjà passé, elle montre le plan actif ; sinon un message
+     * dit que la confirmation est en cours — sans jamais activer ici.
      */
     public function callback(Request $request)
     {
+        $reference = $request->query('reference');
+        $record = blank($reference) ? null : FedaPayTransaction::where('reference', $reference)->first();
+
+        if ($record && $record->purpose === FedaPayTransaction::PURPOSE_SUBSCRIPTION) {
+            if ($record->isApproved()) {
+                Toastr::success(__('fedapay.subscription_activated'), __('message.success'));
+            } else {
+                Toastr::info(__('fedapay.subscription_pending'), __('fedapay.title'));
+            }
+
+            return redirect()->route('subscription.index');
+        }
+
         return view('backend.payment.fedapay_callback', [
-            'reference' => $request->query('reference'),
+            'reference' => $reference,
         ]);
     }
 

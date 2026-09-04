@@ -34,7 +34,7 @@ de domaine, environ 5 400 lignes TypeScript (au 2026-09-04).
 | **Authentification web** | `Http/Controllers/Auth/*` (login, register, reset, verify), `SocialLoginController` (Google, Facebook) | Laravel UI + Socialite |
 | **Authentification API** | `Api/V10/AuthController`, Sanctum, `CheckApiKeyMiddleware` | Inscription, OTP SMS, reset, refresh. Jetons sans `abilities` (constat S5). |
 | **Rôles et permissions** | `RoleController`, `Permission`, `SuperAdminPermission`, middleware `hasPermission` | Permissions par clé (`parcel_read`…). |
-| **Abonnement SaaS** | `subscriptionCheck()`, middleware `subscriptionCheck`, `Subscription`, `Plan` | Paiement Stripe uniquement (S1 corrigé). FedaPay **non branché** sur l'abonnement. |
+| **Abonnement SaaS** | `subscriptionCheck()`, middleware `subscriptionCheck`, `Subscription`, `Plan` | Paiement Stripe (S1 corrigé) **ou FedaPay** (`POST /subscription/fedapay`, activation par webhook, depuis le 2026-09-04). |
 | **Localisation** | `LocalizationController`, `LanguageManager`, `lang/{fr,en,ar,bn,es,in,zh}` | FR par défaut, `lang/fr/` complet (chantier 1). L'API ne négocie pas la locale. |
 | **Devise / montants** | `Helper.php` : `formatAmount()`, `amountValue()`, `currencySymbol()`, `formatRate()` | XOF entier (chantier 1). API sérialise en `number`. |
 | **Installeur** | `InstallerController`, `IsInstalledMiddleware` | Installation We Courier + `PurchaseVerify` (licence Envato). |
@@ -175,7 +175,7 @@ Toutes les routes portent le header `apiKey` puis `auth:sanctum`, sauf le bloc p
 |---|---|---|---|
 | 1 | Francisation + FCFA | ✅ livré | `lang/fr/` (81 fichiers), `fr.json`, helpers `formatAmount()`… |
 | 2 | IFU / RCCM / CNSS | ✅ livré | migration `2026_08_17`, `Rules/LegalIdentifier`, 5 formulaires |
-| 3 | FedaPay (recharge wallet) | ✅ livré, **abonnement SaaS non branché** | `Services/Payments/FedaPayGateway`, `Payment/FedaPayController`, `FedaPayTransaction`, `config/fedapay.php`, migration `2026_08_18`, test `FedaPayWebhookTest` |
+| 3 | FedaPay (recharge wallet **et abonnement SaaS**) | ✅ livré (abonnement le 2026-09-04) | `Services/Payments/FedaPayGateway`, `Payment/FedaPayController`, `FedaPayTransaction`, `config/fedapay.php`, migrations `2026_08_18` et `2026_09_04`, tests `FedaPayWebhookTest`, `FedaPaySubscriptionTest` |
 | S2 | Calcul serveur des montants + devis | ✅ livré | `Services/Parcel/ChargeCalculator`, `POST parcel/quote`, `ParcelQuoteTest` |
 | 4 | Facturation SYSCOHADA + relevés PDF | ⏳ **non commencé** | rien dans `app/` (routes PDF mortes, aucune lib PDF) |
 | 5 | Alertes douanières UEMOA / CEDEAO | ✅ livré (notification à la création en reste) | `Services/Customs/CustomsService`, `Observers/ParcelCustomsObserver`, `Rules/CustomsAllowed`, `CustomsRule`, `CustomsAlert`, `CustomsRuleSeeder`, migration `2026_08_19`, `CustomsAlertTest` |
@@ -282,7 +282,7 @@ consommés (`services/api-list.dart`). Ne rien y coder.
 | IFU / RCCM / CNSS | ✅ | ✅ (inscription) | — | ✅ (5 formulaires) |
 | FedaPay recharge wallet | ✅ | ✅ (navigateur système, historique) | — | ⏳ `my-wallet/recharge` toujours en flux manuel |
 | Retrait (payout) marchand | ✅ (propriété du compte vérifiée) | ✅ | — | ✅ |
-| FedaPay abonnement SaaS | ⏳ | — | — | ⏳ (Stripe seul) |
+| FedaPay abonnement SaaS | ✅ | — | — | ✅ bouton sur la page des plans |
 | Calcul serveur + devis | ✅ | ✅ | — | ✅ (affiche le devis) |
 | SYSCOHADA / relevés PDF | ⏳ | 🟡 relevé natif sans PDF | — | ⏳ |
 | Alertes douanières | ✅ | ✅ | — | ✅ (alertes + règles) |
@@ -297,8 +297,10 @@ consommés (`services/api-list.dart`). Ne rien y coder.
 
 1. **Trois chantiers `web/` restent à ouvrir** : 4 (SYSCOHADA + PDF), 6 (reporting SaaS),
    7 (OpenAPI). L'ordre de la cartographie tient toujours : 2 → 4, 1 → 7.
-2. **FedaPay ne couvre que la recharge wallet.** L'abonnement SaaS passe encore par
-   Stripe en USD ; le brancher sur FedaPay est la seconde moitié du chantier 3.
+2. ~~FedaPay ne couvre que la recharge wallet~~ — ✅ **abonnement branché le
+   2026-09-04** : bouton Mobile Money sur la page des plans, activation par le webhook
+   signé via `switchPlan()`. Stripe reste disponible en parallèle. Le renouvellement
+   avant échéance perd toujours le reliquat (comportement du socle, non tranché).
 3. ~~Quatre écrans mobiles sont partiels~~ — ✅ **complétés le 2026-09-04** : historique
    du wallet (nouvel endpoint `wallet/history`), retrait, boutiques modifiables, profil
    modifiable, mot de passe oublié en deux étapes. Au passage, deux failles du socle
