@@ -223,6 +223,20 @@ export const fr = {
     level2: 'Avertissement',
     level3: 'Bloquant',
   },
+  notifications: {
+    title: 'Notifications',
+    empty: 'Aucune notification pour le moment.',
+    markAllRead: 'Tout marquer comme lu',
+    unread: 'non lue',
+    unreadPlural: 'non lues',
+    /** Libellés de repli par type : le titre vient du serveur. */
+    kindParcel: 'Colis',
+    kindWallet: 'Portefeuille',
+    kindInvoice: 'Relevé',
+    kindCustoms: 'Douane',
+    kindMessage: 'Message BeninLink',
+    kindPayout: 'Retrait',
+  },
   rates: {
     title: 'Tarifs de livraison',
     subtitle: 'Par poids et par zone (FCFA)',

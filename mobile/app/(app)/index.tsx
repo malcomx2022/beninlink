@@ -4,6 +4,7 @@ import { Link } from 'expo-router';
 
 import { ApiError } from '../../src/api/client';
 import { fetchBalanceDetails, fetchDashboard } from '../../src/api/merchant';
+import { fetchUnreadCount } from '../../src/api/notifications';
 import type { BalanceDetails, DashboardData } from '../../src/api/types';
 import { useSession } from '../../src/session/SessionProvider';
 import { Card, CountTile, ErrorText, Muted, StatTile, Title } from '../../src/components/ui';
@@ -16,16 +17,23 @@ export default function DashboardScreen() {
   const { user } = useSession();
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [balance, setBalance] = useState<BalanceDetails | null>(null);
+  const [unread, setUnread] = useState(0);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     setError('');
     try {
-      // Les deux appels sont indépendants : en parallèle.
-      const [d, b] = await Promise.all([fetchDashboard(), fetchBalanceDetails()]);
+      // Les trois appels sont indépendants : en parallèle. Le compteur de
+      // notifications est un confort : son échec n'empêche pas le tableau.
+      const [d, b, n] = await Promise.all([
+        fetchDashboard(),
+        fetchBalanceDetails(),
+        fetchUnreadCount().catch(() => 0),
+      ]);
       setDashboard(d);
       setBalance(b);
+      setUnread(n);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
     }
@@ -81,6 +89,10 @@ export default function DashboardScreen() {
       </View>
 
       <View style={styles.nav}>
+        <Link href="/(app)/notifications" style={styles.link}>
+          {t('notifications.title')}
+          {unread > 0 ? ` (${unread})` : ''}
+        </Link>
         <Link href="/(app)/parcels" style={styles.link}>
           {t('parcels.title')}
         </Link>

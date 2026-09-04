@@ -128,5 +128,15 @@ class AppServiceProvider extends ServiceProvider
         // Chantier 5 — l'alerte douaniere suit le colis, quel que soit le chemin
         // qui l'ecrit (six repositories differents). Voir l'observer.
         \App\Models\Backend\Parcel::observe(\App\Observers\ParcelCustomsObserver::class);
+
+        // Fil de notifications marchand (source de l'écran notifications de
+        // mobile/). Chaque événement métier passe par un observer, jamais par
+        // les repositories du socle. Voir app/Services/Notifications/MerchantFeed.
+        \App\Models\Backend\Parcel::observe(\App\Observers\Feed\ParcelFeedObserver::class);
+        \App\Models\Backend\Wallet::observe(\App\Observers\Feed\WalletFeedObserver::class);
+        \App\Models\Backend\Merchantpanel\Invoice::observe(\App\Observers\Feed\InvoiceFeedObserver::class);
+        \App\Models\Backend\CustomsAlert::observe(\App\Observers\Feed\CustomsAlertFeedObserver::class);
+        \App\Models\Backend\PushNotification::observe(\App\Observers\Feed\PushNotificationFeedObserver::class);
+        \App\Models\Backend\Payment::observe(\App\Observers\Feed\PaymentFeedObserver::class);
     }
 }

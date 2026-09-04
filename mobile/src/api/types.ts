@@ -384,3 +384,34 @@ export type WalletEntry = {
   statusName: string;
   created_at: string | null;
 };
+
+/**
+ * `GET notifications/index` — une entrée du fil (`NotificationResource`).
+ *
+ * `kind` choisit l'icône ; `title` et `body` arrivent rédigés par le serveur.
+ * Les identifiants de navigation sont présents selon le `kind`.
+ */
+export type NotificationKind =
+  | 'parcel_status'
+  | 'wallet_credit'
+  | 'invoice'
+  | 'customs'
+  | 'message'
+  | 'payout';
+
+export type AppNotification = {
+  /** UUID Laravel. */
+  id: string;
+  kind: NotificationKind | string;
+  title: string;
+  body: string;
+  read: boolean;
+  created_at: string | null;
+  created_at_iso: string | null;
+  parcel_id?: number | null;
+  tracking_id?: string | null;
+  amount?: Amount;
+  reference?: string | null;
+  status?: number;
+  level?: number;
+};

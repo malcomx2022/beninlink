@@ -83,6 +83,12 @@ export const endpoints = {
   profileUpdate: 'profile/update',
   updatePassword: 'update-password',
 
+  // — Notifications (fil du marchand : statuts, recharges, relevés, douane, messages, retraits)
+  notificationsIndex: 'notifications/index',
+  notificationsUnreadCount: 'notifications/unread-count',
+  notificationsReadAll: 'notifications/read-all',
+  notificationRead: (id: string) => `notifications/${id}/read`,
+
   // — Divers
   newsOffers: 'news-offer/index',
   supportIndex: 'support/index',
@@ -95,13 +101,9 @@ export const endpoints = {
  * Endpoints **absents du backend** — écrans encore bloqués.
  * Documentés ici pour éviter qu'on les recode à l'aveugle.
  *
- *   Notifications : seul `news-offer/index` existe, ce sont des offres.
- *
- * ✅ La recharge FedaPay n'est plus dans cette liste depuis le chantier 3, les
- * alertes douanières depuis le chantier 5, ni l'historique du wallet depuis
- * `GET wallet/history` (2026-09-04).
+ * ✅ Liste vide depuis le 2026-09-04 : la recharge FedaPay (chantier 3), les
+ * alertes douanières (chantier 5), l'historique du wallet (`wallet/history`) et
+ * les notifications (`notifications/*`) sont servis par web/.
  * Le solde du wallet, lui, arrive via `/profile` (`merchant.wallet_balance`).
  */
-export const MISSING = {
-  notifications: null,
-} as const;
+export const MISSING = {} as const;
