@@ -69,6 +69,8 @@ export const endpoints = {
   // — FedaPay (chantier 3) : recharge du wallet par Mobile Money
   fedapayInitiate: 'fedapay/initiate',
   fedapayStatus: (reference: string) => `fedapay/status/${reference}`,
+  /** Mouvements du porte-monnaie prépayé (recharges, crédits, dépenses). */
+  walletHistory: 'wallet/history',
 
   // — Douane (chantier 5) : alertes UEMOA / CEDEAO
   /** Pays et catégories couverts par les règles en vigueur. */
@@ -93,16 +95,13 @@ export const endpoints = {
  * Endpoints **absents du backend** — écrans encore bloqués.
  * Documentés ici pour éviter qu'on les recode à l'aveugle.
  *
- *   Historique du wallet : aucune route ne liste les mouvements de `wallets`.
- *                          `account-transaction/index` couvre les comptes, pas
- *                          le porte-monnaie prépayé.
- *   Notifications        : seul `news-offer/index` existe, ce sont des offres.
+ *   Notifications : seul `news-offer/index` existe, ce sont des offres.
  *
- * ✅ La recharge FedaPay n'est plus dans cette liste depuis le chantier 3, ni
- * les alertes douanières depuis le chantier 5.
+ * ✅ La recharge FedaPay n'est plus dans cette liste depuis le chantier 3, les
+ * alertes douanières depuis le chantier 5, ni l'historique du wallet depuis
+ * `GET wallet/history` (2026-09-04).
  * Le solde du wallet, lui, arrive via `/profile` (`merchant.wallet_balance`).
  */
 export const MISSING = {
-  walletHistory: null,
   notifications: null,
 } as const;

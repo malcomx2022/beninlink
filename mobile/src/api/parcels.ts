@@ -17,7 +17,6 @@ import type {
   ParcelFormData,
   ParcelQuote,
   ParcelStatusOption,
-  Shop,
 } from './types';
 
 export async function fetchParcels(): Promise<Parcel[]> {
@@ -79,10 +78,6 @@ export function createParcel(parcel: NewParcel): Promise<unknown> {
   return api.post(endpoints.parcelStore, parcel);
 }
 
-export async function fetchShops(): Promise<Shop[]> {
-  const data = await api.get<{ shops: Shop[] }>(endpoints.shopsIndex);
-  return data?.shops ?? [];
-}
 
 export type QuoteInput = {
   category_id: number;

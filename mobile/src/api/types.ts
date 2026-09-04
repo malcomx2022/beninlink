@@ -306,3 +306,81 @@ export type CustomsAlert = {
   status_name: string;
   created_at: string | null;
 };
+
+/** Charge utile de `POST /profile/update`.
+ *
+ * ⚠️ Le backend ne valide que `name` et `address`, mais son repository
+ * **réécrit** aussi `mobile`, `email` et `business_name` avec ce qu'il reçoit :
+ * omettre un champ l'effacerait en base. On envoie donc toujours les cinq.
+ */
+export type ProfileUpdatePayload = {
+  name: string;
+  email: string;
+  mobile: string;
+  business_name: string;
+  address: string;
+};
+
+/**
+ * `GET /payment-accounts/index` — un compte de règlement du marchand
+ * (`PaymentAccountResource`). Sert de destination aux retraits.
+ *
+ * `payment_method` vaut `bank`, `mobile` ou `cash`. Pour le Mobile Money
+ * béninois, `mobile_company` porte l'opérateur (« MTN MoMo », « Moov Money »).
+ */
+export type PaymentAccount = {
+  id: number;
+  payment_method: 'bank' | 'mobile' | 'cash' | string;
+  paymentMethodName: string | null;
+  bank_name: string | null;
+  holder_name: string | null;
+  account_no: string | null;
+  branch_name: string | null;
+  routing_no: string | null;
+  mobile_company: string | null;
+  mobile_no: string | null;
+  account_type: string | null;
+  status: number;
+  statusName: string | null;
+};
+
+/**
+ * `GET payment-request/index` — une demande de retrait (`PaymentResource`).
+ * ⚠️ `amount` arrive en **chaîne** (`(string)` explicite côté backend).
+ */
+export type PaymentRequest = {
+  id: number;
+  transaction_id: string;
+  description: string | null;
+  amount: Amount;
+  paymentMethodName: string | null;
+  mobile_company: string | null;
+  mobile_no: string | null;
+  bank_name: string | null;
+  account_no: string | null;
+  holder_name: string | null;
+  /** App\Enums\ApprovalStatus : 1 rejeté · 2 approuvé · 3 en attente · 4 traité. */
+  status: number;
+  statusName: string | null;
+  request_date: string | null;
+};
+
+/**
+ * `GET wallet/history` — un mouvement du porte-monnaie prépayé (`WalletResource`).
+ * Le montant est un entier ; les libellés arrivent traduits.
+ */
+export type WalletEntry = {
+  id: number;
+  transaction_id: string;
+  source: string | null;
+  amount: Amount;
+  /** 1 crédit · 2 débit (App\Enums\Wallet\WalletType). */
+  type: number;
+  typeName: string;
+  payment_method: number;
+  paymentMethodName: string;
+  /** 1 en attente · 2 approuvé · 3 rejeté (App\Enums\Wallet\WalletStatus). */
+  status: number;
+  statusName: string;
+  created_at: string | null;
+};

@@ -93,3 +93,28 @@ export async function requestPasswordReset(email: string): Promise<string> {
   );
   return res?.message ?? '';
 }
+
+export type ResetPasswordPayload = {
+  /** Jeton porté par le lien reçu par e-mail (`password/reset/{token}`). */
+  token: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+};
+
+/**
+ * Définit le nouveau mot de passe à partir du jeton reçu.
+ *
+ * Le lien envoyé par `password/email` mène à la page web du backend ; l'app
+ * accepte le même jeton, qu'il arrive par lien profond
+ * (`beninlink://reset-password?token=…&email=…`) ou par saisie. Le backend
+ * exige au moins 8 caractères et la confirmation.
+ */
+export async function resetPassword(payload: ResetPasswordPayload): Promise<string> {
+  const res = await api.post<{ message?: string }>(
+    endpoints.passwordReset,
+    { ...payload, email: payload.email.trim() },
+    { authenticated: false },
+  );
+  return res?.message ?? '';
+}

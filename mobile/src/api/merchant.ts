@@ -9,6 +9,7 @@ import type {
   DeliveryRate,
   Invoice,
   InvoiceDetails,
+  ProfileUpdatePayload,
 } from './types';
 
 export function fetchDashboard(): Promise<DashboardData> {
@@ -59,4 +60,21 @@ export async function fetchDeliveryRates(): Promise<DeliveryRate[]> {
 export async function fetchCodCharges(): Promise<CodCharge[]> {
   const data = await api.get<{ codCharges: CodCharge[] }>(endpoints.codCharges);
   return data?.codCharges ?? [];
+}
+
+/** Met à jour l'identité du compte. Voir `ProfileUpdatePayload` : les cinq champs sont requis. */
+export function updateProfile(payload: ProfileUpdatePayload): Promise<void> {
+  return api.post(endpoints.profileUpdate, payload);
+}
+
+/**
+ * Change le mot de passe. Le backend vérifie l'ancien et répond 422 avec un
+ * message explicite s'il ne correspond pas ; minimum 6 caractères.
+ */
+export function updatePassword(oldPassword: string, newPassword: string): Promise<void> {
+  return api.put(endpoints.updatePassword, {
+    old_password: oldPassword,
+    new_password: newPassword,
+    confirm_password: newPassword,
+  });
 }

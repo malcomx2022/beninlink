@@ -36,6 +36,12 @@ export default function ProfileScreen() {
         <Line label={t('auth.email')} value={user?.email ?? '—'} />
         <Line label={t('profile.address')} value={user?.address ?? merchant?.address ?? '—'} />
         <Line label={t('profile.hub')} value={user?.hub?.name ?? '—'} />
+        <Link href="/(app)/profile/edit" style={styles.link}>
+          {t('profile.edit')}
+        </Link>
+        <Link href="/(app)/profile/password" style={styles.link}>
+          {t('profile.changePassword')}
+        </Link>
       </Card>
 
       <Card>

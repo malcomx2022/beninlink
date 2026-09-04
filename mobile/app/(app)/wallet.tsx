@@ -1,9 +1,12 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Link } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 
 import { ApiError } from '../../src/api/client';
 import { fetchRechargeStatus, initiateRecharge } from '../../src/api/fedapay';
+import { fetchWalletHistory } from '../../src/api/wallet';
+import type { WalletEntry } from '../../src/api/types';
 import { useSession } from '../../src/session/SessionProvider';
 import { Button, Card, ErrorText, Field, Muted, Title } from '../../src/components/ui';
 import { colors } from '../../src/theme/colors';
@@ -33,6 +36,28 @@ export default function WalletScreen() {
 
   const balance = user?.merchant?.wallet_balance ?? 0;
 
+  // Historique paginé par 10 : une page incomplète est la dernière.
+  const [entries, setEntries] = useState<WalletEntry[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [historyError, setHistoryError] = useState('');
+
+  const loadHistory = useCallback(async (pageToLoad: number) => {
+    setHistoryError('');
+    try {
+      const items = await fetchWalletHistory(pageToLoad);
+      setEntries((current) => (pageToLoad === 1 ? items : [...current, ...items]));
+      setPage(pageToLoad);
+      setHasMore(items.length >= 10);
+    } catch (e) {
+      setHistoryError(e instanceof ApiError ? e.message : t('errors.unexpected'));
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadHistory(1);
+  }, [loadHistory]);
+
   const recharge = useCallback(async () => {
     setError('');
     setInfo('');
@@ -60,6 +85,7 @@ export default function WalletScreen() {
         setInfo(t('wallet.rechargePending'));
       }
       setAmount('');
+      await loadHistory(1); // la recharge apparaît dans l'historique, quel que soit son statut
     } catch (e) {
       if (e instanceof ApiError) {
         // 503 = passerelle non configurée côté serveur : message explicite.
@@ -70,7 +96,7 @@ export default function WalletScreen() {
     } finally {
       setBusy(false);
     }
-  }, [amount, refresh]);
+  }, [amount, refresh, loadHistory]);
 
   return (
     <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
@@ -78,6 +104,9 @@ export default function WalletScreen() {
         <Title>{t('wallet.balance')}</Title>
         <Text style={styles.balance}>{formatAmount(balance)}</Text>
         <Muted>{t('wallet.prepaidExplanation')}</Muted>
+        <Link href="/(app)/wallet/withdraw" style={styles.link}>
+          {t('wallet.withdrawLink')}
+        </Link>
       </Card>
 
       <Card>
@@ -115,6 +144,34 @@ export default function WalletScreen() {
         {/* Rappel honnête : le crédit dépend de la confirmation de l'opérateur. */}
         <Muted>{t('wallet.confirmationNotice')}</Muted>
       </Card>
+
+      <Card>
+        <Title>{t('wallet.history')}</Title>
+        <ErrorText>{historyError}</ErrorText>
+        {entries.length === 0 && !historyError && <Muted>{t('wallet.historyEmpty')}</Muted>}
+        {entries.map((entry) => (
+          <View key={entry.id} style={styles.entry}>
+            <View style={styles.entryTop}>
+              <Text style={styles.entryAmount}>
+                {entry.type === 2 ? '− ' : '+ '}
+                {formatAmount(entry.amount)}
+              </Text>
+              <Text style={styles.entryStatus}>{entry.statusName}</Text>
+            </View>
+            <Muted>
+              {[entry.typeName, entry.paymentMethodName, entry.transaction_id]
+                .filter(Boolean)
+                .join(' · ')}
+            </Muted>
+            <Muted>{entry.created_at ?? ''}</Muted>
+          </View>
+        ))}
+        {hasMore && (
+          <Text style={styles.link} onPress={() => void loadHistory(page + 1)}>
+            {t('common.loadMore')}
+          </Text>
+        )}
+      </Card>
     </ScrollView>
   );
 }
@@ -122,6 +179,21 @@ export default function WalletScreen() {
 const styles = StyleSheet.create({
   page: { padding: spacing.md, gap: spacing.md },
   balance: { fontFamily: fonts.numeric, fontSize: fontSizes.display, color: colors.accent },
+  link: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: fontSizes.sm,
+    color: colors.primary,
+    paddingVertical: spacing.xs,
+  },
+  entry: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  entryTop: { flexDirection: 'row', justifyContent: 'space-between' },
+  entryAmount: { fontFamily: fonts.numeric, fontSize: fontSizes.md, color: colors.text },
+  entryStatus: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.sm, color: colors.accentDark },
   quick: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   preset: {
     fontFamily: fonts.bodyMedium,
