@@ -201,6 +201,9 @@ Route::prefix('v10')->group(function() {
         });
 
     });
+    // Chantier 7 — contrat de l'API. Public, sans clé : c'est un document.
+    Route::get('openapi.json',                                        [\App\Http\Controllers\Api\V10\OpenApiController::class, 'spec'])->name('openapi.spec');
+
     Route::get('customer/installation',                               [InstallerController::class,'customerInstallation']);
     //frontend api
     Route::get('parcel/tracking/{tracking_id}',                         [ParcelController::class,'parcelTrackingLogs']);

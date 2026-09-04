@@ -12,6 +12,8 @@ Elle **consomme l'API de `web/`** ; aucune logique de paiement propre.
 - **React Native / Expo** (acté Option A ; ne pas repartir sur Flutter).
 - Devise **XOF** : affichage **entier**, sans décimales. Locale **FR** par défaut.
 - **Ne jamais inventer d'endpoint** : toute évolution d'API vient d'abord de `web/`.
+  Le contrat est la spec OpenAPI servie par `GET /api/v10/openapi.json` (lisible sur
+  `/api/docs`) ; `src/api/endpoints.ts` est vérifié contre elle par `OpenApiSpecTest`.
 - URL d'API en **variable d'environnement** (sandbox vs prod). Ne pas coder en dur.
 
 ## FedaPay côté marchand

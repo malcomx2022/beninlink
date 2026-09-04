@@ -11,7 +11,7 @@
 
 | Composante | Techno | Rôle | État |
 |---|---|---|---|
-| `web/` | Laravel 10 · PHP 8.2 | Backend We Courier + modules BeninLink. **Le contrat.** | Actif — chantiers 1 à 6 livrés ; 7 à faire |
+| `web/` | Laravel 10 · PHP 8.2 | Backend We Courier + modules BeninLink. **Le contrat.** | Actif — chantiers 1 à 7 livrés |
 | `web/` (back-office Blade) | Blade + JS compilé dans `public/` | Panneaux Admin, Marchand, Hub, Super-admin, site vitrine | Actif (socle) |
 | `mobile/` | React Native · Expo 57 · expo-router · TypeScript | App **marchand** (PME) | Actif — les 15 écrans de la maquette codés |
 | `mobile-livreur/` | React Native · Expo | App **livreur** | **Pas une ligne de code** (seul `CLAUDE.md`) — fenêtre Création |
@@ -168,6 +168,7 @@ Toutes les routes portent le header `apiKey` puis `auth:sanctum`, sauf le bloc p
 | **Push** | `fcm-subscribe`, `fcm-unsubscribe` | `PushNotificationController` | marchand + livreur (hors service, S11) |
 | **Livreur** | `deliveryman/parcel/*` (index, details, delivered, partial-delivered), `deliveryman/income-expense`, `deliveryman/dashboard`, `deliveryman/profile`, `deliveryman/payment-logs`, `deliveryman/parcel-payment-logs`, `deliveryman/parcel-status`, `deliveryman/parcel-status-update`, `deliveryman/parcel-location-update` | `DeliveryManParcelController`, `DeliveryManIncomeExpenseController`, `DeliverymanController` | **livreur** (aucune app RN ne les consomme encore) |
 | **Public** | `parcel/tracking/{tracking_id}`, `contact-us`, `subscribe`, `customer/installation` | `ParcelController`, `InstallerController` | site / app |
+| **Contrat** (BeninLink, 2026-09-04) | `openapi.json` (spec OpenAPI 3.0.3 générée depuis le routeur ; Swagger UI sur `/api/docs`) | `OpenApiController` | apps + intégrateurs |
 
 ---
 
@@ -182,7 +183,7 @@ Toutes les routes portent le header `apiKey` puis `auth:sanctum`, sauf le bloc p
 | 4 | Facturation SYSCOHADA + relevés PDF | ✅ livré le 2026-09-04 (TVA au niveau entreprise non tranchée) | `Services/Invoicing/*`, `config/syscohada.php`, `statement_pdf.blade.php`, migration `2026_09_04_120000`, test `SettlementStatementTest` |
 | 5 | Alertes douanières UEMOA / CEDEAO | ✅ livré (notification à la création en reste) | `Services/Customs/CustomsService`, `Observers/ParcelCustomsObserver`, `Rules/CustomsAllowed`, `CustomsRule`, `CustomsAlert`, `CustomsRuleSeeder`, migration `2026_08_19`, `CustomsAlertTest` |
 | 6 | Reporting SaaS (MRR, ARR, Churn, LTV, CAC) | ✅ livré le 2026-09-04 | `Services/Reporting/SaasMetrics`, `config/saas_reporting.php`, page `super-admin/reporting`, test `SaasMetricsTest` |
-| 7 | OpenAPI / Swagger | ⏳ **non commencé** | aucun package ni annotation ; `mobile/src/api/endpoints.ts` fait office d'inventaire |
+| 7 | OpenAPI / Swagger | ✅ livré le 2026-09-04 (générée depuis le routeur, sans package) | `Services/OpenApi/SpecGenerator`, `resources/openapi/overlay.php`, `config/openapi.php`, commande `openapi:generate`, `public/openapi/v10.json`, `GET /api/v10/openapi.json`, `GET /api/docs`, test `OpenApiSpecTest` |
 
 **Tests** (`web/tests/Feature`) : `FedaPayWebhookTest`, `CustomsAlertTest`,
 `InvoiceScopeTest` (S14), `ParcelQuoteTest` (S2), `ParcelScopeTest` (S17), trait
@@ -289,7 +290,7 @@ consommés (`services/api-list.dart`). Ne rien y coder.
 | SYSCOHADA / relevés PDF | ✅ | ✅ relevé natif + PDF | — | ✅ PDF, CSV, journal SYSCOHADA |
 | Alertes douanières | ✅ | ✅ | — | ✅ (alertes + règles) |
 | Reporting SaaS (MRR…) | ✅ | — | — | ✅ page super-admin |
-| OpenAPI / Swagger | ⏳ | 🟡 `endpoints.ts` | — | — |
+| OpenAPI / Swagger | ✅ (`openapi.json`, `/api/docs`) | ✅ `endpoints.ts` vérifié contre la spec par test | — | — |
 | Suivi / statuts colis | ✅ | ✅ (timeline) | ⏳ | ✅ |
 | Notifications | ✅ fil marchand (`notifications` Laravel + 6 observers) · SMS ok · push FCM hors service · mail sync | ✅ écran + compteur | — | ✅ |
 
@@ -297,8 +298,10 @@ consommés (`services/api-list.dart`). Ne rien y coder.
 
 ## 13. Constats à retenir pour la suite
 
-1. **Un chantier `web/` reste à ouvrir** : 7 (OpenAPI). Les chantiers 4 et 6 sont
-   livrés le 2026-09-04 ; restent ouverts le choix d'un taux de TVA au niveau
+1. ~~Un chantier `web/` reste à ouvrir~~ — ✅ **les sept chantiers `web/` sont livrés**
+   (4, 6 et 7 le 2026-09-04). La spec OpenAPI est générée depuis le routeur et un
+   test vérifie que chaque endpoint de `mobile/src/api/endpoints.ts` existe dans
+   l'API. Restent ouverts le choix d'un taux de TVA au niveau
    entreprise (il est par marchand), la validation du plan de comptes
    `config/syscohada.php` par l'expert-comptable, et la saisie des dépenses
    d'acquisition sans laquelle le CAC reste « non disponible ».

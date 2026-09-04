@@ -920,14 +920,18 @@ vestige du squelette Laravel.
 4. **Aucun throttle hors `password/email`.** Le groupe `api` d'`app/Http/Kernel.php`
    applique `throttle:api` (60/min par utilisateur ou IP) — seule limite existante.
 
-### ⇒ Conséquences pour le chantier 6 (OpenAPI/Swagger)
-- **Aucun package de doc installé** (ni `l5-swagger`, ni `scribe`), aucune
-  annotation. Spec à écrire **de zéro sur ~80 routes**.
-- **Réponses sans forme stable** : `data` change de structure à chaque endpoint,
-  les `Resource` ne couvrent qu'une partie.
-- ⚠️ **Montants sérialisés en chaînes `"1234.00"`** — que le **chantier 1** va
-  modifier. **Documenter avant de figer le format FCFA produirait une spec périmée**
-  ⇒ faire le chantier 1 d'abord.
+### ⇒ Conséquences pour le chantier 7 (OpenAPI/Swagger) — ✅ répondues le 2026-09-04
+- ~~Aucun package de doc installé, spec à écrire de zéro~~ → **générée depuis le
+  routeur** (`App\Services\OpenApi\SpecGenerator`), sans package ni annotation :
+  chaque route `api/v10/*` devient une opération, la sécurité est déduite des
+  middlewares réels (`CheckApiKey` → `apiKey`, `auth:sanctum` → `bearer`,
+  `throttle` → 429). Ce que le code ne dit pas (résumés, corps, schémas) vit dans
+  `resources/openapi/overlay.php`, qui ne peut décrire qu'une route existante.
+- ~~Réponses sans forme stable~~ → l'overlay décrit `data` endpoint par endpoint
+  (une quarantaine de schémas, tous enveloppés dans `Envelope`).
+- ~~Montants en chaînes~~ → le chantier 1 est passé avant : le schéma `Amount` est
+  un entier XOF.
+- Voir « ✅ Chantier 7 » plus bas.
 
 ## Bloc J — Tarifs de livraison (barème poids × zone)
 - **Tables** :
@@ -1316,6 +1320,25 @@ chapitre d'acquisition — sans saisie, il est « non disponible », jamais zér
 est mesuré sur l'expiration sans renouvellement (le socle n'a pas de résiliation
 explicite) ; les plans du seed ont des prix et durées aléatoires, sans valeur.
 
+## ✅ Chantier 7 — spécification OpenAPI de `/api/v10` (2026-09-04)
+
+Aucune dépendance ajoutée, aucun schéma modifié : la spec est **dérivée du routeur**,
+elle ne peut donc pas s'écarter de `routes/api.php`.
+
+| Élément | Où |
+|---|---|
+| Générateur | `App\Services\OpenApi\SpecGenerator` : parcourt `Route::getRoutes()` sous `api/v10`, une opération par méthode, sécurité déduite de `gatherMiddleware()`, paramètres de chemin déduits, réponses par défaut (200 `Envelope`, 400 clé, 401 jeton, 404 si paramètre, 422 sur POST/PUT, 429 si throttle), extensions `x-middleware` et `x-documented` |
+| Overlay | `resources/openapi/overlay.php` : schémas (`Envelope`, `Amount` entier XOF, `Parcel`, `Invoice`, `WalletEntry`, `CustomsAlert`, `Notification`…) et une entrée « `METHOD chemin` » par route (résumé, corps, réponse). `orphans()` refuse toute entrée sans route ; `undocumented()` liste les routes sans entrée |
+| Config | `config/openapi.php` : titre, version, préfixe, fichier de sortie, serveurs |
+| Commande | `php artisan openapi:generate` écrit `public/openapi/v10.json` (versionné) ; `--check` ne fait que signaler les écarts |
+| Routes | `GET /api/v10/openapi.json` (public, hors `CheckApiKey`, régénéré à la demande) et `GET /api/docs` (Swagger UI, CDN jsdelivr) |
+| Tests | `OpenApiSpecTest` : chaque route est dans la spec, aucun orphelin ni route non documentée, sécurité conforme aux middlewares, **chaque endpoint de `mobile/src/api/endpoints.ts` existe dans la spec**, routes servies, `--check` passe |
+
+⚠️ La spec **décrit** l'API, elle ne la corrige pas : les points 1 et 2 du bloc I
+(livreur et marchand dans le même groupe `auth:sanctum`, `parcel-location-update`
+hors authentification) y apparaissent tels quels via `x-middleware` — ils restent à
+traiter (S5, S7).
+
 ## ✅ Harnais de tests (2026-08-18)
 
 `RefreshDatabase` fonctionne : les 86 migrations passent sur SQLite en mémoire. Deux
@@ -1344,8 +1367,8 @@ Couverts à ce jour : signature du webhook FedaPay, **S14** (facture d'un autre 
 ⇒ Un passage `php artisan route:list` complet est recommandé avant d'ouvrir les chantiers.
 
 ## Ordre des chantiers — dépendances issues de la cartographie
-1. **Chantier 1 (FCFA)** avant **chantier 6 (OpenAPI)** : l'API sérialise les
-   montants en `"1234.00"` ; documenter avant produirait une spec périmée.
+1. ~~**Chantier 1 (FCFA)** avant **chantier 7 (OpenAPI)**~~ — respecté : la spec
+   (2026-09-04) documente `Amount` en entier XOF.
 2. **Chantier 2 (IFU/RCCM/CNSS)** avant **chantier 4 (SYSCOHADA)** : les mentions
    légales de la facture en dépendent.
 3. **S2 (calcul serveur)** avant ou pendant le **chantier 4** : sans cela, aucune
