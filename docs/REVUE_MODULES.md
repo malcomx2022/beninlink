@@ -215,9 +215,11 @@ porte-monnaie prépayé ni le **retrait** (endpoints `payment-request/*` invento
 non branchés), les boutiques et le profil sont en lecture seule, le mot de passe oublié
 s'arrête à l'envoi du code.
 
-⚠️ `app.json` déclare `"locales": { "fr": "./src/i18n/expo-fr.json" }` mais **ce fichier
-n'existe pas** dans `src/i18n/` (seuls `fr.ts` et `index.ts`). À créer ou à retirer avant
-un build EAS.
+Chaînes **natives** (hors JavaScript) : `app.json` déclare `"locales": { "fr":
+"./src/i18n/expo-fr.json" }`. Ce fichier fournit le nom d'app et la demande Face ID en
+français (`fr.lproj/InfoPlist.strings` sur iOS, `values-b+fr/strings.xml` sur Android).
+Il manquait jusqu'au 2026-09-04 : Expo se contentait d'un avertissement au `prebuild`
+et iOS gardait la demande Face ID anglaise du plugin `expo-secure-store`.
 
 ### 9.2 Modules techniques (`mobile/src/`)
 
@@ -228,7 +230,7 @@ un build EAS.
 | Services d'API | `api/auth.ts`, `api/merchant.ts`, `api/parcels.ts`, `api/fedapay.ts`, `api/customs.ts`, `api/types.ts` | Un module par domaine |
 | Session | `session/SessionProvider.tsx` | Contexte utilisateur, garde des groupes `(auth)` / `(app)` |
 | Domaine | `domain/money.ts`, `domain/parcelStatus.ts`, `domain/deliveryType.ts` | FCFA entier, table 33 statuts backend → 7 statuts affichés, types de livraison |
-| i18n | `i18n/fr.ts`, `i18n/index.ts` | FR seul (`expo-fr.json` référencé par `app.json` mais absent) |
+| i18n | `i18n/fr.ts`, `i18n/index.ts`, `i18n/expo-fr.json` | FR seul ; `expo-fr.json` = chaînes natives (`expo.locales`) |
 | Thème | `theme/colors.ts`, `theme/typography.ts` | Vert `#12503A`, Ocre `#E0A63C`, Sora + DM Sans |
 | UI | `components/ui.tsx` | Composants partagés (boutons, cartes, champs) |
 
@@ -303,5 +305,5 @@ consommés (`services/api-list.dart`). Ne rien y coder.
    (aucun filet inter-locataires). Les autres (S1-S4, S6, S8-S17) sont corrigés.
 7. **`mobile-livreur/` n'est pas commencé** mais son backend est prêt : 6 écrans, 12
    endpoints déjà en service.
-8. **`mobile/app.json` pointe un fichier de locale inexistant** (`src/i18n/expo-fr.json`) :
-   à corriger avant le premier build EAS pour les PME pilotes.
+8. ~~`mobile/app.json` pointe un fichier de locale inexistant~~ — ✅ **corrigé le
+   2026-09-04** : `src/i18n/expo-fr.json` créé (nom d'app et Face ID en français).

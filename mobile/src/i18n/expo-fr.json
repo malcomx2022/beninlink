@@ -1,0 +1,9 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "BeninLink Marchand",
+    "NSFaceIDUsageDescription": "BeninLink Marchand utilise Face ID pour protéger l'accès à votre session."
+  },
+  "android": {
+    "app_name": "BeninLink Marchand"
+  }
+}
