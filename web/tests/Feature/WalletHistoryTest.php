@@ -61,7 +61,7 @@ class WalletHistoryTest extends TestCase
         $this->mouvement($this->merchant, 5000, 'RECH-1');
         $this->mouvement($this->merchant, 12000, 'RECH-2', WalletStatus::PENDING);
 
-        Sanctum::actingAs($this->merchant->user);
+        Sanctum::actingAs($this->merchant->user, ['merchant']);
 
         $reponse = $this->getJson('/api/v10/wallet/history', ['apiKey' => self::API_KEY])
             ->assertOk();
@@ -91,7 +91,7 @@ class WalletHistoryTest extends TestCase
         $this->mouvement($voisin, 9999, 'RECH-VOISIN');
         $this->mouvement($this->merchant, 1000, 'RECH-MOI');
 
-        Sanctum::actingAs($this->merchant->user);
+        Sanctum::actingAs($this->merchant->user, ['merchant']);
 
         $entries = $this->getJson('/api/v10/wallet/history', ['apiKey' => self::API_KEY])
             ->assertOk()

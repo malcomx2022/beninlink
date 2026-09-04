@@ -48,7 +48,7 @@ class SettlementStatementTest extends TestCase
         $this->merchant = Merchant::firstOrFail();
         // `settings()` resout la societe depuis l'utilisateur connecte : la
         // generation (InvoiceRepository::store) en depend.
-        Sanctum::actingAs($this->merchant->user);
+        Sanctum::actingAs($this->merchant->user, ['merchant']);
     }
 
     /** Colis livre : encaisse, sous-total HT des frais, TVA. Le net suit la formule de S2. */
@@ -229,7 +229,7 @@ class SettlementStatementTest extends TestCase
 
         // `replicate()` recopie les relations deja chargees : sans `fresh()`,
         // le voisin garderait en memoire le marchand d'origine.
-        Sanctum::actingAs($autreUtilisateur->fresh());
+        Sanctum::actingAs($autreUtilisateur->fresh(), ['merchant']);
         $this->getJson('/api/v10/invoice-pdf-link/' . $invoice->id, $entetes)->assertNotFound();
     }
 }

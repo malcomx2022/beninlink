@@ -129,6 +129,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -149,7 +152,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -197,6 +204,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -208,7 +218,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -294,6 +308,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -305,7 +322,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -493,6 +514,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -504,7 +528,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -560,6 +588,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     },
@@ -583,7 +614,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -623,6 +658,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -634,7 +672,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -674,6 +716,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -685,7 +730,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -725,6 +774,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -736,7 +788,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -765,6 +821,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -776,7 +835,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -827,6 +890,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -838,7 +904,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -924,6 +994,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (deliveryman attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -935,7 +1008,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:deliveryman"
+                ],
+                "x-user-type": [
+                    "deliveryman"
                 ],
                 "x-documented": true
             }
@@ -992,6 +1069,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (deliveryman attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -1003,7 +1083,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:deliveryman"
+                ],
+                "x-user-type": [
+                    "deliveryman"
                 ],
                 "x-documented": true
             }
@@ -1166,6 +1250,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (deliveryman attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -1186,7 +1273,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:deliveryman"
+                ],
+                "x-user-type": [
+                    "deliveryman"
                 ],
                 "x-documented": true
             }
@@ -1234,6 +1325,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (deliveryman attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -1245,7 +1339,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:deliveryman"
+                ],
+                "x-user-type": [
+                    "deliveryman"
                 ],
                 "x-documented": true
             }
@@ -1285,6 +1383,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (deliveryman attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -1296,7 +1397,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:deliveryman"
+                ],
+                "x-user-type": [
+                    "deliveryman"
                 ],
                 "x-documented": true
             }
@@ -1373,6 +1478,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (deliveryman attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -1393,7 +1501,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:deliveryman"
+                ],
+                "x-user-type": [
+                    "deliveryman"
                 ],
                 "x-documented": true
             }
@@ -1469,6 +1581,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (deliveryman attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     },
@@ -1492,7 +1607,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:deliveryman"
+                ],
+                "x-user-type": [
+                    "deliveryman"
                 ],
                 "x-documented": true
             }
@@ -1554,6 +1673,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (deliveryman attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -1567,7 +1689,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:deliveryman"
+                ],
+                "x-user-type": [
+                    "deliveryman"
                 ],
                 "x-documented": true
             }
@@ -1615,6 +1741,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (deliveryman attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -1626,7 +1755,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:deliveryman"
+                ],
+                "x-user-type": [
+                    "deliveryman"
                 ],
                 "x-documented": true
             }
@@ -1705,6 +1838,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (deliveryman attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     },
@@ -1728,7 +1864,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:deliveryman"
+                ],
+                "x-user-type": [
+                    "deliveryman"
                 ],
                 "x-documented": true
             }
@@ -1768,6 +1908,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (deliveryman attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -1779,7 +1922,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:deliveryman"
+                ],
+                "x-user-type": [
+                    "deliveryman"
                 ],
                 "x-documented": true
             }
@@ -1824,6 +1971,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (deliveryman attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -1835,7 +1985,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:deliveryman"
+                ],
+                "x-user-type": [
+                    "deliveryman"
                 ],
                 "x-documented": true
             }
@@ -2094,7 +2248,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -2146,6 +2304,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -2159,7 +2320,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -2218,6 +2383,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -2238,7 +2406,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -2294,6 +2466,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -2307,7 +2482,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -2363,6 +2542,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -2376,7 +2558,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -2424,6 +2610,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -2435,7 +2624,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -2506,6 +2699,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -2526,7 +2722,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -2607,6 +2807,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     },
@@ -2630,7 +2833,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -2774,6 +2981,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -2787,7 +2997,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -2835,6 +3049,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -2846,7 +3063,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -2898,6 +3119,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -2911,7 +3135,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -2960,6 +3188,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -2971,7 +3202,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -3033,6 +3268,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -3044,7 +3282,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -3091,6 +3333,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -3111,7 +3356,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -3156,6 +3405,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -3167,7 +3419,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -3224,6 +3480,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     },
@@ -3247,7 +3506,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -3383,6 +3646,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -3394,7 +3660,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -3434,6 +3704,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -3445,7 +3718,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -3501,6 +3778,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -3514,7 +3794,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -3570,6 +3854,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -3583,7 +3870,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -3634,6 +3925,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -3647,7 +3941,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -3724,6 +4022,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -3735,7 +4036,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -3783,6 +4088,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -3794,7 +4102,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -3853,6 +4165,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -3866,7 +4181,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -3983,6 +4302,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -4003,7 +4325,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -4129,6 +4455,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -4149,7 +4478,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -4336,6 +4669,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     },
@@ -4359,7 +4695,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -4423,6 +4763,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -4436,7 +4779,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -4668,6 +5015,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -4681,7 +5031,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -4737,6 +5091,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -4750,7 +5107,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -4850,6 +5211,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -4870,7 +5234,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -4938,6 +5306,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -4958,7 +5329,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -5006,6 +5381,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -5017,7 +5395,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -5068,6 +5450,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -5079,7 +5464,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -5135,6 +5524,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -5148,7 +5540,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -5210,6 +5606,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -5223,7 +5622,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -5271,6 +5674,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -5282,7 +5688,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -5356,6 +5766,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -5376,7 +5789,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -5458,6 +5875,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     },
@@ -5481,7 +5901,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -5935,6 +6359,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -5946,7 +6373,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -5994,6 +6425,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -6005,7 +6439,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -6061,6 +6499,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -6074,7 +6515,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -6130,6 +6575,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -6143,7 +6591,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -6191,6 +6643,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -6202,7 +6657,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -6280,6 +6739,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -6300,7 +6762,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -6386,6 +6852,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     },
@@ -6409,7 +6878,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -6614,6 +7087,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -6634,7 +7110,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -6699,6 +7179,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -6719,7 +7202,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -6767,6 +7254,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -6778,7 +7268,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -6838,6 +7332,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -6851,7 +7348,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -6962,6 +7463,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -6973,7 +7477,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -7029,6 +7537,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -7042,7 +7553,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -7098,6 +7613,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -7111,7 +7629,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -7159,6 +7681,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -7170,7 +7695,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -7238,6 +7767,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -7258,7 +7790,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -7335,6 +7871,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -7355,7 +7894,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -7433,6 +7976,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     },
@@ -7456,7 +8002,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -7507,6 +8057,9 @@
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
                     },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
+                    },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     }
@@ -7520,7 +8073,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -7665,6 +8222,9 @@
                     },
                     "401": {
                         "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "403": {
+                        "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     }
                 },
                 "security": [
@@ -7676,7 +8236,11 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "auth:sanctum"
+                    "auth:sanctum",
+                    "userType:merchant"
+                ],
+                "x-user-type": [
+                    "merchant"
                 ],
                 "x-documented": true
             }
@@ -7693,7 +8257,7 @@
             "bearer": {
                 "type": "http",
                 "scheme": "bearer",
-                "description": "Jeton personnel Sanctum obtenu par `POST /signin`, `POST /otp-verification` ou `POST /deliveryman/login`."
+                "description": "Jeton personnel Sanctum obtenu par `POST /signin`, `POST /otp-verification` (marchand) ou `POST /deliveryman/login` (livreur). Le jeton porte l'ability de son type (`merchant` ou `deliveryman`) : les routes marquées `x-user-type` répondent 403 à l'autre type."
             }
         },
         "schemas": {

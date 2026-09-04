@@ -60,7 +60,7 @@ class ShopScopeTest extends TestCase
             'status' => \App\Enums\Status::ACTIVE,
         ])->save();
 
-        Sanctum::actingAs($this->merchant->user);
+        Sanctum::actingAs($this->merchant->user, ['merchant']);
     }
 
     private function entetes(): array
