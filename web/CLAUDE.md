@@ -33,6 +33,8 @@ avant les apps.
 
 ## Commandes
 - `composer install` · `php artisan migrate` · `php artisan test` (avant tout commit) · `php -l <fichier>`
+- `php artisan openapi:generate` après tout changement de `routes/api.php` ou de
+  `resources/openapi/overlay.php` (régénère `public/openapi/v10.json`, versionné).
 - Version PHP réelle : voir `web/composer.json`.
 
 ## Conventions

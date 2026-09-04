@@ -1034,3 +1034,9 @@ Route::get('fedapay/callback',   [\App\Http\Controllers\Payment\FedaPayControlle
 | comme le rappel FedaPay ; la société vient de la facture, pas de l'hôte.
 */
 Route::get('invoice/statement/{invoice}/pdf', [\App\Http\Controllers\Backend\MerchantInvoiceController::class, 'signedPdf'])->name('invoice.statement.pdf')->middleware('signed');
+
+/*
+| Chantier 7 — consultation de l'API (Swagger UI). La spécification elle-même
+| est servie par GET /api/v10/openapi.json et versionnée dans public/openapi/.
+*/
+Route::get('api/docs', [\App\Http\Controllers\Api\V10\OpenApiController::class, 'docs'])->name('openapi.docs');
