@@ -334,8 +334,15 @@ class ParcelController extends Controller
 
 
     public function ContactUs(Request $request){
+        // S13 — mêmes règles que le formulaire web : l'adresse du visiteur
+        // devient l'adresse de réponse du message, elle doit être valide.
+        $data = $request->validate([
+            'name'    => ['required', 'string', 'max:255'],
+            'email'   => ['required', 'email'],
+            'subject' => ['required', 'string', 'max:255'],
+            'message' => ['required', 'string', 'min:10'],
+        ]);
         try {
-            $data = $request->all();
             Mail::send(new ContactMail($data));
             return $this->responseWithSuccess('Successfully sended.', [],200);
         } catch (\Throwable $th) {
