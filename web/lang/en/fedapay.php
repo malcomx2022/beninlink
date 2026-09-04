@@ -11,4 +11,10 @@ return [
     'invalid_amount' => 'Amount must be an integer greater than zero.',
     'unknown_reference' => 'Unknown payment reference.',
     'error' => 'Payment could not be initiated. Please try again shortly.',
+    'subscribe_button' => 'Pay with Mobile Money',
+    'subscription_description' => 'BeninLink subscription — :plan',
+    'subscription_pending' => 'Payment awaiting confirmation from your operator. Your subscription will be activated automatically once received.',
+    'subscription_activated' => 'Payment confirmed: your subscription is active.',
+    'plan_not_found' => 'Plan not found.',
+    'free_plan' => 'This plan is free: no payment is needed.',
 ];

@@ -382,6 +382,21 @@ aucune passerelle existante ne servant de modèle.
    « le webhook signé est la seule source de vérité » y répond directement.
 4. **Traiter le renouvellement** : décider si `expired_date` cumule le reliquat.
 
+### ✅ Chantier 3, seconde moitié — abonnement par FedaPay (2026-09-04)
+| Élément | Où |
+|---|---|
+| Paiement d'un plan | `POST /subscription/fedapay` → `FedaPayController::subscribe` (session web, hors `subscriptionCheck` : un plan expiré doit pouvoir être renouvelé) |
+| Clés | **plateforme** (`.env`), `company_id` volontairement nul à l'initialisation — règle de `.claude/rules/multitenant.md` |
+| Journal / idempotence | `fedapay_transactions` avec `purpose = subscription`, colonnes `plan_id` et `user_id` ajoutées (migration `2026_09_04`) ; `subscriptions` reste sans colonne de paiement |
+| Activation | le webhook `transaction.approved`, sous le même verrou que le wallet, appelle **`CompanyRepository::switchPlan()`** — point 1 respecté, même chemin que Stripe |
+| Retour de page | `fedapay/callback?reference=…` redirige vers la page des plans avec un message « en cours » ou « actif » ; **n'active rien** |
+| Page des plans | bouton « Payer par Mobile Money » si les clés plateforme sont renseignées et le plan payant |
+| Tests | `FedaPaySubscriptionTest` : initiation, plan gratuit refusé, **rejeu du webhook = une seule activation**, refus, signature absente, retour de page inerte |
+
+⏳ Point 4 (renouvellement) **non tranché** : `switchPlan()` repart de `now()`, comme
+pour Stripe. Le reliquat d'un plan renouvelé avant échéance est toujours perdu — à
+décider avec le métier, hors de ce chantier.
+
 ## Bloc F — Entreprise/marchand & identité légale (IFU/RCCM/CNSS)
 > **Deux entités sans rapport** : une « entreprise » (locataire) et un « marchand »
 > (client du locataire) ont des tables, formulaires et validations distincts.

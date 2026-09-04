@@ -185,6 +185,10 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                 Route::get('/subscription',          [PlanController::class, 'subscription'])->name('subscription.index');
 
                 Route::get('/subscription/payment',  [PlanController::class, 'subscriptionPayment'])->name('subscription.payment');
+                // Chantier 3 — abonnement par Mobile Money. Hors du groupe
+                // subscriptionCheck : une société dont le plan a expiré doit
+                // pouvoir payer. L'activation vient du webhook, jamais d'ici.
+                Route::post('/subscription/fedapay', [\App\Http\Controllers\Payment\FedaPayController::class, 'subscribe'])->name('subscription.fedapay');
 
                 Route::any('/subscription/success',  [PlanController::class, 'StripePaymentSuccess'])->name('subscription.success');
                 Route::any('/subscription/cancel',   [PlanController::class, 'StripePaymentCancel'])->name('subscription.cancel');
