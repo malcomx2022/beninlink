@@ -21,8 +21,8 @@ Volumétrie `web/` : 22 contrôleurs API, 89 contrôleurs back-office, 52 domain
 repositories, 78 modèles, 87 migrations, 37 seeders, 96 routes API, 625 routes web
 tenant, 136 routes super-admin, 81 fichiers `lang/fr/`.
 
-Volumétrie `mobile/` : 15 fichiers d'écran (expo-router), 10 modules d'API, 3 modules
-de domaine, environ 4 100 lignes TypeScript.
+Volumétrie `mobile/` : 19 fichiers d'écran (expo-router), 12 modules d'API, 3 modules
+de domaine, environ 5 400 lignes TypeScript (au 2026-09-04).
 
 ---
 
@@ -160,6 +160,7 @@ Toutes les routes portent le header `apiKey` puis `auth:sanctum`, sauf le bloc p
 | **Colis** | `parcel/*` (index, create, store, **quote**, details, edit, update, logs, filter, status, delete, all/status), `status-wise/parcel/list/{status}` | `ParcelController` | marchand |
 | **Douane** (BeninLink) | `customs/reference`, `customs/alerts`, `customs/alerts/{id}/resolve` | `CustomsController` | marchand |
 | **FedaPay** (BeninLink) | `fedapay/initiate`, `fedapay/status/{reference}` (+ webhook et callback publics dans `web.php`) | `Payment/FedaPayController` | marchand |
+| **Wallet** (BeninLink, 2026-09-04) | `wallet/history` (mouvements du porte-monnaie prépayé, paginés par 10) | `WalletController` | marchand |
 | **Argent** | `payment-accounts/*`, `account-transaction/*`, `statements/*`, `payment-request/*`, `invoice-list/index`, `invoice-details/{id}`, `statement-reports` | `PaymentAccountController`, `AccountTransactionController`, `StatementsController`, `PaymentRequestController`, `InvoiceController`, `ReportController` | marchand |
 | **Relation** | `fraud/*` (+ `fraud/check`), `news-offer/index`, `support/*` | `FraudController`, `NewsOfferController`, `SupportController` | marchand |
 | **Push** | `fcm-subscribe`, `fcm-unsubscribe` | `PushNotificationController` | marchand + livreur (hors service, S11) |
@@ -196,24 +197,28 @@ Toutes les routes portent le header `apiKey` puis `auth:sanctum`, sauf le bloc p
 | Auth | Connexion | `(auth)/login.tsx` | `login` | `signin` |
 | | Inscription PME (IFU / RCCM / CNSS) | `(auth)/signup.tsx` | `signup` | `register` |
 | | Vérification OTP | `(auth)/verify-otp.tsx` | `login` (étape) | `otp-verification`, `resend-otp` |
-| | Mot de passe oublié | `(auth)/forgot-password.tsx` | `forgot` | `password/email` (la saisie du nouveau mot de passe via `password/reset` n'est pas codée) |
+| | Mot de passe oublié | `(auth)/forgot-password.tsx` | `forgot` | `password/email` |
+| | Nouveau mot de passe (jeton du lien, lien profond `beninlink://reset-password`) | `(auth)/reset-password.tsx` | `forgot` (étape 2) | `password/reset` |
 | App | Tableau de bord | `(app)/index.tsx` | `home` | `dashboard`, `balance-details` (lien vers l'écran douane) |
 | | Colis (liste par statut) | `(app)/parcels.tsx` | `parcels` | `parcel/index`, `parcel/all/status` (filtrage local, pas `parcel/filter`) |
 | | Détail colis + timeline | `(app)/parcel/[id].tsx` | `parcel-detail` | `parcel/details`, `parcel/logs` |
 | | Nouveau colis (devis serveur, export douane) | `(app)/parcel/new.tsx` | `new-parcel` | `parcel/create`, `parcel/quote`, `parcel/store`, `customs/reference` |
-| | Portefeuille + recharge FedaPay (navigateur) | `(app)/wallet.tsx` | `wallet` + `recharge` | `profile`, `fedapay/initiate`, `fedapay/status` |
+| | Portefeuille : solde, recharge FedaPay (navigateur), historique | `(app)/wallet.tsx` | `wallet` + `recharge` | `profile`, `fedapay/initiate`, `fedapay/status`, `wallet/history` |
+| | Retrait du net à reverser (comptes Mobile Money, demandes et statuts) | `(app)/wallet/withdraw.tsx` | `wallet` (retrait) | `payment-accounts/index`, `payment-account/store`, `payment-request/index`, `payment-request/store` |
 | | Alertes douanières | `(app)/customs.tsx` | `customs` | `customs/alerts`, `customs/alerts/{id}/resolve` |
 | | Factures = relevés de règlement | `(app)/invoices.tsx` | `invoices` | `invoice-list/index`, `invoice-details`, `balance-details` |
 | | Tarifs (poids × zone, COD) | `(app)/rates.tsx` | `rates` | `settings/delivery-charges`, `settings/cod-charges` |
-| | Boutiques (lecture seule) | `(app)/shops.tsx` | `shops` | `shops/index` (création, modification, suppression non codées) |
-| | Profil (lecture + déconnexion) | `(app)/profile.tsx` | `profile` | `profile`, `sign-out` (`profile/update` et `update-password` non codés) |
+| | Boutiques (liste) | `(app)/shops.tsx` | `shops` | `shops/index` |
+| | Boutique : création, modification, suppression | `(app)/shop/[id].tsx` | `shops` | `shops/edit`, `shops/store`, `shops/update`, `shops/delete` |
+| | Profil (lecture + déconnexion) | `(app)/profile.tsx` | `profile` | `profile`, `sign-out` |
+| | Mes informations | `(app)/profile/edit.tsx` | `profile` | `profile/update` |
+| | Changer le mot de passe | `(app)/profile/password.tsx` | `profile` | `update-password` |
 | — | **Notifications** | **absent** | `notifications` | aucune source côté `web/` (seul `news-offer/index`) |
 
-Bilan : **14 des 15 écrans** de la maquette existent. Manque l'écran `notifications`
-(bloqué backend). Quatre écrans sont **partiels** : le wallet n'a ni l'**historique** du
-porte-monnaie prépayé ni le **retrait** (endpoints `payment-request/*` inventoriés mais
-non branchés), les boutiques et le profil sont en lecture seule, le mot de passe oublié
-s'arrête à l'envoi du code.
+Bilan : **14 des 15 écrans** de la maquette existent, tous complets depuis le
+2026-09-04 (wallet avec historique et retrait, boutiques modifiables, profil
+modifiable, réinitialisation du mot de passe en deux étapes). Seul l'écran
+`notifications` manque, faute de source côté `web/`.
 
 Chaînes **natives** (hors JavaScript) : `app.json` déclare `"locales": { "fr":
 "./src/i18n/expo-fr.json" }`. Ce fichier fournit le nom d'app et la demande Face ID en
@@ -227,7 +232,7 @@ et iOS gardait la demande Face ID anglaise du plugin `expo-secure-store`.
 |---|---|---|
 | Client d'API | `api/client.ts`, `api/config.ts`, `api/session.ts` | `apiKey` + Bearer Sanctum, URL en `EXPO_PUBLIC_API_URL`, jeton en `expo-secure-store` |
 | Inventaire d'endpoints | `api/endpoints.ts` | Liste des routes réellement servies + bloc `MISSING` |
-| Services d'API | `api/auth.ts`, `api/merchant.ts`, `api/parcels.ts`, `api/fedapay.ts`, `api/customs.ts`, `api/types.ts` | Un module par domaine |
+| Services d'API | `api/auth.ts`, `api/merchant.ts`, `api/parcels.ts`, `api/shops.ts`, `api/wallet.ts`, `api/fedapay.ts`, `api/customs.ts`, `api/types.ts` | Un module par domaine |
 | Session | `session/SessionProvider.tsx` | Contexte utilisateur, garde des groupes `(auth)` / `(app)` |
 | Domaine | `domain/money.ts`, `domain/parcelStatus.ts`, `domain/deliveryType.ts` | FCFA entier, table 33 statuts backend → 7 statuts affichés, types de livraison |
 | i18n | `i18n/fr.ts`, `i18n/index.ts`, `i18n/expo-fr.json` | FR seul ; `expo-fr.json` = chaînes natives (`expo.locales`) |
@@ -275,7 +280,8 @@ consommés (`services/api-list.dart`). Ne rien y coder.
 |---|---|---|---|---|
 | Francisation + FCFA | ✅ | ✅ (FR seul, entiers) | — | ✅ (`lang/fr`) |
 | IFU / RCCM / CNSS | ✅ | ✅ (inscription) | — | ✅ (5 formulaires) |
-| FedaPay recharge wallet | ✅ | ✅ (navigateur système) | — | ⏳ `my-wallet/recharge` toujours en flux manuel |
+| FedaPay recharge wallet | ✅ | ✅ (navigateur système, historique) | — | ⏳ `my-wallet/recharge` toujours en flux manuel |
+| Retrait (payout) marchand | ✅ (propriété du compte vérifiée) | ✅ | — | ✅ |
 | FedaPay abonnement SaaS | ⏳ | — | — | ⏳ (Stripe seul) |
 | Calcul serveur + devis | ✅ | ✅ | — | ✅ (affiche le devis) |
 | SYSCOHADA / relevés PDF | ⏳ | 🟡 relevé natif sans PDF | — | ⏳ |
@@ -293,10 +299,12 @@ consommés (`services/api-list.dart`). Ne rien y coder.
    7 (OpenAPI). L'ordre de la cartographie tient toujours : 2 → 4, 1 → 7.
 2. **FedaPay ne couvre que la recharge wallet.** L'abonnement SaaS passe encore par
    Stripe en USD ; le brancher sur FedaPay est la seconde moitié du chantier 3.
-3. **Quatre écrans mobiles sont partiels** : wallet sans historique du porte-monnaie
-   (aucun endpoint ne liste `wallets`) ni retrait (endpoints existants, écran non
-   branché) ; boutiques et profil en lecture seule ; mot de passe oublié sans l'étape
-   `password/reset`. Les endpoints correspondants existent tous côté `web/`.
+3. ~~Quatre écrans mobiles sont partiels~~ — ✅ **complétés le 2026-09-04** : historique
+   du wallet (nouvel endpoint `wallet/history`), retrait, boutiques modifiables, profil
+   modifiable, mot de passe oublié en deux étapes. Au passage, deux failles du socle
+   relevées et corrigées (voir `web/CARTOGRAPHIE.md`, S18 et S19) : les boutiques
+   n'étaient pas scopées par marchand, et une demande de retrait pouvait désigner le
+   compte bancaire d'un autre marchand.
 4. **L'écran `notifications` attend une source** : `news-offer/index` sert des offres,
    le push FCM legacy est mort, aucun endpoint de notifications n'existe.
 5. **Trois routes mortes** dans `web.php` (`my-wallet/recharge-status`, deux routes PDF

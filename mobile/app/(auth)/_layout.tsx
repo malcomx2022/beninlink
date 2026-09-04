@@ -18,6 +18,7 @@ export default function AuthLayout() {
       <Stack.Screen name="signup" options={{ title: t('auth.signUpTitle') }} />
       <Stack.Screen name="verify-otp" options={{ title: t('auth.otpTitle') }} />
       <Stack.Screen name="forgot-password" options={{ title: t('auth.forgotTitle') }} />
+      <Stack.Screen name="reset-password" options={{ title: t('auth.resetTitle') }} />
     </Stack>
   );
 }

@@ -21,10 +21,12 @@ return [
             'autre_banque',
         ],
 
+        // Opérateurs Mobile Money du Bénin (décision actée : MTN MoMo et Moov
+        // Money). Les anciennes clés bKash/Nagad/Rocket restent traduites dans
+        // lang/*/merchant.php pour afficher les comptes déjà enregistrés.
         'account_methods' => [
-            'bkash',
-            'nogod',
-            'rocket'
+            'mtn_momo',
+            'moov_money',
         ],
 
         'account_types' => [
