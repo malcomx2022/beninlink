@@ -1196,7 +1196,7 @@ vestige du squelette Laravel.
 | ~~S4~~ | I | ~~`parcel-location-update` hors `auth:sanctum`~~ — ✅ **corrigé le 2026-08-18** : rentrée dans le groupe authentifié, vérifié 401 sans jeton | `routes/api.php` |
 | ~~S5~~ | I | ~~Aucune séparation marchand/livreur~~ — ✅ **corrigé le 2026-09-04** : un jeton marchand appelait `deliveryman/*` (lecture et changement de statut des colis du hub, remontée de position) et un jeton livreur sur une route marchand finissait en 500. Le groupe `auth:sanctum` est découpé en trois : routes communes (session, profil, mot de passe, push), espace marchand sous `userType:merchant`, espace livreur sous `userType:deliveryman` ; hors périmètre, 403. Le jeton porte désormais l'ability de son type dès la connexion (`merchant` / `deliveryman`), conservée par `refresh` ; les jetons antérieurs (`['*']`) restent cloisonnés par `user_type` | `Middleware/UserTypeMiddleware` · `routes/api.php` · `Api\V10\AuthController` |
 | ~~S6~~ | C | ~~`Setting::where('key')` non scopé~~ — ✅ **corrigé le 2026-08-18** : recherche scopée par `company_id`. Démontré : deux sociétés portant la même clé, la requête d'origine renvoyait celle de la société 1 | `PayoutSetupRepository` |
-| S7 | B | **Aucun filet contre les fuites inter-locataires** : un oubli de `companywise()` suffit | transverse (47/51 modèles) |
+| ~~S7~~ | B | ~~Aucun filet contre les fuites inter-locataires~~ — ✅ **filet posé le 2026-09-04**, sans scope global (voir « ✅ S7 » plus bas) : chaque route `/api/v10` à identifiant doit être inscrite dans `IsolationCoverageTest` avec le test qui prouve son isolation, sinon la suite échoue. L'audit qui l'accompagne a fermé **cinq fuites** que la cartographie n'avait pas relevées : fiches de fraude, tickets de support, comptes de versement, demandes de retrait (un marchand lisait, modifiait et supprimait ceux d'un autre) et colis côté livreur (détail, livraison, statut, position de n'importe quel colis de la société) | `tests/Feature/IsolationCoverageTest` · `TenantIsolationTest` |
 | ~~S8~~ | J | ~~Repli de tarif non scopé par société~~ — ✅ **corrigé le 2026-09-04** : `ChargeCalculator` l'était depuis S2, mais l'AJAX de l'administration et l'import CSV lisaient encore `DeliveryCharge::where(…)` sans `companywise()`. Les quatre sites passent par `DeliveryChargeResolver`, scopé société | `Services/Parcel/DeliveryChargeResolver` |
 | ~~S9~~ | J | ~~Repli de tarif ignorant le poids~~ — ✅ **corrigé le 2026-09-04** : une ligne de barème vaut « jusqu'à N kg » ; poids exact, sinon la tranche immédiatement supérieure, sinon la plus lourde. Un colis n'est jamais facturé à une tranche plus légère que son poids (le socle servait la première ligne de la catégorie) | `Services/Parcel/DeliveryChargeResolver` |
 | ~~S10~~ | J | ~~`delivery-charges` hors `auth:sanctum`~~ — ✅ **corrigé le 2026-08-18** : placée sous authentification, le locataire se résout par `Auth::user()->company_id`. Vérifié 401 sans jeton, 200 avec | `routes/api.php` |
@@ -1373,6 +1373,27 @@ zones en lignes et tranches min/max, restent des décisions métier).
 ⚠️ Effet visible : un colis dont le poids dépassait le barème était facturé au tarif
 le plus léger ; il l'est désormais à la tranche la plus lourde. C'est le comportement
 voulu (sous-facturation silencieuse corrigée), à annoncer aux marchands pilotes.
+
+## ✅ S7 — un filet contre les fuites inter-locataires, sans scope global (2026-09-04)
+
+**Décision** : pas de *global scope* Eloquent sur les 47 modèles porteurs de `company_id`.
+Il aurait fallu le poser modèle par modèle, il casserait les vues super-admin qui lisent
+toutes les sociétés, et il ne protégerait pas du cas le plus fréquent — deux marchands
+de la **même** société (S14, S17, S18, S19 et les cinq fuites ci-dessous l'étaient tous).
+Le filet est donc posé **au niveau des tests**, là où l'oubli se voit.
+
+| Élément | Où |
+|---|---|
+| Filet | `IsolationCoverageTest` : énumère les routes `/api/v10` portant un paramètre et exige pour chacune une entrée « test d'isolation » ou un motif d'exemption (`{status}`, suivi public). Ajouter une route à identifiant sans la déclarer fait échouer la suite ; déclarer un test inexistant ou une route disparue aussi |
+| Audit | `TenantIsolationTest` (6) : compte A contre les ressources du compte B de la même société. Fraude (edit/update/delete → 404, liste noire de la société partagée), support (edit/view/delete/reply → 404, ticket intact), compte de versement (edit/update/delete → 404), demande de retrait (edit/update/delete → 404, la sienne supprimable), livreur (détail / livré / livraison partielle / changement de statut d'un colis confié à un collègue → 404, liste limitée aux siens, position mise à jour pour soi seul) |
+| Repositories | `MerchantPanel/{Fraud,Support,PaymentAccount,PaymentRequest}Repository` : toute lecture et écriture passe par un `owned…()` (auteur, marchand connecté) sur le modèle de S17 ; `FraudRepository::store` renseigne enfin `company_id`, et la liste noire est scopée société |
+| Contrôleurs | API : 404 dans l'enveloppe hors périmètre (Fraud, Support, PaymentAccount, PaymentRequest, DeliveryManParcel, `parcel-status-update`) ; `parcel-location-update` ignore `deliveryID` et prend le livreur authentifié ; panneau marchand web : `abort_if(…, 404)` aux mêmes endroits |
+| Livreur | `ParcelRepository::deliveryManOwns($id)` (colis dont un événement porte le livreur en livraison ou ramassage), partagé par `deliveryManParcel()` |
+
+⚠️ Effet de bord assumé : les fiches de fraude créées par des marchands **avant** ce
+correctif n'ont pas de `company_id` (le socle ne le renseignait pas) ; elles n'apparaissent
+plus dans la liste noire tant qu'on ne les rattache pas (`UPDATE frauds SET company_id …`
+à partir de `created_by`). Aucune fiche de ce type dans le seed.
 
 ## ✅ Harnais de tests (2026-08-18)
 

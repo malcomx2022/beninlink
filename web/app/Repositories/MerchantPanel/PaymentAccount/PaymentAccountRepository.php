@@ -7,10 +7,19 @@ use App\Enums\Merchant_panel\PaymentMethod;
 use App\Models\MerchantPayment;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * S7 — un compte de versement n'est lisible, modifiable et supprimable que
+ * par le marchand qui le détient. Le socle lisait `MerchantPayment::where('id')`
+ * nu : titulaire, numéro et banque d'un autre marchand étaient accessibles.
+ */
 class PaymentAccountRepository implements PaymentAccountInterface{
 
+    private function ownedAccounts(){
+        return MerchantPayment::where('merchant_id', Auth::user()->merchant?->id);
+    }
+
     public function all(){
-        return MerchantPayment::where('merchant_id',auth()->user()->merchant->id)->orderBy('id','desc')->paginate(10);
+        return $this->ownedAccounts()->orderBy('id','desc')->paginate(10);
     }
     public function get($id){
 
@@ -50,12 +59,15 @@ class PaymentAccountRepository implements PaymentAccountInterface{
 
     }
     public function edit($id){
-        return MerchantPayment::where('id',$id)->first();
+        return $this->ownedAccounts()->find($id);
     }
     public function update($request){
         try {
 
-            $Account=MerchantPayment::where('id',$request->id)->first();
+            $Account=$this->ownedAccounts()->find($request->id);
+            if (blank($Account)) {
+                return false;
+            }
             $Account->merchant_id    = Auth::user()->merchant->id;
             $Account->payment_method = $request->payment_method;
             if($request->payment_method == PaymentMethod::bank){
@@ -95,7 +107,7 @@ class PaymentAccountRepository implements PaymentAccountInterface{
         }
     }
     public function delete($id){
-        return MerchantPayment::destroy($id);
+        return $this->ownedAccounts()->whereKey($id)->delete();
     }
 
 }

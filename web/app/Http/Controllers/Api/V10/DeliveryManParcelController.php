@@ -33,8 +33,17 @@ class DeliveryManParcelController extends Controller
     }
 
 
+    /** S7 — 404 hors des colis confiés au livreur connecté. */
+    private function notOwned($id)
+    {
+        return !$this->repo->deliveryManOwns($id);
+    }
+
     public function details($id)
     {
+        if ($this->notOwned($id)) {
+            return $this->responseWithError(__('parcel.parcel_details'), [], 404);
+        }
 
         try {
             $parcel       = $this->repo->details($id);
@@ -48,6 +57,9 @@ class DeliveryManParcelController extends Controller
 
     public function parcelDelivered($id,Request $request)
     {
+        if ($this->notOwned($id)) {
+            return $this->responseWithError(__('parcel.error_msg'), [], 404);
+        }
         try {
             $this->repo->parcelDelivered($id, $request);
             return $this->responseWithSuccess(__('parcel.delivered_success'), [], 200);
@@ -76,6 +88,9 @@ class DeliveryManParcelController extends Controller
 
         if ($validator->fails()) {
             return $this->responseWithError(__('parcel.required'), ['message' => $validator->errors()], 422);
+        }
+        if ($this->notOwned($id)) {
+            return $this->responseWithError(__('parcel.error_msg'), [], 404);
         }
 
         try {

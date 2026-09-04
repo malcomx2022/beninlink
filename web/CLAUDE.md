@@ -40,6 +40,8 @@ avant les apps.
 ## Conventions
 - Réutiliser les conventions We Courier (repérer un exemple avant d'écrire du neuf).
 - Tout module de paiement modifié est couvert par des tests PHPUnit (dont idempotence webhook).
+- Toute route `/api/v10` à identifiant est inscrite dans `tests/Feature/IsolationCoverageTest`
+  avec le test prouvant qu'un compte n'atteint pas la ressource d'un autre (S7).
 - Jamais de clés en dur : `FEDAPAY_*` dans `web/.env`.
 
 ## Étape 0 — cartographie (à lire AVANT de coder ici)

@@ -51,6 +51,7 @@ class SupportController extends Controller
     {
         $departments   = $this->repo->departments();
         $singleSupport = $this->repo->get($id);
+        abort_if(blank($singleSupport), 404); // S7
         return view('backend.merchant_panel.support.edit',compact('departments','singleSupport'));
     }
 
@@ -82,6 +83,7 @@ class SupportController extends Controller
 
     public function view($id){
         $singleSupport = $this->repo->get($id);
+        abort_if(blank($singleSupport), 404); // S7
         $chats         = $this->repo->chats($id);
         return view('backend.merchant_panel.support.view',compact('singleSupport','chats'));
     }

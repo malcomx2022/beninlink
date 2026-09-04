@@ -60,8 +60,12 @@ class SupportController extends Controller
 
     public function edit($id)
     {
+        $support = $this->repo->get($id);
+        if (blank($support)) {
+            return $this->responseWithError(__('support.error_msg'), [], 404);
+        }
         $departments   = $this->repo->departments();
-        return $this->responseWithSuccess(__('support.title'), ['support'=> new SupportResource($this->repo->get($id)),'departments'=>$departments], 200);
+        return $this->responseWithSuccess(__('support.title'), ['support'=> new SupportResource($support),'departments'=>$departments], 200);
 
     }
 
@@ -75,6 +79,9 @@ class SupportController extends Controller
         if ($validator->fails()) {
             return $this->responseWithError(__('support.title'), ['message' => $validator->errors()], 422);
         }
+        if (blank($this->repo->get($id))) {
+            return $this->responseWithError(__('support.error_msg'), [], 404);
+        }
         if($this->repo->update($id,$request)){
             return $this->responseWithSuccess(__('support.update_msg'), [], 200);
         }else{
@@ -87,6 +94,9 @@ class SupportController extends Controller
     {
 
         try {
+            if (blank($this->repo->get($id))) {
+                return $this->responseWithError(__('support.error_msg'), [], 404);
+            }
             $this->repo->delete($id);
             return $this->responseWithSuccess(__('support.delete_msg'), [], 200);
         }catch (\Exception $exception) {
@@ -95,8 +105,12 @@ class SupportController extends Controller
     }
 
     public function view($id){
+        $support = $this->repo->get($id);
+        if (blank($support)) {
+            return $this->responseWithError(__('support.error_msg'), [], 404);
+        }
         $chats         = $this->repo->chats($id);
-        return $this->responseWithSuccess(__('support.title'), ['support'=> new SupportResource($this->repo->get($id)),'chats'=>$chats], 200);
+        return $this->responseWithSuccess(__('support.title'), ['support'=> new SupportResource($support),'chats'=>$chats], 200);
     }
 
     public function supportReply(Request $request){
@@ -107,6 +121,9 @@ class SupportController extends Controller
 
         if ($validator->fails()) {
             return $this->responseWithError(__('support.reply_msg'), ['message' => $validator->errors()], 422);
+        }
+        if (blank($this->repo->get($request->support_id))) {
+            return $this->responseWithError(__('support.error_msg'), [], 404);
         }
         if($this->repo->reply($request)){
             return $this->responseWithSuccess(__('support.reply_msg'), [], 200);
