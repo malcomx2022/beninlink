@@ -13,6 +13,9 @@ avant les apps.
 - Les **flux de paiement existants** : il n'y a pas d'abstraction de passerelle dans
   We Courier (chaque gateway a son contrôleur) — on **ajoute** FedaPay à côté, on ne
   modifie pas les autres.
+  Exception actée (S21, 2026-09-05) : **Aamarpay et SSLCommerz sont désactivées** via
+  `config/payments.php` (`disabled_gateways`) — ne pas les réactiver sans corriger
+  leur TLS.
 - Le **cycle de vie des colis** : on franchit ses états, on ne les redéfinit pas.
 
 ## Décisions actées

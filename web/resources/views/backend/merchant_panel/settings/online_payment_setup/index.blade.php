@@ -189,6 +189,7 @@
             </div>
         </div>
 
+        @if(gatewayEnabled(\App\Enums\PayoutSetup::SSL_COMMERZ)) {{-- S21 --}}
         <div class="col-lg-6  col-md-6">
             <div class="card">
                 <div class="card-body">
@@ -237,7 +238,9 @@
                 </div>
             </div>
         </div>
+        @endif
 
+        @if(gatewayEnabled(\App\Enums\PayoutSetup::AAMARPAY)) {{-- S21 --}}
         <div class="col-lg-6  col-md-6">
             <div class="card">
                 <div class="card-body">
@@ -285,6 +288,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
         <div class="col-lg-6  col-md-6">
             <div class="card">

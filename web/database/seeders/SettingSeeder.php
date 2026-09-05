@@ -45,7 +45,7 @@ class SettingSeeder extends Seeder
         Setting::create(['company_id'=>2,'key' => 'sslcommerz_store_id',        'value' => 'wemax635e0bd65804e']);
         Setting::create(['company_id'=>2,'key' => 'sslcommerz_store_password',  'value' => 'wemax635e0bd65804e@ssl']);
         Setting::create(['company_id'=>2,'key' => 'sslcommerz_testmode',        'value' => 1]);
-        Setting::create(['company_id'=>2,'key' => 'sslcommerz_status',          'value' => 1]);
+        Setting::create(['company_id'=>2,'key' => 'sslcommerz_status',          'value' => 0] // S21 : passerelle désactivée);
 
         //paypal
         Setting::create(['company_id'=>2,'key' => 'paypal_client_id',              'value' => 'ASNysE4ENGfyplv-cNRife5zi8137rEh21yoK4cBZvuy1JWEm-v_DdmfBKVedtmadG1VPgXxUjRg6Q_3']);
@@ -71,7 +71,7 @@ class SettingSeeder extends Seeder
         Setting::create(['company_id'=>2,'key' => 'aamarpay_store_id',        'value' => 'aamarypay']);
         Setting::create(['company_id'=>2,'key' => 'aamarpay_signature_key',   'value' => '28c78bb1f45112f5d40b956fe104645a']);
         Setting::create(['company_id'=>2,'key' => 'aamarpay_sendbox_mode',    'value' => 1]);
-        Setting::create(['company_id'=>2,'key' => 'aamarpay_status',          'value' => 1]);
+        Setting::create(['company_id'=>2,'key' => 'aamarpay_status',          'value' => 0] // S21 : passerelle désactivée);
           
         //=====payment setup===
  

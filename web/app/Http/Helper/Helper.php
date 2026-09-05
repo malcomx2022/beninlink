@@ -116,6 +116,16 @@ if(!function_exists('settings')){
 }
 
 
+if(!function_exists('gatewayEnabled')){
+    /**
+     * S21 — une passerelle listée dans `config/payments.php` est désactivée
+     * partout (routes, réglages, écrans). Voir la note du fichier de config.
+     */
+    function gatewayEnabled($gateway){
+        return !in_array((int) $gateway, config('payments.disabled_gateways', []), true);
+    }
+}
+
 if(!function_exists('isSuperadmin')){
     function isSuperadmin(){
         if(Auth::user() && Auth::user()->user_type == UserType::SUPER_ADMIN):

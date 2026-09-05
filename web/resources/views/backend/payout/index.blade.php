@@ -103,7 +103,7 @@
                             </a>
                         </div>
                     @endif
-                    @if(MerchantSearchSettings($merchant_id,'sslcommerz_status') == \App\Enums\Status::ACTIVE)
+                    @if(gatewayEnabled(\App\Enums\PayoutSetup::SSL_COMMERZ) && MerchantSearchSettings($merchant_id,'sslcommerz_status') == \App\Enums\Status::ACTIVE)
                         <div class="col-md-6">
                             <a href="{{ route('payout.sslcommerz.index',['merchant_id'=>$merchant_id]) }}" >
                                 <div class="card">
@@ -114,7 +114,7 @@
                             </a>
                         </div>
                     @endif
-                    @if(MerchantSearchSettings($merchant_id,'aamarpay_status') == \App\Enums\Status::ACTIVE)
+                    @if(gatewayEnabled(\App\Enums\PayoutSetup::AAMARPAY) && MerchantSearchSettings($merchant_id,'aamarpay_status') == \App\Enums\Status::ACTIVE)
                         <div class="col-md-6">
                             <a href="{{ route('payout.aamarpay.index',['merchant_id'=>$merchant_id]) }}" >
                                 <div class="card">

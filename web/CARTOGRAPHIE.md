@@ -1210,7 +1210,7 @@ vestige du squelette Laravel.
 | ~~S18~~ | I | ~~`ShopsRepository` lisait, modifiait et supprimait `MerchantShops::where('id')` sans filtre~~ — ✅ **corrigé le 2026-09-04** : depuis l'API (`shops/edit`, `shops/update`, `shops/delete`) comme depuis le panneau marchand, changer l'identifiant suffisait à lire l'adresse et le téléphone de la boutique d'un concurrent, à la renommer ou à la supprimer. Toutes les lectures et écritures passent par un `ownedShops()` scopé sur le marchand connecté ; hors périmètre, 404. Relevé en branchant l'écran boutiques de `mobile/` | `MerchantPanel/Shops/ShopsRepository` · `Api\V10\ShopsController` |
 | ~~S20~~ | G | ~~Le panneau marchand servait le CSV d'un autre marchand~~ — ✅ **corrigé le 2026-09-04** : `merchant.panel.invoice.csv` (et désormais `pdf`, `journal`) portent `merchant_id` dans l'URL sans le recouper avec le compte connecté. `MerchantInvoiceController::ownsOrAbort()` répond 404 hors périmètre | `MerchantInvoiceController` |
 | ~~S19~~ | C | ~~Une demande de retrait acceptait n'importe quel `merchant_account`~~ — ✅ **corrigé le 2026-09-04** : le marchand pouvait désigner le compte d'un autre, puis `PaymentResource` lui en renvoyait le détail (titulaire, numéro, banque) dans sa propre liste. L'API vérifie désormais que le compte lui appartient (422 sinon). Le panneau web, qui propose une liste fermée, n'est pas modifié | `Api\V10\PaymentRequestController` |
-| S21 | C | **TLS non vérifié dans deux passerelles de paiement héritées** (`CURLOPT_SSL_VERIFYPEER=false`, `VERIFYHOST=0`) : Aamarpay et SSLCommerz, passerelles bangladaises du socle, **sans usage prévu au Bénin**. Laissé en l'état : la règle du projet est de ne pas modifier les flux de paiement existants (FedaPay s'ajoute à côté), et rien ne permet de les tester ici. À trancher : les désactiver dans les réglages, ou passer `VERIFYPEER=true` si elles doivent servir | `Library/SslCommerz/AbstractSslCommerz:54` · `SslCommerzNotification:67` · `AamarpayController:53` · `AdminAamarpayController:68` |
+| ~~S21~~ | C | ~~TLS non vérifié dans deux passerelles de paiement héritées~~ — ✅ **désactivées le 2026-09-05** (décision : désactiver plutôt que corriger, aucun usage au Bénin). `config/payments.php` liste Aamarpay et SSLCommerz comme désactivées ; leurs routes ne sont plus enregistrées, les réglages société et marchand refusent de les activer, les écrans ne les proposent plus, une migration passe les statuts existants à inactif (clés conservées). Le code reste (référence, licence) | `config/payments.php` · `gatewayEnabled()` · migration `2026_09_05_100000` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
 
@@ -1394,6 +1394,22 @@ Le filet est donc posé **au niveau des tests**, là où l'oubli se voit.
 correctif n'ont pas de `company_id` (le socle ne le renseignait pas) ; elles n'apparaissent
 plus dans la liste noire tant qu'on ne les rattache pas (`UPDATE frauds SET company_id …`
 à partir de `created_by`). Aucune fiche de ce type dans le seed.
+
+## ✅ S21 — Aamarpay et SSLCommerz désactivées (2026-09-05)
+
+Un seul interrupteur, `config/payments.php` → `disabled_gateways`, lu par le helper
+`gatewayEnabled($gateway)`. Le code des deux passerelles n'est pas supprimé.
+
+| Élément | Où |
+|---|---|
+| Routes | `routes/web.php` : les blocs admin (`payout/sslcommerz`, `payout/aamarpay*`), panneau marchand (`online-payment/sslcommerz`, `online-payment/aamarpay`) et rappels publics (`pay-via-ajax`, `success`, `fail`, `cancel`, `ipn`, `aamarpay-*`) ne sont enregistrés que si la passerelle est active → 404 |
+| Réglages | `PayoutSetupRepository::update` et `PaymentSetupRepository::update` renvoient `false` pour une passerelle désactivée : ni clés enregistrées, ni statut actif |
+| Écrans | tuiles masquées dans `payout/index` et `merchant_panel/onlinepayment/index`, cartes de configuration masquées dans `setting/payout_setup/index` et `merchant_panel/settings/online_payment_setup/index` |
+| Données | migration `2026_09_05_100000_disable_legacy_gateways` : `aamarpay_status` et `sslcommerz_status` à 0 dans `settings` et `merchant_settings` ; seeders alignés |
+| Tests | `LegacyGatewaysDisabledTest` (5) : interrupteur, refus côté société et côté marchand, migration (statuts à 0, clés conservées, Stripe intact), compilation des quatre vues |
+
+Réactiver une passerelle = la retirer de `disabled_gateways` **après** avoir passé
+`CURLOPT_SSL_VERIFYPEER` à `true` dans son code — pas de rollback de la migration.
 
 ## ✅ Harnais de tests (2026-08-18)
 
