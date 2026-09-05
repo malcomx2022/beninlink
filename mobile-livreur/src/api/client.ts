@@ -101,7 +101,10 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     Accept: 'application/json',
     apiKey: API_KEY,
   };
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  // Un FormData (photo de livraison) part tel quel : fetch pose lui-même le
+  // Content-Type multipart et sa frontière.
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+  if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
 
   if (authenticated) {
     const token = await getToken();
@@ -118,7 +121,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     response = await fetch(buildUrl(path, query), {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
       signal: controller.signal,
     });
   } catch {

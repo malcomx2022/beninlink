@@ -21,6 +21,7 @@ export default function AppLayout() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="parcel/[id]/index" options={{ title: t('parcels.detail') }} />
       <Stack.Screen name="parcel/[id]/status" options={{ title: t('status.title') }} />
+      <Stack.Screen name="profile/password" options={{ title: t('profile.changePassword') }} />
     </Stack>
   );
 }

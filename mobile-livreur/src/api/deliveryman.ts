@@ -69,6 +69,28 @@ export async function reportOutcome(
   });
 }
 
+/**
+ * Déclare une course livrée avec, si fournie, la photo du colis remis.
+ * `deliveryman/parcel/delivered/{id}` accepte `note` et le fichier `image`
+ * (multipart) ; le backend l'enregistre sur l'événement de livraison.
+ */
+export async function reportDelivered(
+  parcelId: number,
+  options: { note?: string; photoUri?: string } = {},
+): Promise<void> {
+  const form = new FormData();
+  if (options.note?.trim()) form.append('note', options.note.trim());
+  if (options.photoUri) {
+    // React Native accepte un descripteur { uri, name, type } comme partie de fichier.
+    form.append('image', {
+      uri: options.photoUri,
+      name: `livraison-${parcelId}.jpg`,
+      type: 'image/jpeg',
+    } as unknown as Blob);
+  }
+  await api.post(endpoints.parcelDelivered(parcelId), form);
+}
+
 /** Position courante, écrite sur toutes les courses en cours du livreur. */
 export async function updateLocation(lat: number, long: number): Promise<void> {
   await api.post(endpoints.locationUpdate, { lat, long });
