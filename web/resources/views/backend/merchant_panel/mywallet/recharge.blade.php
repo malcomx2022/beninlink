@@ -13,6 +13,16 @@
                             type="submit">{{ __('parcel.paynow') }}</button>
                     </div>
                 </div>
+                {{-- Chantier 3 : recharge par Mobile Money (MTN MoMo / Moov Money).
+                     Même montant, même formulaire, autre destination : le crédit
+                     vient du webhook signé, jamais du retour de page. --}}
+                @if (!empty($fedapayEnabled))
+                    <button type="submit" class="btn btn-warning mt-2"
+                        formaction="{{ route('merchant-panel.my.wallet.recharge.fedapay') }}">
+                        {{ __('fedapay.recharge_button') }}
+                    </button>
+                    <small class="d-block text-muted mt-1">{{ __('fedapay.pending_notice') }}</small>
+                @endif
                 @error('width')
                     <small class="text-danger mt-2">{{ $message }}</small>
                 @enderror

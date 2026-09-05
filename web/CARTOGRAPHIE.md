@@ -1247,10 +1247,23 @@ et ce qu'enregistre `store()` coïncident au centime. Il porte une clé de plus,
 `total_payable_charges` = sous-total + TVA, pour qu'aucun client n'ait à décider si
 `total_delivery_amount` porte la TVA (il ne la porte pas).
 
-⏳ **Reste** : les vues Blade continuent d'envoyer `chargeDetails` (désormais ignoré) et
-d'afficher un total calculé en JavaScript. Tant que les deux calculs coïncident l'écran
-reste juste, mais **cet affichage devrait passer par `parcel/quote`** pour éviter qu'ils
-divergent silencieusement.
+✅ ~~Reste : les vues Blade affichaient un total calculé en JavaScript~~ — les écrans
+de création, duplication et modification (admin et panneau marchand) appellent
+`POST parcel/quote` (`ParcelQuoteController`) et n'alimentent plus `chargeDetails`
+(`public/backend/js/parcel/create.js`). Constaté périmé le 2026-09-05.
+
+## ✅ Chantier 3, complément — recharge Mobile Money depuis le panneau web (2026-09-05)
+
+L'app marchand rechargeait déjà par FedaPay ; le panneau web ne proposait que la
+demande manuelle validée par l'administrateur. Même flux, même webhook :
+
+| Élément | Où |
+|---|---|
+| Action | `FedaPayController::rechargeWeb` (`POST my-wallet/recharge/fedapay`, panneau marchand) ; `initiate()` (API) et `rechargeWeb()` partagent `startWalletRecharge()` — une seule écriture de la ligne `wallets` PENDING et de `fedapay_transactions` |
+| Retour | `callback()` : `channel=web` dans l'URL de retour ramène au portefeuille avec un message (crédité si le webhook est déjà passé, sinon « en attente ») ; sans `channel`, la page d'attente de la WebView, qui affiche désormais la référence |
+| Écran | `mywallet/recharge.blade.php` : bouton « Recharger par Mobile Money » (`formaction`, même montant, mêmes raccourcis) si la société a ses clés FedaPay ; le flux manuel reste |
+| Route morte | `my-wallet/recharge-status` retirée |
+| Tests | `FedaPayWalletWebTest` (5) : initiation → PENDING + redirection, refus → REJECTED/DECLINED, sans clés → rien, compte non marchand → rien, retour web → portefeuille sans crédit / retour app → page d'attente |
 
 ## ✅ Chantier 5 — alertes douanières (2026-08-19)
 
@@ -1432,7 +1445,7 @@ Couverts à ce jour : signature du webhook FedaPay, **S14** (facture d'un autre 
 ## Routes mortes repérées
 | Route | Méthode cible | Statut |
 |---|---|---|
-| `POST /my-wallet/recharge-status` (`routes/web.php:941`) | `WalletController::rechargeStatus` | **inexistante** |
+| ~~`POST /my-wallet/recharge-status`~~ | `WalletController::rechargeStatus` | ✅ **route retirée le 2026-09-05** (aucune méthode, aucun appelant) |
 | ~~`GET .../pdf/{invoice_id}`~~ | `MerchantInvoiceController::InvoicePdf` | ✅ **implémentée le 2026-09-04** (chantier 4) |
 | ~~`GET .../pdf/{merchant_id}/{invoice_id}`~~ | `MerchantInvoiceController::InvoicePdf` | ✅ **implémentée le 2026-09-04** (chantier 4) |
 

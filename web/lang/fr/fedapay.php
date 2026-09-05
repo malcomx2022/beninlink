@@ -4,6 +4,8 @@ return [
     'title' => 'Mobile Money (FedaPay)',
     'wallet_description' => 'Rechargement du portefeuille — :name',
     'initiated' => 'Paiement initié. Suivez les instructions de votre opérateur.',
+    'recharge_button' => 'Recharger par Mobile Money',
+    'wallet_credited' => 'Paiement confirmé : votre portefeuille est crédité.',
     'status' => 'État du paiement',
 
     // Le solde n'est crédité qu'après confirmation du webhook signé : ne jamais

@@ -965,7 +965,10 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                                 Route::get('/',                 'index')->name('index');
                                 Route::get('/recharge',         'recharge')->name('recharge');
                                 Route::post('/recharge-add',    'rechargeAdd')->name('recharge.add');
-                                Route::post('/recharge-status', 'rechargeStatus')->name('recharge.status');
+                                // Recharge par Mobile Money (FedaPay) — même flux que l'app,
+                                // crédit par le webhook signé uniquement (chantier 3).
+                                Route::post('/recharge/fedapay', [\App\Http\Controllers\Payment\FedaPayController::class, 'rechargeWeb'])->name('recharge.fedapay');
+                                // `recharge-status` : route morte du socle (aucune méthode), retirée.
                             });
                     });
                     // SSLCOMMERZ Start — S21 : passerelle désactivée (config/payments.php)

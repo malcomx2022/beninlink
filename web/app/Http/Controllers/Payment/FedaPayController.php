@@ -139,22 +139,72 @@ class FedaPayController extends Controller
             'amount' => ['required', 'integer', 'min:1'],
         ]);
 
-        $merchant = Auth::user()?->merchant;
-        if (blank($merchant)) {
+        if (blank(Auth::user()?->merchant)) {
             return $this->responseWithError(__('fedapay.merchant_only'), [], 403);
         }
 
-        $amount = (int) $request->amount;
+        $result = $this->startWalletRecharge((int) $request->amount, 'app');
+
+        if (!$result['success']) {
+            return $this->responseWithError($result['message'], [], $result['http'] ?? 502);
+        }
+
+        return $this->responseWithSuccess(__('fedapay.initiated'), [
+            'reference' => $result['reference'],
+            // L'app ouvre cette URL en WebView ; elle ne voit jamais les clés.
+            'payment_url' => $result['payment_url'],
+        ], 200);
+    }
+
+    /**
+     * Recharge depuis le panneau marchand web (même flux que l'app, même
+     * webhook). Le formulaire manuel `recharge-add` (validation par
+     * l'administrateur) reste disponible à côté.
+     */
+    public function rechargeWeb(Request $request)
+    {
+        $request->validate([
+            'amount' => ['required', 'integer', 'min:1'],
+        ]);
+
+        if (blank(Auth::user()?->merchant)) {
+            Toastr::error(__('fedapay.merchant_only'), __('message.error'));
+
+            return redirect()->back();
+        }
+
+        $result = $this->startWalletRecharge((int) $request->amount, 'web');
+
+        if (!$result['success']) {
+            Toastr::error($result['message'], __('message.error'));
+
+            return redirect()->back()->withInput();
+        }
+
+        return redirect()->away($result['payment_url']);
+    }
+
+    /**
+     * Ouvre une recharge de wallet : ligne `wallets` en PENDING (la demande,
+     * sans toucher au solde), enregistrement FedaPay, lien de paiement.
+     * Seul le webhook signé fera passer la ligne en APPROVED.
+     *
+     * `$channel` (`app` ou `web`) voyage dans l'URL de retour : il dit au
+     * `callback()` où renvoyer le marchand, rien de plus.
+     *
+     * @return array{success:bool, message?:string, http?:int, reference?:string, payment_url?:string}
+     */
+    private function startWalletRecharge(int $amount, string $channel): array
+    {
+        $merchant = Auth::user()->merchant;
         $companyId = $merchant->company_id;
 
         if (!$this->gateway->isConfigured($companyId)) {
-            return $this->responseWithError(__('fedapay.not_configured'), [], 503);
+            return ['success' => false, 'message' => __('fedapay.not_configured'), 'http' => 503];
         }
 
         $reference = 'BL-' . Str::upper(Str::random(10));
 
-        // La ligne `wallets` naît en PENDING : elle matérialise la demande sans
-        // toucher au solde. Seul le webhook la fera passer en APPROVED.
         $wallet = new Wallet();
         $wallet->company_id = $companyId;
         $wallet->user_id = Auth::id();
@@ -181,7 +231,7 @@ class FedaPayController extends Controller
         $result = $this->gateway->initialize([
             'amount' => $amount,
             'description' => __('fedapay.wallet_description', ['name' => $merchant->business_name]),
-            'callback_url' => route('fedapay.callback'),
+            'callback_url' => route('fedapay.callback', ['reference' => $reference, 'channel' => $channel]),
             'reference' => $reference,
             'purpose' => FedaPayTransaction::PURPOSE_WALLET,
             'company_id' => $companyId,
@@ -197,7 +247,7 @@ class FedaPayController extends Controller
             $wallet->status = WalletStatus::REJECTED;
             $wallet->save();
 
-            return $this->responseWithError($result['message'] ?? __('fedapay.error'), [], 502);
+            return ['success' => false, 'message' => $result['message'] ?? __('fedapay.error'), 'http' => 502];
         }
 
         $record->update([
@@ -205,11 +255,7 @@ class FedaPayController extends Controller
             'payment_url' => $result['payment_url'],
         ]);
 
-        return $this->responseWithSuccess(__('fedapay.initiated'), [
-            'reference' => $reference,
-            // L'app ouvre cette URL en WebView ; elle ne voit jamais les clés.
-            'payment_url' => $result['payment_url'],
-        ], 200);
+        return ['success' => true, 'reference' => $reference, 'payment_url' => $result['payment_url']];
     }
 
     /**
@@ -375,6 +421,18 @@ class FedaPayController extends Controller
             }
 
             return redirect()->route('subscription.index');
+        }
+
+        // Recharge lancée depuis le panneau marchand web : retour à la page
+        // du portefeuille. Le solde, lui, n'a bougé que si le webhook est passé.
+        if ($record && $request->query('channel') === 'web') {
+            if ($record->isApproved()) {
+                Toastr::success(__('fedapay.wallet_credited'), __('message.success'));
+            } else {
+                Toastr::info(__('fedapay.pending_notice'), __('fedapay.title'));
+            }
+
+            return redirect()->route('merchant-panel.my.wallet.index');
         }
 
         return view('backend.payment.fedapay_callback', [
