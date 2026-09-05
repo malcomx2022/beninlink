@@ -91,6 +91,28 @@ class DeliveryAccountingTest extends TestCase
         $this->assertSame(self::CASH - self::CHARGES - self::VAT, $this->soldeMarchand());
     }
 
+    /**
+     * Chaque ligne nomme son marchand — sans quoi elle n'apparaît nulle part.
+     *
+     * L'écran « Mes relevés », côté panneau comme côté API, lit
+     * `MerchantStatement::where('merchant_id', …)`. Les **treize** écritures du
+     * cycle de vie d'un colis ne renseignaient pas cette colonne : le relevé du
+     * marchand ne montrait donc aucune ligne de livraison — ni l'encaissement,
+     * ni les frais, ni la TVA. Son solde bougeait sans rien pour l'expliquer,
+     * ce qui est exactement le contraire de ce qu'un relevé doit faire.
+     */
+    public function test_every_statement_line_names_its_merchant(): void
+    {
+        $this->livrer();
+
+        $this->assertSame(
+            0,
+            MerchantStatement::whereNull('merchant_id')->count(),
+            'Une ligne de releve sans marchand n\'apparait sur le releve de personne.',
+        );
+        $this->assertSame(3, MerchantStatement::where('merchant_id', $this->marchand->id)->count());
+    }
+
     /** Trois lignes au relevé du marchand : l'encaissement, les frais, la TVA. */
     public function test_the_merchant_statement_details_the_three_movements(): void
     {

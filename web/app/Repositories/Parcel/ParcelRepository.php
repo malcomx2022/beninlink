@@ -1667,6 +1667,7 @@ class ParcelRepository implements ParcelInterface {
             $merchant=Merchant::find($parcel->merchant_id);
             $merchantStatement                   = new MerchantStatement();
             $merchantStatement->company_id       = settings()->id;
+            $merchantStatement->merchant_id      = $parcel->merchant_id;
             $merchantStatement->parcel_id        = $id;
             $merchantStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
             $merchantStatement->amount           = ($parcel->delivery_charge / 100) * $merchant->return_charges;
@@ -1890,6 +1891,7 @@ class ParcelRepository implements ParcelInterface {
             //merchant statment
             $merchantStatement                   = new MerchantStatement();
             $merchantStatement->company_id       = settings()->id;
+            $merchantStatement->merchant_id      = $parcel->merchant_id;
             $merchantStatement->parcel_id        = $id;
             $merchantStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
             $merchantStatement->amount           = $parcel->cash_collection;
@@ -1909,6 +1911,7 @@ class ParcelRepository implements ParcelInterface {
             //total delivery charge
             $merchantStatement                   = new MerchantStatement();
             $merchantStatement->company_id       = settings()->id;
+            $merchantStatement->merchant_id      = $parcel->merchant_id;
             $merchantStatement->parcel_id        = $id;
             $merchantStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
             $merchantStatement->amount           = $parcel->total_delivery_amount;
@@ -1920,6 +1923,7 @@ class ParcelRepository implements ParcelInterface {
             //vat
             $merchantStatement                   = new MerchantStatement();
             $merchantStatement->company_id       = settings()->id;
+            $merchantStatement->merchant_id      = $parcel->merchant_id;
             $merchantStatement->parcel_id        = $id;
             $merchantStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
             $merchantStatement->amount           = $parcel->vat_amount;
@@ -2144,6 +2148,7 @@ class ParcelRepository implements ParcelInterface {
             //merchant statment
             $merchantStatement                   = new MerchantStatement();
             $merchantStatement->company_id       = settings()->id;
+            $merchantStatement->merchant_id      = $parcel->merchant_id;
             $merchantStatement->parcel_id        = $id;
             $merchantStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
             $merchantStatement->amount           = $parcel->cash_collection;
@@ -2163,6 +2168,7 @@ class ParcelRepository implements ParcelInterface {
             //total delivery charge
             $merchantStatement                   = new MerchantStatement();
             $merchantStatement->company_id       = settings()->id;
+            $merchantStatement->merchant_id      = $parcel->merchant_id;
             $merchantStatement->parcel_id        = $id;
             $merchantStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
             $merchantStatement->amount           = $parcel->total_delivery_amount;
@@ -2174,6 +2180,7 @@ class ParcelRepository implements ParcelInterface {
             //vat
             $merchantStatement                   = new MerchantStatement();
             $merchantStatement->company_id       = settings()->id;
+            $merchantStatement->merchant_id      = $parcel->merchant_id;
             $merchantStatement->parcel_id        = $id;
             $merchantStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
             $merchantStatement->amount           = $parcel->vat_amount;
@@ -2433,6 +2440,7 @@ class ParcelRepository implements ParcelInterface {
                 //merchant statment
                 $merchantStatement                   = new MerchantStatement();
                 $merchantStatement->company_id       = settings()->id;
+                $merchantStatement->merchant_id      = $parcel->merchant_id;
                 $merchantStatement->parcel_id        = $id;
                 $merchantStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
                 $merchantStatement->amount           = $parcel->cash_collection;
@@ -2453,6 +2461,7 @@ class ParcelRepository implements ParcelInterface {
                 //total delivery charge
                 $merchantStatement                   = new MerchantStatement();
                 $merchantStatement->company_id       = settings()->id;
+                $merchantStatement->merchant_id      = $parcel->merchant_id;
                 $merchantStatement->parcel_id        = $id;
                 $merchantStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
                 $merchantStatement->amount           = $parcel->total_delivery_amount;
@@ -2464,6 +2473,7 @@ class ParcelRepository implements ParcelInterface {
                 //vat
                 $merchantStatement                   = new MerchantStatement();
                 $merchantStatement->company_id       = settings()->id;
+                $merchantStatement->merchant_id      = $parcel->merchant_id;
                 $merchantStatement->parcel_id        = $id;
                 $merchantStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
                 $merchantStatement->amount           = $parcel->vat_amount;
@@ -2706,6 +2716,7 @@ class ParcelRepository implements ParcelInterface {
             //merchant statment
             $merchantStatement                   = new MerchantStatement();
             $merchantStatement->company_id       = settings()->id;
+            $merchantStatement->merchant_id      = $parcel->merchant_id;
             $merchantStatement->parcel_id        = $id;
             $merchantStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
             $merchantStatement->amount           = $old_cash_collection;
@@ -2725,6 +2736,7 @@ class ParcelRepository implements ParcelInterface {
             //total delivery charge
             $merchantStatement                   = new MerchantStatement();
             $merchantStatement->company_id       = settings()->id;
+            $merchantStatement->merchant_id      = $parcel->merchant_id;
             $merchantStatement->parcel_id        = $id;
             $merchantStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
             $merchantStatement->amount           = $old_total_delivery_amount;
@@ -2735,6 +2747,7 @@ class ParcelRepository implements ParcelInterface {
             //vat
             $merchantStatement                   = new MerchantStatement();
             $merchantStatement->company_id       = settings()->id;
+            $merchantStatement->merchant_id      = $parcel->merchant_id;
             $merchantStatement->parcel_id        = $id;
             $merchantStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
             $merchantStatement->amount           = $old_vat_amount;

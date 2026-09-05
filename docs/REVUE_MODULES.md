@@ -390,6 +390,16 @@ et son propre relevé, le code lisant une TVA déjà réécrite par le recalcul.
 Côté remise d'espèces, la méthode de correction n'avait ni transaction ni
 `try/catch` alors qu'elle défait puis refait six mouvements à la suite.
 
+**Le rapprochement solde / relevé** suit (§18, décision **D9**) :
+`php artisan beninlink:ecarts-marchands` compare `merchants.current_balance` à
+`merchant_statements` et ne corrige que ce qu'il sait **entièrement** expliquer.
+Un défaut de plus est sorti en l'écrivant : les **treize** écritures de relevé
+du cycle de vie d'un colis ne renseignaient pas `merchant_id`, la colonne que lit
+l'écran « Mes relevés » — le marchand ne voyait donc **aucune** ligne de
+livraison, son solde bougeant sans rien pour l'expliquer. Corrigé, et rattrapé
+en base par une migration : ici l'attribution est certaine, chaque ligne portant
+son colis.
+
 ## 11. Apps Flutter dépréciées (référence)
 
 | App | Modules (`lib/Screen/`) |

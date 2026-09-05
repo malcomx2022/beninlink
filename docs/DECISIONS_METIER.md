@@ -246,3 +246,48 @@ transaction, un incident au milieu laisse un état que **relancer aggrave** —
 la correction défait une seconde fois. Une étape qui inverse puis refait est
 la plus exposée des trois règles à la fois.
 
+## D9 — Le solde d'un marchand est un cache ; le relevé est la vérité ✅
+
+**Constat.** `merchants.current_balance` et `merchant_statements` doivent
+toujours se répondre :
+
+    current_balance = opening_balance + Σ(recettes) − Σ(dépenses)
+
+L'annulation d'une livraison partielle a cassé cet invariant : elle créditait
+le solde de la TVA **recalculée** sur le montant d'origine alors que sa propre
+ligne de relevé portait la TVA réellement prélevée — 14,40 F par colis sur le
+jeu de recette, définitivement. Le correctif du 2026-09-05 arrête l'hémorragie,
+pas le passé.
+
+**Décision.** En cas de désaccord, **le relevé a raison**. Le solde n'est qu'un
+cache : le réaligner ne demande aucune écriture, et lui en ajouter une rendrait
+le relevé faux à son tour.
+
+`php artisan beninlink:ecarts-marchands` rapproche les deux, marchand par
+marchand.
+
+| Point | Choix |
+|---|---|
+| Correction | seulement les écarts **entièrement expliqués** par les annulations de livraisons partielles, au centime près |
+| Écarts inexpliqués | montrés, jamais corrigés — réaligner rendrait au marchand un argent qui lui a peut-être été réellement versé |
+| Trace | aucune ligne de relevé n'accompagne la correction : le relevé était juste |
+| Affichage | **au centime**, contrairement à la règle XOF entier du reste du projet : c'est la décimale qui identifie l'écart |
+
+**Deux autres chemins cassent le même invariant**, et la commande les nomme
+plutôt que de faire comme s'ils n'existaient pas :
+
+- les **passerelles de retrait en ligne** (`PayoutController` et ses variantes
+  bKash, Skrill, Razorpay…) débitent `current_balance` sans écrire au relevé ;
+- **modifier une fiche marchand** en renseignant le solde d'ouverture écrase
+  `current_balance` (`MerchantRepository::update()`), effaçant tout ce qui
+  s'était accumulé depuis. Les deux restent à trancher.
+
+**Découvert en écrivant le rapprochement.** Les **treize** écritures de
+`MerchantStatement` du cycle de vie d'un colis ne renseignaient pas
+`merchant_id` — la colonne que lit l'écran « Mes relevés », côté panneau comme
+côté API. Le relevé du marchand ne montrait donc **aucune** ligne de livraison :
+son solde bougeait sans rien pour l'expliquer. Corrigé, et rattrapé en base par
+la migration `2026_09_05_140000` : contrairement aux lignes de `settings`
+orphelines (**D-A**), l'attribution est certaine — chaque ligne porte son
+`parcel_id`, et un colis a un seul marchand.
+
