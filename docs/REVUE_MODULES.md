@@ -341,5 +341,9 @@ consommés (`services/api-list.dart`). Ne rien y coder.
    les jetons portent l'ability de leur type.
 7. ~~`mobile-livreur/` n'est pas commencé~~ — ✅ **v1 livrée le 2026-09-05** (fenêtre
    Création) : 6 écrans sur les endpoints livreur existants, mêmes fondations que `mobile/`.
-8. ~~`mobile/app.json` pointe un fichier de locale inexistant~~ — ✅ **corrigé le
+8. **Recette pilote préparée le 2026-09-05** : guide `docs/guides/recette-pilote/`,
+   profils EAS `recette` / `production` dans les deux apps, jeu de données béninois
+   `php artisan beninlink:pilote` (5 PME, 3 livreurs, 35 colis, barème FCFA), scénarios
+   et critères de sortie.
+9. ~~`mobile/app.json` pointe un fichier de locale inexistant~~ — ✅ **corrigé le
    2026-09-04** : `src/i18n/expo-fr.json` créé (nom d'app et Face ID en français).
