@@ -2,6 +2,7 @@
 
 namespace App\Services\Payments;
 
+use App\Enums\Status;
 use App\Models\Backend\Setting;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -78,6 +79,79 @@ class FedaPayGateway
     public function isConfigured(?int $companyId = null): bool
     {
         return !blank($this->credentialsFor($companyId)['secret_key']);
+    }
+
+    /**
+     * Réglage FedaPay d'une société, lu **explicitement** par `company_id`.
+     *
+     * `globalSettings()` du socle ne convient pas ici : hors requête
+     * authentifiée — dans le webhook, par exemple — il retombe sur la société 1
+     * (constat S6, bloc A).
+     */
+    private function settingFor(?int $companyId, string $key): ?string
+    {
+        if ($companyId === null) {
+            return null;
+        }
+
+        $value = Setting::where('company_id', $companyId)->where('key', $key)->value('value');
+
+        return blank($value) ? null : (string) $value;
+    }
+
+    /**
+     * Le locataire encaisse-t-il sur **son propre** compte FedaPay ?
+     *
+     * F3 — `credentialsFor()` prévoyait ce cas depuis le premier jour, mais rien
+     * n'écrivait jamais `fedapay_secret_key` : ni écran, ni seeder, ni migration.
+     * La branche était inatteignable et **tous** les encaissements de tous les
+     * locataires tombaient sur le compte de la plateforme. L'écran de réglages
+     * la rend enfin atteignable.
+     */
+    public function usesOwnAccount(?int $companyId = null): bool
+    {
+        return $this->settingFor($companyId, 'fedapay_secret_key') !== null;
+    }
+
+    /**
+     * Secret de signature des webhooks pour une société.
+     *
+     * ⚠️ Il suit **le compte qui encaisse** : un locataire qui branche son
+     * propre compte FedaPay reçoit des webhooks signés par le secret de CE
+     * compte, jamais par celui de la plateforme. Sans cela, activer une clé par
+     * locataire ferait rejeter tous ses webhooks — le paiement partirait et le
+     * portefeuille ne serait jamais crédité.
+     */
+    public function webhookSecretFor(?int $companyId = null): ?string
+    {
+        $tenant = $this->settingFor($companyId, 'fedapay_webhook_secret');
+        if ($tenant !== null) {
+            return $tenant;
+        }
+
+        $platform = (string) config('fedapay.webhook_secret');
+
+        return blank($platform) ? null : $platform;
+    }
+
+    /**
+     * La passerelle est-elle utilisable pour cette société ?
+     *
+     * Configurée **et** non coupée. Le statut n'existe qu'une fois l'écran de
+     * réglages enregistré : tant qu'aucune ligne n'a été écrite, on conserve le
+     * comportement d'avant l'écran — utilisable dès que les clés répondent.
+     * Seul un `INACTIVE` explicite coupe la passerelle, ce qui donne à
+     * l'administrateur le levier qui lui manquait en cas d'incident.
+     */
+    public function isEnabled(?int $companyId = null): bool
+    {
+        if (!$this->isConfigured($companyId)) {
+            return false;
+        }
+
+        $status = $this->settingFor($companyId, 'fedapay_status');
+
+        return $status === null || (int) $status !== Status::INACTIVE;
     }
 
     /**
@@ -177,9 +251,9 @@ class FedaPayGateway
      *   - **tolérance d'horodatage**, sans quoi un webhook intercepté peut être
      *     rejoué indéfiniment.
      */
-    public function verifySignature(string $payload, ?string $signatureHeader): bool
+    public function verifySignature(string $payload, ?string $signatureHeader, ?int $companyId = null): bool
     {
-        $secret = (string) config('fedapay.webhook_secret');
+        $secret = (string) $this->webhookSecretFor($companyId);
         if (blank($secret) || blank($signatureHeader)) {
             return false;
         }

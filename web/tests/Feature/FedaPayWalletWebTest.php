@@ -47,7 +47,7 @@ class FedaPayWalletWebTest extends TestCase
     private function passerelle(bool $ok, bool $configuree = true): void
     {
         $this->mock(FedaPayGateway::class, function ($mock) use ($ok, $configuree) {
-            $mock->shouldReceive('isConfigured')->andReturn($configuree);
+            $mock->shouldReceive('isEnabled')->andReturn($configuree);
             $expectation = $mock->shouldReceive('initialize');
             if (!$configuree) {
                 $expectation->never();

@@ -13,4 +13,12 @@ interface PayoutSetup {
     CONST RAZORPAY     = 9;//
     CONST PAYSTACK     = 10;//
     CONST OFFLINE      = 11;//
+    /**
+     * FedaPay — Mobile Money Benin (MTN MoMo + Moov Money), chantier 3.
+     *
+     * F2 — la passerelle n'avait aucune place dans cette enumeration, donc
+     * aucun ecran de reglages, et `gatewayEnabled()` ne pouvait pas la couper.
+     * Son unique surface de configuration etait le `.env` du serveur.
+     */
+    CONST FEDAPAY      = 12;
 }

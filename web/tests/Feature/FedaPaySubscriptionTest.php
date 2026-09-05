@@ -90,7 +90,7 @@ class FedaPaySubscriptionTest extends TestCase
         $attendu = (int) round((float) $this->plan->price);
 
         $this->mock(FedaPayGateway::class, function ($mock) use ($attendu) {
-            $mock->shouldReceive('isConfigured')->andReturn(true);
+            $mock->shouldReceive('isEnabled')->andReturn(true);
             $mock->shouldReceive('initialize')
                 ->once()
                 // Cles PLATEFORME (company_id nul), montant entier du plan.
@@ -128,7 +128,7 @@ class FedaPaySubscriptionTest extends TestCase
         $gratuit = Plan::where('price', 0)->firstOrFail();
 
         $this->mock(FedaPayGateway::class, function ($mock) {
-            $mock->shouldReceive('isConfigured')->andReturn(true);
+            $mock->shouldReceive('isEnabled')->andReturn(true);
             $mock->shouldReceive('initialize')->never();
         });
 
