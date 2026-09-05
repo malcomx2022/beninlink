@@ -276,7 +276,9 @@ facultatif comme la photo), `ParcelLogsResource` expose `delivered_image` /
 `signature_image` en URL absolues, et l'app marchand les affiche dans le suivi du colis.
 Au passage, le type `ParcelEvent` de `mobile/` est aligné sur la ressource réelle
 (`parcel_status_name`, `date`, `time_date`) : la timeline marchande lisait des champs
-inexistants. Reste : visuels propres à l'app livreur.
+inexistants. Visuels propres à l'app livreur livrés dans la foulée (icône, adaptive icon
+Android + monochrome, splash, favicon), générés depuis `mobile-livreur/assets/source/generate.py`.
+L'app marchand `mobile/` garde encore les visuels du gabarit Expo.
 
 ## 11. Apps Flutter dépréciées (référence)
 

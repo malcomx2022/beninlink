@@ -6,7 +6,8 @@
 ## Périmètre & financement
 La ligne 11 (fenêtre Idéation) ne finance que l'app marchand. **Fenêtre Création ouverte
 le 2026-09-05 à la demande du porteur** : v1 (6 écrans, 12 endpoints) puis v2 le même
-jour (position GPS, photo de livraison, mot de passe, icônes). Ne pas imputer ce temps
+jour (position GPS, photo de livraison, mot de passe, icônes), v3 (signature, visuels
+d'app). Ne pas imputer ce temps
 à la ligne 11.
 
 ## Rôle
@@ -50,8 +51,10 @@ Application **livreur (coursier)**, React Native / Expo. **Consomme l'API de `we
   tel quel. Le marchand voit les deux preuves dans le suivi du colis
   (`ParcelEvent.delivered_image` / `signature_image`, URL absolues).
 - **Icônes** : Ionicons (`@expo/vector-icons`).
-
-Non branché : icônes et splash propres à l'app (ceux de `mobile/` réutilisés).
+- **Visuels d'app** (icône, adaptive icon Android + monochrome, splash, favicon) :
+  motif « colis en mouvement » (colis ocre barré de vert, traits de vitesse blancs) sur
+  fond vert. Source unique `assets/source/generate.py` (SVG rendu par Chromium headless,
+  Sora depuis node_modules) — régénérer les PNG plutôt que les retoucher à la main.
 
 ## Statuts colis (alignés backend)
 En attente → Ramassage assigné → Entrepôt → Livreur assigné → Livré ; + Livraison partielle, Retour.
@@ -59,7 +62,7 @@ Codes dans `src/domain/parcelStatus.ts` (jamais redéfinis côté app).
 
 ## Design system
 Identique à `mobile/` : Vert `#12503A` · Ocre `#E0A63C` · Sora + DM Sans · FCFA entiers.
-Icônes Ionicons ; les visuels d'app (icône, splash) restent à produire.
+Icônes Ionicons ; visuels d'app générés depuis `assets/source/generate.py`.
 
 ## Commandes
 - `npm install` · `npx expo start` · `npm run typecheck` · `npx expo lint`
