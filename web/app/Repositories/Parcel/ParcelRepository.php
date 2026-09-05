@@ -1283,7 +1283,21 @@ class ParcelRepository implements ParcelInterface {
     }
 
 
+    /**
+     * Annulation de la reception en entrepot.
+     *
+     * ⚠️ Le controle de statut n'entourait que la suppression de l'evenement :
+     * les ecritures du ramasseur, elles, s'executaient a chaque appel. Annuler
+     * deux fois lui reprenait sa course deux fois. La transaction, elle,
+     * existait deja.
+     */
     public function receivedWarehouseCancel($id,$request){
+
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis) || (int) $colis->status !== ParcelStatus::RECEIVED_WAREHOUSE){
+            return false;
+        }
+
         try {
             DB::beginTransaction();
             $parcel = Parcel::find($id);
@@ -1479,7 +1493,19 @@ class ParcelRepository implements ParcelInterface {
 
     }
 
+    /**
+     * Annulation de l'affectation d'un retour au marchand.
+     *
+     * Ses ecritures etaient deja enfermees dans le controle de statut, et la
+     * transaction existait : seul le scope societe manquait.
+     */
     public function returnAssignToMerchantCancel($id,$request){
+
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis) || (int) $colis->status !== ParcelStatus::RETURN_ASSIGN_TO_MERCHANT){
+            return false;
+        }
+
         try {
             DB::beginTransaction();
 
@@ -1985,8 +2011,30 @@ class ParcelRepository implements ParcelInterface {
 
 
 
+    /**
+     * Annulation d'une livraison — le miroir de `parcelDelivered()`.
+     *
+     * Elle porte les memes obligations que l'etape qu'elle inverse (D8), et le
+     * socle n'en tenait aucune. Deux consequences, constatees avant correction :
+     *
+     * 1. **Annuler deux fois inversait deux fois** : le marchand se retrouvait
+     *    debite d'un encaissement qu'il n'avait jamais eu, le livreur credite
+     *    d'une course qu'il n'avait pas faite.
+     * 2. **Annuler une livraison qui n'a jamais eu lieu** ecrivait la
+     *    contrepartie dans le vide. C'est plus grave qu'une livraison en
+     *    double : rien ne signalait qu'il n'y avait rien a annuler.
+     */
     public function parcelDeliveredCancel($id,$request){
+
+        // On n'annule que ce qui a eu lieu, et seulement chez nous.
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis) || (int) $colis->status !== ParcelStatus::DELIVERED){
+            return false;
+        }
+
         try {
+            $parcel = DB::transaction(function () use ($id) {
+
             $parcel                                            = Parcel::find($id);
             if($parcel->status == ParcelStatus::DELIVERED ){
                 $pickupAsisgn = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=>$parcel->status])->first();
@@ -2175,6 +2223,17 @@ class ParcelRepository implements ParcelInterface {
             }
             $parcel->save();
 
+            return $parcel;
+
+            });
+        } catch (\Throwable $th) {
+            Log::error('Annulation de livraison annulee', ['parcel_id' => $id, 'message' => $th->getMessage()]);
+
+            return false;
+        }
+
+        // A partir d'ici l'annulation est acquise.
+        try {
             if(SmsSendSettingHelper(SmsSendStatus::DELIVERED_CANCEL_CUSTOMER)) {
                 if(session()->has('locale') && session()->get('locale') == 'bn'):
                     $msg = 'প্রিয় '.$parcel->customer_name.', আপনার পার্সেল আইডি - ' . $parcel->tracking_id . ' । '.$parcel->merchant->business_name.' থেকে বাতিল করা হবে । ট্র্যাক করুন: '.url('/').' -'.settings()->name;
@@ -2199,11 +2258,11 @@ class ParcelRepository implements ParcelInterface {
             }catch (\Exception $exception){
 
             }
-
-            return true;
         } catch (\Throwable $th) {
-            return false;
+            Log::warning('Annulation de livraison notifiee en echec', ['parcel_id' => $id, 'message' => $th->getMessage()]);
         }
+
+        return true;
     }
 
 
@@ -2490,8 +2549,22 @@ class ParcelRepository implements ParcelInterface {
     }
 
 
+    /**
+     * Annulation d'une livraison partielle — miroir de
+     * `parcelPartialDelivered()`, memes obligations (D8).
+     *
+     * Elle doit aussi **restaurer** les montants d'origine du colis, que la
+     * livraison partielle avait recalcules sur la somme reellement encaissee.
+     */
     public function parcelPartialDeliveredCancel($id,$request){
+
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis) || (int) $colis->status !== ParcelStatus::PARTIAL_DELIVERED){
+            return false;
+        }
+
         try {
+            $parcel = DB::transaction(function () use ($id) {
 
             $parcel                             = Parcel::find($id);
             //old info
@@ -2669,8 +2742,13 @@ class ParcelRepository implements ParcelInterface {
             $merchantStatement->date             =  date('Y-m-d H:i:s');
             $merchantStatement->note             = __('statementNote.delivered_merchant_statment');
             $merchantStatement->save();
-            //vat and total charge plus from merchant current balance
-            $deliveryCost = $old_total_delivery_amount + $parcel->vat_amount;
+            // ⚠️ `$parcel->vat_amount` porte deja la TVA RECALCULEE sur le
+            // montant d'origine, alors que la livraison partielle avait
+            // preleve `$old_vat_amount`. Le solde du marchand etait donc
+            // credite d'un montant que sa propre ligne de releve — juste, elle
+            // — ne disait pas : livrer partiellement puis annuler laissait un
+            // ecart, petit mais permanent, entre le solde et le releve.
+            $deliveryCost = $old_total_delivery_amount + $old_vat_amount;
             $merchantCost = Merchant::find($parcel->merchant_id);
             $merchantCost->current_balance = $merchantCost->current_balance + $deliveryCost;
             $merchantCost->save();
@@ -2694,11 +2772,17 @@ class ParcelRepository implements ParcelInterface {
             }
             $parcel->partial_delivered              = BooleanStatus::NO;
             $parcel->save();
-            return true;
 
+            return $parcel;
+
+            });
         } catch (\Throwable $th) {
+            Log::error('Annulation de livraison partielle annulee', ['parcel_id' => $id, 'message' => $th->getMessage()]);
+
             return false;
         }
+
+        return true;
     }
 
     public function pickupdatemanAssignedCancel($id,$request){
