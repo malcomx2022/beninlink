@@ -6,10 +6,11 @@
 > Base de référence au moment de la revue : `vendor/bin/phpunit` — 127 tests,
 > 824 assertions, au vert.
 >
-> **Mise à jour du 2026-09-05.** La revue elle-même ne corrigeait rien. Neuf
+> **Mise à jour du 2026-09-05.** La revue elle-même ne corrigeait rien. **Onze**
 > constats ont depuis été corrigés à la demande du porteur : **W1** et **F1**
-> d'abord, puis **W2**, **W4** et **W5**, ensuite **F2** et **F3**, enfin
-> **W3** et **F4**. Chaque section porte son correctif et
+> d'abord, puis **W2**, **W4** et **W5**, ensuite **F2** et **F3**, puis **W3**
+> et **F4**, enfin **F5** et **F6**. Il ne reste plus de constat ouvert ; seules
+> demeurent les décisions listées au §12. Chaque section porte son correctif et
 > les tests qui le verrouillent. Suite après correction : **160 tests,
 > 916 assertions, au vert**, contre 127 au moment de la revue.
 >
@@ -200,13 +201,36 @@ ouvrir un écran de saisie par locataire.
 | # | Constat | Emplacement |
 |---|---|---|
 | F4 | ✅ **corrigé.** Dans le webhook, `settings()` renvoyait la société 1 : le SMS de confirmation portait le nom commercial et la devise d'un autre locataire et, `smsSettings()` retombant sur `company_id = 1`, partait avec les identifiants d'opérateur SMS de cette autre société, facturés à elle. Voir §5 bis. | `WalletRepository::approved()` |
-| F5 | Le chemin de crédit du portefeuille par webhook n'a **aucun test**, alors que `.claude/rules/payments.md` l'exige. L'abonnement, lui, est couvert. Les tests portefeuille s'arrêtent à l'initiation. | `tests/Feature/FedaPayWalletWebTest.php` |
-| F6 | `IsolationCoverageTest` déclare `GET fedapay/status/{reference}` couvert par `FedaPayWebhookTest`, qui ne touche jamais cette route : ni `RefreshDatabase`, ni appel HTTP. Le code est correct, il scope par `merchant_id` ; c'est la déclaration de couverture qui est fausse. | `IsolationCoverageTest.php:58` |
+| F5 | ✅ **corrigé.** Le chemin de crédit du portefeuille par webhook n'avait aucun test, alors que `.claude/rules/payments.md` l'exige. Le crédit et son idempotence ont été couverts en fermant F1 (`WalletApprovalIdempotencyTest`, 7 tests) ; les issues restantes le sont désormais par `FedaPayWalletOutcomeTest` (7 tests) : refus et annulation qui ferment la demande en attente, refus tardif qui ne défait pas un crédit acquis, transaction inconnue, événement étranger, montant annoncé qui ne fait pas autorité, et signature invalide qui n'atteint jamais le crédit. | `tests/Feature/FedaPayWalletOutcomeTest.php` |
+| F6 | ✅ **corrigé.** `IsolationCoverageTest` déclarait `GET fedapay/status/{reference}` couvert par `FedaPayWebhookTest`, qui ne touche jamais cette route : ni base migrée, ni appel HTTP. Voir §5 ter. | `IsolationCoverageTest.php` |
 | F7 | `FedaPayGateway::retrieve()` n'est appelé nulle part. Écrit « pour un rapprochement manuel », sans écran ni commande de rapprochement. | `FedaPayGateway` |
 | F8 | Aucun écran n'expose `fedapay_transactions`. Une transaction refusée, en attente, ou dont le montant diffère, n'est visible que dans les journaux. | — |
 | F9 | Les variables `FEDAPAY_*` sont documentées dans `docs/guides/infra/.env.example` mais absentes de `web/.env.example`, le fichier qu'un développeur copie. | `web/.env.example` |
 | F10 | Le guide d'intégration porte encore « l'abonnement SaaS n'est pas encore câblé » : il a été livré depuis. | `docs/guides/fedapay-module/` |
 | F11 | `SaasMetrics::subscriptionCashBetween()` ne compte que les encaissements FedaPay. Un locataire qui paie par Stripe n'apparaît pas dans `cash_collected`, alors que `bookings` le compte. L'écart est intentionnel et commenté, mais doit être affiché avec le chiffre. | `SaasMetrics.php` |
+
+### 5 ter. F5 et F6 — les correctifs appliqués
+
+**F5.** Le crédit et son idempotence ont été couverts en fermant F1. Ce qui
+restait sans preuve sur le même chemin l'est maintenant : le refus et
+l'annulation ferment la demande en attente, un refus tardif ne défait jamais un
+crédit acquis — cela relèverait d'un remboursement décidé à la main —, une
+transaction inconnue est acquittée sans rien créditer, un montant annoncé
+différent ne fait pas autorité sur le solde, et une signature invalide n'atteint
+jamais la logique de crédit.
+
+**F6.** La fausse déclaration est remplacée par une preuve réelle : un marchand
+qui lit la référence de paiement d'un voisin reçoit un 404, et lit bien la
+sienne. La référence expose le montant et le solde, donc renseignerait un
+concurrent sur le chiffre d'affaires.
+
+Surtout, **le filet lui-même avait un trou** : il vérifiait que la classe
+déclarée existe, jamais qu'elle puisse prouver quoi que ce soit. Une preuve
+d'isolation demande d'atteindre la ressource d'un autre compte, donc de l'avoir
+écrite ; un test sans base migrée ne peut pas la produire. `IsolationCoverageTest`
+le vérifie désormais pour chaque entrée de sa carte. Vérifié : en remettant
+l'ancienne déclaration, le nouveau contrôle la refuse en nommant la route et le
+test fautif.
 
 ### 5 bis. F4 — le correctif appliqué
 
@@ -510,8 +534,16 @@ Cet ordre suit le risque financier, pas la difficulté.
 6. ~~**W3**~~ et ~~**F4**~~ ✅ **corrigés le 2026-09-05** — le back-office porte
    la même règle douanière que les deux autres chemins (5 tests) ; le SMS part au
    nom et par l'opérateur de la bonne société (4 tests).
-7. **F5** et **F6** — les deux filets de sécurité.
+7. ~~**F5**~~ et ~~**F6**~~ ✅ **corrigés le 2026-09-05** — les issues du webhook
+   portefeuille sont couvertes (7 tests), la fausse déclaration de couverture est
+   remplacée par une preuve réelle, et le filet vérifie maintenant que chaque
+   test déclaré peut réellement atteindre une route.
 8. **À décider** : reprendre ou non les lignes de `settings` écrites avec un
    locataire nul avant le correctif du `fillable`.
+9. **À décider** : rendre le débit du portefeuille atomique avec la création du
+   colis (W5), ce qui rendrait un colis impossible à créer si le débit échoue.
+10. **À décider** : les deux voisins non scopés par société repérés en chemin,
+    `ParcelRepository::statusUpdate()` côté administration et l'approbation de
+    portefeuille adressable par identifiant.
 7. Les tests absents des étapes comptables, par ordre d'exposition financière :
    `parcelDelivered`, la livraison partielle, les retraits, les reversements.

@@ -55,7 +55,7 @@ class IsolationCoverageTest extends TestCase
         // Douane, notifications, FedaPay (scopés à la création)
         'PUT customs/alerts/{id}/resolve' => CustomsAlertTest::class,
         'PUT notifications/{id}/read' => MerchantNotificationTest::class,
-        'GET fedapay/status/{reference}' => FedaPayWebhookTest::class,
+        'GET fedapay/status/{reference}' => TenantIsolationTest::class,
         // Livreur (S7)
         'GET deliveryman/parcel/details/{id}' => TenantIsolationTest::class,
         'POST deliveryman/parcel/delivered/{id}' => TenantIsolationTest::class,
@@ -105,5 +105,37 @@ class IsolationCoverageTest extends TestCase
                 $this->assertTrue(class_exists($covering), "Test introuvable pour {$key} : {$covering}");
             }
         }
+    }
+
+    /**
+     * F6 — le filet avait un trou : il vérifiait que la classe déclarée
+     * **existe**, jamais qu'elle puisse prouver quoi que ce soit.
+     * `GET fedapay/status/{reference}` était ainsi déclarée couverte par
+     * `FedaPayWebhookTest`, un test de signature en mémoire, sans base migrée
+     * ni appel HTTP : il ne touchait pas la route, et ne pouvait pas la toucher.
+     *
+     * Une preuve d'isolation demande d'atteindre la ressource d'un autre compte,
+     * donc de l'avoir écrite : un test sans base ne peut pas la produire.
+     * `RefreshDatabase` est le signe minimal et net de cette capacité. Cette
+     * vérification aurait attrapé la fausse déclaration le jour où elle a été
+     * écrite.
+     */
+    public function test_every_declared_test_can_actually_reach_a_route(): void
+    {
+        $incapables = [];
+
+        foreach (self::COVERAGE as $key => $covering) {
+            if (!Str::endsWith($covering, 'Test') || !class_exists($covering)) {
+                continue; // motif d'exemption, ou classe absente : déjà signalé plus haut
+            }
+
+            if (!in_array(RefreshDatabase::class, class_uses_recursive($covering), true)) {
+                $incapables[] = $key . ' → ' . class_basename($covering);
+            }
+        }
+
+        $this->assertSame([], $incapables, "Couverture déclarée par un test sans base migrée, "
+            . "donc incapable d'atteindre la ressource d'un autre compte :\n - "
+            . implode("\n - ", $incapables));
     }
 }
