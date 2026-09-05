@@ -184,7 +184,7 @@ Depuis S5 (2026-09-04), les routes marchand exigent `userType:merchant` et les r
 | 3 | FedaPay (recharge wallet **et abonnement SaaS**) | ✅ livré (abonnement le 2026-09-04) | `Services/Payments/FedaPayGateway`, `Payment/FedaPayController`, `FedaPayTransaction`, `config/fedapay.php`, migrations `2026_08_18` et `2026_09_04`, tests `FedaPayWebhookTest`, `FedaPaySubscriptionTest` |
 | S2 | Calcul serveur des montants + devis | ✅ livré | `Services/Parcel/ChargeCalculator`, `POST parcel/quote`, `ParcelQuoteTest` |
 | 4 | Facturation SYSCOHADA + relevés PDF | ✅ livré le 2026-09-04 (TVA au niveau entreprise non tranchée) | `Services/Invoicing/*`, `config/syscohada.php`, `statement_pdf.blade.php`, migration `2026_09_04_120000`, test `SettlementStatementTest` |
-| 5 | Alertes douanières UEMOA / CEDEAO | ✅ livré (notification à la création en reste) | `Services/Customs/CustomsService`, `Observers/ParcelCustomsObserver`, `Rules/CustomsAllowed`, `CustomsRule`, `CustomsAlert`, `CustomsRuleSeeder`, migration `2026_08_19`, `CustomsAlertTest` |
+| 5 | Alertes douanières UEMOA / CEDEAO | ✅ livré (notification au fil marchand par `CustomsAlertFeedObserver` depuis le 2026-09-04) | `Services/Customs/CustomsService`, `Observers/ParcelCustomsObserver`, `Rules/CustomsAllowed`, `CustomsRule`, `CustomsAlert`, `CustomsRuleSeeder`, migration `2026_08_19`, `CustomsAlertTest` |
 | 6 | Reporting SaaS (MRR, ARR, Churn, LTV, CAC) | ✅ livré le 2026-09-04 | `Services/Reporting/SaasMetrics`, `config/saas_reporting.php`, page `super-admin/reporting`, test `SaasMetricsTest` |
 | 7 | OpenAPI / Swagger | ✅ livré le 2026-09-04 (générée depuis le routeur, sans package) | `Services/OpenApi/SpecGenerator`, `resources/openapi/overlay.php`, `config/openapi.php`, commande `openapi:generate`, `public/openapi/v10.json`, `GET /api/v10/openapi.json`, `GET /api/docs`, test `OpenApiSpecTest` |
 
@@ -287,7 +287,7 @@ consommés (`services/api-list.dart`). Ne rien y coder.
 |---|---|---|---|---|
 | Francisation + FCFA | ✅ | ✅ (FR seul, entiers) | — | ✅ (`lang/fr`) |
 | IFU / RCCM / CNSS | ✅ | ✅ (inscription) | — | ✅ (5 formulaires) |
-| FedaPay recharge wallet | ✅ | ✅ (navigateur système, historique) | — | ⏳ `my-wallet/recharge` toujours en flux manuel |
+| FedaPay recharge wallet | ✅ | ✅ (navigateur système, historique) | — | ✅ bouton Mobile Money sur `my-wallet/recharge` (2026-09-05), flux manuel conservé à côté |
 | Retrait (payout) marchand | ✅ (propriété du compte vérifiée) | ✅ | — | ✅ |
 | FedaPay abonnement SaaS | ✅ | — | — | ✅ bouton sur la page des plans |
 | Calcul serveur + devis | ✅ | ✅ | — | ✅ (affiche le devis) |
@@ -324,7 +324,8 @@ consommés (`services/api-list.dart`). Ne rien y coder.
    (statut colis, crédit wallet, relevé émis, alerte douane, message admin, retrait),
    API `notifications/*`, écran mobile avec compteur sur le tableau de bord. Le push
    FCM reste hors service : le fil est consulté, pas poussé.
-5. **Une route morte** reste dans `web.php` (`my-wallet/recharge-status`) ; les deux
+5. ~~Une route morte reste dans `web.php` (`my-wallet/recharge-status`)~~ — ✅ **retirée
+   le 2026-09-05** avec la recharge Mobile Money du panneau marchand ; les deux
    routes PDF de facture sont implémentées par le chantier 4.
 6. **Constats de sécurité** : ~~S21~~ ✅ **Aamarpay et SSLCommerz désactivées le
    2026-09-05** (`config/payments.php`, routes non enregistrées, réglages verrouillés,

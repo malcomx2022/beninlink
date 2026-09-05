@@ -4,6 +4,8 @@ return [
     'title' => 'Mobile Money (FedaPay)',
     'wallet_description' => 'Wallet top-up — :name',
     'initiated' => 'Payment initiated. Follow your operator instructions.',
+    'recharge_button' => 'Top up with Mobile Money',
+    'wallet_credited' => 'Payment confirmed: your wallet has been credited.',
     'status' => 'Payment status',
     'pending_notice' => 'Your balance will be updated as soon as your operator confirms.',
     'not_configured' => 'Mobile Money payment is not configured yet. Contact the administrator.',

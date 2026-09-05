@@ -21,8 +21,10 @@ class WalletController extends Controller
         $recharge_transactions    = $this->repo->recharges($request);
         return view('backend.merchant_panel.mywallet.index',compact('wallets','request','recharge_transactions'));
     }
-    public function recharge(){
-        return view('backend.merchant_panel.mywallet.recharge');
+    public function recharge(\App\Services\Payments\FedaPayGateway $fedapay){
+        // Bouton Mobile Money affiché seulement si la société a ses clés FedaPay.
+        $fedapayEnabled = $fedapay->isConfigured(settings()->id);
+        return view('backend.merchant_panel.mywallet.recharge', compact('fedapayEnabled'));
     }
 
     public function rechargeAdd(Request $request){
