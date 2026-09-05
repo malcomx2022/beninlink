@@ -372,6 +372,15 @@ inoffensif tant que rien n'était facturé, vidangeur de portefeuille une fois l
 débit branché ; l'import avait son propre barème au lieu du `ChargeCalculator`
 imposé par S2 ; et une colonne facultative en moins tuait l'import.
 
+**Les étapes comptables sont couvertes** depuis le 2026-09-05 (§16) : la
+livraison, la livraison partielle, les retraits et les relevés de règlement,
+**42 tests**. Les montants étaient justes ; c'est le comportement hors chemin
+nominal qui ne l'était pas. Les mêmes trois défauts aux quatre étapes — elles
+se rejouaient sans broncher (livrer deux fois doublait **tous** les comptes,
+et l'app livreur renvoie sur réseau instable), elles n'étaient pas scopées à la
+société, elles n'étaient pas transactionnelles. La règle générale qui s'en
+dégage est consignée en **D8** de `docs/DECISIONS_METIER.md`.
+
 ## 11. Apps Flutter dépréciées (référence)
 
 | App | Modules (`lib/Screen/`) |

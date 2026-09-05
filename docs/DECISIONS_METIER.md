@@ -206,3 +206,33 @@ cet autre, et aurait vidé son portefeuille. Règle posée, alignée sur le rest
 socle : **un marchand n'importe que pour lui-même** ; le back-office importe
 pour un marchand **de sa société**, validé `companywise()`.
 
+## D8 — Une étape comptable s'exécute une fois, chez soi, tout ou rien ✅
+
+**Constat.** Quatre étapes déplacent de l'argent réel — la livraison, la
+livraison partielle, le retrait, le relevé de règlement — et aucune n'avait de
+test. En les couvrant (2026-09-05), les mêmes trois défauts sont apparus aux
+quatre : elles se rejouaient sans broncher, elles n'étaient pas scopées à la
+société, et elles n'étaient pas transactionnelles.
+
+**Décision.** La règle vaut pour toute étape qui écrit dans les comptes —
+`merchant_statements`, `deliveryman_statements`, `courier_statements`,
+`vat_statements`, `wallets`, `bank_transactions` — ou qui touche un solde
+(`merchants.current_balance`, `delivery_man.current_balance`,
+`accounts.balance`, `merchants.wallet_balance`).
+
+| Règle | Ce qu'elle veut dire |
+|---|---|
+| **Une fois** | L'étape vérifie l'état de départ et refuse s'il a déjà changé. Un second appel rend `false` et n'écrit rien. Ce n'est pas une précaution théorique : l'app livreur renvoie sur réseau instable |
+| **Chez soi** | La ressource est chargée `companywise()`, jamais par `find($id)` nu. Le compte payeur aussi, pas seulement la demande |
+| **Tout ou rien** | Toutes les écritures d'une même étape dans une seule transaction. Des livres à moitié faits sont pires que pas de livres : on ne peut pas relancer l'étape sans doubler l'autre moitié |
+| **Notifier après** | SMS et notifications **hors** de la transaction, chacun rattrapé. Un opérateur injoignable ne défait pas une livraison qui a eu lieu |
+| **Nommer** | Chaque écriture porte le tiers qu'elle concerne (`merchant_id`, `delivery_man_id`) : un solde qui bouge sans ligne pour l'expliquer est un litige à venir |
+
+**Et l'appelant le dit.** Une étape qui refuse doit se voir : 422 côté API,
+message à l'écran côté web. L'API livreur répondait 200 quoi qu'il arrive —
+inoffensif tant que l'étape se rejouait, trompeur dès qu'elle refuse.
+
+**Portée restante.** Les méthodes d'annulation (`…Cancel`) inversent ces mêmes
+écritures et présentent la même forme. Elles ne sont pas encore couvertes ;
+elles relèvent de la même règle.
+

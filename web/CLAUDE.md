@@ -54,6 +54,9 @@ avant les apps.
 ## Conventions
 - Réutiliser les conventions We Courier (repérer un exemple avant d'écrire du neuf).
 - Tout module de paiement modifié est couvert par des tests PHPUnit (dont idempotence webhook).
+- Toute étape qui écrit dans les comptes ou touche un solde suit **D8** de
+  `docs/DECISIONS_METIER.md` : une seule fois (refuse d'être rejouée), `companywise()`,
+  dans une transaction, notifications hors transaction, et chaque écriture nomme son tiers.
 - Toute route `/api/v10` à identifiant est inscrite dans `tests/Feature/IsolationCoverageTest`
   avec le test prouvant qu'un compte n'atteint pas la ressource d'un autre (S7).
 - Jamais de clés en dur : `FEDAPAY_*` dans `web/.env`.

@@ -242,45 +242,72 @@ class PaymentRepository implements PaymentInterface{
         }
     }
 
+    /**
+     * Regler une demande de retrait : le transporteur sort l'argent, la creance
+     * du marchand s'eteint.
+     *
+     * Quatre garanties, ajoutees le 2026-09-05 en couvrant l'etape de tests, et
+     * qui appliquent ici des decisions deja prises ailleurs :
+     *
+     * 1. **Une seule fois.** Aucun controle de statut : regler deux fois la
+     *    meme demande sortait l'argent deux fois — creance du marchand sous
+     *    zero, compte du transporteur debite du double. Meme defaut que F1 sur
+     *    les recharges, du cote sortant.
+     * 2. **Chez soi.** `Payment::where('id',...)` nu : un administrateur reglait
+     *    la demande d'une AUTRE societe, depuis son propre compte bancaire.
+     * 3. **Le compte payeur aussi.** `Account::find()` acceptait le compte d'un
+     *    autre transporteur.
+     * 4. **Tout ou rien**, et l'ecriture porte enfin le marchand : le socle ne
+     *    renseignait pas `merchant_id` ICI (il le fait dans `store()` et
+     *    `cancelProcess()`), si bien que le retrait n'apparaissait au releve
+     *    d'aucun marchand — le solde baissait sans ligne pour l'expliquer.
+     */
     public function processed($request){
-        try {
+        $payment = Payment::companywise()->find($request->id);
+        // Seule une demande EN ATTENTE se regle : ni une deja reglee, ni une rejetee.
+        if(blank($payment) || (int) $payment->status !== ApprovalStatus::PENDING){
+            return false;
+        }
 
-            $payment                           = Payment::where('id',$request->id)->first();
+        $courier_account = Account::companywise()->find($request->from_account);
+        if(blank($courier_account)){
+            return false;
+        }
+
+        try {
+            DB::transaction(function () use ($request, $payment, $courier_account) {
+
             //merchant statement
             $merchantstatment                  = new MerchantStatement();
             $merchantstatment->company_id      = settings()->id;
+            $merchantstatment->merchant_id     = $payment->merchant_id;
             $merchantstatment->type            = AccountHeads::EXPENSE;
             $merchantstatment->amount          = $payment->amount;
             $merchantstatment->date            = date('Y-m-d H:i:s');
             $merchantstatment->note            =  __('merchantmanage.payment_withdrawal');
             $merchantstatment->save();
 
-            if($merchantstatment):
-                //minus amount from merchant
-                $merchant                      = Merchant::where('id',$payment->merchant_id)->first();
-                $merchant->current_balance     = $merchant->current_balance - $payment->amount;
-                $merchant->save();
-            endif;
+            //minus amount from merchant
+            $merchant                      = Merchant::where('id',$payment->merchant_id)->first();
+            $merchant->current_balance     = $merchant->current_balance - $payment->amount;
+            $merchant->save();
 
             //bank transaction statements
             $bank_transaction                   =  new BankTransaction();
             $bank_transaction->company_id       =  settings()->id;
-            $bank_transaction->account_id       =  $request->from_account;
+            $bank_transaction->account_id       =  $courier_account->id;
             $bank_transaction->type             =  AccountHeads::EXPENSE;
             $bank_transaction->amount           =  $payment->amount;
             $bank_transaction->date             =  date('Y-m-d H:i:s');
             $bank_transaction->note             =  __('merchantmanage.merchant_payment_withdrawal');
             $bank_transaction->save();
 
-            if($bank_transaction):
-                //minus amount from courier account
-                $courier_account                = Account::find($request->from_account);
-                $courier_account->balance       = $courier_account->balance - $payment->amount;
-                $courier_account->save();
-            endif;
+            //minus amount from courier account
+            $courier_account->balance       = $courier_account->balance - $payment->amount;
+            $courier_account->save();
 
             $payment->transaction_id            = $request->transaction_id;
-            $payment->from_account              = $request->from_account;
+            $payment->from_account              = $courier_account->id;
             if($request->reference_file):
                 if($payment->referencefile !==null && File::exists($payment->referencefile->original)):
                     unlink($payment->referencefile->original);
@@ -289,6 +316,9 @@ class PaymentRepository implements PaymentInterface{
             endif;
             $payment->status                    = ApprovalStatus::PROCESSED;
             $payment->save();
+
+            });
+
             return true;
 
         } catch (\Throwable $th) {
@@ -297,10 +327,22 @@ class PaymentRepository implements PaymentInterface{
         }
     }
 
+    /**
+     * Annuler un reglement : l'argent revient des deux cotes.
+     *
+     * Memes gardes que `processed()`, et pour la meme raison : sans controle de
+     * statut, annuler une demande JAMAIS reglee creditait le marchand d'un
+     * argent qu'il n'avait pas recu et rechargeait le compte du transporteur.
+     */
     public function cancelProcess($id){
+        $payment = Payment::companywise()->find($id);
+        // On n'annule que ce qui a ete regle.
+        if(blank($payment) || (int) $payment->status !== ApprovalStatus::PROCESSED){
+            return false;
+        }
 
         try {
-            $payment                   = Payment::where('id',$id)->first();
+            DB::transaction(function () use ($payment) {
 
             //merchant statement
             $merchantstatment                  = new MerchantStatement();
@@ -341,6 +383,8 @@ class PaymentRepository implements PaymentInterface{
             $payment->transaction_id   = null;
             $payment->from_account     = null;
             $payment->save();
+
+            });
 
             return true;
 

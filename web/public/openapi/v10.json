@@ -1518,7 +1518,7 @@
                     "Livreur"
                 ],
                 "summary": "Déclarer un colis livré",
-                "description": "Multipart : la photo (`image`) et la signature manuscrite du destinataire (`signatureImage`) sont facultatives et ressortent dans `ParcelEvent` (`delivered_image`, `signature_image`).",
+                "description": "Multipart : la photo (`image`) et la signature manuscrite du destinataire (`signatureImage`) sont facultatives et ressortent dans `ParcelEvent` (`delivered_image`, `signature_image`).\n\n**Une seule fois.** L'étape déplace quatre jeux de comptes (marchand, livreur, transporteur, TVA) : un second envoi sur le même colis est refusé en 422, il n'écrit rien. Un renvoi après une coupure réseau est donc sans danger — mais il ne confirme pas la première livraison, il constate qu'elle a déjà eu lieu.",
                 "parameters": [
                     {
                         "name": "id",
@@ -1600,14 +1600,7 @@
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     },
                     "422": {
-                        "description": "Erreurs de validation",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ValidationError"
-                                }
-                            }
-                        }
+                        "description": "Colis déjà livré, hors de la société, ou étape refusée"
                     }
                 },
                 "security": [
@@ -1783,6 +1776,7 @@
                     "Livreur"
                 ],
                 "summary": "Déclarer une livraison partielle",
+                "description": "Les frais sont **recalculés** sur la somme réellement encaissée (les frais COD en sont un pourcentage), la TVA suit, et le montant convenu au départ est conservé dans `old_cash_collection`.\n\n**Une seule fois**, comme la livraison complète : rejouer l'étape recalculerait les frais sur le montant déjà réduit. Un second envoi est refusé en 422.",
                 "parameters": [
                     {
                         "name": "id",
@@ -1857,14 +1851,7 @@
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     },
                     "422": {
-                        "description": "Erreurs de validation",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ValidationError"
-                                }
-                            }
-                        }
+                        "description": "Montant absent, colis déjà livré ou déjà partiellement livré, ou hors de la société"
                     }
                 },
                 "security": [

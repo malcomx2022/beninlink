@@ -202,7 +202,10 @@ class InvoiceRepository implements InvoiceInterface
     public function statusUpdate($request, $merchant_id)
     {
         try {
-            $invoice  = Invoice::where([
+            // `companywise()` : le socle lisait sans scope, si bien qu'un
+            // administrateur qui connaissait le triplet marquait payé le relevé
+            // d'une AUTRE société — sans que le marchand concerné ait rien reçu.
+            $invoice  = Invoice::companywise()->where([
                 'id' => $request->id,
                 'merchant_id' => $merchant_id,
                 'invoice_id' => $request->invoice_id

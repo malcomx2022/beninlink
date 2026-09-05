@@ -61,7 +61,14 @@ class DeliveryManParcelController extends Controller
             return $this->responseWithError(__('parcel.error_msg'), [], 404);
         }
         try {
-            $this->repo->parcelDelivered($id, $request);
+            // Le retour du repository etait ignore : l'app annoncait « livre »
+            // meme quand rien n'avait ete ecrit. Depuis que l'etape refuse une
+            // seconde livraison, ce silence ferait croire au livreur qu'un
+            // renvoi a bien enregistre quelque chose.
+            if(!$this->repo->parcelDelivered($id, $request)){
+                return $this->responseWithError(__('parcel.error_msg'), [], 422);
+            }
+
             return $this->responseWithSuccess(__('parcel.delivered_success'), [], 200);
         } catch (\Exception $exception) {
             return $this->responseWithError(__('parcel.error_msg'), [], 500);
@@ -94,7 +101,10 @@ class DeliveryManParcelController extends Controller
         }
 
         try {
-            $this->repo->parcelPartialDelivered($id, $request);
+            if(!$this->repo->parcelPartialDelivered($id, $request)){
+                return $this->responseWithError(__('parcel.error_msg'), [], 422);
+            }
+
             return $this->responseWithSuccess(__('parcel.partial_delivered_success'), [], 200);
         }catch (\Exception $exception) {
             return $this->responseWithError(__('parcel.error_msg'), [], 500);
