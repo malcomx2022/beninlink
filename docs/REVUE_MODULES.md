@@ -295,8 +295,19 @@ n'a modifié aucun code. Deux constats y appellent une décision rapide :
   `WalletRepository::approved()` n'approuve plus qu'une ligne `PENDING`, sous
   verrou de ligne, 7 tests.
 
-Les autres constats restent ouverts, dont l'absence de configuration FedaPay côté
-administration et l'écrasement des positions passées du livreur.
+- ~~**W2**~~ ✅ **corrigé le 2026-09-05** : la position du livreur n'écrit plus
+  que sur ses courses en main ; l'historique des livraisons closes est préservé.
+- ~~**W4**~~ ✅ **corrigé le 2026-09-05** : la liste des relevés de l'app tombait
+  en 500 dès le premier relevé émis (`InvoiceResource` sommait deux propriétés
+  inexistantes) et ne filtrait que les payés. Elle sert désormais le net porté par
+  le relevé, tous statuts, comme le panneau web.
+- ~~**W5**~~ ✅ **corrigé le 2026-09-05** : le portefeuille n'était **jamais**
+  débité pour un colis créé depuis l'app (le code lisait `$request->merchant_id`,
+  absent de cette requête), et le `catch` vide garantissait le silence.
+
+Restent ouverts l'absence de configuration FedaPay côté administration, la clé par
+locataire jamais écrite, le contrôle douanier absent du back-office et les filets
+de sécurité.
 
 ## 11. Apps Flutter dépréciées (référence)
 
