@@ -262,11 +262,22 @@ class ParcelController extends Controller
 
     }
 
+    /**
+     * Poser un statut sur son propre colis.
+     *
+     * Meme forme que `destroy()` : 404 si le colis n'est pas a ce marchand (on
+     * ne revele pas son existence), 422 si la transition ne lui appartient pas.
+     * La liste blanche vit dans `MerchantParcelRepository`.
+     */
     public function statusUpdate($id, $statusId)
     {
         try {
-            if (!$this->repo->statusUpdate($id, $statusId)) {
+            $parcel = $this->repo->get($id);
+            if (blank($parcel)) {
                 return $this->responseWithError(__('parcel.not_found'), [], 404);
+            }
+            if (!$this->repo->statusUpdate($id, $statusId)) {
+                return $this->responseWithError(__('parcel.status_not_allowed'), [], 422);
             }
             return $this->responseWithSuccess(__('parcel.update_msg'), [], 200);
         }catch (\Exception $exception) {

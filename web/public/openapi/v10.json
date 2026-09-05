@@ -4722,7 +4722,8 @@
                 "tags": [
                     "Colis"
                 ],
-                "summary": "Changer le statut d'un colis (annulation par le marchand)",
+                "summary": "Poser un statut sur son propre colis",
+                "description": "W1 — la liste blanche des statuts qu'un marchand peut poser est **vide** : aucune étape du cycle de vie ne lui appartient, chaque transition est posée par le back-office ou le livreur, qui écrivent aussi l'événement et les écritures comptables. Toute valeur est donc refusée en 422. Pour renoncer à un colis, le supprimer tant qu'il est « En attente » (`DELETE parcel/delete/{id}`).",
                 "parameters": [
                     {
                         "name": "id",
@@ -4779,7 +4780,10 @@
                         "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     },
                     "404": {
-                        "description": "Ressource introuvable ou hors du périmètre du compte connecté"
+                        "description": "Colis absent ou appartenant à un autre marchand"
+                    },
+                    "422": {
+                        "description": "Transition ne relevant pas du marchand"
                     }
                 },
                 "security": [

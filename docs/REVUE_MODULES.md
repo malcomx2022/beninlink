@@ -286,11 +286,17 @@ Une revue transverse du socle FedaPay, de sa configuration côté administration
 des neuf workflows métier vit dans **`docs/REVUE_FEDAPAY_ET_WORKFLOWS.md`**. Elle
 n'a modifié aucun code. Deux constats y appellent une décision rapide :
 
-- **W1 (critique, vérifié)** : un marchand pose lui-même le statut « Livré » par
-  `GET /api/v10/parcel/{id}/status/9`, sans contrôle de transition, et le colis
-  entre au relevé de règlement en sa faveur.
-- **F1 (grave, vérifié)** : l'écran d'approbation des recharges crédite une
-  seconde fois une recharge FedaPay, dans les deux ordres possibles.
+- ~~**W1 (critique)**~~ ✅ **corrigé le 2026-09-05** : un marchand posait lui-même
+  le statut « Livré » par `GET /api/v10/parcel/{id}/status/9`, sans contrôle de
+  transition, et le colis entrait au relevé de règlement en sa faveur. Liste
+  blanche vide dans `MerchantParcelRepository`, 404 / 422 distingués, 5 tests.
+- ~~**F1 (grave)**~~ ✅ **corrigé le 2026-09-05** : l'écran d'approbation des
+  recharges créditait une seconde fois une recharge FedaPay, dans les deux ordres.
+  `WalletRepository::approved()` n'approuve plus qu'une ligne `PENDING`, sous
+  verrou de ligne, 7 tests.
+
+Les autres constats restent ouverts, dont l'absence de configuration FedaPay côté
+administration et l'écrasement des positions passées du livreur.
 
 ## 11. Apps Flutter dépréciées (référence)
 

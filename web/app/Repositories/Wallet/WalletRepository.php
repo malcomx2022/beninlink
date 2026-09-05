@@ -126,18 +126,60 @@ class WalletRepository implements WalletInterface{
            return false; 
         }
     }
+    /**
+     * Approuver une demande de recharge : crediter le solde du marchand une fois.
+     *
+     * ⚠️ Cette methode etait « ni transactionnelle ni idempotente » : elle
+     * creditait le solde a chaque appel, sans jamais regarder l'etat de la ligne.
+     * Deux chemins y menent — le bouton « Approuver » de l'ecran Demandes de
+     * recharge, et le webhook signe de FedaPay — et rien ne les reliait : une
+     * recharge FedaPay en attente, indiscernable d'une recharge manuelle dans la
+     * liste (elle s'y affiche « Hors ligne »), etait approuvee par
+     * l'administrateur puis creditee une seconde fois par le webhook. Un simple
+     * double-clic sur « Approuver » produisait le meme doublement.
+     *
+     * Deux garde-fous, tous deux necessaires :
+     *   - **seule une ligne EN ATTENTE** est approuvee ; un second appel ressort
+     *     sans rien ecrire ;
+     *   - **verrou de ligne** (`lockForUpdate`) dans une transaction, sans quoi
+     *     deux appels simultanes liraient tous deux « en attente ». C'est le
+     *     meme garde-fou que `FedaPayController::approve()` pose sur la
+     *     transaction FedaPay ; il manquait ici, du cote du portefeuille.
+     *
+     * Le SMS part **hors transaction** : un envoi lent ne doit pas tenir le
+     * verrou, et son echec ne doit pas defaire un credit deja acquis.
+     */
     public function approved($id){
         try {
-       
-            $wallet                   = $this->getFind($id);
-       
-            $merchant                 = Merchant::find($wallet->merchant_id);
-            $merchant->wallet_balance = ($merchant->wallet_balance + $wallet->amount);
-            $merchant->save();
-        
-            $wallet->status           = WalletStatus::APPROVED;
-            $wallet->save();
- 
+
+            $credited = DB::transaction(function () use ($id) {
+                $wallet = Wallet::whereKey($id)->lockForUpdate()->first();
+
+                if (blank($wallet) || (int) $wallet->status !== WalletStatus::PENDING) {
+                    return null; // deja traitee, rejetee, ou inexistante
+                }
+
+                $merchant = Merchant::find($wallet->merchant_id);
+                if (blank($merchant)) {
+                    return null;
+                }
+
+                $merchant->wallet_balance = ($merchant->wallet_balance + $wallet->amount);
+                $merchant->save();
+
+                $wallet->status           = WalletStatus::APPROVED;
+                $wallet->save();
+
+                return ['wallet' => $wallet, 'merchant' => $merchant];
+            });
+
+            if (blank($credited)) {
+                return false;
+            }
+
+            $wallet   = $credited['wallet'];
+            $merchant = $credited['merchant'];
+
             $msg = "Dear ".$merchant->business_name.", you are recharges ".settings()->currency.$wallet->amount." to your ".settings()->name." wallet.";
             $response = app(SmsService::class)->sendSms($merchant->user->mobile, $msg); 
 
