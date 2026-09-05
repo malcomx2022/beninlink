@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 
 import { ApiError } from '../../src/api/client';
@@ -29,7 +29,15 @@ import { t } from '../../src/i18n';
  */
 export default function WalletScreen() {
   const { user, refresh } = useSession();
-  const [amount, setAmount] = useState('');
+  /**
+   * Montant pré-rempli quand on arrive ici depuis un refus pour solde
+   * insuffisant : l'écran de création passe exactement ce qui manquait. Le
+   * marchand reste libre de le modifier.
+   */
+  const { amount: montantDemande } = useLocalSearchParams<{ amount?: string }>();
+  const [amount, setAmount] = useState(
+    typeof montantDemande === 'string' && /^\d+$/.test(montantDemande) ? montantDemande : '',
+  );
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);

@@ -192,4 +192,8 @@ return array (
     // transition appartient au back-office ou au livreur, qui ecrivent aussi
     // l'evenement et les ecritures comptables.
     'status_not_allowed' => "Ce changement de statut ne releve pas du marchand. Contactez l'administration.",
+    // Controle de solde a la creation : la regle existait deja dans deux ecrans
+    // du socle, elle vaut desormais sur tous les chemins de creation.
+    'wallet_insufficient' => "Solde insuffisant : il manque :missing pour creer ce colis. Rechargez votre portefeuille.",
+    'merchant_wallet_insufficient' => "Le solde de ce marchand est insuffisant : il manque :missing.",
 );

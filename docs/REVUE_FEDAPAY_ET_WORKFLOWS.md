@@ -598,13 +598,113 @@ confrère.
 
 `RemainingDecisionsTest` (6 tests) couvre les trois décisions.
 
-## 14. Ce qui reste, et n'est pas un constat
+## 14. Le contrôle de solde à la création — tranché le 2026-09-05 ✅
 
-- **Aucun contrôle de solde** à la création d'un colis : un marchand au
-  portefeuille peut passer en négatif sans limite. C'est peut-être voulu — un
-  transporteur peut accorder du crédit — mais cela mérite une décision explicite,
-  pas un silence.
+### La question, et la réponse qu'elle avait déjà
+
+Constat de départ : un marchand au portefeuille pouvait passer en négatif sans
+limite. J'avais laissé la décision ouverte — un transporteur peut vouloir faire
+crédit.
+
+En allant lire, la réponse était déjà dans le socle, écrite deux fois :
+`Backend\ParcelController::store()` et
+`MerchantPanel\MerchantParcelController::store()` refusent la création quand
+`total_delivery_amount` dépasse `wallet_balance`. Ce n'était donc pas une
+question de produit ouverte, mais une **règle appliquée à deux écrans sur cinq**.
+
+Les trois chemins qui l'ignoraient :
+
+| Chemin | Contrôle | Débit |
+|---|---|---|
+| `Backend\ParcelController::store` (back-office) | ✅ | ✅ |
+| `MerchantPanel\MerchantParcelController::store` (panneau) | ✅ | ✅ |
+| `Api\V10\ParcelController::store` (**app mobile**) | ❌ | ✅ |
+| `Backend\ParcelController::duplicateStore` | ❌ | ✅ |
+| `MerchantPanel\MerchantParcelController::duplicateStore` | ❌ | ✅ |
+
+### La décision
+
+Pas de découvert, sur tous les chemins. Le détail et les arbitrages
+(comparaison hors TVA, frontière stricte, pas de plafond de découvert
+paramétrable) sont consignés en **D6** de `docs/DECISIONS_METIER.md`.
+
+### Le correctif
+
+Le débit était **recopié quatre fois**, chaque copie enveloppée d'un
+`try { … } catch (\Throwable $th) { }` vide — quatre occasions de diverger, et
+elles avaient déjà divergé. Les quatre copies deviennent un point unique,
+`App\Services\Parcel\WalletDebit`, qui :
+
+1. charge le marchand **du colis** (pas de la requête : c'était le bug W5) ;
+2. **verrouille sa ligne** (`lockForUpdate`) — sans quoi deux créations
+   simultanées lisent le même solde, le trouvent toutes deux suffisant, et
+   débitent deux fois ; le contrôle ne tiendrait qu'à un colis à la fois ;
+3. refuse par `InsufficientWalletBalance` si les frais dépassent le solde ;
+4. débite et écrit l'écriture de portefeuille.
+
+Le refus n'est pas un `false` : un solde insuffisant n'est pas une panne, le
+marchand peut agir. Il traverse les repositories et chaque appelant répond dans
+sa langue — 422 avec `required` / `wallet_balance` / `missing` en entiers XOF
+côté API, message et retour vers la recharge côté web. Côté `mobile/`, l'écran
+de création propose désormais « Recharger `<montant>` » et pré-remplit l'écran
+de recharge avec ce qui manquait.
+
+Les deux duplications deviennent au passage **transactionnelles**, comme la
+création l'était depuis la décision D-B.
+
+### Deux défauts découverts en descendant
+
+Aucun des deux n'était visible depuis le constat de départ.
+
+- **La duplication depuis le panneau marchand ne fonctionnait pas.** Elle écrit
+  un `ParcelLogs` avec `parcel_bank`, colonne que `parcel_logs` n'a **jamais**
+  eue (migration de 2022). L'insertion échouait donc à tous les coups : le colis
+  était créé, son journal raté, et le `catch` rendait « une erreur est survenue »
+  en laissant le colis derrière. Le drapeau est déjà porté par
+  `parcels.parcel_bank` ; l'affectation est retirée.
+- **Le même journal lisait `$request->merchant_id`**, alors que le colis est
+  rattaché à `$request->merchant_id ?? $merchant_id`. Le formulaire web poste
+  bien ce champ, donc rien ne cassait en production, mais c'est la mécanique
+  exacte de W5, à un appelant près. Le journal suit maintenant le colis.
+
+### Ce que ça couvre
+
+`tests/Feature/ParcelWalletBalanceGuardTest` — 7 tests : refus à un franc près
+sans rien écrire, contenu du refus, frontière du solde exact, marchand hors
+portefeuille jamais bloqué, solde qui ne descend jamais sous zéro quel que soit
+le nombre de tentatives, duplication refusée sans rien laisser derrière,
+duplication acceptée avec son journal.
+
+## 15. Un cinquième chemin de création, qui ne débite rien du tout
+
+Relevé en fermant §14, **non corrigé** : il appelle une décision, pas un
+correctif d'office.
+
+`App\Imports\ParcelImport` — l'import Excel en masse, disponible côté
+back-office **et** côté panneau marchand — crée les colis directement, sans
+passer par aucun repository. Il ne touche **jamais** le portefeuille : ni
+contrôle, ni débit. Pour un marchand au portefeuille, le débit à la création
+*est* la facturation ; un import de deux cents colis n'est donc facturé nulle
+part.
+
+C'est la même famille que W5, mais l'écart est plus grand : ailleurs il fallait
+réparer un débit cassé, ici il faudrait en **introduire un**. Ça change ce que
+paient les marchands qui utilisent déjà l'import, et ça ne se décide pas dans un
+correctif de revue. Trois questions, dans cet ordre :
+
+1. L'import doit-il débiter comme la création unitaire, ou est-il volontairement
+   hors portefeuille (réservé aux gros comptes réglant au relevé) ?
+2. S'il débite : un solde insuffisant refuse-t-il **tout** le fichier, ou
+   n'importe-t-il que les lignes couvertes ?
+3. Que fait-on des imports déjà passés en production, s'il y en a ?
+
+Le correctif serait court une fois la réponse connue — `WalletDebit::apply()`
+existe et s'applique à un colis — mais il n'a de sens qu'après.
+
+## 16. Ce qui reste, et n'est pas un constat
+
 - Les tests absents des étapes comptables, par ordre d'exposition financière :
   `parcelDelivered`, la livraison partielle, les retraits, les reversements.
-7. Les tests absents des étapes comptables, par ordre d'exposition financière :
-   `parcelDelivered`, la livraison partielle, les retraits, les reversements.
+- Le correctif du débit (W5) **ne rattrape pas le passé** : si la production
+  tourne déjà, des colis créés depuis l'app peuvent n'avoir jamais été débités.
+  Un rapprochement `parcels` / `wallets` reste à faire, hors code.

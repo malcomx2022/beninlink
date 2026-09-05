@@ -9,6 +9,7 @@ use App\Enums\DeliveryTime;
 use App\Enums\SmsSendStatus;
 use App\Enums\StatementType;
 use App\Enums\Status;
+use App\Exceptions\InsufficientWalletBalance;
 use App\Http\Resources\MerchantParcelExportResource;
 use App\Http\Services\PushNotificationService;
 use App\Http\Services\SmsService;
@@ -475,27 +476,12 @@ class ParcelRepository implements ParcelInterface {
             $parcel->save();
 
 
-            try {     
-                //wallet 
-                if ($parcel) :
-                    $w_merchant                 =  Merchant::find($request->merchant_id);
-                    if($w_merchant->wallet_use_activation == Status::ACTIVE):
-                        $m_user_id                  = $w_merchant->user_id;
-                        $w_merchant->wallet_balance = $w_merchant->wallet_balance - $parcel->total_delivery_amount;
-                        $w_merchant->save();
-        
-                        $walletExpense                 = new Request();
-                        $walletExpense['user_id']      = $m_user_id;
-                        $walletExpense['merchant_id']  = $request->merchant_id;
-                        $walletExpense['tracking_id']  = $parcel->tracking_id;
-                        $walletExpense['amount']       = $parcel->total_delivery_amount;
-                        $this->walletRepo->expense($walletExpense);
-                    endif;
-                endif;
-                //end wallet
-            } catch (\Throwable $th) {
-                
-            }
+            // W5 / controle de solde — un seul point de debit, partage par les
+            // quatre chemins de creation : voir Services\Parcel\WalletDebit.
+            // Il verrouille la ligne marchand, refuse si le solde ne couvre pas
+            // les frais, puis debite. Plus de `catch` vide : un echec doit
+            // annuler la creation, pas la laisser facturee a personne.
+            app(\App\Services\Parcel\WalletDebit::class)->apply($parcel);
   
             // Parcel logs
             $log                         = new ParcelLogs;
@@ -535,6 +521,12 @@ class ParcelRepository implements ParcelInterface {
 
             }
             return true;
+        }
+        // Le refus de solde traverse : le controleur le transforme en message
+        // clair, la ou un `false` ne disait que « une erreur est survenue ».
+        catch (InsufficientWalletBalance $e) {
+            DB::rollBack();
+            throw $e;
         }
         catch (\Exception $e) { 
             DB::rollBack();
@@ -658,27 +650,12 @@ class ParcelRepository implements ParcelInterface {
             $parcel->tracking_id               = $this->RandomTrackingID();  
             $parcel->save();
 
-            try {      
-                //wallet
-                if ($parcel) :
-                    $w_merchant                 =  Merchant::find($request->merchant_id);
-                    if($w_merchant->wallet_use_activation == Status::ACTIVE):
-                        $m_user_id                  = $w_merchant->user_id;
-                        $w_merchant->wallet_balance = $w_merchant->wallet_balance - $parcel->total_delivery_amount;
-                        $w_merchant->save();
-    
-                        $walletExpense                 = new Request();
-                        $walletExpense['user_id']      = $m_user_id;
-                        $walletExpense['merchant_id']  = $request->merchant_id;
-                        $walletExpense['tracking_id']  = $parcel->tracking_id;
-                        $walletExpense['amount']       = $parcel->total_delivery_amount;
-                        $this->walletRepo->expense($walletExpense);
-                    endif;
-                endif;
-                //end wallet
-            } catch (\Throwable $th) {
-                 
-            }
+            // W5 / controle de solde — un seul point de debit, partage par les
+            // quatre chemins de creation : voir Services\Parcel\WalletDebit.
+            // Il verrouille la ligne marchand, refuse si le solde ne couvre pas
+            // les frais, puis debite. Plus de `catch` vide : un echec doit
+            // annuler la creation, pas la laisser facturee a personne.
+            app(\App\Services\Parcel\WalletDebit::class)->apply($parcel);
 
 
             // Parcel logs
@@ -702,6 +679,10 @@ class ParcelRepository implements ParcelInterface {
             $log->save();
             DB::commit();
             return true;
+        }
+        catch (InsufficientWalletBalance $e) {
+            DB::rollBack();
+            throw $e;
         }
         catch (\Exception $e) {
             DB::rollBack();

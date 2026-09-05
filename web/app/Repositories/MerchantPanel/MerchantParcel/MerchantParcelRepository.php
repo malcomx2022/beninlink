@@ -6,6 +6,7 @@ use App\Enums\ParcelStatus;
 use App\Enums\DeliveryType;
 use App\Enums\DeliveryTime;
 use App\Enums\Status;
+use App\Exceptions\InsufficientWalletBalance;
 use App\Http\Resources\MerchantParcelExportResource;
 use App\Http\Services\PushNotificationService;
 use App\Models\Backend\Deliverycategory;
@@ -339,38 +340,21 @@ class MerchantParcelRepository implements MerchantParcelInterface {
             
             $parcel->save();
 
-            // Plus de `try/catch` autour du débit : un échec doit remonter et
-            // annuler la création, au lieu d'être avalé ou seulement journalisé.
-            //wallet
-            if ($parcel) :
-                // ⚠️ Le socle lisait `$request->merchant_id`, alors que le
-                // colis lui-meme est rattache a `$request->merchant_id ??
-                // $merchant_id`. Cree depuis l'app, la requete ne porte pas
-                // ce champ — le marchand vient du compte authentifie — donc
-                // `Merchant::find(null)` rendait `null`, la condition
-                // n'etait jamais vraie (lire une propriete sur `null` est un
-                // avertissement, pas une exception), et **le portefeuille
-                // n'etait jamais debite** : les colis crees depuis l'app
-                // n'etaient pas factures. On charge le marchand du colis.
-                $w_merchant                 =  Merchant::find($parcel->merchant_id);
-                if($w_merchant && $w_merchant->wallet_use_activation == Status::ACTIVE):
-                    $m_user_id                  = $w_merchant->user_id;
-                    $w_merchant->wallet_balance = $w_merchant->wallet_balance - $parcel->total_delivery_amount;
-                    $w_merchant->save();
-
-                    $walletExpense                 = new Request();
-                    $walletExpense['user_id']      = $m_user_id;
-                    $walletExpense['merchant_id']  = $parcel->merchant_id;
-                    $walletExpense['tracking_id']  = $parcel->tracking_id;
-                    $walletExpense['amount']       = $parcel->total_delivery_amount;
-                    $this->walletRepo->expense($walletExpense);
-                endif;
-            endif;
-            //end wallet
+            // W5 / controle de solde — un seul point de debit, partage par les
+            // quatre chemins de creation : voir Services\Parcel\WalletDebit.
+            // Il verrouille la ligne marchand, refuse si le solde ne couvre pas
+            // les frais, puis debite. Plus de `catch` vide : un echec doit
+            // annuler la creation, pas la laisser facturee a personne.
+            app(\App\Services\Parcel\WalletDebit::class)->apply($parcel);
 
             return true;
 
             });
+        }
+        // Un solde insuffisant n'est pas une panne : il remonte tel quel jusqu'a
+        // l'appelant, qui sait le dire au marchand — et lui dire ce qui manque.
+        catch (InsufficientWalletBalance $e) {
+            throw $e;
         }
         catch (\Throwable $e) {
             // La transaction est annulée : aucun colis n'a été créé, aucun solde
@@ -388,6 +372,12 @@ class MerchantParcelRepository implements MerchantParcelInterface {
 
     public function duplicateStore($request,$merchant_id) {
         try {
+            // Dupliquer un colis, c'est en creer un : meme atomicite que
+            // `store()`. Le socle ecrivait le colis, puis tentait le debit dans
+            // un `catch` vide — un echec laissait un colis a facturer a
+            // personne.
+            return DB::transaction(function () use ($request, $merchant_id) {
+
             $duplicate_parcel = $this->get($request->parcel_id);
 
             $parcel                         = new Parcel();
@@ -502,32 +492,23 @@ class MerchantParcelRepository implements MerchantParcelInterface {
             
             $parcel->save();
 
-            try { 
-                //wallet
-                if ($parcel) :
-                    $w_merchant                 =  Merchant::find($request->merchant_id);
-                    if($w_merchant->wallet_use_activation == Status::ACTIVE):
-                        $m_user_id                  = $w_merchant->user_id;
-                        $w_merchant->wallet_balance = $w_merchant->wallet_balance - $parcel->total_delivery_amount;
-                        $w_merchant->save();
-    
-                        $walletExpense                 = new Request();
-                        $walletExpense['user_id']      = $m_user_id;
-                        $walletExpense['merchant_id']  = $request->merchant_id;
-                        $walletExpense['tracking_id']  = $parcel->tracking_id;
-                        $walletExpense['amount']       = $parcel->total_delivery_amount;
-                        $this->walletRepo->expense($walletExpense);
-                    endif;
-                endif;
-                //end wallet
-            } catch (\Throwable $th) {
-                 
-            }
+            // W5 / controle de solde — un seul point de debit, partage par les
+            // quatre chemins de creation : voir Services\Parcel\WalletDebit.
+            // Il verrouille la ligne marchand, refuse si le solde ne couvre pas
+            // les frais, puis debite. Plus de `catch` vide : un echec doit
+            // annuler la creation, pas la laisser facturee a personne.
+            app(\App\Services\Parcel\WalletDebit::class)->apply($parcel);
 
             // Parcel logs
+            // Meme correction que pour le debit : le marchand vient du COLIS.
+            // Le formulaire du panneau poste bien `merchant_id`, mais le colis
+            // lui-meme est rattache a `$request->merchant_id ?? $merchant_id` —
+            // tout appelant qui ne poste pas ce champ tombait ici sur
+            // `Merchant::find(null)`, puis sur une lecture de propriete de
+            // `null`. Le journal suit desormais le colis, pas la requete.
             $log                         = new ParcelLogs;
-            $log->merchant_id            = $request->merchant_id;
-            $merchant = Merchant::find($request->merchant_id);
+            $log->merchant_id            = $parcel->merchant_id;
+            $merchant = Merchant::find($parcel->merchant_id);
             $log->hub_id                  = $merchant->user->hub_id;
             $log->parcel_id              = $parcel->id;
             $log->pickup_address         = $request->pickup_address;
@@ -543,12 +524,27 @@ class MerchantParcelRepository implements MerchantParcelInterface {
             $log->total_delivery_amount  = $charges['total_delivery_amount'];
             $log->current_payable        = $charges['current_payable'];
             $log->note                   = $request->note;
-            $log->parcel_bank            = $request->parcel_bank;
+            // `parcel_logs` n'a pas de colonne `parcel_bank` — elle n'a jamais
+            // existe (voir la migration de 2022). L'insertion echouait donc a
+            // TOUS les coups : dupliquer un colis depuis le panneau marchand
+            // creait le colis, ratait son journal, et rendait « une erreur est
+            // survenue » en laissant le colis derriere. Le drapeau est deja
+            // porte par `parcels.parcel_bank` ; le journal n'en a pas besoin.
             $log->save();
 
             return true;
+
+            });
         }
-        catch (\Exception $e) {
+        catch (InsufficientWalletBalance $e) {
+            throw $e;
+        }
+        catch (\Throwable $e) {
+            Log::error('Duplication de colis annulee', [
+                'merchant_id' => $request->merchant_id ?? $merchant_id,
+                'message'     => $e->getMessage(),
+            ]);
+
             return false;
         }
     }
