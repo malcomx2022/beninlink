@@ -1,39 +1,26 @@
-// Give the service worker access to Firebase Messaging.
-// Note that you can only use Firebase Messaging here. Other Firebase libraries
-// are not available in the service worker.importScripts('https://www.gstatic.com/firebasejs/7.23.0/firebase-app.js');
-importScripts('https://www.gstatic.com/firebasejs/8.3.2/firebase-app.js');
-importScripts('https://www.gstatic.com/firebasejs/8.3.2/firebase-messaging.js');
 /*
-Initialize the Firebase app in the service worker by passing in the messagingSenderId.
-*/
-firebase.initializeApp({
-    apiKey: "AIzaSyDCthiio0WgX1F2CiVlw1Z-kWOKYYi6vQI",
-    authDomain: "we-courier-81101.firebaseapp.com",
-    projectId: "we-courier-81101",
-    storageBucket: "we-courier-81101.appspot.com",
-    messagingSenderId: "151878495365",
-    appId: "1:151878495365:web:133d9bace19a4846260dec",
-    measurementId: "G-V1K1HVXD5G"
+ * S22 / D12 — service worker de retrait.
+ *
+ * Ce fichier a porté le push navigateur du back-office : il inscrivait le
+ * navigateur de chaque agent au projet Firebase de l'éditeur et attendait des
+ * messages d'une API arrêtée par Google en juin 2024.
+ *
+ * On ne peut pas se contenter de retirer le code de la page : un service
+ * worker déjà installé **survit** au déploiement et resterait enregistré dans
+ * les navigateurs des agents, avec les clés d'un projet tiers. Le fichier
+ * garde donc son chemin — c'est celui que ces navigateurs interrogent — et ne
+ * fait plus qu'une chose : se désinscrire, puis recharger les onglets ouverts
+ * pour qu'ils repartent sans lui.
+ *
+ * À supprimer une fois le parc renouvelé (quelques semaines suffisent).
+ */
+self.addEventListener('install', () => self.skipWaiting());
 
-});
-
-// Retrieve an instance of Firebase Messaging so that it can handle background
-// messages.
-const messaging = firebase.messaging();
-messaging.setBackgroundMessageHandler(function(payload) {
-    console.log(
-        "[firebase-messaging-sw.js] Received background message ",
-        payload,
-    );
-    /* Customize notification here */
-    const notificationTitle = "Background Message Title";
-    const notificationOptions = {
-        body: "Background Message body.",
-        icon: "/itwonders-web-logo.png",
-    };
-
-    return self.registration.showNotification(
-        notificationTitle,
-        notificationOptions,
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        self.registration
+            .unregister()
+            .then(() => self.clients.matchAll({ type: 'window' }))
+            .then((clients) => clients.forEach((client) => client.navigate(client.url)))
     );
 });

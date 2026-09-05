@@ -6,6 +6,7 @@ use App\Models\Backend\Upload;
 use App\Models\User;
 use App\Repositories\PushNotification\PushNotificationInterface;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class PushNotificationRepository implements PushNotificationInterface{
 
@@ -61,12 +62,19 @@ class PushNotificationRepository implements PushNotificationInterface{
                 }
 
             } catch (\Exception $exception) {
-                dd($exception);
+                // Le message EST enregistré : son acheminement est un confort,
+                // il ne doit pas défaire l'écriture — ni, comme le faisait
+                // `dd()`, vider la pile d'exécution dans le navigateur de
+                // l'administrateur au milieu d'un formulaire.
+                Log::warning('Message administrateur non acheminé', [
+                    'push_notification_id' => $pushNotification->id,
+                    'message' => $exception->getMessage(),
+                ]);
             }
             return true;
         }
         catch (\Exception $e) {
-            dd($e);
+            Log::error('Message administrateur non enregistré', ['message' => $e->getMessage()]);
             return false;
         }
     }
@@ -75,7 +83,12 @@ class PushNotificationRepository implements PushNotificationInterface{
     {
         try {
 
-            $pushNotification                   = PushNotification::find($id);
+            // S7 — sans le scope, un administrateur modifiait le message d'un
+            // autre transporteur (la suppression, elle, vérifiait déjà la société).
+            $pushNotification                   = PushNotification::companywise()->find($id);
+            if(blank($pushNotification)){
+                return false;
+            }
             $pushNotification->title            = strip_tags($request->title);
             $pushNotification->description      = strip_tags($request->description);
             $pushNotification->user_id          = $request->user_id;

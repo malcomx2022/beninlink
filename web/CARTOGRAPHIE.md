@@ -1480,7 +1480,8 @@ Couverts à ce jour : signature du webhook FedaPay, **S14** (facture d'un autre 
    2026-09-05** (décision **D11**, revue §21). L'API d'envoi du socle a bien été
    arrêtée par Google le 20 juin 2024 ; le transport passe désormais par le service
    de push d'Expo (`config('push.driver')`), sans compte de service par société.
-   Reste hors périmètre : le push **navigateur** du back-office (`users.web_token`),
-   toujours branché sur l'API arrêtée.
+   Le push **navigateur** du back-office a été **retiré** le même jour (décision
+   **D12**, revue §22) : il inscrivait les agents au projet Firebase de l'éditeur
+   et réclamait une permission pour un canal qui ne livrait rien.
 7. **Mettre les envois en file avant d'ajouter une passerelle SMS locale** : aujourd'hui
    tout part en `sync`, dans la requête HTTP.

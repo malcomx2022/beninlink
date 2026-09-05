@@ -1088,7 +1088,53 @@ que le fil**, absence d'appareil, service en panne, appareil mort oublié,
 découpage en lots, un seul push par événement pour le marchand, et une adresse
 partagée par deux sociétés qui ne pousse qu'au bon compte.
 
-## 22. Ce qui reste, et n'est pas un constat
+## 22. Le push navigateur du back-office — 2026-09-05 ✅
+
+§21 laissait ce point ouvert. En l'ouvrant, il s'est avéré plus lourd qu'un
+simple canal éteint : le back-office inscrivait le navigateur de chaque agent
+au **projet Firebase de l'éditeur** (`we-courier-81101`, clés en clair dans la
+page et dans `public/firebase-messaging-sw.js`), chargeait le SDK Firebase
+depuis un tiers sur **chaque page**, et réclamait la permission de notifier à
+chaque chargement — pour envoyer ensuite par l'API FCM *legacy*, arrêtée en
+juin 2024.
+
+### Décision : retiré (D12)
+
+Le rebrancher demandait un projet appartenant au transporteur (FCM v1) ou du
+Web Push standard (VAPID, donc une dépendance de chiffrement), pour un canal
+dont le seul contenu réel est le message qu'un administrateur écrit à ses
+collègues — déjà enregistré et visible dans le back-office. La branche
+« nouveau colis » de ce transport n'était appelée de nulle part.
+
+### Ce qui a été fait
+
+| Élément | Où |
+|---|---|
+| Page | bloc Firebase et SDK retirés de `backend/partials/footer.blade.php` et de `installer/index.blade.php` |
+| Service worker | `public/firebase-messaging-sw.js` **garde son chemin** et ne fait plus que se désinscrire : un service worker déjà installé survit au déploiement, retirer le code de la page ne l'aurait pas retiré des navigateurs |
+| Route | `notification-store.token` répond 410 sans rien écrire — un navigateur portant l'ancien worker la rappellera |
+| Transport | `sendWebNotification()` garde sa signature et ses trois appels ; elle n'ouvre plus aucune connexion |
+| Données | migration `2026_09_05_230000` : `users.web_token` purgé, colonne conservée |
+
+### Deux défauts trouvés dans le même fichier
+
+- `PushNotificationRepository::store()` faisait **`dd($exception)`** : un échec
+  d'acheminement vidait la pile dans le navigateur de l'administrateur et
+  interrompait la requête, alors que le message était déjà enregistré.
+- `update()` lisait par `find($id)` **sans scope** : un administrateur
+  modifiait le message d'un autre transporteur. La suppression, elle,
+  vérifiait déjà la société.
+
+### Ce que ça couvre
+
+`tests/Feature/BrowserPushRetiredTest` — 9 tests : aucune page ne charge plus
+Firebase et les vues compilent, le service worker se désinscrit sans porter de
+clés, la route répond sans écrire, le transport sortant a disparu mais la
+méthode répond toujours, la migration purge en gardant la colonne, le message
+administrateur reste enregistré **et** atteint le fil du marchand, plus les
+deux défauts ci-dessus.
+
+## 23. Ce qui reste, et n'est pas un constat
 
 - Le correctif du débit (W5) **ne rattrape pas le passé** : si la production
   tourne déjà, des colis créés depuis l'app peuvent n'avoir jamais été débités.
@@ -1099,6 +1145,6 @@ partagée par deux sociétés qui ne pousse qu'au bon compte.
   2026-09-05** (§20). Elles ne déplaçaient pas d'argent — elles décidaient mal
   qui en toucherait.
 - ~~Le **push** hors service~~ ✅ **rebranché le 2026-09-05** (§21, décision
-  **D11**). Reste, et n'a pas bougé : le push **navigateur** du back-office
-  (`users.web_token`), toujours sur l'API arrêtée, et les envois **en file**
+  **D11**), et le **push navigateur** du back-office ✅ **retiré le même jour**
+  (§22, décision **D12**). Reste, et n'a pas bougé : les envois **en file**
   (tout part encore dans la requête HTTP — constat 7 de la cartographie).
