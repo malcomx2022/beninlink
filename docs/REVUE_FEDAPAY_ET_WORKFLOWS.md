@@ -538,12 +538,73 @@ Cet ordre suit le risque financier, pas la difficulté.
    portefeuille sont couvertes (7 tests), la fausse déclaration de couverture est
    remplacée par une preuve réelle, et le filet vérifie maintenant que chaque
    test déclaré peut réellement atteindre une route.
-8. **À décider** : reprendre ou non les lignes de `settings` écrites avec un
-   locataire nul avant le correctif du `fillable`.
-9. **À décider** : rendre le débit du portefeuille atomique avec la création du
-   colis (W5), ce qui rendrait un colis impossible à créer si le débit échoue.
-10. **À décider** : les deux voisins non scopés par société repérés en chemin,
-    `ParcelRepository::statusUpdate()` côté administration et l'approbation de
-    portefeuille adressable par identifiant.
+## 13. Les trois décisions, tranchées le 2026-09-05
+
+### D-A — les lignes de `settings` sans société : **on ne rattache pas**
+
+Deux écritures perdaient `company_id`, et elles sont aujourd'hui
+**indiscernables** : `SettingSeeder`, qui visait la société 1, et
+`PayoutSetupRepository::update()`, qui visait la société **connectée** — donc
+n'importe quel locataire, et plusieurs d'entre eux, puisque la recherche
+préalable ne trouvait jamais rien et créait une ligne de plus à chaque
+enregistrement.
+
+Les attribuer toutes à la société 1 remettrait donc la clé secrète Stripe ou
+PayPal d'un locataire entre les mains d'un autre : exactement la fuite
+inter-locataires que le constat S6 avait fermée. Et cela rallumerait des
+`*_status` sans qu'on l'ait demandé.
+
+**Décision : constater, jamais deviner.** `php artisan beninlink:reglages-orphelins`
+liste ces lignes par clé, sans afficher aucun secret, explique pourquoi elles ne
+sont pas rattachables, et ne supprime qu'avec `--purge` explicite — refusé en
+production sans `--force`. La remise en état passe par l'écran de réglages,
+société par société : la seule voie qui attribue chaque clé à son propriétaire
+réel.
+
+### D-B — le débit du portefeuille : **atomique avec la création**
+
+Le débit vivait dans un `try/catch` à part. Un échec laissait le colis créé et le
+marchand non facturé : le transporteur livrait gratuitement, sans que personne ne
+le sache. La trace ajoutée en fermant W5 rendait l'écart visible, pas moins réel.
+
+**Décision : lier les deux écritures.** Un colis qu'on ne sait pas facturer ne
+doit pas partir. Le prix est une disponibilité — si le portefeuille est
+indisponible, le marchand réessaie —, et il est assumé.
+
+L'annulation est sûre, ce qui rendait cette décision possible : tout ce que la
+création déclenche s'écrit en base, l'alerte douanière comme la notification du
+fil marchand, qui n'a que le canal `database`. Aucun SMS ni push n'est émis à la
+création, donc un `rollback` ne laisse rien derrière lui — vérifié avant de
+trancher.
+
+`ParcelWalletDebitAtomicityTest` : le chemin nominal débite, un échec annule tout,
+et rien de ce que la création déclenche ne survit à l'annulation.
+
+### D-C — les deux voisins non scopés : **fermés**
+
+`ParcelRepository::statusUpdate()` faisait un `Parcel::find($id)` nu. Un
+administrateur de la société A pouvait, en forgeant l'identifiant, changer le
+statut d'un colis de la société B, et par là le faire entrer ou non dans un
+relevé de règlement qui ne le regarde pas. La permission protégeait l'accès à la
+route, jamais la portée. La lecture est désormais `companywise()`, et l'écran
+n'annonce plus un succès quand rien n'a été écrit.
+
+Les trois actions d'administration sur un portefeuille — approuver, rejeter,
+supprimer — adressaient la ligne par identifiant sans scope. Ce n'était pas un
+oubli côté service : le webhook FedaPay les appelle sans session, la société
+venant de la transaction. Le garde est donc posé **au contrôleur**, là où une
+session existe. Sans lui, un administrateur pouvait déplacer de l'argent chez un
+confrère.
+
+`RemainingDecisionsTest` (6 tests) couvre les trois décisions.
+
+## 14. Ce qui reste, et n'est pas un constat
+
+- **Aucun contrôle de solde** à la création d'un colis : un marchand au
+  portefeuille peut passer en négatif sans limite. C'est peut-être voulu — un
+  transporteur peut accorder du crédit — mais cela mérite une décision explicite,
+  pas un silence.
+- Les tests absents des étapes comptables, par ordre d'exposition financière :
+  `parcelDelivered`, la livraison partielle, les retraits, les reversements.
 7. Les tests absents des étapes comptables, par ordre d'exposition financière :
    `parcelDelivered`, la livraison partielle, les retraits, les reversements.
