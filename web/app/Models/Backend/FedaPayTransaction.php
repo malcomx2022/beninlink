@@ -55,4 +55,18 @@ class FedaPayTransaction extends Model
     {
         return $this->status === self::STATUS_APPROVED;
     }
+
+    /**
+     * Societe dont le compte FedaPay a servi a ouvrir cette transaction, et
+     * donc dont le secret de webhook signe l'evenement.
+     *
+     * Ce n'est PAS toujours `company_id` : un abonnement SaaS est encaisse par
+     * la **plateforme** (`FedaPayController::subscribe()` passe explicitement
+     * `company_id => null`), meme si la ligne porte la societe qui s'abonne.
+     * Une recharge de portefeuille, elle, est encaissee par la societe.
+     */
+    public function gatewayCompanyId(): ?int
+    {
+        return $this->purpose === self::PURPOSE_SUBSCRIPTION ? null : $this->company_id;
+    }
 }

@@ -77,7 +77,7 @@ class FedaPayController extends Controller
         }
 
         // Clés plateforme : `company_id` volontairement absent.
-        if (!$this->gateway->isConfigured()) {
+        if (!$this->gateway->isEnabled()) {
             Toastr::error(__('fedapay.not_configured'), __('message.error'));
 
             return redirect()->route('subscription.index');
@@ -199,7 +199,8 @@ class FedaPayController extends Controller
         $merchant = Auth::user()->merchant;
         $companyId = $merchant->company_id;
 
-        if (!$this->gateway->isConfigured($companyId)) {
+        // Coupee depuis Reglages -> Pay-out, ou sans cles : on n'ouvre rien.
+        if (!$this->gateway->isEnabled($companyId)) {
             return ['success' => false, 'message' => __('fedapay.not_configured'), 'http' => 503];
         }
 
@@ -270,24 +271,35 @@ class FedaPayController extends Controller
         $payload = $request->getContent();
         $signature = $request->header('X-FEDAPAY-SIGNATURE');
 
-        if (!$this->gateway->verifySignature($payload, $signature)) {
+        // ⚠️ Lecture SANS CONFIANCE, et sans le moindre effet de bord : elle ne
+        // sert qu'à savoir **avec quel secret vérifier**. Depuis F3, un locataire
+        // peut encaisser sur son propre compte FedaPay ; ses webhooks sont alors
+        // signés par le secret de CE compte, pas par celui de la plateforme.
+        // Désigner une transaction ne donne aucun pouvoir : il faut toujours
+        // produire un HMAC valide avec le secret du compte concerné.
+        $event = json_decode($payload, true) ?: [];
+        $entity = $event['entity'] ?? $event['data']['object'] ?? [];
+        $providerId = (string) ($entity['id'] ?? '');
+
+        // ⚠️ Recherche SANS `companywise()` : le webhook n'a pas de session, et
+        // `settings()` retomberait sur la société 1 (bloc A). Le locataire vient
+        // de la transaction elle-même.
+        $record = $providerId === ''
+            ? null
+            : FedaPayTransaction::where('provider_transaction_id', $providerId)->first();
+
+        if (!$this->gateway->verifySignature($payload, $signature, $record?->gatewayCompanyId())) {
             // Ni détail ni indice : la réponse ne doit pas aider à forger une signature.
             return response()->json(['message' => 'invalid signature'], 400);
         }
 
-        $event = json_decode($payload, true) ?: [];
+        // À partir d'ici seulement, l'événement est authentique.
         $name = $event['name'] ?? $event['event'] ?? null;
-        $entity = $event['entity'] ?? $event['data']['object'] ?? [];
-        $providerId = (string) ($entity['id'] ?? '');
 
         if ($providerId === '') {
             return response()->json(['message' => 'ignored'], 200);
         }
 
-        // ⚠️ Recherche SANS `companywise()` : le webhook n'a pas de session, et
-        // `settings()` retomberait sur la société 1 (bloc A). Le locataire vient
-        // de la transaction elle-même.
-        $record = FedaPayTransaction::where('provider_transaction_id', $providerId)->first();
         if (blank($record)) {
             Log::warning('FedaPay : webhook pour une transaction inconnue', ['id' => $providerId]);
 

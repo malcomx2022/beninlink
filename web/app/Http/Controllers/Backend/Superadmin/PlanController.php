@@ -82,7 +82,9 @@ class PlanController extends Controller
         $allmodules  = $this->roleRepo->adminPermissionsModules();
         // Chantier 3 : le bouton Mobile Money n'apparaît que si les clés
         // FedaPay de la plateforme sont renseignées (.env).
-        $fedapayEnabled = app(\App\Services\Payments\FedaPayGateway::class)->isConfigured();
+        // L'abonnement SaaS est encaissé par la PLATEFORME, jamais par le
+        // locataire : on interroge le compte plateforme, pas le sien.
+        $fedapayEnabled = app(\App\Services\Payments\FedaPayGateway::class)->isEnabled();
         return view('backend.subscription.subscription',compact('plans','allmodules','fedapayEnabled'));
     }
  

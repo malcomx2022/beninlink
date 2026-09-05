@@ -22,8 +22,11 @@ class WalletController extends Controller
         return view('backend.merchant_panel.mywallet.index',compact('wallets','request','recharge_transactions'));
     }
     public function recharge(\App\Services\Payments\FedaPayGateway $fedapay){
-        // Bouton Mobile Money affiché seulement si la société a ses clés FedaPay.
-        $fedapayEnabled = $fedapay->isConfigured(settings()->id);
+        // Bouton Mobile Money affiché si la passerelle répond ET n'a pas été
+        // coupée depuis Réglages → Pay-out (F2). `isConfigured()` seul ne
+        // suffisait pas : il retombe sur la clé plateforme, donc le bouton
+        // apparaissait chez tout le monde sans qu'on puisse le retirer.
+        $fedapayEnabled = $fedapay->isEnabled(settings()->id);
         return view('backend.merchant_panel.mywallet.recharge', compact('fedapayEnabled'));
     }
 

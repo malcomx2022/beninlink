@@ -20,6 +20,86 @@
         </div>
     </div>
     <div class="row">
+        {{-- F2/F3 — FedaPay n'avait aucun ecran : ni cle, ni statut, ni meme
+             la possibilite de savoir si la passerelle tournait en bac a sable.
+             Cette carte est sa seule surface de reglage cote administration. --}}
+        @if(gatewayEnabled(\App\Enums\PayoutSetup::FEDAPAY))
+        <div class="col-lg-6  col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="h4 mb-3">{{ __('fedapay.title') }}</h4>
+
+                    <div class="alert alert-light border mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>{{ __('fedapay.environment') }}</span>
+                            <strong>
+                                @if($fedapayIsLive)
+                                    <span class="text-danger">{{ __('fedapay.environment_live') }}</span>
+                                @else
+                                    <span class="text-success">{{ __('fedapay.environment_sandbox') }}</span>
+                                @endif
+                            </strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>{{ __('fedapay.account') }}</span>
+                            <strong>
+                                @if($fedapayUsesOwnAccount)
+                                    {{ __('fedapay.account_own') }}
+                                @else
+                                    {{ __('fedapay.account_platform') }}
+                                @endif
+                            </strong>
+                        </div>
+                        <small class="d-block text-muted mt-2">{{ __('fedapay.account_hint') }}</small>
+                    </div>
+
+                    @if(hasPermission('payout_setup_settings_update'))
+                    <form action="{{route('payout.setup.settings.update',\App\Enums\PayoutSetup::FEDAPAY)}}"  method="POST" id="fedapayform">
+                        @method('PUT')
+                        @csrf
+                    @endif
+                        <div class="row">
+                            <div class="col-12 ">
+                                <div class="form-group">
+                                    <label for="fedapay_secret_key">{{ __('fedapay.secret_key') }}</label>
+                                    {{-- Jamais reaffiche : un champ vide veut dire « ne pas changer ». --}}
+                                    <input id="fedapay_secret_key" type="password" name="fedapay_secret_key" autocomplete="new-password" placeholder="{{ $fedapayUsesOwnAccount ? __('fedapay.secret_kept') : __('fedapay.secret_placeholder') }}" class="form-control @error('fedapay_secret_key') is-invalid @enderror" value="">
+                                    @error('fedapay_secret_key')
+                                        <small class="text-danger mt-2">{{ $message }}</small>
+                                    @enderror
+                                    <small class="text-muted">{{ __('fedapay.secret_key_hint') }}</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="fedapay_webhook_secret">{{ __('fedapay.webhook_secret') }}</label>
+                                    <input id="fedapay_webhook_secret" type="password" name="fedapay_webhook_secret" autocomplete="new-password" placeholder="{{ $fedapayHasWebhookSecret ? __('fedapay.secret_kept') : __('fedapay.secret_placeholder') }}" class="form-control @error('fedapay_webhook_secret') is-invalid @enderror" value="">
+                                    @error('fedapay_webhook_secret')
+                                        <small class="text-danger mt-2">{{ $message }}</small>
+                                    @enderror
+                                    <small class="text-muted">{{ __('fedapay.webhook_secret_hint', ['url' => route('fedapay.webhook')]) }}</small>
+                                </div>
+
+                                <div class="form-group d-flex">
+                                    <label for="fedapay-switch">{{ __('levels.status') }}</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input switch-id ml-3" name="fedapay_status" id="fedapay-switch" type="checkbox" role="switch" @if($fedapayStatusActive) checked @endif>
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ __('fedapay.status_hint') }}</small>
+                            </div>
+                        </div>
+                    @if(hasPermission('payout_setup_settings_update'))
+                            <div class="row pt-4">
+                                <div class="col-12 text-right">
+                                    <button type="submit" class="btn btn-space btn-primary">{{ __('levels.save_change') }}</button>
+                                </div>
+                            </div>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endif
         <div class="col-lg-6  col-md-6">
             <div class="card">
                 <div class="card-body">

@@ -305,9 +305,17 @@ n'a modifié aucun code. Deux constats y appellent une décision rapide :
   débité pour un colis créé depuis l'app (le code lisait `$request->merchant_id`,
   absent de cette requête), et le `catch` vide garantissait le silence.
 
-Restent ouverts l'absence de configuration FedaPay côté administration, la clé par
-locataire jamais écrite, le contrôle douanier absent du back-office et les filets
-de sécurité.
+- ~~**F2**~~ et ~~**F3**~~ ✅ **corrigés le 2026-09-05** : FedaPay a sa carte dans
+  Réglages → Pay-out (environnement, compte, clé, secret de webhook, interrupteur),
+  et un locataire peut enfin encaisser sur son propre compte. Le secret de
+  signature suit le compte qui encaisse, sans quoi brancher une clé par locataire
+  aurait fait rejeter tous ses webhooks. Découvert au passage : `Setting` ne
+  déclarait pas `company_id` assignable, donc tout réglage de passerelle
+  enregistré depuis l'administration partait avec un locataire nul.
+
+Restent ouverts le contrôle douanier absent du back-office, le SMS émis sous
+l'identité de la première société, les deux filets de sécurité, et la reprise
+éventuelle des lignes `settings` écrites avec un locataire nul.
 
 ## 11. Apps Flutter dépréciées (référence)
 

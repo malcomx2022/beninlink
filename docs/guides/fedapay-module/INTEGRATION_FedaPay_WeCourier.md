@@ -15,6 +15,7 @@
 | Journal des transactions | `web/database/migrations/2026_08_18_100000_create_fedapay_transactions_table.php` |
 | Modèle | `web/app/Models/Backend/FedaPayTransaction.php` |
 | Tests de signature | `web/tests/Feature/FedaPayWebhookTest.php` (8 tests) |
+| **Écran de réglages (F2/F3)** | Administration → **Réglages → Pay-out**, carte « Mobile Money (FedaPay) » |
 
 **Intégration en HTTP direct via Guzzle**, sans le SDK `fedapay/fedapay-php` :
 le socle n'a aucune abstraction de passerelle (chaque gateway a son contrôleur),
@@ -75,26 +76,47 @@ socle — pour ne pas dupliquer l'incrément du solde ni l'envoi du SMS.
 **Le montant crédité est celui attendu**, jamais celui annoncé par l'événement ;
 un écart est journalisé pour rapprochement manuel.
 
+## Deux comptes possibles, depuis F3
+
+| | Compte utilisé | Où se règlent les clés |
+|---|---|---|
+| **Abonnements SaaS** des locataires | Toujours celui de la **plateforme** | `web/.env` (`FEDAPAY_SECRET_KEY`, `FEDAPAY_WEBHOOK_SECRET`) |
+| **Recharges de portefeuille** des marchands | Celui du **locataire** s'il en a branché un, sinon celui de la plateforme | Administration → Réglages → Pay-out |
+
+⚠️ Le secret de signature des webhooks **suit le compte qui encaisse**. Un
+locataire qui enregistre sa clé secrète doit enregistrer le secret de webhook du
+même compte : l'écran refuse l'un sans l'autre, sinon ses webhooks seraient tous
+rejetés et aucun portefeuille ne serait crédité.
+
+L'URL de webhook, elle, est la même pour tous : `https://<domaine>/fedapay/webhook`.
+Chaque locataire la déclare dans le Workbench de **son** compte FedaPay.
+
 ## À faire à la mise en service
 
 1. **Créer un compte FedaPay** et relever les clés sandbox, puis live.
 2. **Déclarer l'URL de webhook** dans le Workbench FedaPay :
    `https://<domaine>/fedapay/webhook` — et relever le secret de signature.
-3. **Renseigner le `.env`** (voir `docs/guides/infra/.env.example`).
-4. **Tester en sandbox** un cycle complet : initiation, paiement, webhook,
+3. **Renseigner le `.env`** pour la plateforme (voir `docs/guides/infra/.env.example`).
+4. **Pour un locataire qui encaisse sur son propre compte** : renseigner sa clé
+   secrète et son secret de webhook depuis Réglages → Pay-out, et déclarer l'URL
+   de webhook dans le Workbench de ce compte.
+5. **Tester en sandbox** un cycle complet : initiation, paiement, webhook,
    crédit du solde, puis **rejouer le même webhook** pour vérifier qu'il ne
    crédite pas deux fois.
-5. Basculer `FEDAPAY_ENVIRONMENT=live` avec les clés de production.
+6. Basculer `FEDAPAY_ENVIRONMENT=live` avec les clés de production.
+
+L'environnement (`sandbox` / `live`) reste **global au serveur** : il n'est pas
+réglable par locataire. L'écran l'affiche pour que l'administrateur sache
+toujours sur quel pied il danse.
 
 ## Limites connues
 
 - **Non testé contre l'API réelle** : aucune clé n'était disponible au
   développement. La forme des requêtes suit la documentation officielle, mais un
   premier essai en sandbox reste indispensable.
-- **Seule la recharge de wallet est branchée.** L'abonnement SaaS
-  (`purpose = subscription`) est prévu dans le schéma mais pas encore câblé :
-  il passe aujourd'hui par Stripe codé en dur (bloc E). La faille S1 qui
-  l'accompagnait — activation sans vérification du paiement — est corrigée.
+- **L'environnement n'est pas réglable par locataire** : `FEDAPAY_ENVIRONMENT`
+  vaut pour tout le serveur. Un locataire en bac à sable pendant qu'un autre est
+  en production demanderait de le porter en base, comme les clés.
 - ✅ **Idempotence vérifiée en conditions réelles le 2026-08-18** : deux webhooks
   `transaction.approved` identiques et signés — le premier crédite 7 500 FCFA, le
   second répond `already processed` et le solde reste inchangé.

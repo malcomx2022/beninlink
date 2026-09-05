@@ -6,16 +6,19 @@
 > Base de référence au moment de la revue : `vendor/bin/phpunit` — 127 tests,
 > 824 assertions, au vert.
 >
-> **Mise à jour du 2026-09-05.** La revue elle-même ne corrigeait rien. Cinq
+> **Mise à jour du 2026-09-05.** La revue elle-même ne corrigeait rien. Sept
 > constats ont depuis été corrigés à la demande du porteur : **W1** et **F1**
-> d'abord, puis **W2**, **W4** et **W5**. Chaque section porte son correctif et
-> les tests qui le verrouillent. Suite après correction : **150 tests,
-> 891 assertions, au vert**, contre 127 au moment de la revue.
+> d'abord, puis **W2**, **W4** et **W5**, enfin **F2** et **F3**. Chaque section porte son correctif et
+> les tests qui le verrouillent. Suite après correction : **160 tests,
+> 916 assertions, au vert**, contre 127 au moment de la revue.
 >
 > Deux défauts plus lourds que ce que la revue avait établi sont apparus en
 > corrigeant, et sont documentés à leur place : la liste des relevés de l'app
 > **échouait en 500** pour tout relevé existant (§10), et le portefeuille
-> **n'était jamais débité** pour un colis créé depuis l'app (§10).
+> **n'était jamais débité** pour un colis créé depuis l'app (§10). Un troisième
+> est apparu en ouvrant l'écran de réglages : `Setting` ne déclarait pas
+> `company_id` assignable, donc **tout réglage de passerelle enregistré depuis
+> l'administration partait avec un locataire nul** et devenait invisible (§4).
 
 ## Sommaire des constats classés
 
@@ -24,8 +27,8 @@
 | **W1** | Un marchand se déclare lui-même « Livré » et entre au relevé de règlement | **Critique** | ✅ **corrigé** |
 | **F1** | Double crédit d'une recharge FedaPay par l'écran d'approbation admin | **Grave** | ✅ **corrigé** |
 | **W2** | La position du livreur écrase celle de toutes ses courses passées | Grave | ✅ **corrigé** |
-| **F2** | FedaPay n'a aucune surface de configuration côté administration | Structurel | oui |
-| **F3** | La clé FedaPay par locataire est une branche morte | Structurel | oui |
+| **F2** | FedaPay n'a aucune surface de configuration côté administration | Structurel | ✅ **corrigé** |
+| **F3** | La clé FedaPay par locataire est une branche morte | Structurel | ✅ **corrigé** |
 | **W3** | Le contrôle douanier est absent de la création côté back-office | Moyen | oui |
 | **F4** | Le SMS de confirmation part sous l'identité de la société 1 | Moyen | oui |
 | **W4** | La liste des relevés de l'API échoue en 500, et ne filtrait que les payés | **Grave** | ✅ **corrigé** |
@@ -116,7 +119,7 @@ Restent ouvertes, et souhaitables : marquer ou masquer les lignes
 pour que l'administrateur cesse de voir une recharge Mobile Money comme une
 recharge « Hors ligne ».
 
-## 3. F2 — FedaPay n'a aucune surface de configuration côté administration
+## 3. F2 — FedaPay n'a aucune surface de configuration côté administration — ✅ corrigé
 
 Le socle expose deux écrans de configuration de passerelles, l'un pour
 l'administrateur (`Réglages → Pay-out`), l'autre pour le marchand
@@ -134,7 +137,43 @@ Un administrateur ne peut donc ni savoir si FedaPay tourne en `sandbox` ou en
 d'incident. Pour une mise en exploitation, c'est le manque le plus structurant
 après F1.
 
-## 4. F3 — la clé FedaPay par locataire est une branche morte
+### Correctif appliqué
+
+`PayoutSetup::FEDAPAY` existe désormais, ce qui donne à la passerelle sa place
+dans le socle : une carte sur **Réglages → Pay-out**, sous les permissions
+`payout_setup_settings_read` / `_update` déjà en place, et la possibilité d'être
+coupée par `config/payments.php` comme les autres.
+
+La carte porte quatre choses :
+
+- l'**environnement** en clair, bac à sable ou production, et le **compte**
+  d'encaissement, le sien ou celui de la plateforme ;
+- la **clé secrète** et le **secret de signature des webhooks**, en champs
+  masqués : ils ne sont jamais réaffichés, et un champ laissé vide veut dire
+  « ne pas changer », jamais « effacer » ;
+- un **interrupteur** qui retire le paiement Mobile Money aux marchands sans
+  toucher aux clés. C'est le levier qui manquait en cas d'incident.
+
+Le statut est respecté partout où la passerelle s'ouvre : bouton de recharge du
+panneau marchand, écran d'abonnement, et les deux initiations côté serveur.
+Tant qu'aucun réglage n'a été enregistré, le comportement d'avant l'écran est
+conservé — utilisable dès que les clés répondent ; seul un arrêt explicite coupe.
+
+### Un défaut du socle découvert en ouvrant l'écran
+
+`Setting` déclarait `protected $fillable = ['key','value']` : **`company_id` en
+était absent**, alors que tout le socle écrit ces lignes par assignation en masse
+(`SettingSeeder`, `PayoutSetupRepository`). Eloquent le laissait donc tomber en
+silence. Chaque réglage de passerelle enregistré depuis l'administration partait
+avec un locataire nul, devenait invisible à `scopeCompanywise()` et à
+`globalSettings()`, et l'enregistrement suivant créait une ligne orpheline de
+plus. `SmsSetting`, lui, le déclarait correctement.
+
+La liste est corrigée. **Les lignes déjà écrites avec un locataire nul ne sont
+pas reprises** : les rattacher ferait réapparaître d'anciens réglages, statuts de
+passerelle compris, ce qui n'est pas une décision à prendre sans le porteur.
+
+## 4. F3 — la clé FedaPay par locataire est une branche morte — ✅ corrigé
 
 `FedaPayGateway::credentialsFor()` lit `settings.fedapay_secret_key` par
 `company_id`, avec repli sur la clé plateforme du `.env`. L'intention est écrite
@@ -425,8 +464,11 @@ Cet ordre suit le risque financier, pas la difficulté.
 4. ~~**W4**~~ et ~~**W5**~~ ✅ **corrigés le 2026-09-05** — la liste des relevés
    ne tombe plus en erreur et rend tous les statuts (5 tests) ; le portefeuille
    est débité et l'échec laisse une trace (2 tests).
-5. **F2** et **F3** — décider du modèle d'encaissement, puis ouvrir l'écran de
-   réglages qui va avec.
+5. ~~**F2**~~ et ~~**F3**~~ ✅ **corrigés le 2026-09-05** — écran de réglages,
+   compte d'encaissement par locataire, secret de webhook qui suit le compte,
+   11 tests.
 6. **W3**, **F4**, **F5**, **F6** — cohérence et filets de sécurité.
+7. **À décider** : reprendre ou non les lignes de `settings` écrites avec un
+   locataire nul avant le correctif du `fillable`.
 7. Les tests absents des étapes comptables, par ordre d'exposition financière :
    `parcelDelivered`, la livraison partielle, les retraits, les reversements.
