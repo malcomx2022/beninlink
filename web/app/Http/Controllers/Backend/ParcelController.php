@@ -347,7 +347,7 @@ class ParcelController extends Controller
             $merchant = Merchant::find($search);
 
             $response[] = array(
-                "vat"         =>$merchant->vat?? 0,
+                "vat"         =>\App\Services\Parcel\VatRate::for($merchant),
                 "cod_charges" =>$merchant->cod_charges,
             );
             return response()->json($response);

@@ -22,6 +22,9 @@ avant les apps.
 - **FedaPay** = passerelle Mobile Money BJ. **Webhook signé = seule source de vérité**
   pour créditer/activer. Traitement **idempotent**.
 - Devise **XOF** : montants **entiers**. Locale **FR** par défaut.
+- **TVA** : taux **au niveau de la société** (`configs.vat_rate`, 18 % au Bénin), surcharge
+  par marchand si `merchants.vat` > 0 — toujours via `VatRate::for()`. Registre des
+  décisions métier : `docs/DECISIONS_METIER.md`.
 - Statuts colis : En attente → Ramassage assigné → Entrepôt → Livreur assigné → Livré ;
   + Livraison partielle, Retour, Annulé.
 

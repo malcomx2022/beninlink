@@ -1424,6 +1424,18 @@ Un seul interrupteur, `config/payments.php` → `disabled_gateways`, lu par le h
 Réactiver une passerelle = la retirer de `disabled_gateways` **après** avoir passé
 `CURLOPT_SSL_VERIFYPEER` à `true` dans son code — pas de rollback de la migration.
 
+## ✅ Décisions métier tranchées en code (2026-09-05)
+
+Registre complet : `docs/DECISIONS_METIER.md` (D1 à D5).
+
+| Décision | Où |
+|---|---|
+| D1 — TVA au niveau société, surcharge par marchand | `App\Services\Parcel\VatRate::for()` (`ChargeCalculator`, import CSV, recherche marchand admin) ; `configs.vat_rate` = 18 (seed, création de société, migration `2026_09_05_110000`) ; réglage sur la page « Liquide/Fragile & TVA » (`LiquidFragileController::update`) |
+| D3 — chapitre « Marketing et acquisition clients » | `AccountHeadSeeder`, migration `2026_09_05_130000` ; reconnu par `config/saas_reporting.php` |
+| D5 — fiches de fraude orphelines rattachées à la société de leur auteur | migration `2026_09_05_120000` |
+| D2, D4 — SYSCOHADA à valider, barème à refondre | propositions et questions dans le registre, aucun code |
+| Tests | `BusinessDecisionsTest` (9) : taux société / taux marchand / aucun taux, devis, migration TVA idempotente, page compilée, chapitre unique et reconnu, rattachement des fiches |
+
 ## ✅ Harnais de tests (2026-08-18)
 
 `RefreshDatabase` fonctionne : les 86 migrations passent sur SQLite en mémoire. Deux

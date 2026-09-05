@@ -303,12 +303,11 @@ consommés (`services/api-list.dart`). Ne rien y coder.
 ## 13. Constats à retenir pour la suite
 
 1. ~~Un chantier `web/` reste à ouvrir~~ — ✅ **les sept chantiers `web/` sont livrés**
-   (4, 6 et 7 le 2026-09-04). La spec OpenAPI est générée depuis le routeur et un
-   test vérifie que chaque endpoint de `mobile/src/api/endpoints.ts` existe dans
-   l'API. Restent ouverts le choix d'un taux de TVA au niveau
-   entreprise (il est par marchand), la validation du plan de comptes
-   `config/syscohada.php` par l'expert-comptable, et la saisie des dépenses
-   d'acquisition sans laquelle le CAC reste « non disponible ».
+   (4, 6 et 7 le 2026-09-04). Les décisions métier sont consignées dans
+   `docs/DECISIONS_METIER.md` : ~~TVA au niveau entreprise~~ ✅ (taux société 18 %,
+   surcharge par marchand, 2026-09-05), ~~dépenses d'acquisition~~ ✅ (chapitre
+   « Marketing et acquisition clients »), plan de comptes SYSCOHADA ⏳ (questions à
+   l'expert-comptable), refonte du barème ⏳ (proposition zones/tranches à décider).
 2. ~~FedaPay ne couvre que la recharge wallet~~ — ✅ **abonnement branché le
    2026-09-04** : bouton Mobile Money sur la page des plans, activation par le webhook
    signé via `switchPlan()`. Stripe reste disponible en parallèle. Le renouvellement

@@ -23,6 +23,19 @@ class LiquidFragileController extends Controller
         $liquid         = Config::companywise()->where('key','fragile_liquid_charge')->first();
         $liquid->value  = $request->charge;
         $liquid->save();
+        // Décision métier 2026-09-05 : taux de TVA de la société, sur la même
+        // page « frais » (0 à 100, entier ou décimal ; 0 = pas de TVA).
+        if ($request->has('vat_rate')) {
+            $request->validate(['vat_rate' => ['numeric', 'min:0', 'max:100']]);
+            $vat = Config::companywise()->where('key', \App\Services\Parcel\VatRate::CONFIG_KEY)->first();
+            if (blank($vat)) {
+                $vat = new Config();
+                $vat->company_id = settings()->id;
+                $vat->key = \App\Services\Parcel\VatRate::CONFIG_KEY;
+            }
+            $vat->value = (float) $request->vat_rate;
+            $vat->save();
+        }
         if($liquid){
             Toastr::success('Liquid/Fragile updated successfully.',__('message.success'));
             return redirect()->route('liquid-fragile.index');

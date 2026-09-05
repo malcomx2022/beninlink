@@ -130,7 +130,9 @@ class CompanyRepository implements CompanyInterface
                 'same_day'                      => 1,
                 'next_day'                      => 1,
                 'sub_city'                      => 1,
-                'outside_City'                  => 1
+                'outside_City'                  => 1,
+                // Décision métier 2026-09-05 : TVA au niveau société (18 % au Bénin), surcharge par marchand.
+                'vat_rate'                      => 18
             ];
             foreach ($config as $key => $value) {
                 $confg           = new Config();

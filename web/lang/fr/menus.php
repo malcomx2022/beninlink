@@ -17,7 +17,7 @@ return [
   'accounts'             => 'Comptes',
   'fund_transfer'        => 'Transfert de fonds',
   'delivery_type'        => 'Type de livraison',
-  'liquid_fragile'       => 'Liquide/Fragile',
+  'liquid_fragile'       => 'Liquide/Fragile & TVA',
   'expense'              => 'Dépense',
   'income'               => 'Revenu',
   'user_role'            => 'Utilisateurs et rôles',

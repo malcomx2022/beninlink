@@ -70,7 +70,8 @@ class ChargeCalculator
         // `total_delivery_amount`.
         $subTotal = $deliveryCharge + $codAmount + $packagingAmount + $fragileAmount;
 
-        $vatRate = (float) ($merchant->vat ?? 0);
+        // Taux du marchand, sinon celui de la société (décision métier 2026-09-05).
+        $vatRate = VatRate::for($merchant);
         $vatAmount = $this->percentage($subTotal, $vatRate);
 
         return [
