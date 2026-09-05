@@ -126,6 +126,23 @@ if(!function_exists('gatewayEnabled')){
     }
 }
 
+if(!function_exists('onlinePayoutEnabled')){
+    /**
+     * D10 — le module « payout / paiement en ligne » (Stripe, PayPal, bKash,
+     * Skrill, Razorpay) est coupe : il deplace le solde d'un marchand sans
+     * ecrire au releve, facture en BDT, ne scope pas la societe, et pour deux
+     * d'entre eux ne verifie rien aupres du fournisseur. Voir la note de
+     * `config/payments.php`.
+     *
+     * Distinct de `gatewayEnabled()` : ici on coupe un MODULE, pas une
+     * passerelle. `stripe_status` sert aussi l'abonnement SaaS, qui ne touche
+     * aucun solde marchand et reste ouvert.
+     */
+    function onlinePayoutEnabled(){
+        return (bool) config('payments.online_payout', false);
+    }
+}
+
 if(!function_exists('isSuperadmin')){
     function isSuperadmin(){
         if(Auth::user() && Auth::user()->user_type == UserType::SUPER_ADMIN):

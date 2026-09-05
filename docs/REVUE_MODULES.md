@@ -400,6 +400,17 @@ livraison, son solde bougeant sans rien pour l'expliquer. Corrigé, et rattrapé
 en base par une migration : ici l'attribution est certaine, chaque ligne portant
 son colis.
 
+**Les deux derniers chemins** que le rapprochement ne savait pas expliquer sont
+tranchés (§19, décision **D10**). Le **module « payout / paiement en ligne »**
+— Stripe, PayPal, bKash, Skrill, Razorpay — est coupé : il déplaçait un solde
+sans écrire au relevé, facturait en **BDT** codé en dur, ne scopait pas la
+société, et **PayPal comme Razorpay ne vérifiaient rien** auprès du fournisseur
+(un identifiant de transaction inventé suffisait à éteindre la dette d'un
+marchand). C'est le **module** qui est coupé, pas les passerelles :
+`stripe_status` sert aussi l'abonnement SaaS. Et **ré-enregistrer une fiche
+marchand** n'écrase plus le solde courant : corriger le solde d'ouverture le
+déplace du même écart.
+
 ## 11. Apps Flutter dépréciées (référence)
 
 | App | Modules (`lib/Screen/`) |

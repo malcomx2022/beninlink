@@ -908,20 +908,19 @@ Les montants s'y affichent **au centime**, contrairement à la règle XOF entier
 du reste du projet. C'est délibéré : afficher « 14 F » cacherait exactement ce
 qui identifie l'écart.
 
-### Deux autres chemins cassent le même invariant
+### Deux autres chemins cassaient le même invariant
 
 La commande les nomme dans sa sortie plutôt que de faire comme s'ils
 n'existaient pas — sans eux, un opérateur lirait tout écart comme le bug de
-TVA.
+TVA. Ils sont tranchés depuis (§19), mais une base antérieure aux correctifs
+porte encore leurs écarts, d'où le maintien du message.
 
 - Les **passerelles de retrait en ligne** (`PayoutController` et ses variantes
-  bKash, Skrill, Razorpay…) débitent `current_balance` **sans écrire au
+  bKash, Skrill, Razorpay…) débitaient `current_balance` **sans écrire au
   relevé**.
-- **Modifier une fiche marchand** en renseignant le solde d'ouverture écrase
+- **Modifier une fiche marchand** en renseignant le solde d'ouverture écrasait
   `current_balance` (`MerchantRepository::update()`), effaçant tout ce qui
   s'était accumulé depuis.
-
-Les deux restent à trancher.
 
 ### Un défaut découvert en écrivant le rapprochement
 
@@ -952,7 +951,62 @@ un marchand et un seul.
 - `tests/Feature/MerchantStatementBackfillTest` — 4 tests sur le rattachement,
   y compris la ligne sans colis qui reste orpheline faute d'attribution.
 
-## 19. Ce qui reste, et n'est pas un constat
+## 19. Les deux derniers chemins — 2026-09-05 ✅
+
+Ceux que le rapprochement (§18) nommait sans savoir les expliquer. Décision
+consignée en **D10**.
+
+### Le module « payout / paiement en ligne » : coupé
+
+Cinq chemins — Stripe, PayPal, bKash, Skrill, Razorpay — réglaient un marchand,
+ou l'encaissaient, hors du flux de retrait. En ouvrant le dossier, ils
+partagent quatre défauts :
+
+| Défaut | Conséquence |
+|---|---|
+| Aucune écriture de relevé | l'écart de §18 : le solde bouge, le relevé ne dit rien |
+| Devise **BDT** codée en dur | un transporteur béninois débiterait des takas |
+| `Merchant::find()` / `Account::find()` **sans scope** | un marchand crédite le compte bancaire d'une autre société |
+| **PayPal et Razorpay ne vérifient rien** | une requête avec un identifiant de transaction inventé éteint la dette du marchand et crédite le transporteur d'un argent jamais reçu |
+
+Le dernier est le plus grave : c'est l'exact opposé de la règle du projet,
+*webhook signé = seule source de vérité*. Razorpay est en outre cassé depuis
+toujours (`accountId` contre `account_id`) — et il échoue **après** avoir
+déplacé le solde du marchand.
+
+Le module est coupé, comme S21 avait coupé Aamarpay et SSLCommerz. Corriger
+cinq chemins qu'aucun transporteur béninois n'utilisera n'a pas de sens ; les
+couper ferme l'écart comptable, la fuite inter-locataires et la fraude d'un
+seul geste. Le reversement passe par la demande de retrait, couverte et scopée
+(**D8**).
+
+**La portée est volontairement étroite**, et c'est le point de méthode : on
+coupe le **module** (`onlinePayoutEnabled()`), pas les passerelles
+(`gatewayEnabled()`). `stripe_status` sert aussi l'abonnement SaaS de la
+plateforme, qui ne touche aucun solde marchand ; couper par identité de
+passerelle l'aurait emporté avec. Un test fixe cette frontière.
+
+### Le solde d'ouverture qui écrasait le solde courant : corrigé
+
+`MerchantRepository::update()` écrivait `current_balance = opening_balance` à
+chaque enregistrement de la fiche. **Ré-enregistrer un marchand pour corriger
+son adresse effaçait tout ce qui s'était accumulé depuis son ouverture** —
+encaissements, frais, retraits — sans avertissement et sans trace au relevé.
+
+Corriger l'ouverture déplace désormais le solde courant du **même écart**. Un
+enregistrement qui n'y touche pas ne touche à rien : on corrige une saisie, on
+n'efface pas une activité.
+
+### Ce que ça couvre
+
+- `tests/Feature/OnlinePayoutModuleDisabledTest` — 4 tests : le module est
+  coupé, chaque route l'est, les deux écrans ne proposent plus rien, et — le
+  garde-fou — couper le module ne coupe pas les passerelles elles-mêmes.
+- `tests/Feature/MerchantOpeningBalanceTest` — 6 tests, dont le cas qui faisait
+  mal (ré-enregistrer sans rien changer) et la vérification que le
+  rapprochement de D9 ne voit plus d'écart après une correction d'ouverture.
+
+## 20. Ce qui reste, et n'est pas un constat
 
 - Le correctif du débit (W5) **ne rattrape pas le passé** : si la production
   tourne déjà, des colis créés depuis l'app peuvent n'avoir jamais été débités.
@@ -962,8 +1016,3 @@ un marchand et un seul.
 - Les étapes **non comptables** du cycle de vie (affectation, transfert entre
   agences, reprogrammations) restent sans tests. Elles ne déplacent pas
   d'argent, mais elles décident quel livreur sera payé à l'arrivée.
-- **Deux chemins cassent encore l'invariant solde / relevé** (§18), et n'ont
-  pas été tranchés : les passerelles de retrait en ligne débitent sans écrire
-  au relevé, et ré-enregistrer une fiche marchand avec un solde d'ouverture
-  écrase le solde courant. Le premier est peut-être sans objet au Bénin — ce
-  sont des passerelles bangladaises ; le second, non.

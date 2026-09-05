@@ -16,6 +16,12 @@ avant les apps.
   Exception actée (S21, 2026-09-05) : **Aamarpay et SSLCommerz sont désactivées** via
   `config/payments.php` (`disabled_gateways`) — ne pas les réactiver sans corriger
   leur TLS.
+  Exception actée (**D10**, 2026-09-05) : le **module « payout / paiement en ligne »**
+  (Stripe, PayPal, bKash, Skrill, Razorpay) est coupé via
+  `config('payments.online_payout')` / `onlinePayoutEnabled()`. Il déplaçait un solde
+  sans écrire au relevé, facturait en BDT, ne scopait pas la société, et PayPal comme
+  Razorpay ne vérifiaient rien. ⚠️ C'est le **module** qui est coupé, pas les
+  passerelles : `stripe_status` sert aussi l'abonnement SaaS.
 - Le **cycle de vie des colis** : on franchit ses états, on ne les redéfinit pas.
 
 ## Décisions actées

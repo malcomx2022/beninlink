@@ -34,7 +34,7 @@
                 </div>
             </div>
             <div class="row mt-2">
-                @if(globalSettings('paypal_status') == \App\Enums\Status::ACTIVE)
+                @if(onlinePayoutEnabled() && globalSettings('paypal_status') == \App\Enums\Status::ACTIVE) {{-- D10 --}}
                 <div class="col-lg-6 col-md-6 ">
                     <a href="{{ route('online.payment.paypal.index') }}" >
                         <div class="card">
@@ -45,7 +45,7 @@
                     </a>
                 </div>
                 @endif
-                @if(globalSettings('stripe_status') == \App\Enums\Status::ACTIVE)
+                @if(onlinePayoutEnabled() && globalSettings('stripe_status') == \App\Enums\Status::ACTIVE) {{-- D10 --}}
                     <div class="col-lg-6  col-md-6">
                         <a href="{{ route('online.payment.stripe') }}" >
                             <div class="card">
@@ -56,7 +56,7 @@
                         </a>
                     </div>
                 @endif
-                @if(globalSettings('skrill_status') == \App\Enums\Status::ACTIVE)
+                @if(onlinePayoutEnabled() && globalSettings('skrill_status') == \App\Enums\Status::ACTIVE) {{-- D10 --}}
                     <div class="col-lg-6  col-md-6">
                         <a href="{{ route('skrill.index') }}" >
                             <div class="card">
@@ -89,7 +89,7 @@
                     </a>
                 </div>
                 @endif
-                @if(globalSettings('bkash_status') == \App\Enums\Status::ACTIVE)
+                @if(onlinePayoutEnabled() && globalSettings('bkash_status') == \App\Enums\Status::ACTIVE) {{-- D10 --}}
                     <div class="col-lg-6 col-md-6">
                         <a href="{{ route('online.payment.bkash.index') }}" >
                             <div class="card">
