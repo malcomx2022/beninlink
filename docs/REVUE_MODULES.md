@@ -324,10 +324,26 @@ n'a modifié aucun code. Deux constats y appellent une décision rapide :
   déclarait une route couverte par un test sans base migrée, porte désormais une
   preuve réelle **et** vérifie que chaque test déclaré peut atteindre une route.
 
-**Plus aucun constat de la revue n'est ouvert.** Restent trois décisions, listées
-au §12 de `docs/REVUE_FEDAPAY_ET_WORKFLOWS.md` : la reprise des lignes `settings`
-écrites avec un locataire nul, l'atomicité du débit de portefeuille à la création
-d'un colis, et les deux voisins non scopés par société repérés en chemin.
+**Plus aucun constat de la revue n'est ouvert**, et les **trois décisions**
+restantes ont été tranchées le 2026-09-05 (§13 de
+`docs/REVUE_FEDAPAY_ET_WORKFLOWS.md`) :
+
+- **Lignes `settings` sans société : on ne rattache pas.** Le seeder visait la
+  société 1 et l'écran de réglages visait la société connectée, sans qu'on puisse
+  les distinguer : les attribuer à la société 1 donnerait la clé d'un locataire à
+  un autre. `php artisan beninlink:reglages-orphelins` les constate, sans afficher
+  aucun secret, et ne supprime qu'avec `--purge`.
+- **Débit du portefeuille : atomique avec la création du colis.** Un colis qu'on
+  ne sait pas facturer ne doit pas partir. Sûr à annuler, tout ce que la création
+  déclenche s'écrivant en base.
+- **Les deux voisins non scopés sont fermés** : le statut de colis côté
+  administration lit désormais `companywise()`, et les trois actions
+  d'administration sur un portefeuille portent un garde au contrôleur — le
+  service restant sans scope pour le webhook, qui n'a pas de session.
+
+Reste une question ouverte, qui n'est pas un constat : **aucun contrôle de solde**
+à la création d'un colis, un marchand au portefeuille pouvant passer en négatif
+sans limite.
 
 ## 11. Apps Flutter dépréciées (référence)
 

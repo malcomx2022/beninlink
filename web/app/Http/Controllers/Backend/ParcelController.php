@@ -238,7 +238,12 @@ class ParcelController extends Controller
     // Parcel update
     public function statusUpdate($id, $status_id)
     {
-        $this->repo->statusUpdate($id, $status_id);
+        // Le repository refuse un colis d'une autre societe : ne pas annoncer
+        // un succes quand rien n'a ete ecrit.
+        if(!$this->repo->statusUpdate($id, $status_id)){
+            Toastr::error(__('parcel.not_found'),__('message.error'));
+            return redirect()->route('parcel.index');
+        }
         Toastr::success(__('parcel.update_msg'),__('message.success'));
         return redirect()->route('parcel.index');
     }

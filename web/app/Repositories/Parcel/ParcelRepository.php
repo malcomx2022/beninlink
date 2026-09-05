@@ -317,8 +317,24 @@ class ParcelRepository implements ParcelInterface {
         }
     }
 
+    /**
+     * Poser un statut sur un colis, depuis l'administration.
+     *
+     * ⚠️ `Parcel::find($id)` etait **nu** : aucun scope de societe. Un
+     * administrateur de la societe A pouvait donc, en forgeant l'identifiant,
+     * changer le statut d'un colis de la societe B — et par la le faire entrer,
+     * ou non, dans un releve de reglement qui ne le regarde pas. La permission
+     * `parcel_status_update` protegeait l'acces a la route, jamais la portee.
+     *
+     * Le repli sur `companywise()` suffit ici : cote administration, la societe
+     * vient de la session, contrairement au webhook de paiement qui n'en a pas.
+     */
     public function statusUpdate($id, $status_id) {
-        $parcel = Parcel::find($id);
+        $parcel = Parcel::companywise()->find($id);
+        if (blank($parcel)) {
+            return false;
+        }
+
         $parcel->status = $status_id;
         $parcel->save();
 
