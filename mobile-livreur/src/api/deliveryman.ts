@@ -76,7 +76,7 @@ export async function reportOutcome(
  */
 export async function reportDelivered(
   parcelId: number,
-  options: { note?: string; photoUri?: string } = {},
+  options: { note?: string; photoUri?: string; signatureUri?: string } = {},
 ): Promise<void> {
   const form = new FormData();
   if (options.note?.trim()) form.append('note', options.note.trim());
@@ -86,6 +86,15 @@ export async function reportDelivered(
       uri: options.photoUri,
       name: `livraison-${parcelId}.jpg`,
       type: 'image/jpeg',
+    } as unknown as Blob);
+  }
+  if (options.signatureUri) {
+    // Signature manuscrite du destinataire : champ `signatureImage` du socle
+    // (parcel_events.signature_image), visible par le marchand dans le suivi.
+    form.append('signatureImage', {
+      uri: options.signatureUri,
+      name: `signature-${parcelId}.png`,
+      type: 'image/png',
     } as unknown as Blob);
   }
   await api.post(endpoints.parcelDelivered(parcelId), form);

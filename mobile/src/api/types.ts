@@ -110,14 +110,25 @@ export type Parcel = {
   parcel_time: string | null;
 };
 
-/** Étape du suivi. Vide sur un colis neuf : les événements naissent des transitions. */
+/**
+ * Étape du suivi, telle que la sert `ParcelLogsResource` côté web/ (`parcel/logs`,
+ * `parcel/details`) : libellé déjà traduit, date déjà formatée. Vide sur un
+ * colis neuf : les événements naissent des transitions.
+ */
 export type ParcelEvent = {
   id: number;
-  parcel_id: number;
-  status?: number;
-  statusName?: string;
-  note?: string | null;
-  created_at?: string | null;
+  /** Code de statut, sérialisé en chaîne par la ressource. */
+  parcel_status: string;
+  parcel_status_name: string;
+  description?: string | null;
+  hub_name?: string;
+  delivery_man?: string;
+  delivery_phone?: string;
+  date?: string;
+  time_date?: string;
+  /** Preuves posées par le livreur sur « Livré » (URL absolues), sinon null. */
+  delivered_image?: string | null;
+  signature_image?: string | null;
 };
 
 /** `GET parcel/all/status` — liste **nue** des 10 statuts marchand, traduits. */

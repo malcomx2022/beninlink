@@ -265,9 +265,18 @@ statuts repris à l'identique ; environ 1 100 lignes TypeScript.
 **v2 le même jour** : position GPS à la demande et après chaque livraison
 (`parcel-location-update`, `expo-location`), photo de livraison facultative en multipart
 (`parcel/delivered/{id}`, `expo-image-picker`), écran de changement de mot de passe
-(`update-password`), icônes Ionicons. Reste : signature manuscrite, visuels propres à
-l'app. Un écart de contrat relevé au passage et corrigé dans la spec :
-`parcel-status-update` lit **`status_action`**, pas `status`.
+(`update-password`), icônes Ionicons. Un écart de contrat relevé au passage et corrigé
+dans la spec : `parcel-status-update` lit **`status_action`**, pas `status`.
+
+**v3 — signature manuscrite** : le socle We Courier attendait déjà `signatureImage` sur
+`parcel/delivered/{id}` (l'app Flutter d'origine l'envoyait via un pad de signature)
+mais ne la montrait qu'à l'administrateur. Livré : canevas de signature dans l'app
+livreur (`src/components/SignaturePad.tsx`, `react-native-svg` + `react-native-view-shot`,
+facultatif comme la photo), `ParcelLogsResource` expose `delivered_image` /
+`signature_image` en URL absolues, et l'app marchand les affiche dans le suivi du colis.
+Au passage, le type `ParcelEvent` de `mobile/` est aligné sur la ressource réelle
+(`parcel_status_name`, `date`, `time_date`) : la timeline marchande lisait des champs
+inexistants. Reste : visuels propres à l'app livreur.
 
 ## 11. Apps Flutter dépréciées (référence)
 

@@ -36,6 +36,8 @@ $bare = fn (array $schema, string $desc = 'Succès (réponse nue, sans enveloppe
     'content' => ['application/json' => ['schema' => $schema]],
 ]];
 $body = fn (array $props, array $required = []) => ['required' => true, 'content' => ['application/json' => ['schema' => $obj($props, $required)]]];
+$multipart = fn (array $props, array $required = []) => ['required' => true, 'content' => ['multipart/form-data' => ['schema' => $obj($props, $required)]]];
+$file = fn (string $desc = '') => array_filter(['type' => 'string', 'format' => 'binary', 'description' => $desc ?: null]);
 $query = fn (string $name, string $desc, string $type = 'string') => ['name' => $name, 'in' => 'query', 'required' => false, 'description' => $desc, 'schema' => ['type' => $type]];
 $path = fn (string $name, string $desc, string $type = 'integer') => ['name' => $name, 'in' => 'path', 'required' => true, 'description' => $desc, 'schema' => ['type' => $type]];
 $page = $query('page', 'Numéro de page (10 ou 20 éléments par page selon l\'endpoint ; une page incomplète est la dernière)', 'integer');
@@ -95,7 +97,7 @@ $schemas = [
         'pickup_date' => $str('', true), 'delivery_date' => $str('', true), 'created_at' => $str('Déjà mise en forme (« 17 Aug 2026, 09:29 PM »)', true),
         'parcel_date' => $str('', true), 'parcel_time' => $str('', true),
     ]),
-    'ParcelEvent' => $obj(['id' => $int(), 'parcel_status' => $str(), 'parcel_status_name' => $str(), 'description' => $str('', true), 'hub_name' => $str(), 'delivery_man' => $str(), 'delivery_phone' => $str(), 'date' => $str(), 'time_date' => $str()]),
+    'ParcelEvent' => $obj(['id' => $int(), 'parcel_status' => $str(), 'parcel_status_name' => $str(), 'description' => $str('', true), 'delivered_image' => $str('URL absolue de la photo de livraison, posée par le livreur', true), 'signature_image' => $str('URL absolue de la signature du destinataire, posée par le livreur', true), 'hub_name' => $str(), 'delivery_man' => $str(), 'delivery_phone' => $str(), 'date' => $str(), 'time_date' => $str()]),
     'ParcelStatusOption' => $obj(['id' => $int(), 'status' => $str('Libellé traduit')]),
     'ParcelFormData' => $obj([
         'shops' => $arr('Shop'),
@@ -277,7 +279,7 @@ $operations = [
     // — Livreur ------------------------------------------------------------
     'GET deliveryman/parcel/index' => ['tag' => 'Livreur', 'summary' => 'Courses du livreur', 'responses' => $ok($obj(['parcels' => $arr('Parcel')]))],
     'GET deliveryman/parcel/details/{id}' => ['tag' => 'Livreur', 'summary' => 'Détail d\'une course et son suivi', 'responses' => $ok($obj(['parcel' => $ref('Parcel'), 'parcelEvents' => $arr('ParcelEvent')]))],
-    'POST deliveryman/parcel/delivered/{id}' => ['tag' => 'Livreur', 'summary' => 'Déclarer un colis livré', 'requestBody' => $body(['cash_collection' => $int('Montant encaissé, entier XOF'), 'note' => $str('', true)]), 'responses' => $empty],
+    'POST deliveryman/parcel/delivered/{id}' => ['tag' => 'Livreur', 'summary' => 'Déclarer un colis livré', 'description' => 'Multipart : la photo (`image`) et la signature manuscrite du destinataire (`signatureImage`) sont facultatives et ressortent dans `ParcelEvent` (`delivered_image`, `signature_image`).', 'requestBody' => $multipart(['cash_collection' => $int('Montant encaissé, entier XOF'), 'note' => $str('', true), 'image' => $file('Photo du colis remis (JPEG/PNG)'), 'signatureImage' => $file('Signature manuscrite du destinataire (PNG)')]), 'responses' => $empty],
     'POST deliveryman/parcel/partial-delivered/{id}' => ['tag' => 'Livreur', 'summary' => 'Déclarer une livraison partielle', 'requestBody' => $body(['cash_collection' => $int('Montant encaissé'), 'note' => $str('', true)], ['cash_collection']), 'responses' => $empty],
     'GET deliveryman/income-expense' => ['tag' => 'Livreur', 'summary' => 'Gains et dépenses du livreur', 'responses' => $ok($obj(['income' => $arr('IncomeExpense'), 'expense' => $arr('IncomeExpense'), 'total' => ['type' => 'object']]))],
     'GET deliveryman/dashboard' => ['tag' => 'Livreur', 'summary' => 'Compteurs du livreur (en cours, livrés, retours, COD)', 'responses' => $ok(['type' => 'object'])],

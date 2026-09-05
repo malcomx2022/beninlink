@@ -25,6 +25,10 @@ class ParcelLogsResource extends JsonResource
             "delivery_phone"            => (string) isset($this->deliveryMan)? $this->deliveryMan->user->mobile:'',
             "transfer_delivery_phone"   => (string)isset($this->transferDeliveryman)? $this->transferDeliveryman->user->mobile:'',
             "description"               => $this->note,
+            // Preuves de livraison posées par le livreur (photo, signature du
+            // destinataire) : chemins relatifs en base, URL absolues pour les apps.
+            "delivered_image"           => $this->delivered_image ? static_asset($this->delivered_image) : null,
+            "signature_image"           => $this->signature_image ? static_asset($this->signature_image) : null,
             "parcel_status"             => (string)$this->parcel_status,
             "parcel_status_name"        => __('parcelLogs.'.$this->parcel_status),
             'date'                      => dateFormat($this->created_at) ,

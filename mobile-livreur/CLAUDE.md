@@ -42,13 +42,16 @@ Application **livreur (coursier)**, React Native / Expo. **Consomme l'API de `we
   position » sur Mes courses, et envoi silencieux après chaque déclaration de livraison.
   Le backend l'écrit sur les courses en cours du livreur authentifié (S4, S7).
 - **Preuve de livraison** : `src/domain/photo.ts` (`expo-image-picker`, appareil photo,
-  qualité 0,5). Photo facultative sur « Livré », envoyée en multipart à
-  `deliveryman/parcel/delivered/{id}` (`image`) ; partiel et retour restent sur
-  `parcel-status-update`. Le client d'API laisse passer un `FormData` tel quel.
+  qualité 0,5) et `src/components/SignaturePad.tsx` (`react-native-svg` +
+  `react-native-view-shot`, PNG sur fond blanc). Photo et signature du destinataire
+  facultatives sur « Livré », envoyées en multipart à
+  `deliveryman/parcel/delivered/{id}` (`image`, `signatureImage`) ; partiel et retour
+  restent sur `parcel-status-update`. Le client d'API laisse passer un `FormData`
+  tel quel. Le marchand voit les deux preuves dans le suivi du colis
+  (`ParcelEvent.delivered_image` / `signature_image`, URL absolues).
 - **Icônes** : Ionicons (`@expo/vector-icons`).
 
-Non branché : signature manuscrite (`signatureImage`, demanderait un canevas de
-dessin), icônes et splash propres à l'app (ceux de `mobile/` réutilisés).
+Non branché : icônes et splash propres à l'app (ceux de `mobile/` réutilisés).
 
 ## Statuts colis (alignés backend)
 En attente → Ramassage assigné → Entrepôt → Livreur assigné → Livré ; + Livraison partielle, Retour.

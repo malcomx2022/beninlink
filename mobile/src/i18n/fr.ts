@@ -93,6 +93,8 @@ export const fr = {
     empty: 'Aucun colis pour le moment.',
     newParcel: 'Nouveau colis',
     timeline: 'Suivi',
+    proofPhoto: 'Photo de livraison',
+    proofSignature: 'Signature du destinataire',
     detail: 'Détail du colis',
     recipient: 'Destinataire',
     name: 'Nom',

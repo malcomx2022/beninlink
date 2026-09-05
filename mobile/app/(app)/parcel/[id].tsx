@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
 import { ApiError } from '../../../src/api/client';
@@ -82,8 +82,22 @@ export default function ParcelDetailScreen() {
             {events.length > 0 ? (
               events.map((event) => (
                 <View key={event.id} style={styles.event}>
-                  <Text style={styles.eventLabel}>{event.statusName ?? '—'}</Text>
-                  <Muted>{event.created_at ?? ''}</Muted>
+                  <Text style={styles.eventLabel}>{event.parcel_status_name || '—'}</Text>
+                  <Muted>{[event.date, event.time_date].filter(Boolean).join(' · ')}</Muted>
+                  {!!event.description && <Muted>{event.description}</Muted>}
+                  {/* Preuves de livraison jointes par le livreur (photo, signature). */}
+                  {!!event.delivered_image && (
+                    <View style={styles.proof}>
+                      <Muted>{t('parcels.proofPhoto')}</Muted>
+                      <Image source={{ uri: event.delivered_image }} style={styles.proofPhoto} resizeMode="cover" />
+                    </View>
+                  )}
+                  {!!event.signature_image && (
+                    <View style={styles.proof}>
+                      <Muted>{t('parcels.proofSignature')}</Muted>
+                      <Image source={{ uri: event.signature_image }} style={styles.proofSignature} resizeMode="contain" />
+                    </View>
+                  )}
                 </View>
               ))
             ) : (
@@ -155,4 +169,14 @@ const styles = StyleSheet.create({
   },
   event: { paddingVertical: spacing.xs },
   eventLabel: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.sm, color: colors.text },
+  proof: { marginTop: spacing.xs, gap: spacing.xs },
+  proofPhoto: { width: '100%', height: 180, borderRadius: radii.md, backgroundColor: colors.border },
+  proofSignature: {
+    width: '100%',
+    height: 120,
+    borderRadius: radii.md,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
 });

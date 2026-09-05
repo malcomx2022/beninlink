@@ -17,6 +17,7 @@ export const fr = {
     photo: 'Prendre une photo',
     retakePhoto: 'Reprendre la photo',
     removePhoto: 'Retirer la photo',
+    clearSignature: 'Effacer la signature',
   },
   errors: {
     network: 'Connexion au serveur impossible.',
@@ -93,6 +94,8 @@ export const fr = {
     notePlaceholder: 'Motif du retour, précision sur la livraison…',
     proof: 'Preuve de livraison',
     proofHint: 'Photo du colis remis (facultatif). Elle est jointe à la déclaration.',
+    signature: 'Signature du destinataire',
+    signatureHint: 'Faites signer le destinataire au doigt (facultatif). La signature est jointe à la déclaration.',
     confirm: 'Enregistrer',
     successDelivered: 'Course déclarée livrée.',
     successPartial: 'Livraison partielle enregistrée.',
