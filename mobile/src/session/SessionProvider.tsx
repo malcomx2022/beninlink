@@ -12,6 +12,7 @@ import type { ReactNode } from 'react';
 import { signIn as apiSignIn, signOut as apiSignOut, verifyOtp as apiVerifyOtp } from '../api/auth';
 import { fetchProfile } from '../api/merchant';
 import { getToken } from '../api/session';
+import { desabonnerAppareil } from '../push';
 import type { AuthUser } from '../api/types';
 
 type SessionState = {
@@ -63,6 +64,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setUser(await apiVerifyOtp(otp));
       },
       signOut: async () => {
+        // D'abord l'appareil, tant que le jeton de session est encore valide :
+        // après `apiSignOut()` l'API refuserait le désabonnement.
+        await desabonnerAppareil();
         await apiSignOut();
         setUser(null);
       },

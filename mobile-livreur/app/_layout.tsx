@@ -5,6 +5,7 @@ import { Sora_600SemiBold, Sora_700Bold } from '@expo-google-fonts/sora';
 import { DMSans_400Regular, DMSans_500Medium } from '@expo-google-fonts/dm-sans';
 import { ActivityIndicator, View } from 'react-native';
 
+import { usePushNotifications } from '../src/push';
 import { SessionProvider, useSession } from '../src/session/SessionProvider';
 import { colors } from '../src/theme/colors';
 import { fonts } from '../src/theme/typography';
@@ -31,6 +32,11 @@ function Splash() {
  */
 function RootNavigator() {
   const { loading, user } = useSession();
+
+  // Abonnement de l'appareil et ouverture de la course touchée : uniquement
+  // session ouverte (voir src/push).
+  usePushNotifications(!!user);
+
   if (loading) return <Splash />;
 
   return (

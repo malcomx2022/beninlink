@@ -343,3 +343,47 @@ d'ouverture déplace le solde courant du **même écart**.
 Un enregistrement qui ne touche pas à l'ouverture ne touche à rien. On corrige
 une saisie, on n'efface pas une activité.
 
+---
+
+## D11 — Les notifications poussées passent par Expo, pas par FCM en direct ✅
+
+**Constat.** Le socle poussait par l'API FCM « legacy »
+(`fcm.googleapis.com/fcm/send`, en-tête `Authorization: key=…`), **arrêtée par
+Google le 20 juin 2024**. Conséquence : le fil du marchand s'écrivait bien en
+base, mais **rien n'arrivait sur le téléphone** — et les quinze appels de
+`ParcelRepository` payaient un aller-retour HTTPS bloquant pour recevoir un
+refus. Pire, `sendPushNotification()` faisait `die()` sur échec cURL : une
+coupure réseau tuait la requête métier en cours.
+
+Le livreur était le plus mal servi : il n'a **pas de fil consultable**, la
+poussée est son seul canal. Une course affectée ne le prévenait pas.
+
+**Décision : transporter par le service de push d'Expo.**
+
+| Question | Réponse, et pourquoi |
+|---|---|
+| Pourquoi pas FCM HTTP v1 ? | Il exige un **compte de service par société** (fichier JSON, rotation, stockage) et un `google-services.json` dans chaque app. Expo relaie vers FCM et APNs avec **ses** identifiants : le backend ne porte aucun secret de push — décisif en multi-tenant. |
+| Et si un client l'exige un jour ? | `config('push.driver')` choisit le pilote ; le reste du code ne connaît que l'interface `PushGateway`. Ajouter FCM v1, c'est une classe de plus, pas une reprise. |
+| Où sont les appareils ? | Table `device_tokens` : une ligne par appareil (un marchand a téléphone **et** tablette), `company_id` pour le scope. `users.device_token`, la colonne du socle, n'a jamais été écrite par aucun code — elle reste inutilisée. |
+| Qui décide du destinataire ? | Le **compte authentifié**, jamais la requête. C'est la suite de S11 : le socle laissait s'abonner aux notifications d'autrui en connaissant son adresse e-mail. |
+
+**Une seule notification par événement.** Le fil marchand
+(`MerchantNotification`) pousse désormais par un canal ajouté à `via()` — les
+six familles d'événements suivent **sans qu'aucun émetteur change**. Le chemin
+du socle (`PushNotificationService`), lui, ne sert plus que les **non-marchands**
+(livreur, ramasseur, hub) : servir le marchand des deux côtés lui vaudrait deux
+notifications pour un fait.
+
+**Périmètre du destinataire.** Il vient de l'objet notifié (le colis, le
+message), **jamais de `settings()`** : les adresses e-mail ne sont pas uniques
+en base, et `settings()` retombe sur la société 1 hors requête locataire — une
+commande console aurait poussé au mauvais compte.
+
+**Ce qui reste hors du push.** Un envoi part encore **dans la requête HTTP**
+(`QUEUE_CONNECTION=sync`), avec un délai d'attente de 5 s ; c'est le constat 7
+de la cartographie, valable pour le SMS comme pour le push, et il n'est pas
+aggravé ici — l'appel remplace un aller-retour vers une API morte. Le back-office
+garde par ailleurs son push **navigateur** (`users.web_token`), toujours branché
+sur l'API arrêtée : il ne concerne aucune app mobile et attend son propre
+chantier.
+

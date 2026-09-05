@@ -2,6 +2,9 @@
 
 namespace App\Notifications;
 
+use App\Models\User;
+use App\Notifications\Channels\PushChannel;
+use App\Services\Push\PushMessage;
 use Illuminate\Notifications\Notification;
 
 /**
@@ -12,9 +15,10 @@ use Illuminate\Notifications\Notification;
  * en français par `MerchantFeed`. Une classe par événement n'apporterait ici
  * qu'un nom de type de plus en base.
  *
- * Canal `database` seulement : le push FCM du socle est hors service (bloc K
- * de la cartographie) et l'e-mail n'a pas de gabarit. Les ajouter reviendra à
- * compléter `via()`, sans toucher aux émetteurs.
+ * Deux canaux : `database` (le fil que lit l'app) et `push` (la notification
+ * poussée sur l'appareil). Le second ne s'ajoute que si l'utilisateur a au
+ * moins un appareil abonné — sinon on n'appelle rien. L'e-mail, lui, n'a
+ * toujours pas de gabarit.
  */
 class MerchantNotification extends Notification
 {
@@ -35,7 +39,27 @@ class MerchantNotification extends Notification
 
     public function via($notifiable): array
     {
-        return ['database'];
+        $canaux = ['database'];
+
+        // Interroger la table plutôt que de tenter un push à vide : la très
+        // grande majorité des comptes du back-office n'a aucun appareil.
+        if ($notifiable instanceof User && $notifiable->deviceTokens()->exists()) {
+            $canaux[] = PushChannel::class;
+        }
+
+        return $canaux;
+    }
+
+    /**
+     * Le même texte que le fil, et les mêmes clés en `data` : l'app ouvre
+     * l'écran concerné au toucher sans avoir à traduire un second vocabulaire.
+     */
+    public function toPush($notifiable): PushMessage
+    {
+        return new PushMessage($this->title, $this->body, array_merge(
+            ['kind' => $this->kind],
+            array_map(fn ($valeur) => is_scalar($valeur) || $valeur === null ? $valeur : (string) $valeur, $this->extra),
+        ));
     }
 
     public function toDatabase($notifiable): array

@@ -91,6 +91,10 @@ export const endpoints = {
   notificationsReadAll: 'notifications/read-all',
   notificationRead: (id: string) => `notifications/${id}/read`,
 
+  // — Notifications poussées : l'appareil s'abonne pour lui-même (D11).
+  pushRegister: 'push/register',
+  pushForget: 'push/forget',
+
   // — Divers
   newsOffers: 'news-offer/index',
   supportIndex: 'support/index',

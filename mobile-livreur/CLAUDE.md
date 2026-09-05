@@ -64,6 +64,13 @@ Codes dans `src/domain/parcelStatus.ts` (jamais redéfinis côté app).
 Identique à `mobile/` : Vert `#12503A` · Ocre `#E0A63C` · Sora + DM Sans · FCFA entiers.
 Icônes Ionicons ; visuels d'app générés depuis `assets/source/generate.py`.
 
+## Notifications poussées (D11)
+- Transport **Expo**, routes communes aux deux apps : `push/register` à l'ouverture de
+  session, `push/forget` **avant** la déconnexion (`src/push`).
+- C'est le **seul** canal du livreur : il n'a pas de fil consultable. Une affectation de
+  course arrive par là, et le toucher ouvre directement la course.
+- Un refus de permission ne bloque rien — les courses restent visibles dans l'onglet.
+
 ## Commandes
 - `npm install` · `npx expo start` · `npm run typecheck` · `npx expo lint`
 - Build : `eas build -p android` (APK/AAB) · `eas build -p ios`

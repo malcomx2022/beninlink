@@ -12,6 +12,11 @@ export const endpoints = {
   signOut: 'sign-out',
   updatePassword: 'update-password',
 
+  // — Notifications poussées : l'appareil s'abonne pour lui-même (D11).
+  // Route commune aux deux apps, sous `auth:sanctum`.
+  pushRegister: 'push/register',
+  pushForget: 'push/forget',
+
   // — Espace livreur
   /** Quatre listes (assignés, reprogrammés, retours, livrés) en ParcelResource. */
   dashboard: 'deliveryman/dashboard',

@@ -111,6 +111,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(WalletInterface::class,     WalletRepository::class);
         $this->app->bind(PlanInterface::class,       PlanRepository::class);
         $this->app->bind(CompanyInterface::class,    CompanyRepository::class);
+
+        // Transport des notifications poussées, choisi par `config('push.driver')`.
+        // `null` = rien ne part (tests, installation sans app mobile) ; le fil en
+        // base est écrit dans les deux cas. Décision D11.
+        $this->app->singleton(\App\Services\Push\PushGateway::class, function () {
+            return config('push.driver') === 'expo'
+                ? new \App\Services\Push\ExpoPushGateway()
+                : new \App\Services\Push\NullPushGateway();
+        });
       
     }
 

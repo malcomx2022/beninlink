@@ -246,6 +246,10 @@ export const fr = {
     kindCustoms: 'Douane',
     kindMessage: 'Message BeninLink',
     kindPayout: 'Retrait',
+    /** Notifications poussées : canal Android et refus de permission. */
+    channelName: 'Alertes BeninLink',
+    permissionDenied:
+      "Les notifications sont désactivées pour BeninLink. Vous retrouverez tout dans l'écran Notifications.",
   },
   rates: {
     title: 'Tarifs de livraison',

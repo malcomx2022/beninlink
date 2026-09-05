@@ -49,6 +49,7 @@
 | Reporting SaaS (MRR…) | oui | — | — |
 | OpenAPI / Swagger | oui (génère) | consomme | consomme |
 | Suivi / statuts colis | oui | oui (timeline) | oui (changer statut) |
+| Notifications poussées | oui (transport D11) | oui (fil + push) | oui (push seul) |
 
 Le module **FedaPay** vit **entièrement dans `web/`**. Les apps ouvrent seulement
 l'`payment_url` renvoyée par le backend ; elles n'accèdent jamais aux clés.

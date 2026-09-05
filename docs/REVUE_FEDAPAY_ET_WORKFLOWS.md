@@ -1050,7 +1050,45 @@ déplacent bien le paiement, les deux réaffectations qui désignent le dernier
 nommé, le transfert entre agences, les onze étapes refusées sur un colis
 d'ailleurs, et le livreur d'ailleurs refusé.
 
-## 21. Ce qui reste, et n'est pas un constat
+## 21. Les notifications poussées, rebranchées — 2026-09-05 ✅
+
+Le fil marchand (§ « Fil de notifications marchand ») écrivait ses entrées en
+base depuis le 4 septembre, et l'app les affichait. Mais **rien ne sonnait sur
+le téléphone** : le transport du socle est l'API FCM *legacy*, arrêtée par
+Google le 20 juin 2024 (constat 6 de la cartographie).
+
+Ce n'était pas seulement une fonction manquante. Chaque changement de statut
+payait un aller-retour HTTPS bloquant pour se faire refuser, et
+`sendPushNotification()` appelait `die()` sur échec cURL — une coupure réseau
+tuait la requête métier.
+
+### Ce qui a été fait
+
+| Élément | Où |
+|---|---|
+| Transport | `App\Services\Push\ExpoPushGateway` (service de push d'Expo), choisi par `config('push.driver')` derrière l'interface `PushGateway` — pilote `null` pour une installation sans app |
+| Appareils | table `device_tokens` (une ligne par appareil, `company_id` scopé) ; `POST push/register` et `push/forget`, qui rattachent au **compte authentifié** |
+| Fan-out | canal `PushChannel` ajouté à `MerchantNotification::via()` : les **six familles** d'événements poussent sans qu'aucun émetteur change |
+| Chemin du socle | `PushNotificationService` garde ses signatures et ses quinze appels ; il sert désormais les **non-marchands** (le marchand est servi par son fil, une fois) |
+| Hygiène | un appareil déclaré `DeviceNotRegistered` est supprimé ; les envois sont découpés à la limite du service ; aucune exception ne remonte |
+| Apps | `expo-notifications` dans `mobile/` et `mobile-livreur/` : abonnement à l'ouverture de session, désabonnement **avant** la déconnexion, et le toucher ouvre l'écran concerné (le colis, la course) |
+
+### Pourquoi Expo plutôt que FCM v1
+
+Décision **D11**. En deux mots : FCM v1 demanderait un compte de service **par
+société**, Expo n'en demande aucun — et les deux apps du projet sont des apps
+Expo. Le pilote se change dans un fichier de configuration.
+
+### Ce que ça couvre
+
+`tests/Feature/PushNotificationTest` — 14 tests : abonnement rejouable,
+désabonnement limité à ses propres appareils, appareil qui change de main,
+jeton non livrable refusé, un crédit de wallet réel qui pousse **le même texte
+que le fil**, absence d'appareil, service en panne, appareil mort oublié,
+découpage en lots, un seul push par événement pour le marchand, et une adresse
+partagée par deux sociétés qui ne pousse qu'au bon compte.
+
+## 22. Ce qui reste, et n'est pas un constat
 
 - Le correctif du débit (W5) **ne rattrape pas le passé** : si la production
   tourne déjà, des colis créés depuis l'app peuvent n'avoir jamais été débités.
@@ -1060,3 +1098,7 @@ d'ailleurs, et le livreur d'ailleurs refusé.
 - ~~Les étapes **non comptables** du cycle de vie~~ ✅ **couvertes le
   2026-09-05** (§20). Elles ne déplaçaient pas d'argent — elles décidaient mal
   qui en toucherait.
+- ~~Le **push** hors service~~ ✅ **rebranché le 2026-09-05** (§21, décision
+  **D11**). Reste, et n'a pas bougé : le push **navigateur** du back-office
+  (`users.web_token`), toujours sur l'API arrêtée, et les envois **en file**
+  (tout part encore dans la requête HTTP — constat 7 de la cartographie).

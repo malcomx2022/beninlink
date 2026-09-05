@@ -40,6 +40,16 @@ En attente → Ramassage assigné → Entrepôt → Livreur assigné → Livré 
 ## Design system
 Vert `#12503A` · Ocre `#E0A63C` · rouge = incident. Sora (titres/chiffres) + DM Sans (corps).
 
+## Notifications poussées (D11)
+- Transport **Expo** ; l'app envoie son jeton à `POST push/register` une fois connectée,
+  et appelle `push/forget` **avant** la déconnexion (`src/push`). Aucun secret côté app.
+- La permission est demandée **après** connexion seulement, et un refus ne bloque rien :
+  le fil (`notifications/*`) reste consultable.
+- Le texte affiché est celui rédigé par le serveur ; le toucher ouvre l'écran nommé par
+  `data.kind` (colis, portefeuille, relevés, douane).
+- Un build Android/iOS de production a besoin des identifiants de push via
+  `eas credentials` ; en Expo Go, seul l'appareil physique reçoit.
+
 ## Commandes
 - `npm install` · `npx expo start` · `npx expo lint`
 - Build : `eas build -p android` (APK/AAB) · `eas build -p ios`

@@ -1476,9 +1476,11 @@ Couverts à ce jour : signature du webhook FedaPay, **S14** (facture d'un autre 
    barème (zones en lignes, poids en tranches) sont **le même chantier** — ~~le repli de
    tarif actuel ignore le poids et n'est pas scopé par société~~ ✅ résolveur unique le
    2026-09-04 (S8, S9) ; la refonte du schéma (zones, tranches min/max) reste à décider.
-6. **Le push (bloc K) est hors service, pas mal configuré** : l'API d'envoi utilisée a
-   été arrêtée par Google le 20 juin 2024 (extinction dès le 22 juillet 2024). Toute
-   promesse de notification dans `mobile/` et `mobile-livreur/` suppose d'abord la
-   migration HTTP v1 — à chiffrer comme un développement.
+6. ~~**Le push (bloc K) est hors service, pas mal configuré**~~ ✅ **traité le
+   2026-09-05** (décision **D11**, revue §21). L'API d'envoi du socle a bien été
+   arrêtée par Google le 20 juin 2024 ; le transport passe désormais par le service
+   de push d'Expo (`config('push.driver')`), sans compte de service par société.
+   Reste hors périmètre : le push **navigateur** du back-office (`users.web_token`),
+   toujours branché sur l'API arrêtée.
 7. **Mettre les envois en file avant d'ajouter une passerelle SMS locale** : aujourd'hui
    tout part en `sync`, dans la requête HTTP.

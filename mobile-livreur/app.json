@@ -49,6 +49,12 @@
           "cameraPermission": "BeninLink Livreur utilise l'appareil photo pour la preuve de livraison.",
           "photosPermission": "BeninLink Livreur accède à vos photos pour joindre une preuve de livraison."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#12503A"
+        }
       ]
     ],
     "experiments": {
