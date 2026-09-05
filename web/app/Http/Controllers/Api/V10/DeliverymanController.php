@@ -98,13 +98,44 @@ class DeliverymanController extends Controller
         }
     }
 
+    /**
+     * Statuts pour lesquels le colis est encore entre les mains du livreur.
+     *
+     * Ce sont les onglets « en cours » et « Retours » de son écran : livré (9)
+     * et livraison partielle (32) en sont exclus, la course y est close.
+     */
+    private const COURSES_EN_COURS = [
+        ParcelStatus::DELIVERY_MAN_ASSIGN,
+        ParcelStatus::DELIVERY_RE_SCHEDULE,
+        ParcelStatus::RETURN_TO_COURIER,
+    ];
+
+    /**
+     * Remonter la position du livreur sur ses courses **en cours**.
+     *
+     * ⚠️ W2 — la portée n'était bornée que par le livreur : chaque partage de
+     * position réécrivait `delivery_lat` / `delivery_long` sur **tous** ses
+     * `parcel_events`, y compris ceux de livraisons déjà closes. La coordonnée
+     * enregistrée au moment d'une livraison ancienne — sa preuve géographique —
+     * était donc détruite à chaque appel. Et l'app livreur appelle cette route
+     * silencieusement après chaque déclaration de livraison, ce qui écrasait
+     * l'historique plusieurs fois par tournée.
+     *
+     * Le correctif borne l'écriture aux colis dont le statut **courant** est
+     * encore une course en main. Le correctif S7 tient toujours : `deliveryID`
+     * de la requête reste ignoré au profit du compte authentifié.
+     */
     public function parcelLocationUpdate(Request $request){
         try {
 
             // S7 — le livreur ne met à jour que SES positions : `deliveryID`
             // de la requête est ignoré au profit du compte authentifié.
             $user = Auth::user()->deliveryman->id;
-            $parcelEvents = ParcelEvent::where('delivery_man_id',$user)->get();
+            $parcelEvents = ParcelEvent::where('delivery_man_id',$user)
+                ->whereHas('parcel', function ($query) {
+                    $query->whereIn('status', self::COURSES_EN_COURS);
+                })
+                ->get();
             if(!blank($parcelEvents)) {
                 foreach ($parcelEvents as $parcelEvent) {
                     $parcelEvent->delivery_lat = $request->lat;

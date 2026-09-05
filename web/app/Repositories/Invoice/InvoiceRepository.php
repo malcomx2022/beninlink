@@ -267,9 +267,24 @@ class InvoiceRepository implements InvoiceInterface
             return false;
         }
     }
+    /**
+     * Relevés de règlement du marchand connecté, pour l'app.
+     *
+     * ⚠️ W4 — la ligne d'origine passait **trois** arguments a `where()` :
+     * `where('status', InvoiceStatus::PAID, InvoiceStatus::PROCESSING)`. Le
+     * deuxieme argument est l'operateur : Laravel, ne reconnaissant pas `3`
+     * comme operateur, retablissait silencieusement `where('status', '=', PAID)`.
+     * Le filtre `PROCESSING` etait perdu, les releves `UNPAID` n'avaient jamais
+     * ete prevus, et la liste ne rendait donc que les releves **deja regles** —
+     * c'est-a-dire pas ceux que le marchand attend. Il n'y avait pas non plus
+     * de tri : les lignes sortaient dans l'ordre de la base.
+     *
+     * `get()` sert deja la meme liste au panneau marchand web, tous statuts,
+     * du plus recent au plus ancien. L'app consomme desormais la meme : une
+     * seule definition, aucune divergence entre les deux surfaces.
+     */
     public function invoiceLists()
     {
-        $invoices = Invoice::companywise()->where('merchant_id', Auth::user()->merchant->id)->where('status', InvoiceStatus::PAID, InvoiceStatus::PROCESSING)->paginate(10);
-        return $invoices;
+        return $this->get();
     }
 }

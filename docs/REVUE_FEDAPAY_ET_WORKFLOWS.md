@@ -6,11 +6,16 @@
 > Base de référence au moment de la revue : `vendor/bin/phpunit` — 127 tests,
 > 824 assertions, au vert.
 >
-> **Mise à jour du 2026-09-05.** La revue elle-même ne corrigeait rien. Les deux
-> constats les plus graves, **W1** et **F1**, ont depuis été corrigés à la demande
-> du porteur ; voir §2 et §7, qui portent le correctif et les tests qui le
-> verrouillent. Suite après correction : **139 tests, 860 assertions, au vert**.
-> Tous les autres constats restent ouverts.
+> **Mise à jour du 2026-09-05.** La revue elle-même ne corrigeait rien. Cinq
+> constats ont depuis été corrigés à la demande du porteur : **W1** et **F1**
+> d'abord, puis **W2**, **W4** et **W5**. Chaque section porte son correctif et
+> les tests qui le verrouillent. Suite après correction : **150 tests,
+> 891 assertions, au vert**, contre 127 au moment de la revue.
+>
+> Deux défauts plus lourds que ce que la revue avait établi sont apparus en
+> corrigeant, et sont documentés à leur place : la liste des relevés de l'app
+> **échouait en 500** pour tout relevé existant (§10), et le portefeuille
+> **n'était jamais débité** pour un colis créé depuis l'app (§10).
 
 ## Sommaire des constats classés
 
@@ -18,13 +23,13 @@
 |---|---|---|---|
 | **W1** | Un marchand se déclare lui-même « Livré » et entre au relevé de règlement | **Critique** | ✅ **corrigé** |
 | **F1** | Double crédit d'une recharge FedaPay par l'écran d'approbation admin | **Grave** | ✅ **corrigé** |
-| **W2** | La position du livreur écrase celle de toutes ses courses passées | Grave | non (lecture) |
+| **W2** | La position du livreur écrase celle de toutes ses courses passées | Grave | ✅ **corrigé** |
 | **F2** | FedaPay n'a aucune surface de configuration côté administration | Structurel | oui |
 | **F3** | La clé FedaPay par locataire est une branche morte | Structurel | oui |
 | **W3** | Le contrôle douanier est absent de la création côté back-office | Moyen | oui |
 | **F4** | Le SMS de confirmation part sous l'identité de la société 1 | Moyen | oui |
-| **W4** | La liste des relevés de l'API ne rend que les relevés payés | Moyen | oui |
-| **W5** | Un échec de débit du portefeuille est avalé en silence | Moyen | oui |
+| **W4** | La liste des relevés de l'API échoue en 500, et ne filtrait que les payés | **Grave** | ✅ **corrigé** |
+| **W5** | Le portefeuille n'est jamais débité depuis l'app, et l'échec est muet | **Grave** | ✅ **corrigé** |
 | — | Onze constats mineurs, voir §5 et §7 | Faible | — |
 
 ---
@@ -244,7 +249,7 @@ web n'annonce plus un succès quand rien n'a été écrit.
 le fait que la liste blanche est le seul levier, et surtout que le colis
 n'atteint plus le relevé de règlement.
 
-## 8. W2 — la position du livreur écrase l'historique de ses courses
+## 8. W2 — la position du livreur écrase l'historique de ses courses — ✅ corrigé
 
 `DeliverymanController::parcelLocationUpdate()` écrit la position reçue sur
 **tous** les `parcel_events` portant l'identifiant du livreur, sans filtrer sur
@@ -262,6 +267,18 @@ preuve géographique d'une livraison ancienne est donc détruite à chaque appui
 « Partager ma position », et l'app livreur appelle cette route silencieusement
 après chaque déclaration de livraison.
 
+### Correctif appliqué
+
+L'écriture est bornée aux colis dont le **statut courant** est encore une course
+en main : livreur affecté, livraison reprogrammée, retour au coursier. Ce sont
+les onglets « en cours » et « Retours » de son écran ; livré et livraison
+partielle en sont exclus, la course y est close. Le correctif S7 tient toujours,
+`deliveryID` de la requête reste ignoré.
+
+`tests/Feature/DeliverymanLocationScopeTest.php` (4 tests) : la course en cours
+reçoit la position, la livraison close et la livraison partielle gardent la leur,
+un retour en main la reçoit encore, et la course d'un collègue reste intacte.
+
 ## 9. W3 — le contrôle douanier est absent de la création côté back-office
 
 `app/Http/Requests/MerchantPanel/Parcel/StoreRequest.php` porte
@@ -273,7 +290,7 @@ bloquant est refusé côté API et côté panneau marchand.
 que la règle douanière interdit. L'observer émet bien l'alerte a posteriori, mais
 le blocage, lui, ne s'applique pas.
 
-## 10. W4 et W5 — deux défauts silencieux
+## 10. W4 et W5 — deux défauts silencieux, plus lourds qu'annoncé — ✅ corrigés
 
 **W4 — la liste des relevés de l'API ne rend que les relevés payés.**
 `InvoiceRepository::invoiceLists()` écrit
@@ -287,14 +304,61 @@ liaisons = [2, 1, 3]
 ```
 
 Le filtre `PROCESSING` est perdu, et les relevés `UNPAID` n'ont jamais été prévus.
-L'écran « Factures » de l'app marchand ne montre donc que les relevés déjà réglés,
-c'est-à-dire pas ceux que le marchand attend.
 
-**W5 — un échec de débit du portefeuille est avalé en silence.**
+**Et le défaut est plus lourd que cela.** En corrigeant le filtre, la liste
+répondait toujours 500. `InvoiceResource` compose le montant à partir de
+`$this->PartialParcelsReturnMerchant` et `$this->parcels_return_merchant_fees`,
+**deux propriétés qui n'existent nulle part** : ni accesseur, ni relation, ni
+colonne. Elles valent donc toujours `null`, et `->sum()` sur `null` est fatal.
+L'écran « Factures » de l'app marchand ne pouvait fonctionner que tant qu'il
+était **vide** : dès le premier relevé émis, il tombait en erreur.
+
+### Correctif appliqué
+
+Deux choses, l'une derrière l'autre.
+
+Le montant servi est désormais le net que **porte le relevé**,
+`invoices.current_payable`. `InvoiceRepository::store()` le calcule une fois à
+l'émission, colis livrés moins frais de retour, et c'est lui que le PDF du
+chantier 4 publie sous « net constaté ». Même chiffre dans la liste, dans le PDF
+et dans le journal SYSCOHADA, et une valeur qu'une mutation ultérieure d'un colis
+ne fait plus bouger, ce qu'on attend d'un relevé de règlement.
+
+La liste elle-même délègue à `get()`, celle que le panneau marchand web sert
+déjà : tous statuts, du plus récent au plus ancien. Une seule définition, aucune
+divergence entre les deux surfaces.
+
+`tests/Feature/InvoiceListTest.php` (5 tests) : les trois statuts présents, le
+plus récent en tête, le cloisonnement par marchand, la non-régression du 500, et
+l'égalité stricte entre ce que voient l'app et le panneau web.
+
+**W5 — le portefeuille n'était jamais débité depuis l'app, et l'échec était muet.**
 Dans `MerchantParcelRepository::store()`, le débit du portefeuille à la création
 d'un colis est enveloppé dans un `try { ... } catch (\Throwable $th) { }` **vide**.
-Si le débit échoue, le colis est créé et le marchand n'est pas facturé, sans trace
-ni journal.
+
+Le silence cachait plus qu'une panne. Le bloc lisait `$request->merchant_id`,
+alors que le colis, lui, est rattaché à `$request->merchant_id ?? $merchant_id`.
+Créée depuis l'app, la requête ne porte pas ce champ — le marchand vient du
+compte authentifié. `Merchant::find(null)` rendait donc `null`, la condition
+n'était jamais vraie (lire une propriété sur `null` est un avertissement, pas une
+exception), et **le portefeuille n'était jamais débité** : tout colis créé depuis
+l'app marchand échappait à la facturation. Le `catch` vide garantissait que
+personne ne le verrait.
+
+### Correctif appliqué
+
+Le débit charge le marchand **du colis**, `$parcel->merchant_id`, la même
+résolution que le colis lui-même. Le chemin web, où la requête porte le champ,
+est inchangé.
+
+Le `catch` journalise désormais en erreur, avec le colis, son numéro de suivi, le
+marchand et le montant : de quoi rapprocher et régulariser. Le colis reste créé,
+comme avant ; rendre le débit atomique avec la création change le comportement et
+relève d'une décision à part.
+
+`tests/Feature/ParcelWalletDebitTraceTest.php` (2 tests) : le chemin nominal
+débite bien et ne journalise aucune erreur ; une panne du service de portefeuille
+laisse le colis en place et une trace exploitable.
 
 ## 11. Autres divergences et trous relevés
 
@@ -356,8 +420,11 @@ Cet ordre suit le risque financier, pas la difficulté.
    distingués, 5 tests.
 2. ~~**F1**~~ ✅ **corrigé le 2026-09-05** — approbation réservée aux lignes
    `PENDING`, sous verrou de ligne, 7 tests.
-3. **W2** — restreindre la mise à jour de position aux courses en cours.
-4. **W4** et **W5** — deux corrections d'une ligne chacune, à fort effet visible.
+3. ~~**W2**~~ ✅ **corrigé le 2026-09-05** — écriture bornée aux courses en main,
+   4 tests.
+4. ~~**W4**~~ et ~~**W5**~~ ✅ **corrigés le 2026-09-05** — la liste des relevés
+   ne tombe plus en erreur et rend tous les statuts (5 tests) ; le portefeuille
+   est débité et l'échec laisse une trace (2 tests).
 5. **F2** et **F3** — décider du modèle d'encaissement, puis ouvrir l'écran de
    réglages qui va avec.
 6. **W3**, **F4**, **F5**, **F6** — cohérence et filets de sécurité.

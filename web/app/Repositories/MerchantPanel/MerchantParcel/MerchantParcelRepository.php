@@ -25,6 +25,7 @@ use App\Models\User;
 use App\Repositories\Wallet\WalletInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class MerchantParcelRepository implements MerchantParcelInterface {
@@ -319,15 +320,24 @@ class MerchantParcelRepository implements MerchantParcelInterface {
             try {
                 //wallet
                 if ($parcel) :
-                    $w_merchant                 =  Merchant::find($request->merchant_id);
-                    if($w_merchant->wallet_use_activation == Status::ACTIVE):
+                    // ⚠️ Le socle lisait `$request->merchant_id`, alors que le
+                    // colis lui-meme est rattache a `$request->merchant_id ??
+                    // $merchant_id`. Cree depuis l'app, la requete ne porte pas
+                    // ce champ — le marchand vient du compte authentifie — donc
+                    // `Merchant::find(null)` rendait `null`, la condition
+                    // n'etait jamais vraie (lire une propriete sur `null` est un
+                    // avertissement, pas une exception), et **le portefeuille
+                    // n'etait jamais debite** : les colis crees depuis l'app
+                    // n'etaient pas factures. On charge le marchand du colis.
+                    $w_merchant                 =  Merchant::find($parcel->merchant_id);
+                    if($w_merchant && $w_merchant->wallet_use_activation == Status::ACTIVE):
                         $m_user_id                  = $w_merchant->user_id;
                         $w_merchant->wallet_balance = $w_merchant->wallet_balance - $parcel->total_delivery_amount;
                         $w_merchant->save();
     
                         $walletExpense                 = new Request();
                         $walletExpense['user_id']      = $m_user_id;
-                        $walletExpense['merchant_id']  = $request->merchant_id;
+                        $walletExpense['merchant_id']  = $parcel->merchant_id;
                         $walletExpense['tracking_id']  = $parcel->tracking_id;
                         $walletExpense['amount']       = $parcel->total_delivery_amount;
                         $this->walletRepo->expense($walletExpense);
@@ -336,7 +346,24 @@ class MerchantParcelRepository implements MerchantParcelInterface {
                 //end wallet
                  
             } catch (\Throwable $th) {
-                 
+                // ⚠️ W5 — ce `catch` etait **vide** : une panne au milieu du
+                // debit ne laissait aucune trace. Selon l'endroit ou elle
+                // survient, le solde a pu bouger sans que la ligne `wallets`
+                // soit ecrite, ou l'inverse : un ecart comptable muet.
+                //
+                // Le colis reste cree, comme avant : rendre le debit atomique
+                // avec la creation change le comportement et releve d'une
+                // decision a part. Mais l'ecart est desormais **visible** et
+                // rapprochable, avec ce qu'il faut pour regulariser a la main.
+                Log::error('Debit du portefeuille en echec a la creation d\'un colis', [
+                    'parcel_id'   => $parcel->id ?? null,
+                    'tracking_id' => $parcel->tracking_id ?? null,
+                    // Le marchand du COLIS, pas celui de la requete : cree
+                    // depuis l'app, elle ne porte pas ce champ.
+                    'merchant_id' => $parcel->merchant_id ?? null,
+                    'amount'      => $parcel->total_delivery_amount ?? null,
+                    'message'     => $th->getMessage(),
+                ]);
             }
 
             return true;
