@@ -886,16 +886,84 @@ Le calcul était juste. Manquaient le scope et l'atomicité :
   dette soldée, les deux scopes, l'atomicité, la suppression, et la correction
   qui **remplace** le montant au lieu de s'y ajouter.
 
-## 18. Ce qui reste, et n'est pas un constat
+## 18. Le rapprochement solde / relevé — 2026-09-05 ✅
+
+`merchants.current_balance` n'est qu'un **cache** : la vérité est
+`merchant_statements`, où chaque mouvement laisse sa ligne. Les deux doivent
+toujours se répondre — `opening_balance + Σ(recettes) − Σ(dépenses)`.
+L'annulation d'une livraison partielle avait cassé cet invariant, 14,40 F à la
+fois (§17).
+
+`php artisan beninlink:ecarts-marchands [--marchand=] [--corriger] [--force]`
+rapproche les deux. Il **ne corrige que ce qu'il sait entièrement expliquer**
+par les annulations de livraisons partielles, au centime près : le reste, il le
+montre. Réaligner un écart qu'on n'explique pas rendrait au marchand un argent
+qui lui a peut-être été réellement versé.
+
+La correction n'écrit **aucune** ligne de relevé, et c'est le point : le relevé
+a toujours été juste, c'est le cache qui avait dérivé. Lui ajouter une ligne le
+rendrait faux à son tour.
+
+Les montants s'y affichent **au centime**, contrairement à la règle XOF entier
+du reste du projet. C'est délibéré : afficher « 14 F » cacherait exactement ce
+qui identifie l'écart.
+
+### Deux autres chemins cassent le même invariant
+
+La commande les nomme dans sa sortie plutôt que de faire comme s'ils
+n'existaient pas — sans eux, un opérateur lirait tout écart comme le bug de
+TVA.
+
+- Les **passerelles de retrait en ligne** (`PayoutController` et ses variantes
+  bKash, Skrill, Razorpay…) débitent `current_balance` **sans écrire au
+  relevé**.
+- **Modifier une fiche marchand** en renseignant le solde d'ouverture écrase
+  `current_balance` (`MerchantRepository::update()`), effaçant tout ce qui
+  s'était accumulé depuis.
+
+Les deux restent à trancher.
+
+### Un défaut découvert en écrivant le rapprochement
+
+Le premier test écrit — « une livraison normale ne produit aucun écart » — a
+échoué. Non pas à cause de la livraison, mais parce que le relevé lu était
+vide : les **treize** écritures de `MerchantStatement` du cycle de vie d'un
+colis ne renseignaient pas `merchant_id`.
+
+Or c'est exactement la colonne que lit l'écran « Mes relevés », côté panneau
+marchand comme côté API : `MerchantStatement::where('merchant_id', …)`. **Le
+relevé du marchand ne montrait donc aucune ligne de livraison** — ni
+l'encaissement, ni les frais, ni la TVA. Son solde bougeait sans rien pour
+l'expliquer, ce qui est le contraire de ce qu'un relevé doit faire.
+
+Les treize écritures nomment désormais leur marchand, et la migration
+`2026_09_05_140000` rattrape ce qui est déjà en base. Contrairement aux lignes
+de `settings` orphelines (**D-A**, laissées telles quelles), l'attribution est
+ici **certaine** : chaque ligne porte son `parcel_id`, et un colis appartient à
+un marchand et un seul.
+
+### Ce que ça couvre
+
+- `tests/Feature/MerchantBalanceDriftCommandTest` — 10 tests. Les écarts y sont
+  **fabriqués à la main**, et il ne peut pas en être autrement : depuis le
+  correctif, le code ne sait plus en produire. Dont : l'écart s'accumule colis
+  par colis, la correction est idempotente, un écart inexpliqué n'est jamais
+  corrigé, un écart mixte non plus, et un solde d'ouverture n'est pas un écart.
+- `tests/Feature/MerchantStatementBackfillTest` — 4 tests sur le rattachement,
+  y compris la ligne sans colis qui reste orpheline faute d'attribution.
+
+## 19. Ce qui reste, et n'est pas un constat
 
 - Le correctif du débit (W5) **ne rattrape pas le passé** : si la production
   tourne déjà, des colis créés depuis l'app peuvent n'avoir jamais été débités.
   `php artisan beninlink:colis-non-debites` en dresse la liste (**D7**).
-- L'écart de 14,40 F ne se rattrape pas non plus tout seul : les colis livrés
-  partiellement **puis annulés** avant le correctif portent, chacun, un écart
-  entre le solde du marchand et son relevé. Un rapprochement
-  `merchant_statements` / `merchants.current_balance` le mettrait au jour ;
-  il n'existe pas encore.
+- ~~L'écart de 14,40 F~~ ✅ **rapprochement écrit le 2026-09-05** :
+  `php artisan beninlink:ecarts-marchands` (§18, décision **D9**).
 - Les étapes **non comptables** du cycle de vie (affectation, transfert entre
   agences, reprogrammations) restent sans tests. Elles ne déplacent pas
   d'argent, mais elles décident quel livreur sera payé à l'arrivée.
+- **Deux chemins cassent encore l'invariant solde / relevé** (§18), et n'ont
+  pas été tranchés : les passerelles de retrait en ligne débitent sans écrire
+  au relevé, et ré-enregistrer une fiche marchand avec un solde d'ouverture
+  écrase le solde courant. Le premier est peut-être sans objet au Bénin — ce
+  sont des passerelles bangladaises ; le second, non.

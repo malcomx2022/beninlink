@@ -49,6 +49,10 @@ avant les apps.
   constate les colis de marchands au portefeuille jamais facturés (W5, `catch`
   vide, import Excel) ; `--regulariser` écrit les débits manquants (refusé en
   production sans `--force`). Décision **D7** de `docs/DECISIONS_METIER.md`.
+- `php artisan beninlink:ecarts-marchands [--marchand=] [--corriger] [--force]` —
+  rapproche `merchants.current_balance` de son relevé (`merchant_statements`).
+  Ne corrige que les écarts **entièrement expliqués** par les annulations de
+  livraisons partielles ; les autres, il les montre. Décision **D9**.
 - Version PHP réelle : voir `web/composer.json`.
 
 ## Conventions
