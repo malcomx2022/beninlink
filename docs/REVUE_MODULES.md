@@ -357,13 +357,20 @@ fonctionnait pas du tout (elle écrivait une colonne `parcel_bank` que
 journal lisait le marchand de la requête au lieu de celui du colis — la mécanique
 exacte de W5.
 
-**Un constat neuf, laissé ouvert volontairement** (§15) : l'**import Excel en
-masse** (`ParcelImport`, back-office et panneau marchand) crée les colis sans
-jamais toucher le portefeuille — ni contrôle, ni débit. Pour un marchand au
-portefeuille, le débit à la création *est* la facturation : un import n'est donc
-facturé nulle part. Le corriger reviendrait à **introduire** un débit là où il
-n'y en a jamais eu, ce qui change ce que paient les marchands qui utilisent déjà
-l'import : c'est une décision métier, pas un correctif de revue.
+**L'import Excel en masse** (`ParcelImport`, back-office et panneau marchand)
+créait les colis sans jamais toucher le portefeuille — ni contrôle, ni débit.
+Ses trois questions ont été tranchées le 2026-09-05 (§15, décision **D7**) :
+**il débite** comme la saisie, un solde insuffisant refuse **tout le fichier**
+(le socle faisait déjà ainsi pour les erreurs de validation), et le passé se
+constate avec `php artisan beninlink:colis-non-debites` avant de se régulariser
+compte par compte.
+
+Quatre défauts découverts en ouvrant le fichier : les colis importés n'avaient
+pas de `company_id` et restaient invisibles à tous les écrans du back-office ;
+le marchand venait de la colonne `merchant_id` du fichier sans aucun contrôle —
+inoffensif tant que rien n'était facturé, vidangeur de portefeuille une fois le
+débit branché ; l'import avait son propre barème au lieu du `ChargeCalculator`
+imposé par S2 ; et une colonne facultative en moins tuait l'import.
 
 ## 11. Apps Flutter dépréciées (référence)
 

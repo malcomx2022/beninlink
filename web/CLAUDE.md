@@ -45,6 +45,10 @@ avant les apps.
 - `php artisan beninlink:reglages-orphelins` — constate les lignes `settings`
   écrites sans société avant le correctif du `fillable` ; `--purge` pour les retirer.
   (refusé en production) — voir `docs/guides/recette-pilote/README.md`.
+- `php artisan beninlink:colis-non-debites [--marchand=] [--regulariser] [--force]` —
+  constate les colis de marchands au portefeuille jamais facturés (W5, `catch`
+  vide, import Excel) ; `--regulariser` écrit les débits manquants (refusé en
+  production sans `--force`). Décision **D7** de `docs/DECISIONS_METIER.md`.
 - Version PHP réelle : voir `web/composer.json`.
 
 ## Conventions

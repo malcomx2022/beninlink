@@ -270,10 +270,25 @@ class MerchantParcelController extends Controller
         $request->validate([
             'file' => 'required',
         ]);
+        $import = new ParcelImport();
         try {
-            $import = new ParcelImport();
             $import->import($request->file('file'));
-        } catch (ValidationException $e) {
+        }
+        // Solde insuffisant en cours de fichier : Laravel Excel enveloppe
+        // l'import dans une transaction, donc rien n'est entre. On dit ou ca a
+        // bloque, et on emmene vers la recharge.
+        catch (InsufficientWalletBalance $e) {
+            Toastr::error(
+                __('parcel.import_wallet_insufficient', [
+                    'line'    => $import->ligneCourante(),
+                    'missing' => formatAmount($e->missing()),
+                ]),
+                __('message.error')
+            );
+
+            return redirect()->route('merchant-panel.my.wallet.index');
+        }
+        catch (ValidationException $e) {
             $failures = $e->failures();
             $importErrors = [];
             foreach ($failures as $failure) {

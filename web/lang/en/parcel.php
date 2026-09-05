@@ -205,4 +205,6 @@ return array (
     'status_not_allowed' => 'This status change is not available to a merchant. Contact the administration.',
     'wallet_insufficient' => 'Insufficient balance: :missing short to create this parcel. Please top up your wallet.',
     'merchant_wallet_insufficient' => "This merchant's balance is insufficient: :missing short.",
+    'import_wallet_insufficient' => 'Row :line — insufficient balance: :missing short. Nothing was imported.',
+    'import_merchant_wallet_insufficient' => 'Row :line — :merchant is :missing short. Nothing was imported.',
 );

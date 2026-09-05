@@ -196,4 +196,8 @@ return array (
     // du socle, elle vaut desormais sur tous les chemins de creation.
     'wallet_insufficient' => "Solde insuffisant : il manque :missing pour creer ce colis. Rechargez votre portefeuille.",
     'merchant_wallet_insufficient' => "Le solde de ce marchand est insuffisant : il manque :missing.",
+    // Import Excel : le refus nomme la ligne, parce que rien n'a ete importe et
+    // que le marchand doit savoir ou reprendre son fichier.
+    'import_wallet_insufficient' => "Ligne :line — solde insuffisant : il manque :missing. Aucun colis n'a ete importe.",
+    'import_merchant_wallet_insufficient' => "Ligne :line — le solde de :merchant est insuffisant : il manque :missing. Aucun colis n'a ete importe.",
 );

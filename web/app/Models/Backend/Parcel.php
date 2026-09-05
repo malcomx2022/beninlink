@@ -22,6 +22,11 @@ class Parcel extends Model
 {
     use HasFactory, LogsActivity;
     protected $fillable = [
+        // `company_id` manquait : l'import Excel, seul appelant de
+        // `Parcel::create()`, creait donc des colis sans societe, invisibles a
+        // tous les ecrans `companywise()`. Les repositories, eux, affectent la
+        // propriete directement et n'etaient pas touches.
+        'company_id',
         'merchant_id', 'merchant_shop_id', 'pickup_address', 'pickup_phone', 'customer_name', 'customer_phone',
         'customer_address', 'invoice_no', 'category_id', 'weight', 'delivery_type_id', 'pickup_date', 'delivery_date', 'packaging_id','cash_collection','first_hub_id','hub_id',
         'selling_price','liquid_fragile_amount','packaging_amount','delivery_charge','cod_charge','cod_amount',

@@ -150,3 +150,59 @@ vers la recharge — le comportement d'origine, conservé.
 ferait en un seul endroit (`WalletDebit`) ; c'est précisément pour cela que le
 contrôle n'a pas été recopié dans les écrans.
 
+## D7 — L'import Excel de colis facture comme la saisie ✅
+
+**Constat.** `App\Imports\ParcelImport` créait les colis directement, sans passer
+par aucun repository, et ne touchait **jamais** le portefeuille : ni contrôle de
+solde, ni débit. Pour un marchand au portefeuille, le débit à la création *est*
+la facturation : un import de deux cents colis n'était facturé nulle part.
+
+Trois questions se posaient. Voici les réponses, tranchées le 2026-09-05.
+
+### 1. L'import doit-il débiter, ou est-il volontairement hors portefeuille ?
+
+**Il débite.** Rien dans le socle ne suggérait une exemption : pas de réglage,
+pas de commentaire, pas de seconde passe de facturation. Le même fichier saisi
+ligne à ligne dans le formulaire débite ; l'import est le même acte, en gros.
+Il passe donc par `Services\Parcel\WalletDebit`, comme les quatre autres
+chemins de création (**D6**), avec le même plancher de solde.
+
+### 2. Un solde insuffisant refuse-t-il tout le fichier, ou les lignes couvertes ?
+
+**Tout le fichier.** Et ce n'est pas une nouveauté : Laravel Excel enveloppe
+déjà l'import dans une transaction (`config('excel.transactions.handler')`), ce
+sur quoi le socle s'appuie pour les erreurs de validation — une ligne invalide
+annule déjà tout le fichier. Le refus de solde suit la même règle.
+
+La raison de ne pas faire autrement : un import à moitié passé est
+**indiscernable** d'un import complet — même écran, même message — et le
+marchand qui relance son fichier pour « finir » duplique ce qui était déjà
+entré. Rien dans le fichier ne permet de dédoublonner (pas de clé, pas de
+référence externe). Le refus nomme la ligne qui bloque et le montant manquant.
+
+### 3. Que fait-on des imports déjà passés en production ?
+
+**On constate, puis on régularise à la main.**
+`php artisan beninlink:colis-non-debites` liste, par marchand, les colis qui ne
+portent aucune écriture de portefeuille, avec le montant dû et les dates.
+`--regulariser` écrit les débits manquants ; `--marchand=<id>` limite la portée ;
+la commande refuse d'écrire en production sans `--force`.
+
+Elle balaie plus large que l'import : W5 (les colis créés depuis l'app) et le
+`catch` vide ont laissé la même signature.
+
+| Point | Choix |
+|---|---|
+| Rapprochement | libellé du mouvement (`WalletDebit::SOURCE` + n° de suivi), seul lien existant entre une écriture et son colis |
+| Plancher de solde | **ignoré** à la régularisation : le colis existe, la dette est acquise ; la refuser laisserait la créance invisible |
+| Balayage automatique | **non**. `merchants.wallet_use_activation` n'a pas d'historique : un colis créé quand le marchand réglait au relevé apparaît dans la liste s'il est passé au portefeuille depuis. Un humain regarde, puis régularise marchand par marchand |
+
+**Ce que la correction a ouvert au passage.** Brancher le débit rendait
+exploitable un trou qui ne coûtait rien tant que rien n'était facturé : le
+marchand venait de la colonne `merchant_id` du **fichier**, sans aucun contrôle.
+Un marchand qui y écrivait l'identifiant d'un autre — la colonne n'est même pas
+dans son fichier modèle, il fallait l'ajouter — créait des colis au compte de
+cet autre, et aurait vidé son portefeuille. Règle posée, alignée sur le reste du
+socle : **un marchand n'importe que pour lui-même** ; le back-office importe
+pour un marchand **de sa société**, validé `companywise()`.
+

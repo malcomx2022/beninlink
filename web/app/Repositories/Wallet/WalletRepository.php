@@ -214,8 +214,12 @@ class WalletRepository implements WalletInterface{
 
     public function expense($request){
         $wallet                 = new Wallet();
-        $wallet->company_id     = settings()->id; 
-        $wallet->source         = 'Parcel delivery charge - #'.$request->tracking_id; 
+        // La societe vient de l'appelant quand il la connait : en console
+        // (regularisation) il n'y a pas de locataire et `settings()` retombe
+        // sur la societe 1, ce qui rattacherait l'ecriture au mauvais
+        // transporteur. En requete web les deux valeurs sont identiques.
+        $wallet->company_id     = $request->company_id ?? settings()->id;
+        $wallet->source         = \App\Services\Parcel\WalletDebit::SOURCE.$request->tracking_id; 
         $wallet->user_id        = $request->user_id;
         $wallet->merchant_id    = $request->merchant_id; 
         $wallet->amount         = $request->amount;
