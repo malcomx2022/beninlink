@@ -41,6 +41,8 @@ avant les apps.
 - `composer install` · `php artisan migrate` · `php artisan test` (avant tout commit) · `php -l <fichier>`
 - `php artisan openapi:generate` après tout changement de `routes/api.php` ou de
   `resources/openapi/overlay.php` (régénère `public/openapi/v10.json`, versionné).
+- `php artisan beninlink:pilote [--company=] [--reset]` : jeu de données béninois de recette
+  (refusé en production) — voir `docs/guides/recette-pilote/README.md`.
 - Version PHP réelle : voir `web/composer.json`.
 
 ## Conventions
