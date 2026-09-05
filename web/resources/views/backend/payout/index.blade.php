@@ -59,7 +59,7 @@
                     </div>
                 </div>
                 @if(isset($merchant_id))
-                    @if(MerchantSearchSettings($merchant_id,'paypal_status') == \App\Enums\Status::ACTIVE)
+                    @if(onlinePayoutEnabled() && MerchantSearchSettings($merchant_id,'paypal_status') == \App\Enums\Status::ACTIVE) {{-- D10 --}}
                         <div class="col-md-6">
                             <a href="{{ route('payout.paypal.index',['merchant_id'=>$merchant_id]) }}" >
                                 <div class="card">
@@ -70,7 +70,7 @@
                             </a>
                         </div>
                     @endif
-                    @if(MerchantSearchSettings($merchant_id,'stripe_status') == \App\Enums\Status::ACTIVE)
+                    @if(onlinePayoutEnabled() && MerchantSearchSettings($merchant_id,'stripe_status') == \App\Enums\Status::ACTIVE) {{-- D10 --}}
                         <div class="col-md-6">
                             <a href="{{ route('payout.merchant.stripe',['merchant_id'=>$merchant_id]) }}" >
                                 <div class="card">
@@ -81,7 +81,7 @@
                             </a>
                         </div>
                     @endif
-                        @if(MerchantSearchSettings($merchant_id,'razorpay_status') == \App\Enums\Status::ACTIVE)
+                        @if(onlinePayoutEnabled() && MerchantSearchSettings($merchant_id,'razorpay_status') == \App\Enums\Status::ACTIVE) {{-- D10 --}}
                         <div class="col-md-6">
                             <a href="{{ route('payout.merchant.razorpay',['merchant_id'=>$merchant_id]) }}" >
                                 <div class="card">
@@ -92,7 +92,7 @@
                             </a>
                         </div>
                     @endif
-                    @if(MerchantSearchSettings($merchant_id,'skrill_status') == \App\Enums\Status::ACTIVE)
+                    @if(onlinePayoutEnabled() && MerchantSearchSettings($merchant_id,'skrill_status') == \App\Enums\Status::ACTIVE) {{-- D10 --}}
                         <div class="col-md-6">
                             <a href="{{ route('payout.skrill.index',['merchant_id'=>$merchant_id]) }}" >
                                 <div class="card">
@@ -125,7 +125,7 @@
                             </a>
                         </div>
                     @endif
-                    @if(MerchantSearchSettings($merchant_id,'bkash_status') == \App\Enums\Status::ACTIVE)
+                    @if(onlinePayoutEnabled() && MerchantSearchSettings($merchant_id,'bkash_status') == \App\Enums\Status::ACTIVE) {{-- D10 --}}
                         <div class="col-md-6 ">
                             <a href="{{ route('payout.bkash.index',['merchant_id'=>$merchant_id]) }}" >
                                 <div class="card">

@@ -672,18 +672,24 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::put('social-login-settings/update/{social}',     [SocialLoginController::class, 'socialLoginSettingsUpdate'])->name('social.login.settings.update')->middleware('hasPermission:social_login_settings_update');
                         //Payout
                         Route::prefix('payout')->name('payout.')->group(function () {
-                            //stripe payment gateway
                             Route::get('/',                                     [PayoutController::class, 'index'])->name('index');
                             Route::get('/merchant/payout',                      [PayoutController::class, 'merchantPayout'])->name('merchant.payout');
+                            // D10 — module « payout / paiement en ligne » coupé
+                            // (config/payments.php) : il déplace le solde sans écrire au
+                            // relevé, facture en BDT, ne scope pas la société, et pour
+                            // PayPal et Razorpay ne vérifie rien.
+                            if (onlinePayoutEnabled()) {
                             Route::get('/stripe',                               [PayoutController::class, 'stripe'])->name('merchant.stripe');
                             Route::post('/stripe/post',                         [PayoutController::class, 'stripePost'])->name('merchant.stripe.post');
-
+                            }
+                            if (onlinePayoutEnabled()) {
                             Route::get('/razorpay',                              [PayoutController::class, 'razorpay'])->name('merchant.razorpay');
                             Route::get('/razorpay/payment',                     [PayoutController::class, 'razorpayPost'])->name('merchant.razorpay.post');
-
-                            //paypal payment gateway
+                            }
+                            if (onlinePayoutEnabled()) {
                             Route::get('paypal-index',                          [PayoutController::class, 'paypalIndex'])->name('paypal.index');
                             Route::post('paypal-payment',                       [PayoutController::class, 'paypalpayment'])->name('paypal');
+                            }
                             // SSLCOMMERZ Start — S21 : passerelle désactivée (config/payments.php)
                             if (gatewayEnabled(\App\Enums\PayoutSetup::SSL_COMMERZ)) {
                             Route::get('/sslcommerz',                 [AdminSslCommerzController::class, 'sslcommerzIndex'])->name('sslcommerz.index');
@@ -693,11 +699,13 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                             Route::post('/cancel',                    [AdminSslCommerzController::class, 'cancel']);
                             Route::post('/ipn',                       [AdminSslCommerzController::class, 'ipn']);
                             }
-                            //skrill payment start
+                            //skrill — D10 : module payout coupé (config/payments.php)
+                            if (onlinePayoutEnabled()) {
                             Route::get('skrill',                      [AdminSkrillController::class, 'index'])->name('skrill.index');
                             Route::get('skrill-make-payment',         [AdminSkrillController::class, 'makePayment'])->name('skrill.make.payment');
                             Route::get('payment-completed',           [AdminSkrillController::class, 'paymentCompleted'])->name('skrill.payment.completed');
                             Route::get('payment-cancelled',           [AdminSkrillController::class, 'PaymentCancelled']);
+                            }
                             //amarpay — S21 : passerelle désactivée (config/payments.php)
                             if (gatewayEnabled(\App\Enums\PayoutSetup::AAMARPAY)) {
                             Route::get('/aamarpay',                   [AdminAamarpayController::class, 'aamarpayIndex'])->name('aamarpay.index');
@@ -705,10 +713,12 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                             Route::post('/aamarpay-success',          [AdminAamarpayController::class, 'success'])->name('aamarpay.payment.success');
                             Route::post('/aamarpay-fail',             [AdminAamarpayController::class, 'fail'])->name('aamarpay.payment.fail');
                             }
-                            //bkash payment
+                            //bkash — D10 : module payout coupé (config/payments.php)
+                            if (onlinePayoutEnabled()) {
                             Route::get('/online-payment/bkash',       [AdminBkashController::class, 'index'])->name('bkash.index');
                             Route::get('bkash/redirect',              [AdminBkashController::class, 'bkashRedirect'])->name('bkash.redirect');
                             Route::get('bkash/execute',               [AdminBkashController::class, 'bkashExecute'])->name('bkash.execute');
+                            }
                         });
                         Route::get('online-payment-list',                                [PayoutSetupController::class, 'onlinePaymentList'])->name('online.payment.list')->middleware('hasPermission:online_payment_read');
                         //payout setup settings
@@ -940,13 +950,16 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         //online payment module
                         Route::get('/payment/received',                            [OnlinePaymentController::class, 'merchantPaymentReceived'])->name('online.payment.received');
                         Route::prefix('online-payment')->name('online.payment.')->group(function () {
-                            //stripe payment gateway
                             Route::get('/',                                     [OnlinePaymentController::class, 'index'])->name('index');
+                            // D10 — même module, côté marchand.
+                            if (onlinePayoutEnabled()) {
                             Route::get('/stripe',                               [OnlinePaymentController::class, 'stripe'])->name('stripe');
                             Route::post('/stripe/post',                         [OnlinePaymentController::class, 'stripePost'])->name('stripe.post');
-                            //paypal payment gateway
+                            }
+                            if (onlinePayoutEnabled()) {
                             Route::get('paypal-index',                         [OnlinePaymentController::class, 'paypalIndex'])->name('paypal.index');
                             Route::post('paypal-payment',                      [OnlinePaymentController::class, 'paypalpayment'])->name('paypal');
+                            }
                             //ssl commerz / aamarpay — S21 : passerelles désactivées (config/payments.php)
                             if (gatewayEnabled(\App\Enums\PayoutSetup::SSL_COMMERZ)) {
                             Route::get('/sslcommerz',                          [OnlinePaymentController::class, 'sslcommerzIndex'])->name('sslcommerz.index');
@@ -979,15 +992,19 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                     Route::post('/cancel',                    [SslCommerzPaymentController::class, 'cancel']);
                     Route::post('/ipn',                       [SslCommerzPaymentController::class, 'ipn']);
                     }
-                    //skrill payment start
+                    //skrill — D10 : module payout coupé (config/payments.php)
+                    if (onlinePayoutEnabled()) {
                     Route::get('skrill',                      [SkrillController::class, 'index'])->name('skrill.index');
                     Route::get('skrill-make-payment',         [SkrillController::class, 'makePayment'])->name('skrill.make.payment');
                     Route::get('payment-completed',           [SkrillController::class, 'paymentCompleted'])->name('skrill.payment.completed');
                     Route::get('payment-cancelled',           [SkrillController::class, 'PaymentCancelled']);
-                    //bkash payment
+                    }
+                    //bkash — D10 : module payout coupé (config/payments.php)
+                    if (onlinePayoutEnabled()) {
                     Route::get('/online-payment/bkash',       [BkashController::class, 'index'])->name('online.payment.bkash.index');
                     Route::get('bkash/redirect',              [BkashController::class, 'bkashRedirect'])->name('bkash.redirect');
                     Route::get('bkash/execute',               [BkashController::class, 'bkashExecute'])->name('bkash.execute');
+                    }
                     //amarpay — S21 : passerelle désactivée (config/payments.php)
                     if (gatewayEnabled(\App\Enums\PayoutSetup::AAMARPAY)) {
                     Route::get('/aamarpay-payment',           [AamarpayController::class, 'payment'])->name('aamarpay.payment');

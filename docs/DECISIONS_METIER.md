@@ -273,14 +273,11 @@ marchand.
 | Trace | aucune ligne de relevé n'accompagne la correction : le relevé était juste |
 | Affichage | **au centime**, contrairement à la règle XOF entier du reste du projet : c'est la décimale qui identifie l'écart |
 
-**Deux autres chemins cassent le même invariant**, et la commande les nomme
-plutôt que de faire comme s'ils n'existaient pas :
-
-- les **passerelles de retrait en ligne** (`PayoutController` et ses variantes
-  bKash, Skrill, Razorpay…) débitent `current_balance` sans écrire au relevé ;
-- **modifier une fiche marchand** en renseignant le solde d'ouverture écrase
-  `current_balance` (`MerchantRepository::update()`), effaçant tout ce qui
-  s'était accumulé depuis. Les deux restent à trancher.
+**Deux autres chemins cassaient le même invariant**, tranchés depuis (**D10**) :
+le module de paiement en ligne est coupé, et corriger un solde d'ouverture
+déplace désormais le solde courant du même écart au lieu de l'écraser. La
+commande continue de les nommer dans sa sortie : une base antérieure aux
+correctifs porte encore leurs écarts.
 
 **Découvert en écrivant le rapprochement.** Les **treize** écritures de
 `MerchantStatement` du cycle de vie d'un colis ne renseignaient pas
@@ -290,4 +287,58 @@ son solde bougeait sans rien pour l'expliquer. Corrigé, et rattrapé en base pa
 la migration `2026_09_05_140000` : contrairement aux lignes de `settings`
 orphelines (**D-A**), l'attribution est certaine — chaque ligne porte son
 `parcel_id`, et un colis a un seul marchand.
+
+## D10 — Les deux derniers chemins qui cassaient l'invariant ✅
+
+Le rapprochement de **D9** nommait deux écarts qu'il ne savait pas expliquer.
+Voici ce qu'ils étaient, et ce qu'on en a fait.
+
+### 1. Le module « payout / paiement en ligne » — **coupé**
+
+Cinq chemins (Stripe, PayPal, bKash, Skrill, Razorpay) réglaient un marchand,
+ou l'encaissaient, hors du flux de retrait. En ouvrant le dossier, ils
+partagent quatre défauts :
+
+| Défaut | Conséquence |
+|---|---|
+| Aucune écriture de relevé | l'écart de D9 : le solde bouge, le relevé ne dit rien |
+| Devise **BDT** codée en dur | un transporteur béninois débiterait des takas |
+| `Merchant::find()` / `Account::find()` **sans scope** | un marchand crédite le compte bancaire d'une autre société |
+| **PayPal et Razorpay ne vérifient rien** | une requête avec un identifiant de transaction inventé éteint la dette du marchand et crédite le transporteur d'un argent jamais reçu |
+
+Le dernier point est le plus grave, et c'est l'exact opposé de la règle du
+projet : *webhook signé = seule source de vérité*. Razorpay est en outre cassé
+depuis toujours (`accountId` contre `account_id`) — et il échoue **après** avoir
+déplacé le solde du marchand.
+
+**Décision : couper le module**, comme S21 avait coupé Aamarpay et SSLCommerz.
+Corriger cinq chemins qu'aucun transporteur béninois n'utilisera n'a pas de
+sens ; les couper ferme l'écart comptable, la fuite inter-locataires et la
+fraude d'un seul geste. Le reversement au marchand passe par la demande de
+retrait (`MerchantManage\Payment`), couverte et scopée depuis **D8**.
+
+**Portée volontairement étroite.** On coupe le **module**, pas les passerelles :
+`config('payments.online_payout')`, lu par `onlinePayoutEnabled()`, distinct de
+`gatewayEnabled()`. La raison est concrète : `stripe_status` sert **aussi**
+l'abonnement SaaS de la plateforme, qui ne touche aucun solde marchand. Couper
+par identité de passerelle l'aurait emporté avec, et rien ne le justifiait. Un
+test fixe cette frontière.
+
+Pour rouvrir : `online_payout => true` **et** les quatre défauts corrigés. Le
+code est resté en place.
+
+### 2. Le solde d'ouverture qui écrasait le solde courant — **corrigé**
+
+`MerchantRepository::update()` écrivait `current_balance = opening_balance` à
+chaque enregistrement de la fiche. Ré-enregistrer un marchand pour corriger son
+adresse effaçait donc tout ce qui s'était accumulé depuis son ouverture —
+encaissements, frais, retraits — sans avertissement et sans trace au relevé.
+
+**Décision.** L'invariant de D9 commande la règle : corriger le solde
+d'ouverture déplace le solde courant du **même écart**.
+
+    current_balance += (ouverture_voulue − ouverture_actuelle)
+
+Un enregistrement qui ne touche pas à l'ouverture ne touche à rien. On corrige
+une saisie, on n'efface pas une activité.
 

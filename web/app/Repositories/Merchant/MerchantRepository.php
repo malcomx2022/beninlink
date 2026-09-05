@@ -323,9 +323,24 @@ class MerchantRepository implements MerchantInterface{
             if($request->filled('ifu')){  $merchant->ifu  = trim($request->ifu);  }
             if($request->filled('rccm')){ $merchant->rccm = trim($request->rccm); }
             if($request->filled('cnss')){ $merchant->cnss = trim($request->cnss); }
-            if($request->opening_balance !==""){
-                $merchant->current_balance      = $request->opening_balance;
-                $merchant->opening_balance      = $request->opening_balance;
+            /**
+             * ⚠️ Le socle ECRASAIT `current_balance` avec le solde d'ouverture
+             * a chaque enregistrement de la fiche. Ré-enregistrer un marchand
+             * pour corriger son adresse effaçait donc tout ce qui s'était
+             * accumule depuis son ouverture — encaissements, frais, retraits.
+             *
+             * Le solde courant n'est qu'un cache du releve (D9) :
+             * `current_balance = opening_balance + Σ(recettes) − Σ(depenses)`.
+             * Corriger le solde d'ouverture doit donc deplacer le solde courant
+             * du MEME ecart, pas le remettre a la valeur d'ouverture. Un
+             * enregistrement qui ne change pas l'ouverture ne touche a rien.
+             */
+            if($request->opening_balance !== "" && $request->opening_balance !== null){
+                $ouvertureVoulue = (float) $request->opening_balance;
+                $ecart           = $ouvertureVoulue - (float) $merchant->opening_balance;
+
+                $merchant->current_balance      = (float) $merchant->current_balance + $ecart;
+                $merchant->opening_balance      = $ouvertureVoulue;
             }
             ;
             if($request->vat !==""){
