@@ -108,6 +108,8 @@ Cocher chaque scénario sur un appareil réel, en réseau mobile (pas seulement 
 - [ ] Mes courses : les onglets En cours / Retours / Livrés correspondent au jeu de données ; Appeler et Itinéraire ouvrent le téléphone et la carte.
 - [ ] Détail : marchand, adresse d'enlèvement, infos colis, destinataire, montant à encaisser.
 - [ ] Livré avec photo : la photo part avec la déclaration ; le colis passe dans Livrés ; le marchand voit le statut.
+- [ ] Livré avec signature : le destinataire signe au doigt (le défilement se bloque pendant le tracé) ; « Effacer » remet le canevas à blanc ; photo et signature apparaissent dans le suivi du colis côté marchand (app et administration).
+- [ ] Retour marchand à consigner : la signature est-elle utile ou superflue pour vos clients ? (elle reste facultative ; l'issue décide de son maintien dans l'écran).
 - [ ] Livraison partielle : montant encaissé obligatoire ; le net du colis est recalculé côté serveur.
 - [ ] Retour : le colis passe dans Retours.
 - [ ] Partager ma position : autorisation demandée une fois ; refus géré sans blocage.

@@ -1518,6 +1518,7 @@
                     "Livreur"
                 ],
                 "summary": "Déclarer un colis livré",
+                "description": "Multipart : la photo (`image`) et la signature manuscrite du destinataire (`signatureImage`) sont facultatives et ressortent dans `ParcelEvent` (`delivered_image`, `signature_image`).",
                 "parameters": [
                     {
                         "name": "id",
@@ -1531,7 +1532,7 @@
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "multipart/form-data": {
                             "schema": {
                                 "type": "object",
                                 "properties": {
@@ -1542,6 +1543,16 @@
                                     "note": {
                                         "type": "string",
                                         "nullable": true
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "description": "Photo du colis remis (JPEG/PNG)"
+                                    },
+                                    "signatureImage": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "description": "Signature manuscrite du destinataire (PNG)"
                                     }
                                 }
                             }
@@ -8710,6 +8721,16 @@
                     },
                     "description": {
                         "type": "string",
+                        "nullable": true
+                    },
+                    "delivered_image": {
+                        "type": "string",
+                        "description": "URL absolue de la photo de livraison, posée par le livreur",
+                        "nullable": true
+                    },
+                    "signature_image": {
+                        "type": "string",
+                        "description": "URL absolue de la signature du destinataire, posée par le livreur",
                         "nullable": true
                     },
                     "hub_name": {

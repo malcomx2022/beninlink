@@ -1711,7 +1711,9 @@ class ParcelRepository implements ParcelInterface {
             $parcelDelivered->parcel_id     = $id;
             $parcelDelivered->note          = $request->note;
 
-            if (isset($_FILES['image']['name']) && $_FILES['image']['name']) {
+            // `hasFile()` plutôt que `$_FILES` : même comportement en production,
+            // et la requête reste testable (le superglobal n'y est pas alimenté).
+            if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 $destinationPath   = public_path('uploads/parcel/image/');
                 $imageName         = date('YmdHis') .uniqid() . rand(5, 10).".".$image->getClientOriginalExtension();
@@ -1721,7 +1723,7 @@ class ParcelRepository implements ParcelInterface {
 
             }
 
-            if (isset($_FILES['signatureImage']['name']) && $_FILES['signatureImage']['name']) {
+            if ($request->hasFile('signatureImage')) {
                 $signatureImage = $request->file('signatureImage');
                 $destinationPath   = public_path('uploads/parcel/signature/');
                 $signatureImageName         = date('YmdHis') .uniqid() . rand(5, 10).".".$signatureImage->getClientOriginalExtension();

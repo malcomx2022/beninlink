@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
@@ -6,6 +6,7 @@ import { ApiError } from '../../../../src/api/client';
 import { fetchParcelDetails, reportDelivered, reportOutcome, type StatusAction } from '../../../../src/api/deliveryman';
 import { shareCurrentPosition } from '../../../../src/domain/location';
 import { CameraDeniedError, takeDeliveryPhoto } from '../../../../src/domain/photo';
+import { SignaturePad, type SignaturePadHandle } from '../../../../src/components/SignaturePad';
 import type { ParcelDetails } from '../../../../src/api/types';
 import { Button, Card, ChoiceGroup, ErrorText, Field, Muted, Title } from '../../../../src/components/ui';
 import { colors } from '../../../../src/theme/colors';
@@ -29,6 +30,9 @@ export default function ParcelStatusScreen() {
   const [collected, setCollected] = useState('');
   const [note, setNote] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const signatureRef = useRef<SignaturePadHandle>(null);
+  const [hasSignature, setHasSignature] = useState(false);
+  const [drawing, setDrawing] = useState(false);
   const [error, setError] = useState('');
   const [fieldError, setFieldError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -78,7 +82,13 @@ export default function ParcelStatusScreen() {
     setSaving(true);
     try {
       if (action === 'delivered') {
-        await reportDelivered(parcelId, { note, photoUri: photoUri ?? undefined });
+        // Le PNG n'est produit qu'à l'envoi : inutile de capturer à chaque trait.
+        const signatureUri = hasSignature ? await signatureRef.current?.capture() : null;
+        await reportDelivered(parcelId, {
+          note,
+          photoUri: photoUri ?? undefined,
+          signatureUri: signatureUri ?? undefined,
+        });
       } else {
         await reportOutcome(parcelId, action, { cashCollection, note });
       }
@@ -102,7 +112,12 @@ export default function ParcelStatusScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.page}
+        keyboardShouldPersistTaps="handled"
+        // Pendant un tracé, le défilement rendrait la signature impossible.
+        scrollEnabled={!drawing}
+      >
         {parcel && (
           <Card>
             <Text style={styles.tracking}>{parcel.tracking_id}</Text>
@@ -141,6 +156,13 @@ export default function ParcelStatusScreen() {
                 <Button title={photoUri ? t('common.retakePhoto') : t('common.photo')} onPress={capture} />
                 {photoUri && <Button title={t('common.removePhoto')} onPress={() => setPhotoUri(null)} />}
               </View>
+
+              <Text style={styles.proofLabel}>{t('status.signature')}</Text>
+              <Muted>{t('status.signatureHint')}</Muted>
+              <SignaturePad ref={signatureRef} onChange={setHasSignature} onDrawingChange={setDrawing} />
+              {hasSignature && (
+                <Button title={t('common.clearSignature')} onPress={() => signatureRef.current?.clear()} />
+              )}
             </View>
           )}
 
