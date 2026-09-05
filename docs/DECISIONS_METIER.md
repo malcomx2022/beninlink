@@ -232,7 +232,17 @@ société, et elles n'étaient pas transactionnelles.
 message à l'écran côté web. L'API livreur répondait 200 quoi qu'il arrive —
 inoffensif tant que l'étape se rejouait, trompeur dès qu'elle refuse.
 
-**Portée restante.** Les méthodes d'annulation (`…Cancel`) inversent ces mêmes
-écritures et présentent la même forme. Elles ne sont pas encore couvertes ;
-elles relèvent de la même règle.
+**Portée.** La règle vaut aussi pour les **annulations**, qui inversent ces
+mêmes écritures : couvertes le 2026-09-05, elles présentaient bien les mêmes
+défauts — plus un qui leur est propre, *annuler ce qui n'a jamais eu lieu*.
+D'où la formulation « vérifie l'état de départ » plutôt que « refuse un second
+appel » : une annulation doit constater qu'il y a quelque chose à annuler.
+
+Et pour la **remise d'espèces du livreur à l'agence**
+(`CashReceivedFromDeliveryman`), qui solde la dette constatée à la livraison.
+Sa méthode de correction y ajoute un cas limite instructif : elle défait
+l'ancienne remise puis refait la nouvelle, six mouvements à la suite. Sans
+transaction, un incident au milieu laisse un état que **relancer aggrave** —
+la correction défait une seconde fois. Une étape qui inverse puis refait est
+la plus exposée des trois règles à la fois.
 

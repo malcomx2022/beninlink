@@ -816,16 +816,86 @@ a enregistré quelque chose.
 La règle générale qui s'en dégage est consignée en **D8** de
 `docs/DECISIONS_METIER.md`.
 
-## 17. Ce qui reste, et n'est pas un constat
+## 17. Les annulations et la remise d'espèces — 2026-09-05 ✅
+
+Le bloc annoncé au §16. **21 tests**, et l'intuition était bonne : les
+annulations présentaient les mêmes défauts que les étapes qu'elles inversent.
+
+### Les annulations
+
+La propriété qui les résume : **livrer puis annuler ne déplace aucun solde**.
+Elle est vraie sur la livraison complète, et elle l'est désormais sur la
+partielle — elle ne l'était pas.
+
+Quatre annulations touchent aux comptes. Voici ce qu'il en était.
+
+| Annulation | Rejouable | Scopée | Transactionnelle |
+|---|---|---|---|
+| `parcelDeliveredCancel` | ❌ oui | ❌ non | ❌ non |
+| `parcelPartialDeliveredCancel` | ❌ oui | ❌ non | ❌ non |
+| `receivedWarehouseCancel` | ❌ oui | ❌ non | ✅ |
+| `returnAssignToMerchantCancel` | ✅ | ❌ non | ✅ |
+
+Deux constats méritent d'être isolés.
+
+**Annuler une livraison qui n'a jamais eu lieu** écrivait la contrepartie dans
+le vide : le marchand débité des frais d'un colis encore en entrepôt, le
+livreur crédité de l'encaissement d'un colis qu'il n'a pas remis. C'est plus
+grave qu'une livraison en double — là au moins il y avait quelque chose à
+doubler. Rien ne signalait qu'il n'y avait rien à annuler.
+
+**Le solde et le relevé divergeaient de 14,40 F** sur l'annulation d'une
+livraison partielle, et c'était structurel. L'annulation recalcule les montants
+du colis sur la somme d'origine (TVA 216 F) tout en devant inverser ce qui
+avait réellement été prélevé (TVA 201,60 F). La ligne du relevé portait bien
+201,60 ; le solde du marchand, lui, était crédité de 216 — parce que le code
+lisait `$parcel->vat_amount`, **déjà réécrit** par le recalcul deux lignes plus
+haut. Livrer partiellement puis annuler laissait donc un écart permanent entre
+ce que le marchand voyait sur son relevé et ce que son solde disait.
+Une ligne : `$old_vat_amount` au lieu de `$parcel->vat_amount`.
+
+Pour `receivedWarehouseCancel`, le contrôle de statut n'entourait que la
+suppression de l'événement — les écritures du ramasseur, elles, s'exécutaient
+à chaque appel.
+
+### La remise d'espèces
+
+`CashReceivedFromDeliveryman` solde la dette que la livraison a constatée : le
+livreur remet les espèces à son agence, qui les dépose sur un compte du
+transporteur. Trois soldes bougent ensemble — le livreur remonte vers zéro,
+l'agence descend, le compte monte.
+
+Le calcul était juste. Manquaient le scope et l'atomicité :
+
+- **`store()`** lisait `DeliveryMan::find()` et `Account::find()` nus : une
+  agence soldait la dette d'un livreur d'une **autre** société en déposant la
+  somme sur son propre compte.
+- **`update()`** — corriger le montant d'une remise — n'avait **ni transaction
+  ni `try/catch`**, alors qu'elle écrit six mouvements à la suite : elle défait
+  l'ancienne remise puis refait la nouvelle. Un incident au milieu laissait la
+  remise à moitié défaite et pas refaite, l'état le plus difficile à rattraper
+  de tout le socle — relancer la correction défait une seconde fois. Elle
+  n'était pas scopée non plus.
+- **`delete()`** vérifiait déjà la société ; la transaction manquait.
+
+### Ce que ça couvre
+
+- `tests/Feature/DeliveryCancellationAccountingTest` — 13 tests, dont
+  l'inversion à zéro des deux livraisons et les quatre annulations comptables.
+- `tests/Feature/CashHandoverAccountingTest` — 8 tests : les trois soldes, la
+  dette soldée, les deux scopes, l'atomicité, la suppression, et la correction
+  qui **remplace** le montant au lieu de s'y ajouter.
+
+## 18. Ce qui reste, et n'est pas un constat
 
 - Le correctif du débit (W5) **ne rattrape pas le passé** : si la production
   tourne déjà, des colis créés depuis l'app peuvent n'avoir jamais été débités.
   `php artisan beninlink:colis-non-debites` en dresse la liste (**D7**).
-- Les **annulations** d'étapes comptables (`parcelDeliveredCancel`,
-  `parcelPartialDeliveredCancel`, `returnReceivedByMerchantCancel`…) restent
-  sans tests. Elles inversent les écritures des étapes désormais couvertes et
-  présentent la même forme — donc, très probablement, les mêmes défauts.
-  C'est le prochain bloc par ordre d'exposition.
-- Le **transfert d'espèces du livreur au hub**
-  (`CashReceivedFromDeliveryman`), qui solde la dette constatée à la livraison,
-  n'est pas couvert non plus.
+- L'écart de 14,40 F ne se rattrape pas non plus tout seul : les colis livrés
+  partiellement **puis annulés** avant le correctif portent, chacun, un écart
+  entre le solde du marchand et son relevé. Un rapprochement
+  `merchant_statements` / `merchants.current_balance` le mettrait au jour ;
+  il n'existe pas encore.
+- Les étapes **non comptables** du cycle de vie (affectation, transfert entre
+  agences, reprogrammations) restent sans tests. Elles ne déplacent pas
+  d'argent, mais elles décident quel livreur sera payé à l'arrivée.

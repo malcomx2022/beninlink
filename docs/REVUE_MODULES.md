@@ -381,6 +381,15 @@ et l'app livreur renvoie sur réseau instable), elles n'étaient pas scopées à
 société, elles n'étaient pas transactionnelles. La règle générale qui s'en
 dégage est consignée en **D8** de `docs/DECISIONS_METIER.md`.
 
+**Les annulations et la remise d'espèces** ont suivi le même jour (§17,
+21 tests). Mêmes défauts, plus un qui leur est propre : **annuler une livraison
+qui n'a jamais eu lieu** écrivait la contrepartie dans le vide — le marchand
+débité des frais d'un colis encore en entrepôt. Et l'annulation d'une livraison
+partielle laissait un écart **permanent de 14,40 F** entre le solde du marchand
+et son propre relevé, le code lisant une TVA déjà réécrite par le recalcul.
+Côté remise d'espèces, la méthode de correction n'avait ni transaction ni
+`try/catch` alors qu'elle défait puis refait six mouvements à la suite.
+
 ## 11. Apps Flutter dépréciées (référence)
 
 | App | Modules (`lib/Screen/`) |

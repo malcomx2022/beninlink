@@ -14,6 +14,7 @@ use App\Models\CashReceivedFromDeliveryman;
 use App\Repositories\CashReceivedFromDeliveryman\ReceivedInterface;
 use Database\Seeders\HubSeeder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ReceivedRepository implements ReceivedInterface {
 
@@ -24,11 +25,33 @@ class ReceivedRepository implements ReceivedInterface {
     public function get($id){
         return CashReceivedFromDeliveryman::find($id);
     }
+    /**
+     * Remise d'especes du livreur a son agence — le pendant de la livraison.
+     *
+     * Livrer laisse le livreur DEBITEUR de l'argent encaisse chez le client ;
+     * cette etape solde cette dette et depose les especes sur un compte du
+     * transporteur. Trois soldes bougent ensemble : le livreur, l'agence, le
+     * compte.
+     *
+     * Deux gardes ajoutees le 2026-09-05 en couvrant l'etape de tests (D8) :
+     * le livreur et le compte de depot sont lus `companywise()` — le socle
+     * lisait `find()` nu, si bien qu'une agence soldait la dette d'un livreur
+     * d'une AUTRE societe en deposant la somme sur son propre compte — et les
+     * trois mouvements passent dans une transaction.
+     */
     public function store($request){
+        if(blank(Auth::user()->hub_id)){
+            return false;
+        }
+
+        $deliveryman  = DeliveryMan::companywise()->find($request->delivery_man_id);
+        $account      = Account::companywise()->find($request->account_id);
+        if(blank($deliveryman) || blank($account)){
+            return false;
+        }
+
         try {
-            if(Auth::user()->hub_id):
-                $deliveryman  = DeliveryMan::find($request->delivery_man_id);
-                $account      = Account::find($request->account_id);
+            return DB::transaction(function () use ($request, $deliveryman, $account) {
                 $hub          = Hub::find(Auth::user()->hub_id);
                  //add hub statements
                  $cash_received                   = new CashReceivedFromDeliveryman();
@@ -94,19 +117,42 @@ class ReceivedRepository implements ReceivedInterface {
                  $deliveryman->save();
 
                  return true;
-             else:
-                return false;
-             endif;
+            });
         } catch (\Throwable $th) {
 
            return false;
         }
     }
+    /**
+     * Corriger une remise : on defait l'ancienne, on refait la nouvelle.
+     *
+     * ⚠️ Cette methode n'avait **ni transaction ni `try/catch`**, alors qu'elle
+     * ecrit six mouvements de comptes a la suite. Un incident au milieu laissait
+     * la remise a moitie defaite et pas refaite — l'etat le plus difficile a
+     * rattraper de tout le socle, puisque relancer la correction defait une
+     * seconde fois. Et elle lisait la remise sans scope : celle d'un autre
+     * transporteur etait corrigeable.
+     */
     public function update($request){
+        if(blank(Auth::user()->hub_id)){
+            return false;
+        }
+
+        $cash_received = CashReceivedFromDeliveryman::companywise()->find($request->id);
+        if(blank($cash_received)){
+            return false;
+        }
+
+        // Le livreur et le compte VISES par la correction, chez nous eux aussi.
+        if(blank(DeliveryMan::companywise()->find($request->delivery_man_id))
+            || blank(Account::companywise()->find($request->account_id))){
+            return false;
+        }
+
+        try {
+            return DB::transaction(function () use ($request, $cash_received) {
 
         //start first reverse
-        $cash_received = CashReceivedFromDeliveryman::find($request->id);
-        // $cash_received
         $deliveryman  = DeliveryMan::find($cash_received->delivery_man_id);
         $account      = Account::find($cash_received->account_id);
         $hub          = Hub::find(Auth::user()->hub_id);
@@ -218,16 +264,28 @@ class ReceivedRepository implements ReceivedInterface {
         //add (+) amount
         $deliveryman->current_balance         = $deliveryman->current_balance + $request->amount;
         $deliveryman->save();
+
         return true;
+
+            });
+        } catch (\Throwable $th) {
+            return false;
+        }
     }
+
+    /**
+     * Supprimer une remise : elle se defait entierement, ou pas du tout.
+     * Le controle de societe existait deja ici ; la transaction manquait.
+     */
     public function delete($id){
 
         if(Auth::user()->hub_id):
 
             try {
+                return DB::transaction(function () use ($id) {
 
-                $cash_received = CashReceivedFromDeliveryman::find($id);
-                if($cash_received->company_id == settings()->id):
+                $cash_received = CashReceivedFromDeliveryman::companywise()->find($id);
+                if(!blank($cash_received)):
 
                     $deliveryman   = DeliveryMan::find($cash_received->delivery_man_id);
                     $account       = Account::find($cash_received->account_id);
@@ -280,6 +338,8 @@ class ReceivedRepository implements ReceivedInterface {
                     return CashReceivedFromDeliveryman::destroy($cash_received->id);
                 endif;
                 return false;
+
+                });
             } catch (\Throwable $th) {
                 return false;
             }
