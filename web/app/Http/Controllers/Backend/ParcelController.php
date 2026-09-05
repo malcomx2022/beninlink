@@ -317,10 +317,25 @@ class ParcelController extends Controller
         $request->validate([
             'file' => 'required',
         ]);
+        $import = new ParcelImport();
         try {
-            $import = new ParcelImport();
             $import->import($request->file('file'));
-        } catch (ValidationException $e) {
+        }
+        // Idem cote back-office : rien n'est entre, et l'operateur a besoin de
+        // savoir quel marchand bloque et de combien.
+        catch (InsufficientWalletBalance $e) {
+            Toastr::error(
+                __('parcel.import_merchant_wallet_insufficient', [
+                    'line'     => $import->ligneCourante(),
+                    'merchant' => $e->merchant->business_name,
+                    'missing'  => formatAmount($e->missing()),
+                ]),
+                __('message.error')
+            );
+
+            return back();
+        }
+        catch (ValidationException $e) {
             $failures     = $e->failures();
             $importErrors = [];
             foreach ($failures as $failure) {

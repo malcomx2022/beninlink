@@ -675,31 +675,79 @@ portefeuille jamais bloqué, solde qui ne descend jamais sous zéro quel que soi
 le nombre de tentatives, duplication refusée sans rien laisser derrière,
 duplication acceptée avec son journal.
 
-## 15. Un cinquième chemin de création, qui ne débite rien du tout
+## 15. L'import Excel — les trois questions, tranchées le 2026-09-05 ✅
 
-Relevé en fermant §14, **non corrigé** : il appelle une décision, pas un
-correctif d'office.
+Relevé en fermant §14. `App\Imports\ParcelImport` — l'import en masse,
+disponible côté back-office **et** côté panneau marchand — crée les colis
+directement, sans passer par aucun repository, et ne touchait **jamais** le
+portefeuille : ni contrôle, ni débit. Pour un marchand au portefeuille, le débit
+à la création *est* la facturation ; un import de deux cents colis n'était donc
+facturé nulle part.
 
-`App\Imports\ParcelImport` — l'import Excel en masse, disponible côté
-back-office **et** côté panneau marchand — crée les colis directement, sans
-passer par aucun repository. Il ne touche **jamais** le portefeuille : ni
-contrôle, ni débit. Pour un marchand au portefeuille, le débit à la création
-*est* la facturation ; un import de deux cents colis n'est donc facturé nulle
-part.
+Les réponses aux trois questions sont consignées en **D7** de
+`docs/DECISIONS_METIER.md`. En résumé : **il débite**, le refus vaut pour
+**tout le fichier**, et le passé se **constate** avant de se régulariser.
 
-C'est la même famille que W5, mais l'écart est plus grand : ailleurs il fallait
-réparer un débit cassé, ici il faudrait en **introduire un**. Ça change ce que
-paient les marchands qui utilisent déjà l'import, et ça ne se décide pas dans un
-correctif de revue. Trois questions, dans cet ordre :
+### Le passé : `beninlink:colis-non-debites`
 
-1. L'import doit-il débiter comme la création unitaire, ou est-il volontairement
-   hors portefeuille (réservé aux gros comptes réglant au relevé) ?
-2. S'il débite : un solde insuffisant refuse-t-il **tout** le fichier, ou
-   n'importe-t-il que les lignes couvertes ?
-3. Que fait-on des imports déjà passés en production, s'il y en a ?
+La commande liste, par marchand, les colis qui ne portent aucune écriture de
+portefeuille — le libellé du mouvement est le seul lien existant entre une
+écriture et son colis. `--regulariser` écrit les débits manquants,
+`--marchand=<id>` limite la portée, et l'écriture est refusée en production sans
+`--force`.
 
-Le correctif serait court une fois la réponse connue — `WalletDebit::apply()`
-existe et s'applique à un colis — mais il n'a de sens qu'après.
+Deux choix méritent d'être dits :
+
+- **La régularisation ignore le plancher de solde.** Le colis existe, il a été
+  livré ou il le sera : la dette est acquise. La refuser laisserait la créance
+  invisible — exactement l'état qu'on corrige. Le solde peut passer en négatif ;
+  c'est le constat d'une dette, pas une autorisation de découvert.
+- **Rien n'est balayé automatiquement.** `merchants.wallet_use_activation` n'a
+  pas d'historique : un colis créé quand le marchand réglait encore au relevé
+  apparaît dans la liste s'il est passé au portefeuille depuis. Un humain
+  regarde, puis régularise compte par compte.
+
+Elle balaie plus large que l'import : W5 et le `catch` vide ont laissé la même
+signature.
+
+### Quatre défauts découverts en ouvrant le fichier
+
+Un seul était visible depuis le constat de départ. Tous constatés par sonde
+avant correction.
+
+1. **Les colis importés n'avaient pas de `company_id`** — le champ n'était même
+   pas assignable sur `Parcel`, seul `Parcel::create()` du dépôt étant concerné
+   (les repositories affectent la propriété directement). Ils étaient donc
+   invisibles à **tous** les écrans `companywise()` : créés, non facturés, et
+   introuvables par le transporteur qui devait les affecter à un ramassage.
+2. **Le marchand venait de la colonne `merchant_id` du fichier**, sans aucun
+   contrôle. Un marchand qui y écrivait l'identifiant d'un autre créait les
+   colis au compte de cet autre. Inoffensif tant que rien n'était facturé ;
+   vidangeur de portefeuille dès que le débit est branché. C'est le seul défaut
+   que la correction **rendait** dangereux, et il fallait donc le fermer avant.
+3. **L'import avait son propre barème.** Il recalculait frais COD et TVA de son
+   côté au lieu du `ChargeCalculator` imposé par S2 : le même colis n'était pas
+   facturé au même prix importé ou saisi. Il passe désormais par le calculateur
+   unique — d'autant que c'est ce montant qui est débité.
+4. **Une colonne facultative en moins tuait l'import.** Chaque colonne était lue
+   crûment (`$row['note']`) : un fichier allégé levait une `ErrorException` au
+   lieu d'un message utilisable. Les deux fichiers modèles distribués les
+   portent toutes — le trou ne s'ouvre que sur un fichier remanié à la main.
+
+Au passage, sans conséquence : `ParcelController::parcelSampleExport()` et
+`App\Exports\ParcelSampleExport` sont du **code mort** — aucune route ne les
+appelle. Les deux écrans servent des `.xlsx` statiques de `public/sample-parcel/`,
+qui n'ont d'ailleurs pas les mêmes colonnes : celui du panneau marchand ne porte
+ni `shop_id`, ni `merchant_id`.
+
+### Ce que ça couvre
+
+- `tests/Feature/ParcelImportWalletTest` — 9 tests. Les fichiers y sont écrits
+  avec les colonnes des **modèles réellement distribués**, pas un jeu inventé.
+- `tests/Feature/UndebitedParcelsCommandTest` — 7 tests : constat sans écriture,
+  colis déjà débité ignoré, marchand hors portefeuille ignoré, régularisation
+  idempotente, société du marchand sur l'écriture (en console `settings()`
+  retombe sur la société 1), découvert assumé, portée limitée à un marchand.
 
 ## 16. Ce qui reste, et n'est pas un constat
 
