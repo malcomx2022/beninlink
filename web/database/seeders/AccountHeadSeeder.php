@@ -58,6 +58,15 @@ class AccountHeadSeeder extends Seeder
         $account_heads->status = Status::ACTIVE;
         $account_heads->save();
 
+        // Décision métier 2026-09-05 : chapitre des dépenses d'acquisition. Les
+        // dépenses de la société plateforme saisies ici alimentent le CAC du
+        // reporting SaaS (config/saas_reporting.php, mot-clé « acquisition »).
+        $account_heads         = new AccountHead();
+        $account_heads->type   = AccountHeads::EXPENSE;
+        $account_heads->name   = 'Marketing et acquisition clients';
+        $account_heads->status = Status::ACTIVE;
+        $account_heads->save();
+
         $account_heads         = new AccountHead();
         $account_heads->type   = AccountHeads::INCOME;
         $account_heads->name   = 'Payment receive from hub';

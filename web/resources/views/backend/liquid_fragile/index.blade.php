@@ -68,10 +68,19 @@
                                                         <input  type="number" name="charge"  autocomplete="off"   class="form-control" value="{{ SettingHelper('fragile_liquid_charge') }}" />
                                                     </div>
                                                 </td>
-                                            <td>
+                                            <td rowspan="2" class="align-middle">
                                                 <button type="submit" class="btn btn-primary btn-sm" >
                                                     {{ __('levels.update') }}
                                                 </button>
+                                            </td>
+                                        </tr>
+                                        {{-- Décision métier 2026-09-05 : TVA au niveau société, surcharge par marchand. --}}
+                                        <tr>
+                                            <td>{{ __('liquid.vat_rate') }}<br><small class="text-muted">{{ __('liquid.vat_rate_help') }}</small></td>
+                                            <td>
+                                                <div class="form-group mb-0">
+                                                    <input type="number" step="0.01" min="0" max="100" name="vat_rate" autocomplete="off" class="form-control" value="{{ SettingHelper(\App\Services\Parcel\VatRate::CONFIG_KEY) }}" />
+                                                </div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -115,6 +124,16 @@
                                                         </div>
                                                     </div>
                                                 </td>
+                                            @endif
+                                        </tr>
+                                        <tr>
+                                            <td>{{ __('liquid.vat_rate') }}</td>
+                                            @if(hasPermission('liquid_status_change') == true)
+                                            <td>—</td>
+                                            @endif
+                                            <td>{{ SettingHelper(\App\Services\Parcel\VatRate::CONFIG_KEY) !== '' ? SettingHelper(\App\Services\Parcel\VatRate::CONFIG_KEY) . ' %' : '—' }}</td>
+                                            @if(hasPermission('liquid_fragile_update') == true)
+                                            <td></td>
                                             @endif
                                         </tr>
                                 </tbody>

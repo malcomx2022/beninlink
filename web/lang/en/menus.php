@@ -17,7 +17,7 @@ return [
   'accounts'             => 'Accounts',
   'fund_transfer'        => 'Fund Transfer',
   'delivery_type'        => 'Delivery Type',
-  'liquid_fragile'       => 'Liquid/Fragile',
+  'liquid_fragile'       => 'Liquid/Fragile & VAT',
   'expense'              => 'Expense',
   'income'               => 'Income',
   'user_role'            => 'Users & Roles',

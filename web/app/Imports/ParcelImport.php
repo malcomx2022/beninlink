@@ -77,7 +77,7 @@ class ParcelImport implements ToModel, WithHeadingRow ,WithValidation , SkipsEmp
         $packagingAmount      = 0;
         $codAmount            = $codChargeAmount['codAmount'];
         $merchantCodCharge    = $codChargeAmount['merchantCodCharge'];
-        $vat                  = $merchant->vat;
+        $vat                  = \App\Services\Parcel\VatRate::for($merchant);
         if($liquid_fragile){
             $liquidFragileAmount = SettingHelper('fragile_liquid_charge');
         }
