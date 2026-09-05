@@ -319,9 +319,15 @@ n'a modifié aucun code. Deux constats y appellent une décision rapide :
   nom, à la devise et par l'opérateur SMS de la société du portefeuille, au lieu
   de ceux de la première société.
 
-Restent ouverts les deux filets de sécurité qui déclarent une couverture
-inexistante, et la reprise éventuelle des lignes `settings` écrites avec un
-locataire nul.
+- ~~**F5**~~ et ~~**F6**~~ ✅ **corrigés le 2026-09-05** : les issues du webhook de
+  recharge autres que le crédit sont couvertes ; et le filet d'isolation, qui
+  déclarait une route couverte par un test sans base migrée, porte désormais une
+  preuve réelle **et** vérifie que chaque test déclaré peut atteindre une route.
+
+**Plus aucun constat de la revue n'est ouvert.** Restent trois décisions, listées
+au §12 de `docs/REVUE_FEDAPAY_ET_WORKFLOWS.md` : la reprise des lignes `settings`
+écrites avec un locataire nul, l'atomicité du débit de portefeuille à la création
+d'un colis, et les deux voisins non scopés par société repérés en chemin.
 
 ## 11. Apps Flutter dépréciées (référence)
 

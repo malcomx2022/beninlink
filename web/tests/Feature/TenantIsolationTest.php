@@ -9,6 +9,7 @@ use App\Enums\Status;
 use App\Enums\UserType;
 use App\Models\Backend\DeliveryMan;
 use App\Models\Backend\Department;
+use App\Models\Backend\FedaPayTransaction;
 use App\Models\Backend\Fraud;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\Parcel;
@@ -295,5 +296,43 @@ class TenantIsolationTest extends TestCase
 
         $this->assertNull(ParcelEvent::where('parcel_id', $sonColis->id)->first()->delivery_lat);
         $this->assertNotNull(ParcelEvent::where('delivery_man_id', $moi->deliveryman->id)->first()->delivery_lat);
+    }
+
+    /**
+     * F6 — `GET fedapay/status/{reference}` etait declaree couverte par
+     * `FedaPayWebhookTest`, qui ne touche jamais cette route : ce fichier n'a
+     * ni base migree ni appel HTTP, il verifie une signature en memoire. Le
+     * code, lui, etait correct — il scope par `merchant_id` — mais le filet
+     * annonçait une preuve qui n'existait pas. La voici.
+     *
+     * Une reference de paiement expose le montant et le solde du marchand :
+     * lue par un voisin, elle renseigne sur son chiffre d'affaires.
+     */
+    public function test_a_merchant_cannot_read_another_merchant_payment_reference(): void
+    {
+        $laMienne = $this->rechargeDe($this->merchant, 'BL-A-MOI');
+        $laSienne = $this->rechargeDe($this->voisin, 'BL-AU-VOISIN');
+
+        $this->connecterMarchand();
+
+        $this->getJson("/api/v10/fedapay/status/{$laSienne->reference}", $this->entetes())
+            ->assertStatus(404);
+
+        $this->getJson("/api/v10/fedapay/status/{$laMienne->reference}", $this->entetes())
+            ->assertOk()
+            ->assertJsonPath('data.reference', $laMienne->reference);
+    }
+
+    private function rechargeDe(Merchant $merchant, string $reference): FedaPayTransaction
+    {
+        return FedaPayTransaction::create([
+            'company_id' => $merchant->company_id,
+            'merchant_id' => $merchant->id,
+            'reference' => $reference,
+            'provider_transaction_id' => 'PROV-' . $reference,
+            'purpose' => FedaPayTransaction::PURPOSE_WALLET,
+            'amount' => 5000,
+            'status' => FedaPayTransaction::STATUS_PENDING,
+        ]);
     }
 }
