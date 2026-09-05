@@ -3,25 +3,24 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
-use App\Http\Services\PushNotificationService;
 use Illuminate\Http\Request;
-use App\Models\User;
 
+/**
+ * Enregistrement du jeton de push navigateur — **retiré** (S22, décision D12).
+ *
+ * La route reste servie pour une raison précise : un navigateur d'agent peut
+ * encore porter l'ancien service worker et rappeler cette adresse au prochain
+ * chargement. Elle répond désormais sans rien écrire, plutôt que de renvoyer
+ * une 404 dans la console de tout le monde.
+ *
+ * Ce qu'elle faisait : stocker `users.web_token` (un jeton du projet Firebase
+ * de l'éditeur) puis appeler l'abonnement au topic FCM. Les deux appartiennent
+ * à un canal qui ne livrait plus rien.
+ */
 class WebNotificationController extends Controller
 {
     public function store(Request $request)
     {
-        $user = User::find(auth()->user()->id);
-        $user->web_token = $request->token;
-        $user->save();
-        try {
-            $request->request->add(['device_token'  => $request->token, 'topic' => $user->email]);
-             app(PushNotificationService::class)->fcmSubscribe($request);
-        } catch (\Exception $exception) {
-            return response()->json(['Something went wrong.']);
-        }
-        return response()->json(['Token successfully stored.']);
+        return response()->json(['Browser push notifications are retired.'], 410);
     }
-
-
 }

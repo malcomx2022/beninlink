@@ -27,6 +27,10 @@ avant les apps.
   arrêtée depuis 2024. Les notifications poussées passent par `config('push.driver')`
   → `App\Services\Push\PushGateway` (pilote `expo`, ou `null` pour ne rien envoyer).
   Ne pas rebrancher un appel direct à `fcm.googleapis.com`.
+  Exception actée (**D12**, 2026-09-05) : le **push navigateur du back-office** est
+  retiré — il inscrivait les agents au projet Firebase de l'éditeur. Ne pas remettre
+  de SDK Firebase dans les vues ; `public/firebase-messaging-sw.js` ne sert plus qu'à
+  désinscrire les navigateurs déjà abonnés.
 
 ## Décisions actées
 - **FedaPay** = passerelle Mobile Money BJ. **Webhook signé = seule source de vérité**

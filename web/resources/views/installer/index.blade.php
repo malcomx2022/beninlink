@@ -166,7 +166,7 @@
 <script src="{{static_asset('backend')}}/vendor/bootstrap/js/bootstrap.bundle.js"></script>
 <script src="{{static_asset('backend')}}/libs/js/custom.js"></script>
 <script src="http://cdn.bootcss.com/toastr.js/latest/js/toastr.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.3.2/firebase.js"></script>
+{{-- SDK Firebase retiré avec le push navigateur (D12) : l'installateur ne s'en servait pas. --}}
 
 @include('installer.stepper_js')
 

@@ -259,60 +259,25 @@ class PushNotificationService
         }
     } 
     
-    public function sendWebNotification($data,$notification,$type,$FcmToken)
+    /**
+     * Push **navigateur** du back-office — retiré (S22, décision D12).
+     *
+     * La méthode garde sa signature et ses trois appels dans
+     * `PushNotificationRepository` : c'est le canal qui disparaît, pas la
+     * façon dont le socle écrit ses messages. Elle n'ouvre plus aucune
+     * connexion sortante.
+     *
+     * Ce qu'elle faisait : un POST à l'API FCM « legacy » (arrêtée par Google
+     * en juin 2024) avec les jetons `users.web_token`, émis par le projet
+     * Firebase **de l'éditeur**. Rien n'arrivait, et la page de connexion
+     * réclamait malgré tout la permission de notifier.
+     *
+     * Pour rouvrir, il faut un transport vivant ET un projet maîtrisé par le
+     * transporteur : FCM HTTP v1, ou du Web Push standard (VAPID) — voir D12.
+     * L'app marchand et l'app livreur, elles, sont servies depuis D11.
+     */
+    public function sendWebNotification($data, $notification, $type, $FcmToken)
     {
-        $url = 'https://fcm.googleapis.com/fcm/send';
-
-        if(!blank($FcmToken)) {
-
-            $serverKey = notificationSettings()->fcm_secret_key;
-            if ($notification) {
-                $pushData = [
-                    "registration_ids" => $FcmToken,
-                    "notification" => [
-                        "title" => "New Parcel #" . $data->id,
-                        "body"  => 'A new parcel has been placed ' . $data->merchant->title . ' The parcel amount is ' . $data->cash_collection,
-                        'sound' => 'default', // Optional
-                        'icon'  => public_path('images/fav.png'),
-                    ]
-                ];
-            } else {
-                $pushData = [
-                    "registration_ids" => $FcmToken,
-                    "notification" => [
-                        "title" => $data->title,
-                        "body"  => $data->description,
-                        'sound' => 'default', // Optional
-                        'icon'  => $data->image,
-                    ]
-                ];
-            }
-
-            $encodedData = json_encode($pushData);
-
-            $headers = [
-                'Authorization:key=' . $serverKey,
-                'Content-Type: application/json',
-            ];
-
-            $ch = curl_init();
-
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // S12 : nom d hote verifie
-            curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // S12 : certificat verifie
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $encodedData);
-            // Execute post
-            $result = curl_exec($ch);
-            // Close connection
-            curl_close($ch);
-            // FCM response
-            return true;
-        }else{
-            return true;
-        }
+        return true;
     }
 }

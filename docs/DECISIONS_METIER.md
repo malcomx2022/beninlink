@@ -387,3 +387,50 @@ garde par ailleurs son push **navigateur** (`users.web_token`), toujours branch�
 sur l'API arrêtée : il ne concerne aucune app mobile et attend son propre
 chantier.
 
+---
+
+## D12 — Le push navigateur du back-office est retiré ✅
+
+**D11** a rebranché les deux apps mobiles. Restait le canal du back-office, et
+en ouvrant le dossier il s'est révélé pire que mort.
+
+| Ce qu'il faisait | Pourquoi c'est un problème |
+|---|---|
+| Inscrivait le navigateur de chaque agent au projet Firebase **de l'éditeur** (`we-courier-81101`) | Les jetons sont émis par un projet que le transporteur ne contrôle pas ; qui détient la clé serveur de ce projet peut notifier les agents de **toutes** les installations We Courier |
+| Chargeait le SDK Firebase depuis `gstatic.com` **sur chaque page** du back-office | Un appel tiers et ~150 Ko à chaque chargement, pour une fonction qui ne marchait pas |
+| Appelait `requestPermission()` à chaque chargement | Une demande de permission système réclamée pour un canal incapable de livrer |
+| Envoyait par l'API FCM **legacy** | Arrêtée par Google en juin 2024 (le même constat que D11) |
+| Affichait, en arrière-plan, « Background Message Title » avec le logo de l'éditeur | Le service worker n'avait jamais été personnalisé |
+
+**Décision : retirer le module**, comme D10 pour le paiement en ligne et S21
+pour deux passerelles. Le rebrancher aurait demandé, au minimum, un projet
+Firebase appartenant au transporteur (FCM v1) ou du Web Push standard (VAPID,
+donc une dépendance de chiffrement) — pour un canal dont le seul contenu réel
+est le message qu'un administrateur écrit à ses propres collègues, déjà
+enregistré et visible dans le back-office. La branche « nouveau colis » de ce
+transport, elle, n'était appelée de nulle part.
+
+**Le service worker se retire lui-même.** C'est le point qu'on aurait pu
+manquer : un service worker déjà installé **survit** au déploiement. Retirer le
+code de la page n'aurait pas désinscrit les navigateurs des agents. Le fichier
+garde donc son chemin — c'est celui qu'ils interrogent — et ne fait plus que se
+désinscrire avant de recharger les onglets ouverts. À supprimer une fois le
+parc renouvelé.
+
+**Ce qui a été purgé, et ce qui reste.** Les valeurs de `users.web_token` sont
+supprimées par migration : ce sont des jetons d'un projet tiers, pour un canal
+retiré. La colonne reste, elle servira à qui rebranchera.
+
+**Pour rouvrir**, il faut les deux : un transport vivant (FCM HTTP v1 ou Web
+Push VAPID) **et** un projet maîtrisé par le transporteur. Les apps marchand
+et livreur, elles, sont servies depuis D11 — c'est là que la notification
+compte, et c'est là qu'elle arrive.
+
+**Deux défauts trouvés en chemin, dans le même fichier, corrigés.**
+`PushNotificationRepository::store()` faisait `dd($exception)` : un échec
+d'acheminement vidait la pile d'exécution dans le navigateur de
+l'administrateur au milieu de son formulaire, et interrompait la requête. Et
+`update()` lisait le message par `find($id)` **sans scope** — un administrateur
+modifiait le message d'un autre transporteur (la suppression, elle, vérifiait
+déjà la société). Les deux sont couverts par des tests.
+

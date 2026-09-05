@@ -17,7 +17,6 @@
     <script src="{{static_asset('backend')}}/js/lang.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> 
     <script src="{{ static_asset('backend/vendor') }}/toastr/toastr.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.3.2/firebase.js"></script>
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
  
     <script type="text/javascript">   
@@ -47,75 +46,17 @@
     </script>
 @stack('scripts')
 
-<script type="text/javascript">
-    "use strict";
-    $(document).ready(function() {
-        var firebaseConfig = {
-            apiKey: "AIzaSyDCthiio0WgX1F2CiVlw1Z-kWOKYYi6vQI",
-            authDomain: "we-courier-81101.firebaseapp.com",
-            projectId: "we-courier-81101",
-            storageBucket: "we-courier-81101.appspot.com",
-            messagingSenderId: "151878495365",
-            appId: "1:151878495365:web:133d9bace19a4846260dec",
-            measurementId: "G-V1K1HVXD5G"
-        };
+{{-- S22 — le push navigateur du back-office est retiré (décision D12).
 
-            firebase.initializeApp(firebaseConfig);
-            const messaging = firebase.messaging();
-            startFCM();
-            function startFCM() {
-                messaging.requestPermission()
-                    .then(function () {
-                        return messaging.getToken()
-                    })
-                    .then(function (response) {
-                        var dataurl = '{{request()->is('/')}}'
-                        if(dataurl == 1){
-                            $.ajax({
-                                url: '{{ route("notification-store.token") }}',
-                                type: 'POST',
-                                data: {
-                                    token: response
-                                },
-                                dataType: 'JSON',
-                                success: function (response) {
-                                    console.log(response);
-                                },
-                                error: function (error) {
-                                    console.log(error);
-                                },
-                            });
-                        }
-                    }).catch(function (error) {
-                    console.log(error);
-                });
-            }
+     Ce qui vivait ici inscrivait le navigateur de chaque agent au projet
+     Firebase **de l'éditeur** (`we-courier-81101`, clés en clair dans la page),
+     demandait la permission de notifier à chaque chargement, et envoyait
+     ensuite par l'API FCM « legacy », arrêtée par Google en juin 2024 : la
+     permission était réclamée pour un canal qui ne pouvait rien livrer.
 
-            messaging.onMessage(function(payload) {
-                console.log(payload.notification);
-                const title = payload.notification.title;
-                const options = {
-                    body: payload.notification.body,
-                    icon: payload.notification.icon,
-                };
-                Swal.fire({
-                    imageUrl:payload.notification.image,
-                    title: title,
-                    text: payload.notification.body,
-                    position: 'top',
-                    showOkButton: true,
-                    showCancelButton: true,
-                    confirmButtonText: yes,
-                    cancelButtonText: cancel,
-                }).then((result) => {
-                    if (result.isConfirmed){
-                        console.log('ok');
-                    }
-                })
-                new Notification(title, options);
-            });
-    });
-</script>
+     Le fil et les écrans du back-office ne changent pas. Pour un vrai push
+     navigateur, voir D12 : il faudra un projet maîtrisé par le transporteur
+     (FCM v1) ou du Web Push standard (VAPID), et un service worker à nous. --}}
 
     {!! Toastr::message() !!}
 </body>
