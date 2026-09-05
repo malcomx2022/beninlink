@@ -749,10 +749,83 @@ ni `shop_id`, ni `merchant_id`.
   idempotente, société du marchand sur l'écriture (en console `settings()`
   retombe sur la société 1), découvert assumé, portée limitée à un marchand.
 
-## 16. Ce qui reste, et n'est pas un constat
+## 16. Les étapes comptables, couvertes — 2026-09-05 ✅
 
-- Les tests absents des étapes comptables, par ordre d'exposition financière :
-  `parcelDelivered`, la livraison partielle, les retraits, les reversements.
+Le plus gros trou de couverture qui restait. Quatre étapes déplacent de
+l'argent réel, aucune n'avait de test : la livraison, la livraison partielle,
+les retraits, les relevés de règlement.
+
+**42 tests** les couvrent désormais. Ils ont d'abord servi à établir que les
+montants sont justes — ils le sont, sur les quatre étapes — puis à éprouver ce
+qui se passe quand on s'écarte du chemin nominal. C'est là que tout s'est joué.
+
+### Ce que les montants font, et qu'on peut désormais vérifier
+
+Un colis livré déplace quatre jeux de comptes d'un coup :
+
+| Compte | Mouvement |
+|---|---|
+| Marchand | + encaissement, − frais, − TVA → exactement son net à reverser |
+| Livreur | + sa course, − l'encaissement qu'il détient (dette soldée à la remise d'espèces) |
+| Transporteur | − la course du livreur, + les frais de livraison |
+| TVA | + la TVA collectée |
+
+La livraison partielle refait le calcul sur la somme réellement encaissée — les
+frais COD en sont un pourcentage, la TVA suit — et conserve le montant convenu
+dans `old_cash_collection`. Le retrait éteint la créance du marchand et sort
+l'argent d'un compte du transporteur, les deux ensemble. Le relevé ne bouge
+aucun solde : il arrête un compte, et marque les colis pour qu'ils n'y
+reviennent jamais.
+
+### Quatre défauts, les mêmes aux quatre étapes
+
+Aucun n'appelait de décision neuve : ce sont les décisions déjà prises
+(**F1** l'idempotence, **W1** le scoping, **D-B** l'atomicité) qui n'avaient
+simplement jamais été appliquées ici.
+
+1. **Aucune étape ne refusait d'être rejouée.** Livrer deux fois le même colis
+   doublait **tous** les comptes — marchand crédité deux fois du même
+   encaissement, livreur endetté deux fois, TVA déclarée en double. Ce n'est
+   pas théorique : l'app livreur appelle cette étape et un renvoi sur une
+   connexion instable suffit. Régler deux fois la même demande de retrait
+   sortait l'argent deux fois. Rejouer une livraison partielle recalculait les
+   frais sur le montant **déjà réduit**.
+2. **Aucune n'était scopée à la société.** `Parcel::find($id)`,
+   `Payment::where('id',…)`, `Invoice::where(…)` : un administrateur créditait
+   le marchand d'un autre transporteur, réglait sa demande de retrait depuis
+   son propre compte bancaire, ou marquait payé son relevé.
+3. **Aucune n'était atomique.** Les quatre jeux d'écritures s'écrivaient hors
+   transaction : un incident au milieu laissait des livres à moitié faits — et
+   impossibles à rattraper, puisque relancer l'étape doublait l'autre moitié.
+4. **Les SMS étaient dans le même `try` que les écritures.** Une passerelle
+   injoignable rendait « une erreur est survenue » à l'écran alors que les
+   livres étaient écrits et le colis livré. Les notifications sont sorties de
+   la transaction : elles ne peuvent plus défaire ce qui a eu lieu.
+
+Deux détails relevés au passage, corrigés : l'écriture de retrait ne portait
+pas `merchant_id` — le solde du marchand baissait sans ligne pour l'expliquer,
+alors que les deux autres méthodes du même fichier le renseignaient ; et
+annuler un règlement **jamais effectué** créditait le marchand d'un argent
+qu'il n'avait jamais reçu.
+
+Enfin, l'API livreur ignorait le retour du repository et répondait toujours
+200. Tant que l'étape se rejouait, cela « marchait » ; maintenant qu'elle
+refuse, elle rend **422** — sans quoi un renvoi ferait croire au livreur qu'il
+a enregistré quelque chose.
+
+La règle générale qui s'en dégage est consignée en **D8** de
+`docs/DECISIONS_METIER.md`.
+
+## 17. Ce qui reste, et n'est pas un constat
+
 - Le correctif du débit (W5) **ne rattrape pas le passé** : si la production
   tourne déjà, des colis créés depuis l'app peuvent n'avoir jamais été débités.
-  Un rapprochement `parcels` / `wallets` reste à faire, hors code.
+  `php artisan beninlink:colis-non-debites` en dresse la liste (**D7**).
+- Les **annulations** d'étapes comptables (`parcelDeliveredCancel`,
+  `parcelPartialDeliveredCancel`, `returnReceivedByMerchantCancel`…) restent
+  sans tests. Elles inversent les écritures des étapes désormais couvertes et
+  présentent la même forme — donc, très probablement, les mêmes défauts.
+  C'est le prochain bloc par ordre d'exposition.
+- Le **transfert d'espèces du livreur au hub**
+  (`CashReceivedFromDeliveryman`), qui solde la dette constatée à la livraison,
+  n'est pas couvert non plus.

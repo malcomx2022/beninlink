@@ -32,6 +32,7 @@ use App\Models\Backend\Setting;
 use App\Models\Config;
 use App\Repositories\Wallet\WalletInterface;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -1700,9 +1701,42 @@ class ParcelRepository implements ParcelInterface {
         }
     }
 
+    /**
+     * Livraison d'un colis — l'etape la plus lourde du socle sur le plan
+     * comptable : elle deplace quatre jeux de comptes d'un coup (marchand,
+     * livreur, transporteur, TVA).
+     *
+     * Trois garanties, ajoutees le 2026-09-05 en la couvrant de tests, et qui
+     * ne font qu'appliquer ici des decisions deja prises ailleurs :
+     *
+     * 1. **Une seule fois.** Le socle ne verifiait pas le statut : relivrer le
+     *    meme colis doublait TOUS les comptes — marchand credite deux fois du
+     *    meme encaissement, livreur endette deux fois, TVA declaree en double.
+     *    Ce n'est pas theorique : l'app livreur appelle cette etape
+     *    (`POST deliveryman/parcel/delivered/{id}`) et un renvoi sur une
+     *    connexion instable suffit. Meme defaut que F1 sur les recharges.
+     * 2. **Chez soi.** `Parcel::find($id)` nu laissait un administrateur
+     *    crediter le marchand d'une AUTRE societe en changeant l'identifiant
+     *    poste. Meme correction que W1 sur le statut de colis.
+     * 3. **Tout ou rien.** Les quatre jeux d'ecritures s'ecrivaient hors
+     *    transaction : un incident au milieu laissait des livres a moitie
+     *    faits, impossibles a rattraper puisque relancer l'etape doublait
+     *    l'autre moitie.
+     *
+     * Les notifications sortent de la transaction : une passerelle SMS en
+     * panne ne doit pas defaire une livraison qui a eu lieu — c'est deja la
+     * regle posee pour la validation des recharges.
+     */
     public function parcelDelivered($id,$request){
- 
+
+        // Le colis doit etre chez nous, et ne pas etre deja livre.
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis) || (int) $colis->status === ParcelStatus::DELIVERED){
+            return false;
+        }
+
         try {
+            $parcel = DB::transaction(function () use ($id, $request) {
 
             $parcelDelivered                = new ParcelEvent();
             $parcelDelivered->parcel_id     = $id;
@@ -1901,6 +1935,21 @@ class ParcelRepository implements ParcelInterface {
             $parcel->status = ParcelStatus::DELIVERED;
             $parcel->priority_type_id = 2;
             $parcel->save();
+
+            return $parcel;
+
+            });
+        } catch (\Throwable $th) {
+            // Les livres sont annules en entier : rien n'a bouge, l'etape peut
+            // etre relancee telle quelle.
+            Log::error('Livraison annulee', ['parcel_id' => $id, 'message' => $th->getMessage()]);
+
+            return false;
+        }
+
+        // A partir d'ici la livraison est acquise. Ce qui suit previent le
+        // monde exterieur, et ne peut plus la defaire.
+        try {
             if($request->send_sms_customer == 'on') {
 
                 if(session()->has('locale') && session()->get('locale') == 'bn'):
@@ -1926,11 +1975,12 @@ class ParcelRepository implements ParcelInterface {
             }catch (\Exception $exception){
 
             }
-            return true;
         } catch (\Throwable $th) {
-
-            return false;
+            // Notification en echec : on le note, on ne defait pas la livraison.
+            Log::warning('Livraison notifiee en echec', ['parcel_id' => $id, 'message' => $th->getMessage()]);
         }
+
+        return true;
     }
 
 
@@ -2157,8 +2207,30 @@ class ParcelRepository implements ParcelInterface {
     }
 
 
+    /**
+     * Livraison partielle — le client ne prend qu'une partie du colis et paie
+     * moins que prevu.
+     *
+     * C'est la seule etape qui **recalcule les frais** au moment de la
+     * livraison : les frais COD suivent la somme reellement encaissee, la TVA
+     * suit les frais, et le montant convenu au depart est conserve dans
+     * `old_cash_collection`.
+     *
+     * Memes garanties que `parcelDelivered()`, et pour les memes raisons : une
+     * seule fois, chez soi, tout ou rien, notifications hors transaction. Ici
+     * la relance etait meme plus perverse — elle recalculait les frais sur le
+     * montant DEJA reduit.
+     */
     public function parcelPartialDelivered($id,$request){
+
+        // Le colis doit etre chez nous, et son sort ne doit pas etre deja scelle.
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis) || in_array((int) $colis->status, [ParcelStatus::PARTIAL_DELIVERED, ParcelStatus::DELIVERED], true)){
+            return false;
+        }
+
         try {
+            $parcel = DB::transaction(function () use ($id, $request) {
 
             // Parcel Event
             $parcelPartialDelivered                     = new ParcelEvent();
@@ -2372,6 +2444,17 @@ class ParcelRepository implements ParcelInterface {
 
             }
 
+            return $parcel;
+
+            });
+        } catch (\Throwable $th) {
+            Log::error('Livraison partielle annulee', ['parcel_id' => $id, 'message' => $th->getMessage()]);
+
+            return false;
+        }
+
+        // A partir d'ici la livraison partielle est acquise.
+        try {
             if($request->send_sms_customer == 'on') {
 
                 if(session()->has('locale') && session()->get('locale') == 'bn'):
@@ -2399,11 +2482,11 @@ class ParcelRepository implements ParcelInterface {
             }catch (\Exception $exception){
 
             }
-
-            return true;
         } catch (\Throwable $th) {
-            return false;
+            Log::warning('Livraison partielle notifiee en echec', ['parcel_id' => $id, 'message' => $th->getMessage()]);
         }
+
+        return true;
     }
 
 
