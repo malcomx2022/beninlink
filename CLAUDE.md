@@ -10,7 +10,7 @@
 |---|---|---|---|
 | `web/` | Laravel / PHP 8.3 | Backend We Courier : multi-tenant, API, paiements, facturation. **Cœur / contrat.** | Ligne 10 (backend MVP) |
 | `mobile/` | React Native / Expo | App **marchand** (PME) : colis, wallet, factures, douane. | **Ligne 11 / TDR-L8 — financé** |
-| `mobile-livreur/` | React Native / Expo | App **livreur** : courses, statuts, encaissement COD, gains. | **Hors périmètre Idéation → fenêtre Création** |
+| `mobile-livreur/` | React Native / Expo | App **livreur** : courses, statuts, encaissement COD, gains. | **Fenêtre Création ouverte le 2026-09-05** (v1 livrée, hors ligne 11) |
 
 ## Déprécié (référence seulement — ne pas développer)
 - `courier_merchant_saas-main/` (Flutter) et `courier_delivery_saas-main/` (Flutter) :

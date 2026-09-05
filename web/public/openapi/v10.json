@@ -1423,12 +1423,13 @@
                                     "parcel_id": {
                                         "type": "integer"
                                     },
-                                    "status": {
+                                    "status_action": {
                                         "type": "integer",
-                                        "description": "App\\Enums\\ParcelStatus"
+                                        "description": "App\\Enums\\ParcelStatus : 9 livré, 32 livraison partielle, 24 retour au coursier"
                                     },
                                     "cash_collection": {
                                         "type": "integer",
+                                        "description": "Obligatoire pour la livraison partielle",
                                         "nullable": true
                                     },
                                     "note": {
@@ -1438,7 +1439,7 @@
                                 },
                                 "required": [
                                     "parcel_id",
-                                    "status"
+                                    "status_action"
                                 ]
                             }
                         }

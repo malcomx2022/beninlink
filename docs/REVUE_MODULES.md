@@ -14,7 +14,7 @@
 | `web/` | Laravel 10 · PHP 8.2 | Backend We Courier + modules BeninLink. **Le contrat.** | Actif — chantiers 1 à 7 livrés |
 | `web/` (back-office Blade) | Blade + JS compilé dans `public/` | Panneaux Admin, Marchand, Hub, Super-admin, site vitrine | Actif (socle) |
 | `mobile/` | React Native · Expo 57 · expo-router · TypeScript | App **marchand** (PME) | Actif — les 15 écrans de la maquette codés |
-| `mobile-livreur/` | React Native · Expo | App **livreur** | **Pas une ligne de code** (seul `CLAUDE.md`) — fenêtre Création |
+| `mobile-livreur/` | React Native · Expo 57 · expo-router · TypeScript | App **livreur** | Actif — v1 livrée le 2026-09-05 (6 écrans, fenêtre Création) |
 | `courier_merchant_saas-main/` · `courier_delivery_saas-main/` | Flutter | Apps d'origine We Courier | **Dépréciées**, référence seulement |
 
 Volumétrie `web/` : 22 contrôleurs API, 89 contrôleurs back-office, 52 domaines de
@@ -249,25 +249,23 @@ et iOS gardait la demande Face ID anglaise du plugin `expo-secure-store`.
 
 ## 10. Front `mobile-livreur/` — app livreur
 
-**Aucun code** : le dossier ne contient que `CLAUDE.md`. Hors périmètre Idéation.
+**v1 livrée le 2026-09-05** (fenêtre Création ouverte à la demande du porteur, hors
+ligne 11). Mêmes fondations que `mobile/` : charte, briques, client d'API, argent et
+statuts repris à l'identique ; environ 1 100 lignes TypeScript.
 
-Modules attendus (maquette `2_app_livreur.html`, 6 écrans) et leur couverture backend :
+| Écran maquette | Fichier | Endpoints `/api/v10` | État |
+|---|---|---|---|
+| `login` | `(auth)/login.tsx` | `deliveryman/login`, `sign-out` | ✅ (`driver_id`) |
+| `parcels` (En cours / Retours / Livrés) | `(app)/(tabs)/index.tsx` | `deliveryman/dashboard` | ✅ Appeler / Itinéraire depuis la liste |
+| `detail` | `(app)/parcel/[id]/index.tsx` | `deliveryman/parcel/details/{id}` | ✅ marchand, colis, destinataire, historique |
+| `status` (Livré / partielle / Retour + montant) | `(app)/parcel/[id]/status.tsx` | `deliveryman/parcel-status-update` | ✅ (montant obligatoire pour le partiel) |
+| `earnings` | `(app)/(tabs)/earnings.tsx` | `deliveryman/profile`, `income-expense`, `parcel-payment-logs` | ✅ |
+| `profile` | `(app)/(tabs)/profile.tsx` | `deliveryman/profile` | ✅ stats, soldes, tarifs, déconnexion |
 
-| Écran maquette | Endpoints `/api/v10` existants | Prêt côté `web/` |
-|---|---|---|
-| `login` | `deliveryman/login`, `refresh`, `sign-out` | ✅ |
-| `parcels` (En cours / Retours / Livrés) | `deliveryman/parcel/index`, `deliveryman/parcel-status` | ✅ |
-| `detail` | `deliveryman/parcel/details/{id}` | ✅ |
-| `status` (Livré / partielle / Retour + montant) | `deliveryman/parcel/delivered/{id}`, `partial-delivered/{id}`, `parcel-status-update`, `parcel-location-update` | ✅ |
-| `earnings` | `deliveryman/income-expense`, `deliveryman/payment-logs`, `deliveryman/parcel-payment-logs` | ✅ |
-| `profile` | `deliveryman/dashboard`, `deliveryman/profile` | ✅ |
-
-Le backend couvre déjà les 6 écrans : l'app livreur est un chantier **purement front**
-quand la fenêtre Création s'ouvre. ~~Réserve : les jetons ne distinguent pas marchand et
-livreur (S5)~~ — ✅ levée le 2026-09-04 : `deliveryman/login` émet un jeton `deliveryman`
-et les routes `deliveryman/*` sont réservées à ce type.
-
----
+Reste pour une v2 : position GPS (`parcel-location-update`, dépendance `expo-location`),
+photo et signature de livraison (`parcel/delivered/{id}` les accepte), changement de mot
+de passe (fonction prête). Un écart de contrat relevé au passage et corrigé dans la spec :
+`parcel-status-update` lit **`status_action`**, pas `status`.
 
 ## 11. Apps Flutter dépréciées (référence)
 
@@ -295,7 +293,7 @@ consommés (`services/api-list.dart`). Ne rien y coder.
 | Alertes douanières | ✅ | ✅ | — | ✅ (alertes + règles) |
 | Reporting SaaS (MRR…) | ✅ | — | — | ✅ page super-admin |
 | OpenAPI / Swagger | ✅ (`openapi.json`, `/api/docs`) | ✅ `endpoints.ts` vérifié contre la spec par test | — | — |
-| Suivi / statuts colis | ✅ | ✅ (timeline) | ⏳ | ✅ |
+| Suivi / statuts colis | ✅ | ✅ (timeline) | ✅ (livré / partiel / retour) | ✅ |
 | Notifications | ✅ fil marchand (`notifications` Laravel + 6 observers) · SMS ok · push FCM hors service · mail sync | ✅ écran + compteur | — | ✅ |
 
 ---
@@ -339,7 +337,7 @@ consommés (`services/api-list.dart`). Ne rien y coder.
    la plateforme, validation de `contact-us`). ~~S5~~ ✅ **corrigé le
    2026-09-04** : l'API est cloisonnée par `userType` (marchand / livreur → 403) et
    les jetons portent l'ability de leur type.
-7. **`mobile-livreur/` n'est pas commencé** mais son backend est prêt : 6 écrans, 12
-   endpoints déjà en service.
+7. ~~`mobile-livreur/` n'est pas commencé~~ — ✅ **v1 livrée le 2026-09-05** (fenêtre
+   Création) : 6 écrans sur les endpoints livreur existants, mêmes fondations que `mobile/`.
 8. ~~`mobile/app.json` pointe un fichier de locale inexistant~~ — ✅ **corrigé le
    2026-09-04** : `src/i18n/expo-fr.json` créé (nom d'app et Face ID en français).
