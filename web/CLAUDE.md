@@ -23,6 +23,10 @@ avant les apps.
   Razorpay ne vérifiaient rien. ⚠️ C'est le **module** qui est coupé, pas les
   passerelles : `stripe_status` sert aussi l'abonnement SaaS.
 - Le **cycle de vie des colis** : on franchit ses états, on ne les redéfinit pas.
+- Le **transport du push** (**D11**, 2026-09-05) : l'API FCM « legacy » du socle est
+  arrêtée depuis 2024. Les notifications poussées passent par `config('push.driver')`
+  → `App\Services\Push\PushGateway` (pilote `expo`, ou `null` pour ne rien envoyer).
+  Ne pas rebrancher un appel direct à `fcm.googleapis.com`.
 
 ## Décisions actées
 - **FedaPay** = passerelle Mobile Money BJ. **Webhook signé = seule source de vérité**
@@ -67,6 +71,9 @@ avant les apps.
 - Toute étape qui écrit dans les comptes ou touche un solde suit **D8** de
   `docs/DECISIONS_METIER.md` : une seule fois (refuse d'être rejouée), `companywise()`,
   dans une transaction, notifications hors transaction, et chaque écriture nomme son tiers.
+- Une notification poussée ne se décide pas dans un repository : le fil marchand passe
+  par `MerchantFeed` et le canal `push` de `MerchantNotification`. Un push raté ne fait
+  jamais échouer l'écriture métier, et un même fait ne donne **qu'une** notification.
 - Toute route `/api/v10` à identifiant est inscrite dans `tests/Feature/IsolationCoverageTest`
   avec le test prouvant qu'un compte n'atteint pas la ressource d'un autre (S7).
 - Jamais de clés en dur : `FEDAPAY_*` dans `web/.env`.

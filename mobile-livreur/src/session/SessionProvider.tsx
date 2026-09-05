@@ -11,6 +11,7 @@ import type { ReactNode } from 'react';
 import { signIn as apiSignIn, signOut as apiSignOut } from '../api/auth';
 import { fetchProfile } from '../api/deliveryman';
 import { getToken } from '../api/session';
+import { desabonnerAppareil } from '../push';
 import type { DeliverymanUser } from '../api/types';
 
 type SessionState = {
@@ -55,6 +56,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setUser(await apiSignIn(driverId, password));
       },
       signOut: async () => {
+        // D'abord l'appareil, tant que le jeton de session est encore valide :
+        // après `apiSignOut()` l'API refuserait le désabonnement.
+        await desabonnerAppareil();
         await apiSignOut();
         setUser(null);
       },

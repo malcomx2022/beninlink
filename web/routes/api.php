@@ -68,7 +68,11 @@ Route::prefix('v10')->group(function() {
             Route::get('/refresh',                                      [AuthController::class, 'refresh']);
             Route::get('/profile',                                      [AuthController::class, 'profile']);
             Route::post('/profile/update',                              [AuthController::class,'profileUpdate']);
-            //push notification
+            // Notifications poussées : l'app dépose le jeton de son appareil,
+            // le serveur le rattache au compte authentifié (D11).
+            Route::post('push/register',                                [PushNotificationController::class, 'register']);
+            Route::post('push/forget',                                  [PushNotificationController::class, 'forget']);
+            // Topics FCM du socle (apps Flutter dépréciées) — API arrêtée côté Google.
             Route::post('fcm-subscribe',                                [PushNotificationController::class, 'fcmSubscribe']);
             Route::post('fcm-unsubscribe',                              [PushNotificationController::class, 'fcmUnsubscribe']);
 

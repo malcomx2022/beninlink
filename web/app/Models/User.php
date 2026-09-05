@@ -149,6 +149,11 @@ class User extends Authenticatable
         return $this->belongsTo(GeneralSettings::class,'company_id','id');
     }
 
+    /** Appareils de l'utilisateur abonnés aux notifications poussées. */
+    public function deviceTokens(){
+        return $this->hasMany(\App\Models\Backend\DeviceToken::class,'user_id','id');
+    }
+
     public function getSubscriptionAttribute(){
         return Subscription::where('company_id',$this->company_id)->orderBy('id','desc')->first();
     }

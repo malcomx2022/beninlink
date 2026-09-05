@@ -6060,6 +6060,178 @@
                 "x-documented": true
             }
         },
+        "/push/forget": {
+            "post": {
+                "operationId": "pushNotificationControllerForget",
+                "tags": [
+                    "Push"
+                ],
+                "summary": "Désabonner cet appareil",
+                "description": "À appeler avant la déconnexion. Ne supprime que ses **propres** appareils : connaître le jeton d'autrui ne permet pas de le désabonner.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "token": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "token"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Envelope"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "maxItems": 0,
+                                                    "description": "Tableau vide"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "En-tête `apiKey` absent ou invalide"
+                    },
+                    "401": {
+                        "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "422": {
+                        "description": "Erreurs de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "apiKey": [],
+                        "bearer": []
+                    }
+                ],
+                "x-middleware": [
+                    "api",
+                    "CheckApiKey",
+                    "auth:sanctum"
+                ],
+                "x-documented": true
+            }
+        },
+        "/push/register": {
+            "post": {
+                "operationId": "pushNotificationControllerRegister",
+                "tags": [
+                    "Push"
+                ],
+                "summary": "Abonner cet appareil aux notifications poussées",
+                "description": "Le jeton est celui rendu par le service de push de l'app (Expo). Il est rattaché au **compte authentifié** : la requête ne désigne jamais son destinataire. Rejouable — l'app renvoie son jeton à chaque démarrage, cela ne crée pas de doublon, et un appareil qui change de main suit son dernier compte. Décision D11.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "token": {
+                                        "type": "string",
+                                        "description": "ExponentPushToken[...]"
+                                    },
+                                    "platform": {
+                                        "type": "string",
+                                        "description": "ios | android"
+                                    },
+                                    "app": {
+                                        "type": "string",
+                                        "description": "merchant | deliveryman"
+                                    }
+                                },
+                                "required": [
+                                    "token"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Envelope"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "maxItems": 0,
+                                                    "description": "Tableau vide"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "En-tête `apiKey` absent ou invalide"
+                    },
+                    "401": {
+                        "description": "Jeton absent, expiré ou révoqué"
+                    },
+                    "422": {
+                        "description": "Jeton absent ou d'une forme non livrable"
+                    }
+                },
+                "security": [
+                    {
+                        "apiKey": [],
+                        "bearer": []
+                    }
+                ],
+                "x-middleware": [
+                    "api",
+                    "CheckApiKey",
+                    "auth:sanctum"
+                ],
+                "x-documented": true
+            }
+        },
         "/refresh": {
             "get": {
                 "operationId": "authControllerRefresh",

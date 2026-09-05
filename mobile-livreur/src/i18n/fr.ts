@@ -53,6 +53,10 @@ export const fr = {
     earnings: 'Gains',
     profile: 'Profil',
   },
+  notifications: {
+    /** Canal Android des notifications poussées (affectations de courses). */
+    channelName: 'Courses BeninLink',
+  },
   parcels: {
     title: 'Mes courses',
     tabOngoing: 'En cours',
