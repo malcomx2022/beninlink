@@ -1006,13 +1006,57 @@ n'efface pas une activité.
   mal (ré-enregistrer sans rien changer) et la vérification que le
   rapprochement de D9 ne voit plus d'écart après une correction d'ouverture.
 
-## 20. Ce qui reste, et n'est pas un constat
+## 20. Le cycle de vie non comptable — 2026-09-05 ✅
+
+Le dernier trou de couverture. Onze étapes — ramassage assigné, reçu par le
+ramasseur, entrepôt, transfert entre agences, livreur assigné, les deux
+reprogrammations, les retours — n'écrivent rien au grand livre.
+
+Elles n'en sont pas moins comptables au second degré, et c'est l'angle qu'ont
+pris les tests : **la livraison ne choisit pas son livreur, elle le lit** — dans
+le dernier événement de reprogrammation, à défaut dans celui d'affectation. Les
+tests franchissent donc les étapes par les vraies méthodes, puis livrent, et
+regardent **qui a été payé**.
+
+### Le défaut : réaffecter payait le mauvais livreur
+
+Les reprogrammations effaçaient l'événement précédent. Les **affectations**,
+non : elles empilaient. Or les cinq endroits qui relisent cet événement prennent
+`->first()`.
+
+Réaffecter un colis à un autre livreur payait donc **le premier nommé** :
+crédité de la course et débité d'un encaissement qu'il n'avait jamais eu,
+pendant que celui qui avait réellement livré ne touchait rien. Même chose côté
+ramassage.
+
+Le correctif suit l'idiome que le socle appliquait déjà à la reprogrammation :
+l'affectation efface la précédente. **Un seul prétendant à la course**, et les
+cinq lecteurs deviennent justes par construction — plutôt que cinq `->latest()`
+à ne pas oublier.
+
+### Et aucune n'était scopée
+
+`Parcel::find($id)` nu, sur les onze. Un administrateur faisait avancer le colis
+d'un autre transporteur — et désignait au passage qui y serait payé. Les
+affectations acceptaient en outre **le livreur d'une autre société** : une
+société aurait payé la course d'un livreur qu'elle n'emploie pas, sur les colis
+d'une autre.
+
+### Ce que ça couvre
+
+`tests/Feature/ParcelLifecycleTest` — 11 tests. Les deux chaînes de bout en bout
+(ramassage → entrepôt, affectation → livraison), les deux reprogrammations qui
+déplacent bien le paiement, les deux réaffectations qui désignent le dernier
+nommé, le transfert entre agences, les onze étapes refusées sur un colis
+d'ailleurs, et le livreur d'ailleurs refusé.
+
+## 21. Ce qui reste, et n'est pas un constat
 
 - Le correctif du débit (W5) **ne rattrape pas le passé** : si la production
   tourne déjà, des colis créés depuis l'app peuvent n'avoir jamais été débités.
   `php artisan beninlink:colis-non-debites` en dresse la liste (**D7**).
 - ~~L'écart de 14,40 F~~ ✅ **rapprochement écrit le 2026-09-05** :
   `php artisan beninlink:ecarts-marchands` (§18, décision **D9**).
-- Les étapes **non comptables** du cycle de vie (affectation, transfert entre
-  agences, reprogrammations) restent sans tests. Elles ne déplacent pas
-  d'argent, mais elles décident quel livreur sera payé à l'arrivée.
+- ~~Les étapes **non comptables** du cycle de vie~~ ✅ **couvertes le
+  2026-09-05** (§20). Elles ne déplaçaient pas d'argent — elles décidaient mal
+  qui en toucherait.
