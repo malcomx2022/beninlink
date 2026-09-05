@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V10;
 
 use App\Enums\Status;
+use App\Exceptions\InsufficientWalletBalance;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\v10\DeliveryChargeResource;
 use App\Http\Resources\v10\ParcelLogsResource;
@@ -111,11 +112,37 @@ class ParcelController extends Controller
         }
         $userID = auth()->user()->id;
         $merchant = $this->repo->getMerchant($userID);
-        if($this->repo->store($request,$merchant->id)){
-            return $this->responseWithSuccess(__('parcel.added_msg'), [], 200);
-        }else{
-            return $this->responseWithError(__('parcel.error_msg'), [], 500);
 
+        /**
+         * Controle de solde — la regle du socle, enfin appliquee ici.
+         *
+         * Les deux ecrans web refusaient deja la creation quand les frais
+         * depassaient le portefeuille. Ce chemin-ci, celui de l'app, ne le
+         * faisait pas : le colis partait et le solde passait en negatif, sans
+         * plancher. Le controle vit maintenant avec le debit
+         * (`Services\Parcel\WalletDebit`) et remonte jusqu'ici.
+         *
+         * 422 et non 500 : le marchand peut agir, il lui suffit de recharger.
+         * On lui renvoie de quoi le faire — ce qui manque, en entiers XOF, pour
+         * que l'app propose directement le bon montant.
+         */
+        try {
+            if($this->repo->store($request,$merchant->id)){
+                return $this->responseWithSuccess(__('parcel.added_msg'), [], 200);
+            }
+
+            return $this->responseWithError(__('parcel.error_msg'), [], 500);
+        }
+        catch (InsufficientWalletBalance $e) {
+            return $this->responseWithError(
+                __('parcel.wallet_insufficient', ['missing' => formatAmount($e->missing())]),
+                [
+                    'wallet_balance' => (int) round($e->available),
+                    'required'       => (int) round($e->required),
+                    'missing'        => (int) round($e->missing()),
+                ],
+                422
+            );
         }
     }
 

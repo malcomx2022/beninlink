@@ -119,6 +119,13 @@ export const fr = {
     quotePending: 'Calcul du devis…',
     quoteHint: 'Choisissez la catégorie et le type de livraison pour obtenir le devis.',
     totalCharges: 'Total des frais (TVA comprise)',
+    /**
+     * Refus pour solde insuffisant : le serveur renvoie déjà le message, on
+     * ajoute seulement l'issue — recharger du bon montant, en un geste. Le
+     * montant est composé à l'appel, comme ailleurs dans les écrans : `t()` ne
+     * fait pas d'interpolation, et le MVP est monolingue.
+     */
+    rechargeToContinue: 'Recharger',
   },
   /** Les 7 étapes marchand (voir src/domain/parcelStatus.ts). */
   parcelStage: {

@@ -4353,7 +4353,7 @@
                     "Colis"
                 ],
                 "summary": "Créer un colis",
-                "description": "Tous les montants (frais, TVA, net) sont calculés **côté serveur** (S2) ; un éventuel `chargeDetails` posté est ignoré. Un export bloquant (règle douanière niveau 3) est refusé en 422.",
+                "description": "Tous les montants (frais, TVA, net) sont calculés **côté serveur** (S2) ; un éventuel `chargeDetails` posté est ignoré. Un export bloquant (règle douanière niveau 3) est refusé en 422. **Solde** : pour un marchand réglant par porte-monnaie prépayé, la création est refusée en 422 si `total_delivery_amount` dépasse `wallet_balance` — la règle des écrans web, qui vaut désormais ici aussi. Le solde ne descend jamais sous zéro.",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -4471,14 +4471,7 @@
                         "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     },
                     "422": {
-                        "description": "Erreurs de validation",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ValidationError"
-                                }
-                            }
-                        }
+                        "description": "Export bloquant, champ invalide, ou solde insuffisant. Dans ce dernier cas `data` porte `required`, `wallet_balance` et `missing` (entiers XOF) : de quoi proposer la recharge du bon montant."
                     }
                 },
                 "security": [

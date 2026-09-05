@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend;
 use App\Enums\ParcelStatus;
 use App\Enums\Status;
 use App\Enums\UserType;
+use App\Exceptions\InsufficientWalletBalance;
 use App\Exports\ParcelSampleExport;
 use App\Http\Controllers\Controller;
 use App\Imports\ParcelImport;
@@ -138,12 +139,18 @@ class ParcelController extends Controller
         endif;
         // end wallet use checking
   
-        if($this->repo->store($request)){
-            Toastr::success(__('parcel.added_msg'),__('message.success'));
-            return redirect()->route('parcel.index');
-        }else{
+        try {
+            if($this->repo->store($request)){
+                Toastr::success(__('parcel.added_msg'),__('message.success'));
+                return redirect()->route('parcel.index');
+            }
             Toastr::error(__('parcel.error_msg'),__('message.error'));
             return redirect()->back();
+        }
+        // Filet du controle fait plus haut : entre les deux, le solde a pu
+        // bouger. Le refus vient alors du debit lui-meme, verrou pose.
+        catch (InsufficientWalletBalance $e) {
+            return $this->soldeInsuffisant($e, $request);
         }
     }
 
@@ -160,13 +167,32 @@ class ParcelController extends Controller
             return redirect()->back(); 
         endif;
          
-        if($this->repo->duplicateStore($request)){
-            Toastr::success(__('parcel.added_msg'),__('message.success'));
-            return redirect()->route('parcel.index');
-        }else{
+        try {
+            if($this->repo->duplicateStore($request)){
+                Toastr::success(__('parcel.added_msg'),__('message.success'));
+                return redirect()->route('parcel.index');
+            }
             Toastr::error(__('parcel.error_msg'),__('message.error'));
             return redirect()->back();
         }
+        // Dupliquer, c'est creer : le socle ne controlait pas le solde ici.
+        catch (InsufficientWalletBalance $e) {
+            return $this->soldeInsuffisant($e, $request);
+        }
+    }
+
+    /**
+     * Le solde du marchand ne couvre pas les frais : le dire, et rendre la
+     * saisie plutot que de la perdre.
+     */
+    private function soldeInsuffisant(InsufficientWalletBalance $e, $request)
+    {
+        Toastr::error(
+            __('parcel.merchant_wallet_insufficient', ['missing' => formatAmount($e->missing())]),
+            __('message.error')
+        );
+
+        return redirect()->back()->withInput($request->all());
     }
 
     /**

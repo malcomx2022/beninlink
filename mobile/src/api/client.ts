@@ -24,12 +24,27 @@ export class ApiError extends Error {
   readonly status: number;
   /** Erreurs par champ renvoyées par Laravel en 422. */
   readonly errors: Record<string, string[]>;
+  /**
+   * `data` de l'enveloppe d'erreur, tel quel.
+   *
+   * Certains refus portent autre chose qu'un message : le refus pour solde
+   * insuffisant à la création d'un colis renvoie ce qui manque, en entiers XOF,
+   * pour que l'écran propose la bonne recharge. On ne l'interprète pas ici —
+   * chaque appelant lit ce qu'il attend, comme partout ailleurs dans ce client.
+   */
+  readonly data: unknown;
 
-  constructor(message: string, status: number, errors: Record<string, string[]> = {}) {
+  constructor(
+    message: string,
+    status: number,
+    errors: Record<string, string[]> = {},
+    data: unknown = null,
+  ) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.errors = errors;
+    this.data = data;
   }
 
   /** Session expirée ou jeton révoqué : l'app doit renvoyer vers la connexion. */
@@ -150,6 +165,9 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
       extractMessage(payload, `Erreur serveur (HTTP ${response.status}).`),
       response.status,
       extractValidationErrors(payload),
+      payload && typeof payload === 'object'
+        ? (payload as Record<string, unknown>).data ?? null
+        : null,
     );
   }
 

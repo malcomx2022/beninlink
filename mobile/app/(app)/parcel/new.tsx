@@ -4,7 +4,13 @@ import { useRouter } from 'expo-router';
 
 import { ApiError } from '../../../src/api/client';
 import { fetchCustomsReference } from '../../../src/api/customs';
-import { createParcel, fetchParcelFormData, fetchQuote } from '../../../src/api/parcels';
+import {
+  createParcel,
+  fetchParcelFormData,
+  fetchQuote,
+  walletShortfall,
+  type WalletShortfall,
+} from '../../../src/api/parcels';
 import type { CustomsReference, ParcelFormData, ParcelQuote } from '../../../src/api/types';
 import { Button, Card, ChoiceGroup, ErrorText, Field, Muted, Title } from '../../../src/components/ui';
 import { colors } from '../../../src/theme/colors';
@@ -45,6 +51,13 @@ export default function NewParcelScreen() {
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [error, setError] = useState('');
+  /**
+   * Refus pour solde insuffisant : le porte-monnaie prépayé ne couvre pas les
+   * frais. Le backend l'oppose désormais à tous les chemins de création — le
+   * colis n'est pas créé, et le solde ne descend plus sous zéro. On garde ce
+   * qui manque pour proposer la recharge du bon montant.
+   */
+  const [shortfall, setShortfall] = useState<WalletShortfall | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [quote, setQuote] = useState<ParcelQuote | null>(null);
@@ -141,6 +154,7 @@ export default function NewParcelScreen() {
   async function submit() {
     setError('');
     setFieldErrors({});
+    setShortfall(null);
     if (!shopId || !categoryId || !typeId) {
       setError(t('parcels.chooseAllOptions'));
       return;
@@ -172,6 +186,7 @@ export default function NewParcelScreen() {
       if (e instanceof ApiError) {
         setError(e.message);
         setFieldErrors(e.errors);
+        setShortfall(walletShortfall(e));
       } else {
         setError(t('errors.unexpected'));
       }
@@ -368,6 +383,17 @@ export default function NewParcelScreen() {
         </Card>
 
         <ErrorText>{error}</ErrorText>
+        {!!shortfall && (
+          <Button
+            title={`${t('parcels.rechargeToContinue')} ${formatAmount(shortfall.missing)}`}
+            onPress={() =>
+              router.push({
+                pathname: '/(app)/wallet',
+                params: { amount: String(shortfall.missing) },
+              })
+            }
+          />
+        )}
         <Button
           title={t('parcels.create')}
           onPress={submit}

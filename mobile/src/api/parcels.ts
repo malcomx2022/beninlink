@@ -9,7 +9,7 @@
  * calculé**. Vérifié : une création sans `chargeDetails` aboutit, et un
  * `chargeDetails` falsifié est ignoré.
  */
-import { api } from './client';
+import { ApiError, api } from './client';
 import { endpoints } from './endpoints';
 import type {
   Parcel,
@@ -76,6 +76,44 @@ export type NewParcel = {
  */
 export function createParcel(parcel: NewParcel): Promise<unknown> {
   return api.post(endpoints.parcelStore, parcel);
+}
+
+/** Ce qui manque au porte-monnaie pour que le colis puisse être créé. */
+export type WalletShortfall = {
+  /** Frais du colis, en entiers XOF. */
+  required: number;
+  /** Solde du porte-monnaie au moment du refus. */
+  available: number;
+  /** `required - available` : le montant à recharger, au minimum. */
+  missing: number;
+};
+
+/**
+ * Reconnaît le refus pour solde insuffisant, et rend ce qui manque.
+ *
+ * Le backend refuse la création quand les frais dépassent le porte-monnaie
+ * prépayé — la règle de ses écrans web, qui vaut désormais aussi pour l'app.
+ * Le refus arrive en 422 avec les trois montants ; l'écran s'en sert pour
+ * proposer la recharge du bon montant au lieu d'un message sans issue.
+ *
+ * Rend `null` pour tout autre 422 (validation de champs, par exemple).
+ */
+export function walletShortfall(error: unknown): WalletShortfall | null {
+  if (!(error instanceof ApiError) || error.status !== 422) return null;
+  const data = error.data;
+  if (!data || typeof data !== 'object') return null;
+
+  const lu = (cle: string): number | null => {
+    const valeur = (data as Record<string, unknown>)[cle];
+    return typeof valeur === 'number' && Number.isFinite(valeur) ? valeur : null;
+  };
+
+  const missing = lu('missing');
+  const required = lu('required');
+  const available = lu('wallet_balance');
+  if (missing === null || required === null || available === null) return null;
+
+  return { required, available, missing };
 }
 
 

@@ -341,9 +341,29 @@ restantes ont été tranchées le 2026-09-05 (§13 de
   d'administration sur un portefeuille portent un garde au contrôleur — le
   service restant sans scope pour le webhook, qui n'a pas de session.
 
-Reste une question ouverte, qui n'est pas un constat : **aucun contrôle de solde**
-à la création d'un colis, un marchand au portefeuille pouvant passer en négatif
-sans limite.
+La dernière question ouverte — **aucun contrôle de solde** à la création d'un
+colis — a été tranchée le 2026-09-05 (§14 de
+`docs/REVUE_FEDAPAY_ET_WORKFLOWS.md`, décision **D6** de
+`docs/DECISIONS_METIER.md`) : **pas de découvert**. La règle existait déjà dans
+le socle, mais dans deux écrans sur cinq ; l'API mobile et les deux duplications
+créaient le colis et laissaient le solde descendre sans plancher. Le contrôle est
+descendu là où le débit a lieu — `Services\Parcel\WalletDebit`, qui remplace
+quatre copies du même bloc — sous verrou de ligne, et le refus arrive à l'app en
+422 avec ce qui manque, de quoi proposer directement la bonne recharge.
+
+Découverts en descendant : la duplication depuis le panneau marchand ne
+fonctionnait pas du tout (elle écrivait une colonne `parcel_bank` que
+`parcel_logs` n'a jamais eue, créait le colis et rendait une erreur), et son
+journal lisait le marchand de la requête au lieu de celui du colis — la mécanique
+exacte de W5.
+
+**Un constat neuf, laissé ouvert volontairement** (§15) : l'**import Excel en
+masse** (`ParcelImport`, back-office et panneau marchand) crée les colis sans
+jamais toucher le portefeuille — ni contrôle, ni débit. Pour un marchand au
+portefeuille, le débit à la création *est* la facturation : un import n'est donc
+facturé nulle part. Le corriger reviendrait à **introduire** un débit là où il
+n'y en a jamais eu, ce qui change ce que paient les marchands qui utilisent déjà
+l'import : c'est une décision métier, pas un correctif de revue.
 
 ## 11. Apps Flutter dépréciées (référence)
 

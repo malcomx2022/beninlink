@@ -117,3 +117,36 @@ sortaient.
 société de son auteur (`created_by` → `users.company_id`). Une fiche sans auteur
 reste orpheline (elle n'a pas d'origine à laquelle la rattacher) ; aucune dans le
 seed.
+
+## D6 — Le solde du portefeuille est un plancher à la création d'un colis ✅
+
+**Constat.** Un marchand réglant par porte-monnaie prépayé pouvait passer en
+négatif sans limite : rien n'arrêtait la descente. La règle existait pourtant
+déjà dans le socle — `Backend\ParcelController::store()` et
+`MerchantPanel\MerchantParcelController::store()` refusaient tous deux la
+création quand `total_delivery_amount` dépassait `wallet_balance` — mais elle
+vivait dans ces **deux écrans seulement**. Les trois autres chemins de création
+(API mobile, et les deux duplications) créaient le colis et débitaient sans rien
+vérifier.
+
+**Décision (2026-09-05).** On tranche pour la règle du socle, appliquée partout :
+**pas de découvert**. Un colis qu'on ne peut pas facturer ne part pas.
+
+| Point | Choix |
+|---|---|
+| Portée | tous les chemins de création : back-office, panneau marchand, API, duplications |
+| Comparaison | `total_delivery_amount` (sous-total **hors TVA**) contre `wallet_balance` — la convention du socle, qui est aussi le montant réellement prélevé |
+| Frontière | strictement supérieur : un solde exactement égal aux frais passe et tombe à zéro |
+| Hors portée | les marchands qui ne règlent pas par portefeuille (`wallet_use_activation` inactif) ne sont jamais bloqués : ils paient au relevé |
+| Découvert autorisé | **non**, et pas de réglage pour l'activer. Un transporteur qui veut faire crédit crédite le portefeuille — c'est traçable, un plafond de découvert ne l'est pas |
+| Où vit le contrôle | avec le débit, dans `Services\Parcel\WalletDebit`, sous le même verrou de ligne : sans cela deux créations simultanées lisent le même solde et débitent deux fois |
+
+**Ce que le refus rend.** 422 côté API, avec `required`, `wallet_balance` et
+`missing` en entiers XOF : l'app affiche ce qui manque et propose la recharge du
+bon montant, au lieu d'un message sans issue. Côté web, un message et un retour
+vers la recharge — le comportement d'origine, conservé.
+
+**À revoir si le métier change d'avis.** Autoriser un découvert plafonné se
+ferait en un seul endroit (`WalletDebit`) ; c'est précisément pour cela que le
+contrôle n'a pas été recopié dans les écrans.
+

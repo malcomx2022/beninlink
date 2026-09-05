@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Backend\MerchantPanel;
 
 use App\Enums\Status;
+use App\Exceptions\InsufficientWalletBalance;
 use App\Http\Controllers\Controller;
 use App\Imports\ParcelImport;
 use App\Models\Backend\DeliveryCharge;
@@ -109,12 +110,19 @@ class MerchantParcelController extends Controller
         
         $userID = Auth::user()->id;
         $merchant = $this->repo->getMerchant($userID);
-        if($this->repo->store($request,$merchant->id)){
-            Toastr::success(__('parcel.added_msg'),__('message.success'));
-            return redirect()->route('merchant-panel.parcel.index');
-        }else{
+        try {
+            if($this->repo->store($request,$merchant->id)){
+                Toastr::success(__('parcel.added_msg'),__('message.success'));
+                return redirect()->route('merchant-panel.parcel.index');
+            }
             Toastr::error(__('parcel.error_msg'),__('message.error'));
             return redirect()->back();
+        }
+        // Filet du controle fait plus haut : le devis a pu changer entre les
+        // deux, ou deux creations simultanees viser le meme solde. Le refus
+        // vient alors du debit lui-meme, verrou pose.
+        catch (InsufficientWalletBalance $e) {
+            return $this->versLaRecharge($e);
         }
     }
 
@@ -122,13 +130,31 @@ class MerchantParcelController extends Controller
     {
         $userID = Auth::user()->id;
         $merchant = $this->repo->getMerchant($userID);
-        if($this->repo->duplicateStore($request,$merchant->id)){
-            Toastr::success(__('parcel.added_msg'),__('message.success'));
-            return redirect()->route('merchant-panel.parcel.index');
-        }else{
+        try {
+            if($this->repo->duplicateStore($request,$merchant->id)){
+                Toastr::success(__('parcel.added_msg'),__('message.success'));
+                return redirect()->route('merchant-panel.parcel.index');
+            }
             Toastr::error(__('parcel.error_msg'),__('message.error'));
             return redirect()->back();
         }
+        // Dupliquer, c'est creer : le socle ne controlait pas le solde ici.
+        catch (InsufficientWalletBalance $e) {
+            return $this->versLaRecharge($e);
+        }
+    }
+
+    /**
+     * Dire au marchand ce qui manque, et l'emmener la ou il peut le regler.
+     */
+    private function versLaRecharge(InsufficientWalletBalance $e)
+    {
+        Toastr::error(
+            __('parcel.wallet_insufficient', ['missing' => formatAmount($e->missing())]),
+            __('message.error')
+        );
+
+        return redirect()->route('merchant-panel.my.wallet.index');
     }
 
 
