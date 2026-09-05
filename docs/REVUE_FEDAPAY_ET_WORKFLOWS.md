@@ -6,15 +6,18 @@
 > Base de référence au moment de la revue : `vendor/bin/phpunit` — 127 tests,
 > 824 assertions, au vert.
 >
-> Ce document ne corrige rien. Il établit ce qui est, pour que les décisions
-> soient prises en connaissance de cause.
+> **Mise à jour du 2026-09-05.** La revue elle-même ne corrigeait rien. Les deux
+> constats les plus graves, **W1** et **F1**, ont depuis été corrigés à la demande
+> du porteur ; voir §2 et §7, qui portent le correctif et les tests qui le
+> verrouillent. Suite après correction : **139 tests, 860 assertions, au vert**.
+> Tous les autres constats restent ouverts.
 
 ## Sommaire des constats classés
 
 | # | Constat | Gravité | Vérifié |
 |---|---|---|---|
-| **W1** | Un marchand se déclare lui-même « Livré » et entre au relevé de règlement | **Critique** | oui |
-| **F1** | Double crédit d'une recharge FedaPay par l'écran d'approbation admin | **Grave** | oui |
+| **W1** | Un marchand se déclare lui-même « Livré » et entre au relevé de règlement | **Critique** | ✅ **corrigé** |
+| **F1** | Double crédit d'une recharge FedaPay par l'écran d'approbation admin | **Grave** | ✅ **corrigé** |
 | **W2** | La position du livreur écrase celle de toutes ses courses passées | Grave | non (lecture) |
 | **F2** | FedaPay n'a aucune surface de configuration côté administration | Structurel | oui |
 | **F3** | La clé FedaPay par locataire est une branche morte | Structurel | oui |
@@ -45,7 +48,7 @@ L'architecture du module est saine. Les constats qui suivent portent sur ce qui
 l'entoure : l'écran d'approbation du socle, l'absence de réglages, et une branche
 de code jamais atteinte.
 
-## 2. F1 — double crédit par l'écran d'approbation de l'administrateur (grave)
+## 2. F1 — double crédit par l'écran d'approbation de l'administrateur (grave) — ✅ corrigé
 
 **Vérifié : 5 000 FCFA payés, 10 000 FCFA crédités.**
 
@@ -83,9 +86,30 @@ Le second ordre déborde d'ailleurs FedaPay : `approved()` recrédite **toute**
 ligne déjà approuvée qu'on lui repasse. C'est un défaut du socle We Courier que
 l'ouverture de FedaPay rend atteignable en exploitation normale.
 
-Pistes, par coût croissant : refuser dans `approved()` toute ligne qui n'est pas
-`PENDING`, ce qui corrige aussi le socle ; marquer ou masquer les lignes
-`source = 'FedaPay'` dans l'écran d'approbation ; afficher la colonne `source`.
+### Correctif appliqué
+
+`WalletRepository::approved()` porte désormais les deux garde-fous que le socle
+n'avait pas, et que `FedaPayController::approve()` posait déjà de son côté sur la
+transaction FedaPay :
+
+- **seule une ligne `PENDING` est approuvée** ; un second appel ressort sans rien
+  écrire, quel que soit le chemin ;
+- **verrou de ligne** dans une transaction, sans quoi deux appels simultanés
+  liraient tous deux « en attente ». Le crédit du solde et le passage à
+  `APPROVED` sont désormais atomiques, ce qui referme aussi le « ni
+  transactionnelle » relevé par la cartographie.
+
+Le SMS part hors transaction : un envoi lent ne doit pas tenir le verrou, et son
+échec ne doit pas défaire un crédit acquis.
+
+`tests/Feature/WalletApprovalIdempotencyTest.php` (7 tests) verrouille les trois
+enchaînements — approbation puis webhook, webhook puis approbation, double-clic —
+plus le rejeu du webhook, le refus d'une demande rejetée, et le chemin nominal.
+
+Restent ouvertes, et souhaitables : marquer ou masquer les lignes
+`source = 'FedaPay'` dans l'écran d'approbation, et afficher la colonne `source`
+pour que l'administrateur cesse de voir une recharge Mobile Money comme une
+recharge « Hors ligne ».
 
 ## 3. F2 — FedaPay n'a aucune surface de configuration côté administration
 
@@ -169,7 +193,7 @@ qui a servi à cette revue ; le tableau ci-dessous en donne l'état de santé.
 | Reversements et salaires | oui | — | — | **aucun** |
 | Fraudes et support | oui | **non** | — | isolation seulement |
 
-## 7. W1 — un marchand peut se déclarer livré et entrer au relevé (critique)
+## 7. W1 — un marchand peut se déclarer livré et entrer au relevé (critique) — ✅ corrigé
 
 **Vérifié de bout en bout.** Avec son seul jeton, un marchand appelle
 `GET /api/v10/parcel/{id}/status/9` sur un colis jamais ramassé.
@@ -195,6 +219,30 @@ Une valeur arbitraire est acceptée de la même façon : `.../status/999` renvoi
 
 Le back-office, lui, passe par des méthodes dédiées qui posent les événements et
 les écritures. La divergence est entière entre les deux chemins.
+
+### Correctif appliqué
+
+`MerchantParcelRepository::statusUpdate()` n'écrit plus que les statuts inscrits
+dans une liste blanche explicite, `MERCHANT_ALLOWED_STATUSES`. Cette liste est
+**vide**, et c'est le constat, pas un oubli : dans le socle, aucune étape du
+cycle de vie n'appartient au marchand. Chaque transition est posée par une
+méthode dédiée du back-office ou du livreur, qui écrit l'événement et les
+écritures comptables qui vont avec. Le seul geste légitime du marchand reste de
+supprimer un colis encore « En attente », ce que `destroy()` autorise déjà en
+refusant au-delà par un 422.
+
+Y ajouter une transition un jour ne sera pas qu'une ligne : il faudra écrire
+l'événement et les écritures correspondants.
+
+Le contrôleur d'API distingue maintenant les deux cas, sur le modèle de
+`destroy()` : **404** si le colis n'est pas à ce marchand, on ne révèle pas son
+existence ; **422** si la transition ne lui appartient pas. Le panneau marchand
+web n'annonce plus un succès quand rien n'a été écrit.
+
+`tests/Feature/MerchantParcelStatusGuardTest.php` (5 tests) couvre le refus de
+« Livré », le refus d'une valeur hors énumération, le 404 sur le colis d'autrui,
+le fait que la liste blanche est le seul levier, et surtout que le colis
+n'atteint plus le relevé de règlement.
 
 ## 8. W2 — la position du livreur écrase l'historique de ses courses
 
@@ -304,10 +352,10 @@ produit pas en exploitation normale.
 
 Cet ordre suit le risque financier, pas la difficulté.
 
-1. **W1** — fermer `statusUpdate` sur une liste blanche de transitions marchand.
-   C'est la seule faille exploitable par un tiers sans complicité interne.
-2. **F1** — refuser dans `WalletRepository::approved()` toute ligne qui n'est pas
-   `PENDING`. Une ligne de code qui ferme aussi le double-clic du socle.
+1. ~~**W1**~~ ✅ **corrigé le 2026-09-05** — liste blanche vide, 404 / 422
+   distingués, 5 tests.
+2. ~~**F1**~~ ✅ **corrigé le 2026-09-05** — approbation réservée aux lignes
+   `PENDING`, sous verrou de ligne, 7 tests.
 3. **W2** — restreindre la mise à jour de position aux courses en cours.
 4. **W4** et **W5** — deux corrections d'une ligne chacune, à fort effet visible.
 5. **F2** et **F3** — décider du modèle d'encaissement, puis ouvrir l'écran de

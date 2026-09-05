@@ -195,7 +195,12 @@ class MerchantParcelController extends Controller
     // Parcel update
     public function statusUpdate($id, $status_id)
     {
-        $this->repo->statusUpdate($id, $status_id);
+        // La liste blanche des transitions marchand vit dans le repository :
+        // l'ecran ne doit plus annoncer un succes quand rien n'a ete ecrit.
+        if(!$this->repo->statusUpdate($id, $status_id)){
+            Toastr::error(__('parcel.status_not_allowed'),__('message.error'));
+            return redirect()->route('merchant-panel.parcel.index');
+        }
         Toastr::success(__('parcel.update_msg'),__('message.success'));
         return redirect()->route('merchant-panel.parcel.index');
     }

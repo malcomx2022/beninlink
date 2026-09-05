@@ -188,4 +188,8 @@ return array (
 
     'quote' => 'Devis',
     'not_found' => 'Colis introuvable.',
+    // W1 — le marchand n'a aucun levier sur le cycle de vie d'un colis : chaque
+    // transition appartient au back-office ou au livreur, qui ecrivent aussi
+    // l'evenement et les ecritures comptables.
+    'status_not_allowed' => "Ce changement de statut ne releve pas du marchand. Contactez l'administration.",
 );

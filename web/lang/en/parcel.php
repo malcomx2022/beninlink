@@ -202,4 +202,5 @@ return array (
   'expired_date' => 'Expired Date',
     'quote' => 'Quote',
     'not_found' => 'Parcel not found.',
+    'status_not_allowed' => 'This status change is not available to a merchant. Contact the administration.',
 );

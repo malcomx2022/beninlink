@@ -117,12 +117,47 @@ class MerchantParcelRepository implements MerchantParcelInterface {
         return $this->ownedParcels()->with('merchant', 'merchant.user','merchantShop','deliveryCategory','packaging')->find($id);
     }
 
+    /**
+     * Statuts qu'un marchand peut poser lui-meme sur son colis.
+     *
+     * La liste est **vide**, et c'est le constat, pas un oubli : dans le socle
+     * We Courier, aucune etape du cycle de vie n'appartient au marchand. Chaque
+     * transition est posee par une methode dediee du back-office ou du livreur,
+     * qui ecrit l'evenement (`parcel_events`) et les ecritures comptables qui
+     * vont avec (statements coursier, marchand, TVA, soldes). Le seul levier
+     * legitime du marchand sur un colis est de le **supprimer** tant qu'il est
+     * « En attente » : voir `Api\V10\ParcelController::destroy()`, qui refuse
+     * en 422 au-dela.
+     *
+     * Y ajouter une transition un jour n'est pas qu'une ligne ici : il faudra
+     * ecrire l'evenement et les ecritures correspondants, comme le font les
+     * methodes du back-office.
+     */
+    public const MERCHANT_ALLOWED_STATUSES = [];
+
+    /**
+     * Poser un statut sur son propre colis.
+     *
+     * ⚠️ Cette methode etait un setter nu : `$parcel->status = $status_id`, sans
+     * aucun controle de transition. Un marchand pouvait donc se declarer
+     * lui-meme « Livre » (9) sur un colis jamais ramasse — sans `parcel_events`,
+     * sans ecriture comptable — puis voir ce colis entrer au releve de reglement
+     * (`InvoiceRepository::store()` selectionne les colis DELIVERED sans
+     * `invoice_id`) et reclamer au transporteur un encaissement qui n'a jamais
+     * eu lieu. Une valeur hors enumeration, `999`, etait ecrite telle quelle.
+     *
+     * @return bool `false` si le colis n'est pas a lui, ou si la transition ne
+     *              lui appartient pas. L'appelant distingue les deux cas.
+     */
     public function statusUpdate($id, $status_id) {
         $parcel         = $this->ownedParcels()->find($id);
         if(blank($parcel)){
             return false;
         }
-        $parcel->status = $status_id;
+        if(!in_array((int) $status_id, self::MERCHANT_ALLOWED_STATUSES, true)){
+            return false;
+        }
+        $parcel->status = (int) $status_id;
         $parcel->save();
         return true;
     }
