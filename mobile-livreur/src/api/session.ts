@@ -1,25 +1,19 @@
 /**
- * Jeton Sanctum du marchand connecté.
+ * Jeton Sanctum du livreur connecté.
  *
- * Sur **iOS et Android** — les cibles réellement livrées aux PME — le jeton vit
- * dans expo-secure-store (Keychain / Keystore), jamais dans AsyncStorage : c'est
- * un jeton d'accès à des données financières.
+ * Sur **iOS et Android** le jeton vit dans expo-secure-store (Keychain /
+ * Keystore). Sur le **web** (vérification rapide en développement seulement),
+ * repli sur `localStorage`, sans protection comparable — jamais une cible de
+ * production.
  *
- * Sur le **web**, expo-secure-store n'existe pas (pas d'implémentation : l'appel
- * échoue avec `getValueWithKeyAsync is not a function`). On retombe sur
- * `localStorage`, qui n'offre aucune protection comparable — acceptable parce que
- * la cible web ne sert qu'à la vérification rapide en développement, jamais à un
- * usage marchand. Si le web devenait une cible de production, il faudrait un
- * cookie httpOnly posé par le serveur, pas un jeton en JavaScript.
- *
- * Depuis S5 (2026-09-04), le jeton émis par `/signin` porte l'ability `merchant`
- * et les routes livreur répondent 403 : un jeton marchand n'ouvre que l'espace
- * marchand.
+ * Depuis S5 (2026-09-04), le backend émet des jetons portant l'ability
+ * `deliveryman` et refuse (403) les routes marchand : un jeton livreur n'ouvre
+ * que l'espace livreur. Voir web/CARTOGRAPHIE.md.
  */
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-const TOKEN_KEY = 'beninlink.merchant.token';
+const TOKEN_KEY = 'beninlink.livreur.token';
 
 const isWeb = Platform.OS === 'web';
 
@@ -29,7 +23,7 @@ const storage = {
       try {
         return globalThis.localStorage?.getItem(key) ?? null;
       } catch {
-        return null; // localStorage indisponible (navigation privée, iframe…)
+        return null;
       }
     }
     return SecureStore.getItemAsync(key);

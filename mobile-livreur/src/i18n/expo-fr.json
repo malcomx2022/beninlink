@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "BeninLink Livreur"
+  },
+  "android": {
+    "app_name": "BeninLink Livreur"
+  }
+}

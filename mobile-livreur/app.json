@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "BeninLink Livreur",
+    "slug": "beninlink-livreur",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "beninlink-livreur",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#12503A"
+    },
+    "locales": {
+      "fr": "./src/i18n/expo-fr.json"
+    },
+    "android": {
+      "package": "app.beninlink.livreur",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png",
+        "backgroundColor": "#12503A"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "ios": {
+      "bundleIdentifier": "app.beninlink.livreur",
+      "supportsTablet": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-secure-store",
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
