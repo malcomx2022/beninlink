@@ -400,6 +400,16 @@ livraison, son solde bougeant sans rien pour l'expliquer. Corrigé, et rattrapé
 en base par une migration : ici l'attribution est certaine, chaque ligne portant
 son colis.
 
+**Les étapes non comptables du cycle de vie** sont couvertes à leur tour (§20,
+11 tests) — le dernier trou. Elles ne déplacent pas d'argent, mais **la livraison
+ne choisit pas son livreur, elle le lit** dans l'événement d'affectation. Or les
+reprogrammations effaçaient l'événement précédent quand les affectations
+empilaient : **réaffecter un colis payait le premier livreur nommé**, crédité
+d'une course qu'il n'avait pas faite, pendant que celui qui avait livré ne
+touchait rien. Et aucune des onze n'était scopée : un administrateur faisait
+avancer le colis d'un autre transporteur, et pouvait y nommer un livreur
+d'ailleurs.
+
 **Les deux derniers chemins** que le rapprochement ne savait pas expliquer sont
 tranchés (§19, décision **D10**). Le **module « payout / paiement en ligne »**
 — Stripe, PayPal, bKash, Skrill, Razorpay — est coupé : il déplaçait un solde

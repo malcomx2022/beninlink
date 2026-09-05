@@ -227,6 +227,7 @@ société, et elles n'étaient pas transactionnelles.
 | **Tout ou rien** | Toutes les écritures d'une même étape dans une seule transaction. Des livres à moitié faits sont pires que pas de livres : on ne peut pas relancer l'étape sans doubler l'autre moitié |
 | **Notifier après** | SMS et notifications **hors** de la transaction, chacun rattrapé. Un opérateur injoignable ne défait pas une livraison qui a eu lieu |
 | **Nommer** | Chaque écriture porte le tiers qu'elle concerne (`merchant_id`, `delivery_man_id`) : un solde qui bouge sans ligne pour l'expliquer est un litige à venir |
+| **Un seul prétendant** | Les étapes **non comptables** qui désignent qui sera payé (affectation, reprogrammation) laissent **un seul** événement en lice. Le socle empilait les affectations là où la reprogrammation effaçait la précédente : réaffecter un colis payait le premier livreur nommé, pas celui qui avait livré. Effacer à l'écriture rend justes les cinq endroits qui relisent, plutôt que cinq `->latest()` à ne pas oublier |
 
 **Et l'appelant le dit.** Une étape qui refuse doit se voir : 422 côté API,
 message à l'écran côté web. L'API livreur répondait 200 quoi qu'il arrive —

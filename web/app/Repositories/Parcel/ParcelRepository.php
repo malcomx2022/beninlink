@@ -819,7 +819,25 @@ class ParcelRepository implements ParcelInterface {
 
     //parcel events
     public function pickupdatemanAssigned($id,$request){
+
+        // Le colis doit etre chez nous. Le socle lisait `Parcel::find($id)` nu :
+        // un administrateur faisait avancer le colis d'un autre transporteur —
+        // et designait au passage qui y serait paye.
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis)){
+            return false;
+        }
+
+        // ...et le livreur nomme doit l'etre aussi : sinon une societe paie la
+        // course d'un livreur qu'elle n'emploie pas, sur les colis d'une autre.
+        if(blank(DeliveryMan::companywise()->find($request->delivery_man_id))){
+            return false;
+        }
         try {
+
+            // Meme regle cote ramassage : une seule affectation en lice, sinon
+            // c'est le premier ramasseur nomme qui touche la course.
+            ParcelEvent::where('parcel_id',$id)->whereIn('parcel_status',[ParcelStatus::PICKUP_ASSIGN,ParcelStatus::PICKUP_RE_SCHEDULE])->delete();
 
             $pickupAsisgn                = new ParcelEvent();
             $pickupAsisgn->parcel_id     = $id;
@@ -876,6 +894,20 @@ class ParcelRepository implements ParcelInterface {
 
 
     public function PickupReSchedule($id,$request){
+
+        // Le colis doit etre chez nous. Le socle lisait `Parcel::find($id)` nu :
+        // un administrateur faisait avancer le colis d'un autre transporteur —
+        // et designait au passage qui y serait paye.
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis)){
+            return false;
+        }
+
+        // ...et le livreur nomme doit l'etre aussi : sinon une societe paie la
+        // course d'un livreur qu'elle n'emploie pas, sur les colis d'une autre.
+        if(blank(DeliveryMan::companywise()->find($request->delivery_man_id))){
+            return false;
+        }
         try {
 
             $pickupassignevents                = ParcelEvent::where('parcel_id',$id)->whereIn('parcel_status',[parcelStatus::PICKUP_ASSIGN,parcelStatus::PICKUP_RE_SCHEDULE])->delete();
@@ -968,6 +1000,14 @@ class ParcelRepository implements ParcelInterface {
     }
 
     public function receivedBypickupman($id,$request){
+
+        // Le colis doit etre chez nous. Le socle lisait `Parcel::find($id)` nu :
+        // un administrateur faisait avancer le colis d'un autre transporteur —
+        // et designait au passage qui y serait paye.
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis)){
+            return false;
+        }
         try {
             $receivedPickupman                = new ParcelEvent();
             $receivedPickupman->parcel_id     = $id;
@@ -987,6 +1027,14 @@ class ParcelRepository implements ParcelInterface {
 
 
     public function receivedByHub($id,$request){
+
+        // Le colis doit etre chez nous. Le socle lisait `Parcel::find($id)` nu :
+        // un administrateur faisait avancer le colis d'un autre transporteur —
+        // et designait au passage qui y serait paye.
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis)){
+            return false;
+        }
         try {
 
             $receivedByhub                = new ParcelEvent();
@@ -1068,6 +1116,14 @@ class ParcelRepository implements ParcelInterface {
 
 
     public function transfertohub($id,$request){
+
+        // Le colis doit etre chez nous. Le socle lisait `Parcel::find($id)` nu :
+        // un administrateur faisait avancer le colis d'un autre transporteur —
+        // et designait au passage qui y serait paye.
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis)){
+            return false;
+        }
         try {
 
             $transfertohub                           = new ParcelEvent();
@@ -1092,8 +1148,31 @@ class ParcelRepository implements ParcelInterface {
  
     public function deliverymanAssign($id,$request){
 
+        // Le colis doit etre chez nous. Le socle lisait `Parcel::find($id)` nu :
+        // un administrateur faisait avancer le colis d'un autre transporteur —
+        // et designait au passage qui y serait paye.
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis)){
+            return false;
+        }
+
+        // ...et le livreur nomme doit l'etre aussi : sinon une societe paie la
+        // course d'un livreur qu'elle n'emploie pas, sur les colis d'une autre.
+        if(blank(DeliveryMan::companywise()->find($request->delivery_man_id))){
+            return false;
+        }
+
         try {
             $deliveyrman = DeliveryMan::find($request->delivery_man_id);
+
+            // ⚠️ Un seul pretendant a la course. Le socle empilait les
+            // affectations, alors que la reprogrammation, elle, effacait la
+            // precedente. Les cinq endroits qui relisent cet evenement prennent
+            // `->first()` : reaffecter un colis payait donc LE PREMIER livreur
+            // nomme — credite de la course et debite d'un encaissement qu'il
+            // n'avait jamais eu — pendant que celui qui avait livre ne touchait
+            // rien. Meme geste que `deliveryReschedule()`.
+            ParcelEvent::where('parcel_id',$id)->whereIn('parcel_status',[ParcelStatus::DELIVERY_MAN_ASSIGN,ParcelStatus::DELIVERY_RE_SCHEDULE])->delete();
 
             $deliverymanAssign                  = new ParcelEvent();
             $deliverymanAssign->parcel_id       = $id;
@@ -1133,6 +1212,20 @@ class ParcelRepository implements ParcelInterface {
 
 
     public function deliveryReschedule($id,$request){
+
+        // Le colis doit etre chez nous. Le socle lisait `Parcel::find($id)` nu :
+        // un administrateur faisait avancer le colis d'un autre transporteur —
+        // et designait au passage qui y serait paye.
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis)){
+            return false;
+        }
+
+        // ...et le livreur nomme doit l'etre aussi : sinon une societe paie la
+        // course d'un livreur qu'elle n'emploie pas, sur les colis d'une autre.
+        if(blank(DeliveryMan::companywise()->find($request->delivery_man_id))){
+            return false;
+        }
         try {
 
             $deliveryManStatement                = ParcelEvent::where('parcel_id',$id)->whereIn('parcel_status',[parcelStatus::DELIVERY_MAN_ASSIGN,parcelStatus::DELIVERY_RE_SCHEDULE])->delete();
@@ -1172,6 +1265,14 @@ class ParcelRepository implements ParcelInterface {
 
 
     public function receivedWarehouse($id,$request){
+
+        // Le colis doit etre chez nous. Le socle lisait `Parcel::find($id)` nu :
+        // un administrateur faisait avancer le colis d'un autre transporteur —
+        // et designait au passage qui y serait paye.
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis)){
+            return false;
+        }
         try {
 
             DB::beginTransaction();
@@ -1382,6 +1483,14 @@ class ParcelRepository implements ParcelInterface {
 
 
     public function returntoQourier($id,$request){
+
+        // Le colis doit etre chez nous. Le socle lisait `Parcel::find($id)` nu :
+        // un administrateur faisait avancer le colis d'un autre transporteur —
+        // et designait au passage qui y serait paye.
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis)){
+            return false;
+        }
         try {
 
             $returntocourier                = new ParcelEvent();
@@ -1553,6 +1662,14 @@ class ParcelRepository implements ParcelInterface {
     }
 
     public function returnAssignToMerchantReschedule($id,$request){
+
+        // Le colis doit etre chez nous. Le socle lisait `Parcel::find($id)` nu :
+        // un administrateur faisait avancer le colis d'un autre transporteur —
+        // et designait au passage qui y serait paye.
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis)){
+            return false;
+        }
         try {
 
             $returnassigntomerchant                  = new ParcelEvent();
@@ -1598,6 +1715,14 @@ class ParcelRepository implements ParcelInterface {
 
 
     public function returnReceivedByMerchant($id,$request){
+
+        // Le colis doit etre chez nous. Le socle lisait `Parcel::find($id)` nu :
+        // un administrateur faisait avancer le colis d'un autre transporteur —
+        // et designait au passage qui y serait paye.
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis)){
+            return false;
+        }
         try {
             $returnReceived                 = new ParcelEvent();
             $returnReceived->parcel_id      = $id;
