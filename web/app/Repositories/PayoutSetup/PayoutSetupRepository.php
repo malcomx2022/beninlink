@@ -8,6 +8,11 @@ use App\Repositories\PayoutSetup\PayoutSetupInterface;
 class PayoutSetupRepository implements PayoutSetupInterface{
 
     public function update($payment_method,$request){
+        // S21 — une passerelle désactivée (config/payments.php) ne s'active pas
+        // par les réglages : ni clés enregistrées, ni statut actif.
+        if (!gatewayEnabled($payment_method)) {
+            return false;
+        }
         try {
 
 

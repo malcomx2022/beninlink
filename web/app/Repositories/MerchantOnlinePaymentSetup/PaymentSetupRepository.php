@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\Auth;
 
 class PaymentSetupRepository implements  PaymentSetupInterface {
     public function update($payment_method,$request){
+        // S21 — une passerelle désactivée (config/payments.php) ne s'active pas
+        // par les réglages : ni clés enregistrées, ni statut actif.
+        if (!gatewayEnabled($payment_method)) {
+            return false;
+        }
             try {
                 switch ($payment_method) {
                     case PayoutSetup::STRIPE:

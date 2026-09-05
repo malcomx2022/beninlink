@@ -67,7 +67,7 @@
                         </a>
                     </div>
                 @endif
-                @if(globalSettings('sslcommerz_status') == \App\Enums\Status::ACTIVE)
+                @if(gatewayEnabled(\App\Enums\PayoutSetup::SSL_COMMERZ) && globalSettings('sslcommerz_status') == \App\Enums\Status::ACTIVE)
                     <div class="col-lg-6 col-md-6">
                         <a href="{{ route('online.payment.sslcommerz.index') }}" >
                             <div class="card">
@@ -78,7 +78,7 @@
                         </a>
                     </div>
                 @endif
-                @if(globalSettings('aamarpay_status') == \App\Enums\Status::ACTIVE)
+                @if(gatewayEnabled(\App\Enums\PayoutSetup::AAMARPAY) && globalSettings('aamarpay_status') == \App\Enums\Status::ACTIVE)
                 <div class="col-lg-6 col-md-6">
                     <a href="{{ route('online.payment.aamarpay.index') }}" >
                         <div class="card">

@@ -326,9 +326,9 @@ consommés (`services/api-list.dart`). Ne rien y coder.
    FCM reste hors service : le fil est consulté, pas poussé.
 5. **Une route morte** reste dans `web.php` (`my-wallet/recharge-status`) ; les deux
    routes PDF de facture sont implémentées par le chantier 4.
-6. **Constats de sécurité ouverts** : S21 seulement (TLS non vérifié dans les
-   passerelles Aamarpay / SSLCommerz du socle, sans usage au Bénin — à désactiver ou
-   corriger, décision à prendre). ~~S7~~ ✅ **filet posé le 2026-09-04** : toute route
+6. **Constats de sécurité** : ~~S21~~ ✅ **Aamarpay et SSLCommerz désactivées le
+   2026-09-05** (`config/payments.php`, routes non enregistrées, réglages verrouillés,
+   statuts existants passés à inactif). **Plus aucun constat ouvert.** ~~S7~~ ✅ **filet posé le 2026-09-04** : toute route
    `/api/v10` à identifiant doit déclarer son test d'isolation
    (`IsolationCoverageTest`), et l'audit a fermé cinq fuites (fraude, support, comptes
    de versement, retraits, colis côté livreur). ~~S8-S9~~ ✅ **corrigés

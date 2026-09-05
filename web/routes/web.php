@@ -684,23 +684,27 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                             //paypal payment gateway
                             Route::get('paypal-index',                          [PayoutController::class, 'paypalIndex'])->name('paypal.index');
                             Route::post('paypal-payment',                       [PayoutController::class, 'paypalpayment'])->name('paypal');
-                            // SSLCOMMERZ Start
+                            // SSLCOMMERZ Start — S21 : passerelle désactivée (config/payments.php)
+                            if (gatewayEnabled(\App\Enums\PayoutSetup::SSL_COMMERZ)) {
                             Route::get('/sslcommerz',                 [AdminSslCommerzController::class, 'sslcommerzIndex'])->name('sslcommerz.index');
                             Route::post('/pay-via-ajax',              [AdminSslCommerzController::class, 'payViaAjax'])->name('pay.via.ajax');
                             Route::post('/success',                   [AdminSslCommerzController::class, 'success']);
                             Route::post('/fail',                      [AdminSslCommerzController::class, 'fail']);
                             Route::post('/cancel',                    [AdminSslCommerzController::class, 'cancel']);
                             Route::post('/ipn',                       [AdminSslCommerzController::class, 'ipn']);
+                            }
                             //skrill payment start
                             Route::get('skrill',                      [AdminSkrillController::class, 'index'])->name('skrill.index');
                             Route::get('skrill-make-payment',         [AdminSkrillController::class, 'makePayment'])->name('skrill.make.payment');
                             Route::get('payment-completed',           [AdminSkrillController::class, 'paymentCompleted'])->name('skrill.payment.completed');
                             Route::get('payment-cancelled',           [AdminSkrillController::class, 'PaymentCancelled']);
-                            //amarpay
+                            //amarpay — S21 : passerelle désactivée (config/payments.php)
+                            if (gatewayEnabled(\App\Enums\PayoutSetup::AAMARPAY)) {
                             Route::get('/aamarpay',                   [AdminAamarpayController::class, 'aamarpayIndex'])->name('aamarpay.index');
                             Route::get('/aamarpay-payment',           [AdminAamarpayController::class, 'payment'])->name('aamarpay.payment');
                             Route::post('/aamarpay-success',          [AdminAamarpayController::class, 'success'])->name('aamarpay.payment.success');
                             Route::post('/aamarpay-fail',             [AdminAamarpayController::class, 'fail'])->name('aamarpay.payment.fail');
+                            }
                             //bkash payment
                             Route::get('/online-payment/bkash',       [AdminBkashController::class, 'index'])->name('bkash.index');
                             Route::get('bkash/redirect',              [AdminBkashController::class, 'bkashRedirect'])->name('bkash.redirect');
@@ -943,9 +947,13 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                             //paypal payment gateway
                             Route::get('paypal-index',                         [OnlinePaymentController::class, 'paypalIndex'])->name('paypal.index');
                             Route::post('paypal-payment',                      [OnlinePaymentController::class, 'paypalpayment'])->name('paypal');
-                            //ssl commerz
+                            //ssl commerz / aamarpay — S21 : passerelles désactivées (config/payments.php)
+                            if (gatewayEnabled(\App\Enums\PayoutSetup::SSL_COMMERZ)) {
                             Route::get('/sslcommerz',                          [OnlinePaymentController::class, 'sslcommerzIndex'])->name('sslcommerz.index');
+                            }
+                            if (gatewayEnabled(\App\Enums\PayoutSetup::AAMARPAY)) {
                             Route::get('/aamarpay',                            [OnlinePaymentController::class, 'aamarpayIndex'])->name('aamarpay.index');
+                            }
                         });
 
 
@@ -960,12 +968,14 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                                 Route::post('/recharge-status', 'rechargeStatus')->name('recharge.status');
                             });
                     });
-                    // SSLCOMMERZ Start
+                    // SSLCOMMERZ Start — S21 : passerelle désactivée (config/payments.php)
+                    if (gatewayEnabled(\App\Enums\PayoutSetup::SSL_COMMERZ)) {
                     Route::post('/pay-via-ajax',              [SslCommerzPaymentController::class, 'payViaAjax']);
                     Route::post('/success',                   [SslCommerzPaymentController::class, 'success']);
                     Route::post('/fail',                      [SslCommerzPaymentController::class, 'fail']);
                     Route::post('/cancel',                    [SslCommerzPaymentController::class, 'cancel']);
                     Route::post('/ipn',                       [SslCommerzPaymentController::class, 'ipn']);
+                    }
                     //skrill payment start
                     Route::get('skrill',                      [SkrillController::class, 'index'])->name('skrill.index');
                     Route::get('skrill-make-payment',         [SkrillController::class, 'makePayment'])->name('skrill.make.payment');
@@ -975,10 +985,12 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                     Route::get('/online-payment/bkash',       [BkashController::class, 'index'])->name('online.payment.bkash.index');
                     Route::get('bkash/redirect',              [BkashController::class, 'bkashRedirect'])->name('bkash.redirect');
                     Route::get('bkash/execute',               [BkashController::class, 'bkashExecute'])->name('bkash.execute');
-                    //amarpay
+                    //amarpay — S21 : passerelle désactivée (config/payments.php)
+                    if (gatewayEnabled(\App\Enums\PayoutSetup::AAMARPAY)) {
                     Route::get('/aamarpay-payment',           [AamarpayController::class, 'payment'])->name('aamarpay.payment');
                     Route::post('/aamarpay-success',          [AamarpayController::class, 'success'])->name('aamarpay.payment.success');
                     Route::post('/aamarpay-fail',             [AamarpayController::class, 'fail'])->name('aamarpay.payment.fail');
+                    }
                 });
                 // Theme Pages
                 Route::get('/dashboard-finance', function () {
