@@ -5,8 +5,9 @@
 
 ## Périmètre & financement
 La ligne 11 (fenêtre Idéation) ne finance que l'app marchand. **Fenêtre Création ouverte
-le 2026-09-05 à la demande du porteur** : première version livrée (6 écrans, 12 endpoints).
-Ne pas imputer ce temps à la ligne 11.
+le 2026-09-05 à la demande du porteur** : v1 (6 écrans, 12 endpoints) puis v2 le même
+jour (position GPS, photo de livraison, mot de passe, icônes). Ne pas imputer ce temps
+à la ligne 11.
 
 ## Rôle
 Application **livreur (coursier)**, React Native / Expo. **Consomme l'API de `web/`**
@@ -33,10 +34,21 @@ Application **livreur (coursier)**, React Native / Expo. **Consomme l'API de `we
 | Issue de la course (livré / partielle / retour + montant) | `(app)/parcel/[id]/status.tsx` | `deliveryman/parcel-status-update` (`status_action`) |
 | Gains | `(app)/(tabs)/earnings.tsx` | `deliveryman/profile`, `income-expense`, `parcel-payment-logs` |
 | Profil | `(app)/(tabs)/profile.tsx` | `deliveryman/profile`, `sign-out` |
+| Mot de passe | `(app)/profile/password.tsx` | `update-password` (6 caractères, confirmation) |
 
-Non branché dans cette version : remontée de position (`parcel-location-update`,
-demanderait `expo-location`), photo / signature de livraison (le backend les accepte
-sur `parcel/delivered/{id}`), changement de mot de passe (fonction prête dans `src/api/auth.ts`).
+### v2 (2026-09-05)
+- **Position** : `src/domain/location.ts` (`expo-location`, autorisation « pendant
+  l'utilisation » seulement — pas de suivi en arrière-plan). Bouton « Partager ma
+  position » sur Mes courses, et envoi silencieux après chaque déclaration de livraison.
+  Le backend l'écrit sur les courses en cours du livreur authentifié (S4, S7).
+- **Preuve de livraison** : `src/domain/photo.ts` (`expo-image-picker`, appareil photo,
+  qualité 0,5). Photo facultative sur « Livré », envoyée en multipart à
+  `deliveryman/parcel/delivered/{id}` (`image`) ; partiel et retour restent sur
+  `parcel-status-update`. Le client d'API laisse passer un `FormData` tel quel.
+- **Icônes** : Ionicons (`@expo/vector-icons`).
+
+Non branché : signature manuscrite (`signatureImage`, demanderait un canevas de
+dessin), icônes et splash propres à l'app (ceux de `mobile/` réutilisés).
 
 ## Statuts colis (alignés backend)
 En attente → Ramassage assigné → Entrepôt → Livreur assigné → Livré ; + Livraison partielle, Retour.
@@ -44,9 +56,11 @@ Codes dans `src/domain/parcelStatus.ts` (jamais redéfinis côté app).
 
 ## Design system
 Identique à `mobile/` : Vert `#12503A` · Ocre `#E0A63C` · Sora + DM Sans · FCFA entiers.
-Icônes d'onglets en glyphes Unicode (aucune bibliothèque d'icônes dans les dépendances).
+Icônes Ionicons ; les visuels d'app (icône, splash) restent à produire.
 
 ## Commandes
 - `npm install` · `npx expo start` · `npm run typecheck` · `npx expo lint`
 - Build : `eas build -p android` (APK/AAB) · `eas build -p ios`
 - `.env` : copier `.env.example` (`EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_API_KEY`).
+- Dépendances propres à cette app (en plus de `mobile/`) : `expo-location`,
+  `expo-image-picker`, `@expo/vector-icons` — textes d'autorisation dans `app.json`.

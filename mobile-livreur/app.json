@@ -36,7 +36,20 @@
       "expo-router",
       "expo-font",
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "BeninLink Livreur transmet votre position au transporteur pendant vos courses."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "BeninLink Livreur utilise l'appareil photo pour la preuve de livraison.",
+          "photosPermission": "BeninLink Livreur accède à vos photos pour joindre une preuve de livraison."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

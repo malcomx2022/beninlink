@@ -6,6 +6,7 @@ import { ApiError } from '../../../src/api/client';
 import { fetchDashboard } from '../../../src/api/deliveryman';
 import type { DashboardData, ParcelSummary } from '../../../src/api/types';
 import { ErrorText, Muted } from '../../../src/components/ui';
+import { shareCurrentPosition } from '../../../src/domain/location';
 import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, radii, spacing } from '../../../src/theme/typography';
 import { formatAmount } from '../../../src/domain/money';
@@ -44,6 +45,23 @@ export default function ParcelsScreen() {
   const [tab, setTab] = useState<TabKey>('ongoing');
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [locationNotice, setLocationNotice] = useState('');
+  const [sharing, setSharing] = useState(false);
+
+  const share = useCallback(async () => {
+    setSharing(true);
+    setLocationNotice(t('location.sending'));
+    try {
+      const result = await shareCurrentPosition();
+      setLocationNotice(
+        result === 'sent' ? t('location.sent') : result === 'denied' ? t('location.denied') : t('location.unavailable'),
+      );
+    } catch (e) {
+      setLocationNotice(e instanceof ApiError ? e.message : t('location.unavailable'));
+    } finally {
+      setSharing(false);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setError('');
@@ -104,7 +122,15 @@ export default function ParcelsScreen() {
         keyExtractor={(p) => String(p.id)}
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListHeaderComponent={<ErrorText>{error}</ErrorText>}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Pressable onPress={share} disabled={sharing} style={({ pressed }) => [styles.share, pressed && styles.rowPressed]}>
+              <Text style={styles.shareLabel}>{t('location.share')}</Text>
+            </Pressable>
+            {!!locationNotice && <Muted>{locationNotice}</Muted>}
+            <ErrorText>{error}</ErrorText>
+          </View>
+        }
         ListEmptyComponent={
           <View style={styles.empty}>
             <Muted>{t('parcels.empty')}</Muted>
@@ -151,6 +177,15 @@ const styles = StyleSheet.create({
   tabLabel: { fontFamily: fonts.body, fontSize: fontSizes.sm, color: colors.textMuted },
   tabLabelActive: { fontFamily: fonts.bodyMedium, color: colors.primary },
   list: { padding: spacing.md, gap: spacing.sm },
+  header: { gap: spacing.xs, marginBottom: spacing.xs },
+  share: {
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.pill,
+    backgroundColor: colors.primary,
+  },
+  shareLabel: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.sm, color: colors.textOnPrimary },
   empty: { padding: spacing.xl, alignItems: 'center' },
   row: {
     backgroundColor: colors.surface,

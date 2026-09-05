@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { ApiError } from '../../../../src/api/client';
-import { fetchParcelDetails, reportOutcome, type StatusAction } from '../../../../src/api/deliveryman';
+import { fetchParcelDetails, reportDelivered, reportOutcome, type StatusAction } from '../../../../src/api/deliveryman';
+import { shareCurrentPosition } from '../../../../src/domain/location';
+import { CameraDeniedError, takeDeliveryPhoto } from '../../../../src/domain/photo';
 import type { ParcelDetails } from '../../../../src/api/types';
 import { Button, Card, ChoiceGroup, ErrorText, Field, Muted, Title } from '../../../../src/components/ui';
 import { colors } from '../../../../src/theme/colors';
-import { fonts, fontSizes, spacing } from '../../../../src/theme/typography';
+import { fonts, fontSizes, radii, spacing } from '../../../../src/theme/typography';
 import { formatAmount, toAmount } from '../../../../src/domain/money';
 import { t } from '../../../../src/i18n';
 
@@ -26,6 +28,7 @@ export default function ParcelStatusScreen() {
   const [action, setAction] = useState<StatusAction | null>(null);
   const [collected, setCollected] = useState('');
   const [note, setNote] = useState('');
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [fieldError, setFieldError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -46,6 +49,16 @@ export default function ParcelStatusScreen() {
 
   const expected = toAmount(parcel?.cash_collection);
 
+  async function capture() {
+    setError('');
+    try {
+      const uri = await takeDeliveryPhoto();
+      if (uri) setPhotoUri(uri);
+    } catch (e) {
+      setError(e instanceof CameraDeniedError ? t('errors.cameraDenied') : t('errors.unexpected'));
+    }
+  }
+
   async function submit() {
     setError('');
     setFieldError('');
@@ -64,7 +77,13 @@ export default function ParcelStatusScreen() {
     }
     setSaving(true);
     try {
-      await reportOutcome(parcelId, action, { cashCollection, note });
+      if (action === 'delivered') {
+        await reportDelivered(parcelId, { note, photoUri: photoUri ?? undefined });
+      } else {
+        await reportOutcome(parcelId, action, { cashCollection, note });
+      }
+      // Position au moment de la déclaration : utile au transporteur, jamais bloquante.
+      void shareCurrentPosition().catch(() => undefined);
       setDone(
         action === 'delivered'
           ? t('status.successDelivered')
@@ -113,6 +132,18 @@ export default function ParcelStatusScreen() {
             </>
           )}
 
+          {action === 'delivered' && (
+            <View style={styles.proof}>
+              <Text style={styles.proofLabel}>{t('status.proof')}</Text>
+              <Muted>{t('status.proofHint')}</Muted>
+              {photoUri && <Image source={{ uri: photoUri }} style={styles.preview} resizeMode="cover" />}
+              <View style={styles.proofActions}>
+                <Button title={photoUri ? t('common.retakePhoto') : t('common.photo')} onPress={capture} />
+                {photoUri && <Button title={t('common.removePhoto')} onPress={() => setPhotoUri(null)} />}
+              </View>
+            </View>
+          )}
+
           <Field
             label={`${t('status.note')} (${t('common.optional')})`}
             value={note}
@@ -140,4 +171,8 @@ const styles = StyleSheet.create({
   expectedLabel: { fontFamily: fonts.body, fontSize: fontSizes.xs, color: colors.textMuted },
   expectedValue: { fontFamily: fonts.numeric, fontSize: fontSizes.xl, color: colors.accent },
   done: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.sm, color: colors.success },
+  proof: { gap: spacing.xs },
+  proofLabel: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.sm, color: colors.textMuted },
+  preview: { width: '100%', height: 200, borderRadius: radii.md, backgroundColor: colors.border },
+  proofActions: { gap: spacing.sm },
 });

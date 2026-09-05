@@ -14,7 +14,7 @@
 | `web/` | Laravel 10 · PHP 8.2 | Backend We Courier + modules BeninLink. **Le contrat.** | Actif — chantiers 1 à 7 livrés |
 | `web/` (back-office Blade) | Blade + JS compilé dans `public/` | Panneaux Admin, Marchand, Hub, Super-admin, site vitrine | Actif (socle) |
 | `mobile/` | React Native · Expo 57 · expo-router · TypeScript | App **marchand** (PME) | Actif — les 15 écrans de la maquette codés |
-| `mobile-livreur/` | React Native · Expo 57 · expo-router · TypeScript | App **livreur** | Actif — v1 livrée le 2026-09-05 (6 écrans, fenêtre Création) |
+| `mobile-livreur/` | React Native · Expo 57 · expo-router · TypeScript | App **livreur** | Actif — v1 et v2 livrées le 2026-09-05 (7 écrans, fenêtre Création) |
 | `courier_merchant_saas-main/` · `courier_delivery_saas-main/` | Flutter | Apps d'origine We Courier | **Dépréciées**, référence seulement |
 
 Volumétrie `web/` : 22 contrôleurs API, 89 contrôleurs back-office, 52 domaines de
@@ -262,9 +262,11 @@ statuts repris à l'identique ; environ 1 100 lignes TypeScript.
 | `earnings` | `(app)/(tabs)/earnings.tsx` | `deliveryman/profile`, `income-expense`, `parcel-payment-logs` | ✅ |
 | `profile` | `(app)/(tabs)/profile.tsx` | `deliveryman/profile` | ✅ stats, soldes, tarifs, déconnexion |
 
-Reste pour une v2 : position GPS (`parcel-location-update`, dépendance `expo-location`),
-photo et signature de livraison (`parcel/delivered/{id}` les accepte), changement de mot
-de passe (fonction prête). Un écart de contrat relevé au passage et corrigé dans la spec :
+**v2 le même jour** : position GPS à la demande et après chaque livraison
+(`parcel-location-update`, `expo-location`), photo de livraison facultative en multipart
+(`parcel/delivered/{id}`, `expo-image-picker`), écran de changement de mot de passe
+(`update-password`), icônes Ionicons. Reste : signature manuscrite, visuels propres à
+l'app. Un écart de contrat relevé au passage et corrigé dans la spec :
 `parcel-status-update` lit **`status_action`**, pas `status`.
 
 ## 11. Apps Flutter dépréciées (référence)

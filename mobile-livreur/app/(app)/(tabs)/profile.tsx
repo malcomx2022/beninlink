@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Link } from 'expo-router';
 
 import { ApiError } from '../../../src/api/client';
 import { fetchProfile } from '../../../src/api/deliveryman';
@@ -62,6 +63,9 @@ export default function ProfileScreen() {
         <Line label={t('auth.phone')} value={current?.phone ?? '—'} />
         <Line label={t('auth.email')} value={current?.email ?? '—'} />
         <Line label={t('profile.hub')} value={current?.hub?.name ?? '—'} />
+        <Link href="/(app)/profile/password" style={styles.link}>
+          {t('profile.changePassword')}
+        </Link>
       </Card>
 
       <View style={styles.tiles}>
@@ -104,4 +108,5 @@ const styles = StyleSheet.create({
   line: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md },
   lineLabel: { fontFamily: fonts.body, fontSize: fontSizes.sm, color: colors.textMuted },
   lineValue: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.sm, color: colors.text, flexShrink: 1, textAlign: 'right' },
+  link: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.sm, color: colors.primary, marginTop: spacing.xs },
 });

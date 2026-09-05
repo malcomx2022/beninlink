@@ -1,18 +1,16 @@
 import { Tabs } from 'expo-router';
-import { Text, type ColorValue } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import type { ColorValue } from 'react-native';
 
 import { colors } from '../../../src/theme/colors';
 import { fonts } from '../../../src/theme/typography';
 import { t } from '../../../src/i18n';
 
-/**
- * Icônes en glyphes Unicode : pas de bibliothèque d'icônes dans les
- * dépendances (celles de mobile/, reprises telles quelles). À remplacer par
- * un jeu d'icônes si la charte en impose un.
- */
-function icon(glyph: string) {
+type IconName = keyof typeof Ionicons.glyphMap;
+
+function icon(name: IconName) {
   return function TabIcon({ color, size }: { color: ColorValue; size: number }) {
-    return <Text style={{ color, fontSize: size, lineHeight: size + 4 }}>{glyph}</Text>;
+    return <Ionicons name={name} color={color} size={size} />;
   };
 }
 
@@ -32,15 +30,15 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: t('parcels.title'), tabBarLabel: t('tabs.parcels'), tabBarIcon: icon('▣') }}
+        options={{ title: t('parcels.title'), tabBarLabel: t('tabs.parcels'), tabBarIcon: icon('bicycle-outline') }}
       />
       <Tabs.Screen
         name="earnings"
-        options={{ title: t('earnings.title'), tabBarLabel: t('tabs.earnings'), tabBarIcon: icon('◆') }}
+        options={{ title: t('earnings.title'), tabBarLabel: t('tabs.earnings'), tabBarIcon: icon('wallet-outline') }}
       />
       <Tabs.Screen
         name="profile"
-        options={{ title: t('profile.title'), tabBarLabel: t('tabs.profile'), tabBarIcon: icon('●') }}
+        options={{ title: t('profile.title'), tabBarLabel: t('tabs.profile'), tabBarIcon: icon('person-outline') }}
       />
     </Tabs>
   );
