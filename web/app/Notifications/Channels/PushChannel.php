@@ -2,8 +2,8 @@
 
 namespace App\Notifications\Channels;
 
+use App\Jobs\SendPush;
 use App\Models\User;
-use App\Services\Push\PushGateway;
 use App\Services\Push\PushMessage;
 use Illuminate\Notifications\Notification;
 
@@ -21,10 +21,6 @@ use Illuminate\Notifications\Notification;
  */
 class PushChannel
 {
-    public function __construct(private PushGateway $gateway)
-    {
-    }
-
     public function send($notifiable, Notification $notification): void
     {
         if (!$notifiable instanceof User || !method_exists($notification, 'toPush')) {
@@ -36,11 +32,12 @@ class PushChannel
             return;
         }
 
-        // La passerelle n'émet pas d'exception ; ce garde-fou couvre le cas où
-        // une future implémentation en laisserait passer une : le fil en base
-        // est déjà écrit, il ne doit pas être perdu pour un push.
+        // D13 — l'appel au service de push quitte la requête : le fil en base
+        // est déjà écrit quand on arrive ici, l'agent ou le webhook qui a
+        // déclenché l'événement n'a pas à attendre un aller-retour réseau.
+        // En `sync` (installation sans worker), le job s'exécute immédiatement.
         try {
-            $this->gateway->toUser($notifiable, $message);
+            dispatch(SendPush::pour($notifiable, $message));
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('Push non émis', [
                 'user_id' => $notifiable->id,

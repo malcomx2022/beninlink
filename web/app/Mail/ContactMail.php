@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class ContactMail extends Mailable
+class ContactMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -17,9 +17,24 @@ class ContactMail extends Mailable
      * @return void
      */
     protected $data;
+
+    /**
+     * D13 — l'expéditeur est figé **ici**, dans la requête.
+     *
+     * Le mail part désormais en file : à l'exécution, `settings()` retomberait
+     * sur la société 1 et le message serait envoyé au nom d'un autre
+     * transporteur (constat F4, déjà fermé côté SMS).
+     */
+    protected array $societe = [];
+
     public function __construct($data = null)
     {
         $this->data = $data;
+        $this->societe = [
+            'email' => settings()?->email,
+            'name' => settings()?->name,
+            'logo' => settings()?->LogoImage,
+        ];
     }
 
     /**
@@ -30,7 +45,7 @@ class ContactMail extends Mailable
     public function build()
     {
         $data = $this->data;
-        $logoImage = settings()->LogoImage;
+        $logoImage = $this->societe['logo'];
         // S13 — l'expéditeur était l'adresse SAISIE PAR LE VISITEUR : usurpation
         // possible, et rejets SPF/DKIM puisque le serveur n'est pas autorisé à
         // écrire au nom d'un domaine tiers.
@@ -38,9 +53,9 @@ class ContactMail extends Mailable
         // visiteur devient l'adresse de réponse, ce qui préserve l'usage
         // (répondre au message) sans mentir sur l'origine.
         return $this->view('backend.contact.contact_mail',compact('data','logoImage'))
-            ->from(settings()->email, settings()->name)
+            ->from($this->societe['email'], $this->societe['name'])
             ->replyTo($data['email'], $data['name'] ?? null)
-            ->to(settings()->email)
+            ->to($this->societe['email'])
             ->subject($data['subject']);
     }
 }

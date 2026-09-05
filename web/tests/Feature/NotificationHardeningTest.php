@@ -66,11 +66,16 @@ class NotificationHardeningTest extends TestCase
 
         $this->postJson('/api/v10/contact-us', ['email' => 'pas-une-adresse'])->assertStatus(422);
         Mail::assertNothingSent();
+        Mail::assertNothingQueued();
 
         $this->postJson('/api/v10/contact-us', $this->visiteur())->assertOk();
+        // D13 — le courriel part désormais **en file** : `assertSent` ne le voit
+        // plus, `assertQueued` oui. La propriété vérifiée, elle, ne bouge pas :
+        // le visiteur reste l'adresse de réponse, pas l'expéditeur (S13).
         // Le faux mailer stocke le mailable sans le construire : on le construit
         // pour lire ses destinataires.
-        Mail::assertSent(ContactMail::class, fn (ContactMail $mail) => $mail->build()->hasReplyTo('aicha@example.test'));
+        Mail::assertQueued(ContactMail::class, fn (ContactMail $mail) => $mail->build()->hasReplyTo('aicha@example.test')
+            && $mail->hasFrom(settings()->email, settings()->name));
     }
 
     public function test_push_topic_is_not_derived_from_the_email(): void

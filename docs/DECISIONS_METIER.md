@@ -434,3 +434,51 @@ l'administrateur au milieu de son formulaire, et interrompait la requête. Et
 modifiait le message d'un autre transporteur (la suppression, elle, vérifiait
 déjà la société). Les deux sont couverts par des tests.
 
+---
+
+## D13 — Les envois quittent la requête HTTP ✅
+
+**Constat 7 de la cartographie**, laissé ouvert par D11 et D12 : tout partait
+`sync`, c'est-à-dire **dans la requête de l'agent**.
+
+Le chiffre qui décide : `SmsService::reveSms()` pose un `CURLOPT_TIMEOUT` de
+**80 secondes**, et un changement de statut de colis déclenche jusqu'à **deux**
+SMS (le livreur et le marchand). Un opérateur lent faisait donc attendre, à un
+clic, l'agent qui n'a rien à voir avec l'acheminement du message. Le push (5 s)
+et les courriels s'ajoutaient par-dessus.
+
+**Décision : mettre en file, sans toucher aux appelants.**
+
+| Ce qui change | Où |
+|---|---|
+| SMS | `SmsService::sendSms()` / `sendOtp()` gardent leurs **28 appels** ; ils mettent en file. La livraison vit dans `deliverSms()` / `deliverOtp()`, appelées par `App\Jobs\SendSms` |
+| Push | `PushChannel` (le fil) et `PushNotificationService` (le chemin du socle) passent par `App\Jobs\SendPush` |
+| Courriels | `ContactMail`, `MerchantSignup`, `CompanySignup` implémentent `ShouldQueue` |
+| Pilote | `QUEUE_CONNECTION=database` : un VPS mutualisé n'a que sa base, et le volume d'un transporteur béninois tient dans une table |
+
+**Le vrai risque du changement : le locataire.** Un job s'exécute **hors
+requête**, où `settings()` retombe sur la société 1. Un SMS mis en file sans
+précaution serait donc parti avec le nom commercial ET les identifiants
+d'opérateur d'un **autre** transporteur — facturés à lui. C'est le constat F4,
+que `forCompany()` avait fermé côté requête ; le sortir de la requête le
+rouvrait. La société est donc **résolue à la mise en file** et voyage avec le
+job ; les trois mailables figent de même leur expéditeur à la construction.
+
+**La garantie qui rend le changement sûr.** En `QUEUE_CONNECTION=sync`, un job
+s'exécute immédiatement : une installation sans worker se comporte
+**exactement** comme avant. Le passage à `database` est un choix de
+déploiement, pas une rupture de code.
+
+**La panne que la file introduit, et son témoin.** Si le worker s'arrête,
+l'application répond normalement, les colis avancent, les écrans sont justes —
+et plus aucun SMS ne part. Personne ne le voit avant qu'un client se plaigne.
+D'où `php artisan beninlink:file-attente` : en attente, âge du plus ancien,
+échoués ; sortie 1 au-delà du seuil, de quoi la brancher sur une alerte. Le
+guide d'infra fournit l'unité superviseur (corrigée au passage : elle visait
+`queue:work redis`, que l'application n'utilise pas — le worker n'aurait rien
+traité) et un repli cron pour un hébergement sans superviseur.
+
+**Ce qui reste inline, et pourquoi.** `InvoicePDFSend` : son expéditeur est
+codé en dur (`admin@example.com`) et le PDF voyagerait dans la charge du job.
+Le corriger est un chantier à part, pas un effet de bord de celui-ci.
+

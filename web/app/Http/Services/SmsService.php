@@ -4,6 +4,7 @@
 namespace App\Http\Services;
 
 use App\Enums\Status;
+use App\Jobs\SendSms;
 use App\Models\Backend\GeneralSettings;
 use App\Models\Backend\SmsSetting;
 use http\Client;
@@ -64,9 +65,33 @@ class SmsService
         return (string) settings()?->name;
     }
 
+    /**
+     * D13 — l'envoi quitte la requête HTTP.
+     *
+     * Les deux points d'entrée du socle (`sendOtp`, `sendSms`) gardent leur
+     * signature et leurs vingt-huit appels : ils ne parlent plus à l'opérateur,
+     * ils **mettent en file**. La livraison elle-même vit dans `deliverOtp()` /
+     * `deliverSms()`, appelées par `App\Jobs\SendSms`.
+     *
+     * La société est résolue **ici**, dans la requête, et voyage avec le job :
+     * à l'exécution, `settings()` retomberait sur la société 1 (constat F4).
+     *
+     * Avec `QUEUE_CONNECTION=sync` — une installation sans worker — le job
+     * s'exécute immédiatement : le comportement est exactement celui d'avant.
+     */
     public function sendOtp($userPhone,$otpCode)
     {
+        SendSms::dispatch($this->companyId ?? settings()?->id, (string) $userPhone, (string) $otpCode, true);
+    }
 
+    public function sendSms($userPhone,$msg)
+    {
+        SendSms::dispatch($this->companyId ?? settings()?->id, (string) $userPhone, (string) $msg);
+    }
+
+    /** Livraison réelle d'un code de vérification. Appelée par le job. */
+    public function deliverOtp($userPhone,$otpCode)
+    {
         $smsSetting = $this->setting('reve_status');
         $smsTwilioSetting = $this->setting('twilio_status');
         if($smsSetting == Status::ACTIVE){
@@ -78,7 +103,8 @@ class SmsService
 
     }
 
-    public function sendSms($userPhone,$msg)
+    /** Livraison réelle d'un SMS. Appelée par le job. */
+    public function deliverSms($userPhone,$msg)
     {
 
         $smsSetting       = $this->setting('reve_status');

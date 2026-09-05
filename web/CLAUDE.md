@@ -67,11 +67,18 @@ avant les apps.
   rapproche `merchants.current_balance` de son relevé (`merchant_statements`).
   Ne corrige que les écarts **entièrement expliqués** par les annulations de
   livraisons partielles ; les autres, il les montre. Décision **D9**.
+- `php artisan beninlink:file-attente [--seuil=5]` — état de la file des envois
+  (SMS, push, e-mails) et détection d'un **worker arrêté** : la panne que la file
+  introduit est silencieuse. Décision **D13**.
 - Version PHP réelle : voir `web/composer.json`.
 
 ## Conventions
 - Réutiliser les conventions We Courier (repérer un exemple avant d'écrire du neuf).
 - Tout module de paiement modifié est couvert par des tests PHPUnit (dont idempotence webhook).
+- Tout envoi sortant (SMS, push, e-mail) part **en file** (**D13**), jamais dans la
+  requête : mettre en file dans le point d'entrée existant, garder ses appelants, et
+  **porter la société dans le job** — hors requête, `settings()` retombe sur la
+  société 1 et l'envoi partirait au nom d'un autre transporteur (F4).
 - Toute étape qui écrit dans les comptes ou touche un solde suit **D8** de
   `docs/DECISIONS_METIER.md` : une seule fois (refuse d'être rejouée), `companywise()`,
   dans une transaction, notifications hors transaction, et chaque écriture nomme son tiers.
