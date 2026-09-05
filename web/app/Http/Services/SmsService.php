@@ -4,16 +4,71 @@
 namespace App\Http\Services;
 
 use App\Enums\Status;
+use App\Models\Backend\GeneralSettings;
 use App\Models\Backend\SmsSetting;
 use http\Client;
 use Twilio\Rest\Client as TwilioClient;
 class SmsService
 {
+    /**
+     * Societe pour le compte de laquelle le SMS part, quand l'appelant la
+     * connait. Voir `forCompany()`.
+     */
+    private ?int $companyId = null;
+
+    /**
+     * F4 — envoyer un SMS **au nom d'une societe donnee**.
+     *
+     * Les deux aides du socle, celle des reglages SMS et celle des reglages
+     * generaux, retombent sur la societe 1 en l'absence d'utilisateur connecte.
+     * Un SMS declenche hors session — le webhook FedaPay en est le cas type —
+     * partait donc avec le nom commercial et la devise d'un AUTRE locataire, et
+     * surtout avec les identifiants d'operateur SMS de la societe 1, factures
+     * a elle.
+     *
+     * Renvoie une **copie** : le service est resolu depuis le conteneur et
+     * partage, on ne doit pas lui coller un locataire de facon durable.
+     */
+    public function forCompany(?int $companyId): static
+    {
+        $copie = clone $this;
+        $copie->companyId = $companyId;
+
+        return $copie;
+    }
+
+    /**
+     * Reglage SMS de la societe visee, avec repli sur le comportement du socle
+     * quand aucune n'est precisee : en requete authentifiee, l'aide du socle est
+     * deja scopee par la societe connectee.
+     */
+    private function setting(string $key)
+    {
+        if ($this->companyId === null) {
+            return smsSettings($key);
+        }
+
+        return SmsSetting::where('company_id', $this->companyId)->where('key', $key)->value('value');
+    }
+
+    /** Nom commercial a afficher comme expediteur. */
+    private function brand(): string
+    {
+        if ($this->companyId !== null) {
+            $nom = GeneralSettings::where('id', $this->companyId)->value('name');
+            if (!blank($nom)) {
+                return (string) $nom;
+            }
+        }
+
+        return (string) settings()?->name;
+    }
+
     public function sendOtp($userPhone,$otpCode)
     {
 
-        $smsSetting = smsSettings('reve_status');
-        $smsTwilioSetting = smsSettings('twilio_status');
+        $smsSetting = $this->setting('reve_status');
+        $smsTwilioSetting = $this->setting('twilio_status');
         if($smsSetting == Status::ACTIVE){
             $this->reveSms ('otp',$userPhone,$otpCode);
         }
@@ -26,9 +81,9 @@ class SmsService
     public function sendSms($userPhone,$msg)
     {
 
-        $smsSetting       = smsSettings('reve_status');
-        $smsTwilioSetting = smsSettings('twilio_status');
-        $smsNexmoSetting  = smsSettings('nexmo_status');
+        $smsSetting       = $this->setting('reve_status');
+        $smsTwilioSetting = $this->setting('twilio_status');
+        $smsNexmoSetting  = $this->setting('nexmo_status');
         if($smsSetting == Status::ACTIVE){
             $this->reveSms ('sms',$userPhone,$msg);
         }
@@ -44,12 +99,12 @@ class SmsService
     private function reveSms ($type,$userPhone,$userMsg){
       
             try {
-                    $api_key    = smsSettings('reve_api_key');
-                    $api_secret = smsSettings('reve_secret_key');
-                    $api_url    = smsSettings('reve_api_url');
-                    $callerID   = settings()->name;
+                    $api_key    = $this->setting('reve_api_key');
+                    $api_secret = $this->setting('reve_secret_key');
+                    $api_url    = $this->setting('reve_api_url');
+                    $callerID   = $this->brand();
                     if($type == 'otp') {
-                        $message = $userMsg . ' is your ' . settings()->name . ' verification code.';
+                        $message = $userMsg . ' is your ' . $this->brand() . ' verification code.';
                     }else {
                         $message = $userMsg;
                     }
@@ -82,9 +137,9 @@ class SmsService
 
         try {
 
-            $account_sid = smsSettings('twilio_sid');
-            $auth_token = smsSettings('twilio_token');
-            $twilio_number = smsSettings('twilio_from');
+            $account_sid = $this->setting('twilio_sid');
+            $auth_token = $this->setting('twilio_token');
+            $twilio_number = $this->setting('twilio_from');
 
             $client = new TwilioClient($account_sid, $auth_token); 
             $client->messages->create($receiverNumber, [
@@ -99,12 +154,12 @@ class SmsService
     private function nexmoSms($type,$receiverNumber,$message) {
 
         try {
-            $nexmoKey = smsSettings('nexmo_key');
-            $nexmoSecretKey = smsSettings('nexmo_secret_key');
+            $nexmoKey = $this->setting('nexmo_key');
+            $nexmoSecretKey = $this->setting('nexmo_secret_key');
             $basic  = new \Vonage\Client\Credentials\Basic($nexmoKey, $nexmoSecretKey);
             $client = new \Vonage\Client($basic);
             $response = $client->sms()->send(
-                new \Vonage\SMS\Message\SMS($receiverNumber, settings()->name, $message)
+                new \Vonage\SMS\Message\SMS($receiverNumber, $this->brand(), $message)
             );
             $message = $response->current();
 

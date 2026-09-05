@@ -313,9 +313,15 @@ n'a modifié aucun code. Deux constats y appellent une décision rapide :
   déclarait pas `company_id` assignable, donc tout réglage de passerelle
   enregistré depuis l'administration partait avec un locataire nul.
 
-Restent ouverts le contrôle douanier absent du back-office, le SMS émis sous
-l'identité de la première société, les deux filets de sécurité, et la reprise
-éventuelle des lignes `settings` écrites avec un locataire nul.
+- ~~**W3**~~ et ~~**F4**~~ ✅ **corrigés le 2026-09-05** : la requête de création
+  côté administration porte enfin les règles douanières, comme le prescrivait le
+  commentaire de `CustomsAllowed` ; et le SMS de confirmation de recharge part au
+  nom, à la devise et par l'opérateur SMS de la société du portefeuille, au lieu
+  de ceux de la première société.
+
+Restent ouverts les deux filets de sécurité qui déclarent une couverture
+inexistante, et la reprise éventuelle des lignes `settings` écrites avec un
+locataire nul.
 
 ## 11. Apps Flutter dépréciées (référence)
 

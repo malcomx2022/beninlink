@@ -6,9 +6,10 @@
 > Base de référence au moment de la revue : `vendor/bin/phpunit` — 127 tests,
 > 824 assertions, au vert.
 >
-> **Mise à jour du 2026-09-05.** La revue elle-même ne corrigeait rien. Sept
+> **Mise à jour du 2026-09-05.** La revue elle-même ne corrigeait rien. Neuf
 > constats ont depuis été corrigés à la demande du porteur : **W1** et **F1**
-> d'abord, puis **W2**, **W4** et **W5**, enfin **F2** et **F3**. Chaque section porte son correctif et
+> d'abord, puis **W2**, **W4** et **W5**, ensuite **F2** et **F3**, enfin
+> **W3** et **F4**. Chaque section porte son correctif et
 > les tests qui le verrouillent. Suite après correction : **160 tests,
 > 916 assertions, au vert**, contre 127 au moment de la revue.
 >
@@ -29,8 +30,8 @@
 | **W2** | La position du livreur écrase celle de toutes ses courses passées | Grave | ✅ **corrigé** |
 | **F2** | FedaPay n'a aucune surface de configuration côté administration | Structurel | ✅ **corrigé** |
 | **F3** | La clé FedaPay par locataire est une branche morte | Structurel | ✅ **corrigé** |
-| **W3** | Le contrôle douanier est absent de la création côté back-office | Moyen | oui |
-| **F4** | Le SMS de confirmation part sous l'identité de la société 1 | Moyen | oui |
+| **W3** | Le contrôle douanier est absent de la création côté back-office | Moyen | ✅ **corrigé** |
+| **F4** | Le SMS de confirmation part sous l'identité de la société 1 | Moyen | ✅ **corrigé** |
 | **W4** | La liste des relevés de l'API échoue en 500, et ne filtrait que les payés | **Grave** | ✅ **corrigé** |
 | **W5** | Le portefeuille n'est jamais débité depuis l'app, et l'échec est muet | **Grave** | ✅ **corrigé** |
 | — | Onze constats mineurs, voir §5 et §7 | Faible | — |
@@ -198,7 +199,7 @@ ouvrir un écran de saisie par locataire.
 
 | # | Constat | Emplacement |
 |---|---|---|
-| F4 | **Vérifié.** Dans le webhook, `settings()` renvoie la société 1. Le SMS de confirmation porte donc le nom commercial et la devise d'un autre locataire, et `smsSettings()` retombant sur `company_id = 1`, il part avec les identifiants d'opérateur SMS de la société 1, facturés à elle. Le crédit reste correct ; le fil de notifications est sain. | `WalletRepository::approved()` |
+| F4 | ✅ **corrigé.** Dans le webhook, `settings()` renvoyait la société 1 : le SMS de confirmation portait le nom commercial et la devise d'un autre locataire et, `smsSettings()` retombant sur `company_id = 1`, partait avec les identifiants d'opérateur SMS de cette autre société, facturés à elle. Voir §5 bis. | `WalletRepository::approved()` |
 | F5 | Le chemin de crédit du portefeuille par webhook n'a **aucun test**, alors que `.claude/rules/payments.md` l'exige. L'abonnement, lui, est couvert. Les tests portefeuille s'arrêtent à l'initiation. | `tests/Feature/FedaPayWalletWebTest.php` |
 | F6 | `IsolationCoverageTest` déclare `GET fedapay/status/{reference}` couvert par `FedaPayWebhookTest`, qui ne touche jamais cette route : ni `RefreshDatabase`, ni appel HTTP. Le code est correct, il scope par `merchant_id` ; c'est la déclaration de couverture qui est fausse. | `IsolationCoverageTest.php:58` |
 | F7 | `FedaPayGateway::retrieve()` n'est appelé nulle part. Écrit « pour un rapprochement manuel », sans écran ni commande de rapprochement. | `FedaPayGateway` |
@@ -206,6 +207,23 @@ ouvrir un écran de saisie par locataire.
 | F9 | Les variables `FEDAPAY_*` sont documentées dans `docs/guides/infra/.env.example` mais absentes de `web/.env.example`, le fichier qu'un développeur copie. | `web/.env.example` |
 | F10 | Le guide d'intégration porte encore « l'abonnement SaaS n'est pas encore câblé » : il a été livré depuis. | `docs/guides/fedapay-module/` |
 | F11 | `SaasMetrics::subscriptionCashBetween()` ne compte que les encaissements FedaPay. Un locataire qui paie par Stripe n'apparaît pas dans `cash_collected`, alors que `bookings` le compte. L'écart est intentionnel et commenté, mais doit être affiché avec le chiffre. | `SaasMetrics.php` |
+
+### 5 bis. F4 — le correctif appliqué
+
+Le message est désormais bâti avec le nom et la devise de la société **du
+portefeuille**, jamais avec ceux de `settings()`.
+
+`SmsService` reçoit un contexte de société explicite, `forCompany()`, qui rend
+une **copie** : le service est résolu depuis le conteneur et partagé, on ne doit
+pas lui coller un locataire de façon durable. Toutes ses lectures de réglages
+passent par ce contexte, avec repli sur le comportement du socle quand aucune
+société n'est précisée — en requête authentifiée, l'aide du socle est déjà
+scopée par la société connectée, donc rien ne change là où rien n'était cassé.
+
+`tests/Feature/WalletSmsTenantTest.php` (4 tests) : la marque et la devise du
+message, l'opérateur SMS effectivement interrogé, le repli conservé sans société
+précisée, et le fait que `forCompany()` ne teinte jamais l'instance partagée.
+Vérifié : le test échoue sans le correctif.
 
 ---
 
@@ -318,7 +336,7 @@ partielle en sont exclus, la course y est close. Le correctif S7 tient toujours,
 reçoit la position, la livraison close et la livraison partielle gardent la leur,
 un retour en main la reçoit encore, et la course d'un collègue reste intacte.
 
-## 9. W3 — le contrôle douanier est absent de la création côté back-office
+## 9. W3 — le contrôle douanier est absent de la création côté back-office — ✅ corrigé
 
 `app/Http/Requests/MerchantPanel/Parcel/StoreRequest.php` porte
 `destination_country`, `customs_category` et la règle `CustomsAllowed` : un colis
@@ -328,6 +346,28 @@ bloquant est refusé côté API et côté panneau marchand.
 **aucun de ces champs**. Un agent peut donc créer depuis l'administration un colis
 que la règle douanière interdit. L'observer émet bien l'alerte a posteriori, mais
 le blocage, lui, ne s'applique pas.
+
+Le bypass est réel et pas seulement théorique : `ParcelRepository` écrit
+`destination_country` et `customs_category` depuis la requête dans ses trois
+points d'entrée — `store()`, `duplicateStore()` et `update()` — sans jamais les
+valider. Les formulaires du back-office n'affichent pas ces champs, mais la route
+les accepte.
+
+### Correctif appliqué
+
+Les deux règles sont ajoutées à la requête de l'administration, à l'identique de
+celle du marchand. C'est exactement ce que `CustomsAllowed` prescrit dans son
+propre commentaire : elle vit dans `StoreRequest` « parce que c'est le seul point
+commun aux TROIS chemins de création ». Le troisième ne la portait pas.
+
+Les trois points d'entrée du back-office partagent la même classe de requête :
+une seule modification les couvre tous.
+
+`tests/Feature/BackofficeCustomsGuardTest.php` (5 tests) : le refus d'un export
+bloqué, la catégorie rendue obligatoire sur un export — sans quoi l'omettre
+contournerait le blocage —, le colis domestique laissé intact, l'export autorisé
+qui passe toujours, et l'accord entre le chemin administration et le chemin
+marchand. Vérifié : trois de ces cinq tests échouent sans le correctif.
 
 ## 10. W4 et W5 — deux défauts silencieux, plus lourds qu'annoncé — ✅ corrigés
 
@@ -467,8 +507,11 @@ Cet ordre suit le risque financier, pas la difficulté.
 5. ~~**F2**~~ et ~~**F3**~~ ✅ **corrigés le 2026-09-05** — écran de réglages,
    compte d'encaissement par locataire, secret de webhook qui suit le compte,
    11 tests.
-6. **W3**, **F4**, **F5**, **F6** — cohérence et filets de sécurité.
-7. **À décider** : reprendre ou non les lignes de `settings` écrites avec un
+6. ~~**W3**~~ et ~~**F4**~~ ✅ **corrigés le 2026-09-05** — le back-office porte
+   la même règle douanière que les deux autres chemins (5 tests) ; le SMS part au
+   nom et par l'opérateur de la bonne société (4 tests).
+7. **F5** et **F6** — les deux filets de sécurité.
+8. **À décider** : reprendre ou non les lignes de `settings` écrites avec un
    locataire nul avant le correctif du `fillable`.
 7. Les tests absents des étapes comptables, par ordre d'exposition financière :
    `parcelDelivered`, la livraison partielle, les retraits, les reversements.

@@ -7,6 +7,7 @@ use App\Enums\Wallet\WalletPaymentMethod;
 use App\Enums\Wallet\WalletStatus;
 use App\Enums\Wallet\WalletType;
 use App\Http\Services\SmsService;
+use App\Models\Backend\GeneralSettings;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\Wallet;
 use App\Repositories\Wallet\WalletInterface;
@@ -180,8 +181,18 @@ class WalletRepository implements WalletInterface{
             $wallet   = $credited['wallet'];
             $merchant = $credited['merchant'];
 
-            $msg = "Dear ".$merchant->business_name.", you are recharges ".settings()->currency.$wallet->amount." to your ".settings()->name." wallet.";
-            $response = app(SmsService::class)->sendSms($merchant->user->mobile, $msg); 
+            // F4 — la societe vient du PORTEFEUILLE, jamais de `settings()`.
+            // Appelee depuis le webhook FedaPay, cette methode n'a ni session ni
+            // sous-domaine : `settings()` y retombait sur la societe 1. Le
+            // marchand recevait donc un SMS au nom commercial et a la devise
+            // d'un autre locataire, emis avec les identifiants d'operateur SMS
+            // de cette autre societe et factures a elle.
+            $company  = GeneralSettings::find($wallet->company_id);
+            $marque   = $company->name ?? '';
+            $devise   = $company->currency ?? '';
+
+            $msg = "Dear ".$merchant->business_name.", you are recharges ".$devise.$wallet->amount." to your ".$marque." wallet.";
+            $response = app(SmsService::class)->forCompany($wallet->company_id)->sendSms($merchant->user->mobile, $msg); 
 
             return true; 
         } catch (\Throwable $th) {
