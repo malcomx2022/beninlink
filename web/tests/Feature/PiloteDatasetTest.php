@@ -3,9 +3,12 @@
 namespace Tests\Feature;
 
 use App\Enums\ParcelStatus;
+use App\Enums\Status;
+use App\Enums\Wallet\WalletType;
 use App\Models\Backend\DeliveryMan;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\Parcel;
+use App\Models\Backend\Wallet;
 use App\Models\User;
 use App\Services\Pilote\PiloteDataset;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -89,6 +92,48 @@ class PiloteDatasetTest extends TestCase
         );
     }
 
+    public function test_one_pilot_merchant_pays_by_wallet_and_its_parcels_are_debited(): void
+    {
+        // Sans cette PME, la recette ne pouvait pas exercer le portefeuille : ni le
+        // débit à la création, ni le refus pour solde insuffisant, ni la recharge —
+        // et `beninlink:colis-non-debites` s'arrêtait sur « aucun marchand ne règle
+        // par portefeuille », donc sans rien vérifier.
+        app(PiloteDataset::class)->seed($this->companyId);
+
+        $portefeuille = Merchant::where('merchant_unique_id', 'PIL-002')->firstOrFail();
+        $this->assertEquals(Status::ACTIVE, (int) $portefeuille->wallet_use_activation);
+
+        // Les quatre autres restent au règlement à la livraison : les deux modes
+        // doivent être testés côté PME pilotes.
+        $this->assertSame(1, Merchant::where('merchant_unique_id', 'like', 'PIL-%')
+            ->where('wallet_use_activation', Status::ACTIVE)->count());
+
+        $colis = Parcel::where('merchant_id', $portefeuille->id)->get();
+        $du = (float) $colis->sum('total_delivery_amount');
+
+        $recharges = Wallet::where('merchant_id', $portefeuille->id)->where('type', WalletType::INCOME)->sum('amount');
+        $depenses = Wallet::where('merchant_id', $portefeuille->id)->where('type', WalletType::EXPENSE)->sum('amount');
+
+        $this->assertEquals(PiloteDataset::WALLET_TOPUP, (float) $recharges, 'la recharge d\'ouverture');
+        $this->assertEquals($du, (float) $depenses, 'chaque colis a été débité');
+        $this->assertEquals(PiloteDataset::WALLET_TOPUP - $du, (float) $portefeuille->wallet_balance);
+    }
+
+    public function test_the_two_regularisations_find_nothing_on_a_fresh_dataset(): void
+    {
+        app(PiloteDataset::class)->seed($this->companyId);
+
+        // Le jeu de recette sort cohérent : les commandes n'ont rien à rattraper.
+        // C'est ce qui rend un constat non vide, plus tard, exploitable.
+        $this->artisan('beninlink:colis-non-debites')
+            ->expectsOutputToContain('Aucun colis non débité')
+            ->assertSuccessful();
+
+        $this->artisan('beninlink:ecarts-marchands')
+            ->expectsOutputToContain('Aucun écart')
+            ->assertSuccessful();
+    }
+
     public function test_a_second_run_requires_reset_and_does_not_duplicate(): void
     {
         $service = app(PiloteDataset::class);
@@ -107,6 +152,12 @@ class PiloteDatasetTest extends TestCase
         $this->assertSame(5, Merchant::where('merchant_unique_id', 'like', 'PIL-%')->count());
         $this->assertSame(3, User::where('unique_id', 'like', 'LIV-%')->count());
         $this->assertSame(35, Parcel::where('tracking_id', 'like', PiloteDataset::TRACKING_PREFIX . '%')->count());
+
+        // `--reset` doit aussi effacer les mouvements de portefeuille : ils
+        // référencent le marchand, et leur oubli faisait échouer la suppression
+        // sur une contrainte de clé étrangère.
+        $portefeuille = Merchant::where('merchant_unique_id', 'PIL-002')->firstOrFail();
+        $this->assertSame(8, Wallet::where('merchant_id', $portefeuille->id)->count(), 'une recharge et sept débits, pas le double');
     }
 
     public function test_the_command_refuses_production_and_prints_accounts(): void

@@ -56,6 +56,8 @@ avant les apps.
 - `php artisan openapi:generate` après tout changement de `routes/api.php` ou de
   `resources/openapi/overlay.php` (régénère `public/openapi/v10.json`, versionné).
 - `php artisan beninlink:pilote [--company=] [--reset]` : jeu de données béninois de recette
+  (5 PME dont **PIL-002 au portefeuille prépayé**, recharge d'ouverture et colis débités :
+  sans elle, la recette n'exerce ni le débit à la création ni `beninlink:colis-non-debites`)
 - `php artisan beninlink:reglages-orphelins` — constate les lignes `settings`
   écrites sans société avant le correctif du `fillable` ; `--purge` pour les retirer.
   (refusé en production) — voir `docs/guides/recette-pilote/README.md`.
