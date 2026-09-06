@@ -9,7 +9,7 @@
 | D1 | TVA au niveau entreprise | ✅ tranché | taux société `configs.vat_rate` (18 %), surcharge par marchand | valeur par société hors Bénin, exonérations |
 | D2 | Plan de comptes SYSCOHADA | ⏳ à valider | config, export journal, **extrait de période**, auxiliaires par marchand, **fiche de validation** | signature de l'expert-comptable sur `docs/guides/comptabilite/plan-de-comptes.md` |
 | D3 | Dépenses d'acquisition (CAC) | ✅ tranché | chapitre « Marketing et acquisition clients » | discipline de saisie mensuelle |
-| D4 | Refonte du barème (zones, tranches) | ⏳ à décider | tranches « jusqu'à N kg » sans schéma (S9) | zones béninoises, grille tarifaire, migration |
+| D4 | Refonte du barème (zones, tranches) | ⏳ à décider | tranches « jusqu'à N kg » (S9), **étalon des tarifs**, **étude d'impact** | zones béninoises, grille tarifaire, délai par zone, CEDEAO |
 | D5 | Fiches de fraude sans `company_id` | ✅ tranché | migration de rattachement par l'auteur | — |
 
 ---
@@ -121,10 +121,30 @@ tous les écrans. Les taux COD, eux, ont **trois** zones (`inside_city`, `sub_ci
 
 **Questions pour le métier.** Liste et libellés des zones ; grille tarifaire cible
 (par tranche de poids et par zone) ; faut-il un délai par zone ou un délai global ;
-politique CEDEAO (tarif au pays ou forfait).
+politique CEDEAO (tarif au pays ou forfait) ; taux COD par zone.
 
 Aucun code tant que la grille n'est pas fixée : la structure actuelle rend juste
 ce que le barème contient.
+
+**Préparé le 2026-09-06, sans préjuger des réponses :**
+
+- **L'étalon** — `tests/Feature/DeliveryPricingBaselineTest` fixe ce que coûte un
+  colis aujourd'hui : neuf poids × quatre types, le devis complet TVA comprise,
+  et le fait qu'**aucune case ne croise délai et périmètre** (le constat de D4,
+  sous forme exécutable). La migration promet « aucun montant ne change » ;
+  cette promesse ne se vérifie pas à l'œil sur 274 occurrences — elle se
+  vérifie contre un étalon écrit **avant**.
+- **L'étude d'impact** — `docs/guides/tarification/refonte-bareme.md` : les 274
+  occurrences réparties par nature (120 dans les vues, 41 en écriture, 24 en
+  validation, 11 en lecture **déjà centralisée** par `DeliveryChargeResolver`),
+  le contrat mobile à faire évoluer dans l'ordre `web/` → OpenAPI → apps, et
+  une exécution en six étapes dont les trois premières sont réversibles et ne
+  déplacent aucun montant.
+- **La grille à remplir** — même document, partie 1 : zones proposées, tableau
+  tranche × zone avec les tarifs d'aujourd'hui rappelés en regard, questions
+  sur le délai, la CEDEAO et les taux COD.
+
+Ce qui manque pour coder n'est donc plus une analyse : ce sont **cinq réponses**.
 
 ## D5 — Fiches de fraude sans `company_id` ✅
 
