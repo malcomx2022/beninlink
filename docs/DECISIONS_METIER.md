@@ -153,8 +153,10 @@ Ce qui manque pour coder n'est donc plus une analyse : ce sont **cinq réponses*
 | Zones | **Cotonou, Périphérie, Intérieur, CEDEAO** |
 | Délai | **global** — les mêmes délais partout, avec un **supplément par délai** indépendant de la zone |
 | CEDEAO | **forfait par pays** (Togo, Nigeria, Burkina…), pas de tarif au poids |
-| Grille de prix | ⏳ reste à fixer |
-| Taux COD par zone | ⏳ reste à fixer |
+| Grille de prix | **les tarifs actuels sont conservés** — Cotonou ← `next_day`, Périphérie ← `sub_city`, Intérieur ← `outside_city` |
+| Supplément « jour même » | **300 F**, global |
+| Taux COD par zone | **les taux actuels sont conservés** (Cotonou ← `inside_city`, Périphérie ← `sub_city`, Intérieur ← `outside_city`) |
+| Forfaits CEDEAO par pays | ⏳ reste à fixer (pays et montants), ainsi que le taux COD de la zone |
 
 ### Livré le même jour (étapes 1 à 3, réversibles)
 
@@ -170,12 +172,25 @@ Ce qui manque pour coder n'est donc plus une analyse : ce sont **cinq réponses*
   montants d'aujourd'hui (Cotonou ← `next_day`, Périphérie ← `sub_city`,
   Intérieur ← `outside_city`, CEDEAO ← 0).
 
-**Ce que la conversion ne masque pas.** Le supplément « jour même » vaut
-aujourd'hui 200, 300, 300 puis 500 F selon la tranche. Le modèle retenu n'en
-admet **qu'un seul**, global : aucune valeur unique ne reproduit les quatre. La
-commande affiche l'écart tranche par tranche et propose la médiane, mais ne
-pose rien d'autorité — c'est un prix, il appartient au métier. Sans
-`--supplement=`, les délais sont créés à 0.
+**Le seul tarif qui bouge, et de combien.** Le supplément « jour même » valait
+200, 300, 300 puis 500 F selon la tranche ; le modèle retenu n'en admet qu'un,
+et le métier a fixé **300 F**. Conséquence, sur le barème pilote :
+
+| Tranche | « Jour même » avant | Après | Écart |
+|---|---|---|---|
+| 1 kg | +200 | +300 | **+100** |
+| 3 kg | +300 | +300 | 0 |
+| 5 kg | +300 | +300 | 0 |
+| 10 kg | +500 | +300 | **−200** |
+
+Tout le reste — les trois zones nationales, tous délais confondus — est
+**identique au centime près**. La commande affiche ce tableau avant d'écrire ;
+un test le fixe (`DeliveryZoneGridTest`).
+
+**Reste côté métier** : les **forfaits CEDEAO par pays** (quels pays, quels
+montants) et le **taux COD de la zone CEDEAO**. Un encaissement à l'étranger
+n'a jamais été tarifé : `codRateForZone()` rend 0 pour cette zone plutôt que
+d'emprunter le taux « hors ville » — on ne devine pas un prix.
 
 **Reste à faire** (étapes 4 à 6, dans cet ordre) : les écrans de saisie
 (une ligne par zone, ajout dynamique), la ressource d'API `zones[]` puis

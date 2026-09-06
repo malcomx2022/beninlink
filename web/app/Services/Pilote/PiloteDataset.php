@@ -24,6 +24,7 @@ use App\Models\Backend\MerchantStatement;
 use App\Models\Backend\Wallet;
 use App\Repositories\Wallet\WalletInterface;
 use App\Services\Parcel\ChargeCalculator;
+use App\Services\Pricing\ZoneGridConverter;
 use App\Services\Parcel\WalletDebit;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -147,6 +148,12 @@ class PiloteDataset
                 $deliverymen[] = $this->deliveryman($companyId, $i + 1, $name, $phone, $hubs[$hubIndex], $upload);
             }
 
+            // D4 — le jeu de recette naît avec ses zones : sans elles, la
+            // recette ne peut pas exercer le nouveau barème (zones, supplément
+            // de délai, forfaits CEDEAO). Les montants sont ceux du barème
+            // hérité, décision du métier du 2026-09-06.
+            app(ZoneGridConverter::class)->convert($companyId, ZoneGridConverter::SAME_DAY_SURCHARGE);
+
             $parcels = 0;
             foreach ($merchants as $mi => $merchant) {
                 foreach (self::PARCEL_PLAN as $pi => [$status, $deliveryType]) {
@@ -202,6 +209,11 @@ class PiloteDataset
             Deliverycategory::whereIn('id', $categoryIds)->delete();
             Packaging::where('company_id', $companyId)->whereIn('name', array_column(self::PACKAGING, 0))->delete();
             Hub::where('company_id', $companyId)->whereIn('name', array_column(self::HUBS, 0))->delete();
+            // Les lignes de barème par zone tombent avec leurs zones (clé
+            // étrangère `nullOnDelete` : on les retire explicitement d'abord).
+            DeliveryCharge::where('company_id', $companyId)->whereNotNull('zone_id')->delete();
+            \App\Models\Backend\DeliveryZone::where('company_id', $companyId)->delete();
+            \App\Models\Backend\DeliveryDelay::where('company_id', $companyId)->delete();
         });
     }
 

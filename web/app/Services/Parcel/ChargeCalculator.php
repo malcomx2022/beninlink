@@ -2,6 +2,7 @@
 
 namespace App\Services\Parcel;
 
+use App\Models\Backend\DeliveryZone;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\Packaging;
 
@@ -94,6 +95,29 @@ class ChargeCalculator
     private function deliveryCharge(Merchant $merchant, ?int $categoryId, $weight, int $deliveryTypeId): float
     {
         return $this->resolver->resolve($merchant->id, $categoryId, $weight, $deliveryTypeId);
+    }
+
+    /**
+     * Taux COD du marchand pour une **zone** (D4).
+     *
+     * Le métier a demandé de garder les taux actuels : les trois clés
+     * existantes se rattachent aux trois zones nationales, une pour une.
+     * La CEDEAO n'en a pas — un encaissement à l'étranger n'a jamais été
+     * tarifé ici — et rend donc 0 tant que le métier n'a rien fixé. Zéro,
+     * pas le taux « hors ville » : on ne devine pas un prix.
+     */
+    public function codRateForZone(Merchant $merchant, DeliveryZone $zone): float
+    {
+        $rates = $merchant->cod_charges ?? [];
+
+        $key = match ($zone->code) {
+            DeliveryZone::COTONOU => 'inside_city',
+            DeliveryZone::PERIPHERIE => 'sub_city',
+            DeliveryZone::INTERIEUR => 'outside_city',
+            default => null,
+        };
+
+        return $key === null ? 0.0 : (float) ($rates[$key] ?? 0);
     }
 
     /** Taux COD du marchand, en pourcentage, selon la zone de livraison. */
