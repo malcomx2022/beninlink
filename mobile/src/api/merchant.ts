@@ -6,7 +6,10 @@ import type {
   BalanceDetails,
   CodCharge,
   DashboardData,
+  DeliveryDelay,
+  DeliveryGrid,
   DeliveryRate,
+  DeliveryZone,
   Invoice,
   InvoiceDetails,
   ProfileUpdatePayload,
@@ -59,10 +62,27 @@ export async function fetchInvoicePdfLink(id: number): Promise<string> {
   return data.url;
 }
 
-/** Barème de livraison du marchand : une ligne par catégorie et par poids. */
-export async function fetchDeliveryRates(): Promise<DeliveryRate[]> {
-  const data = await api.get<{ deliveryCharges: DeliveryRate[] }>(endpoints.deliveryCharges);
-  return data?.deliveryCharges ?? [];
+/**
+ * Le barème du marchand, dans **les deux formes** (**D4**).
+ *
+ * Le serveur sert les quatre colonnes héritées et, à côté, les zones. `zones`
+ * arrive vide tant que le transporteur n'en a pas configuré — et un serveur
+ * antérieur à la refonte n'envoie tout simplement pas la clé. Les deux cas
+ * donnent ici un tableau vide, et l'écran retombe sur `rates` : c'est ce qui
+ * permet à cette version de tourner sur les deux générations de serveur.
+ */
+export async function fetchDeliveryGrid(): Promise<DeliveryGrid> {
+  const data = await api.get<{
+    deliveryCharges?: DeliveryRate[];
+    zones?: DeliveryZone[];
+    delays?: DeliveryDelay[];
+  }>(endpoints.deliveryCharges);
+
+  return {
+    rates: data?.deliveryCharges ?? [],
+    zones: data?.zones ?? [],
+    delays: data?.delays ?? [],
+  };
 }
 
 /** Taux d'encaissement (COD) par zone, en pourcentage. */

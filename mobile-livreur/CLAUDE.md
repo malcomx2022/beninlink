@@ -25,6 +25,11 @@ Application **livreur (coursier)**, React Native / Expo. **Consomme l'API de `we
 - Le jeton porte l'ability `deliveryman` (S5) : les routes marchand répondent 403.
 - Aucun montant calculé dans l'app : livré / partiel / retour ne transmettent que
   l'action (et le montant réellement encaissé pour le partiel) — le backend recalcule.
+- **Le barème de livraison n'est pas dans le contrat de cette app** (**D4**, vérifié
+  le 2026-09-06) : aucun endpoint de tarif dans `src/api/endpoints.ts`, et aucun écran
+  n'affiche `deliveryType`. Un livreur encaisse un montant que le serveur a déjà
+  calculé ; il ne consulte pas la grille. La refonte par zones n'a donc rien à y
+  changer — l'app marchand est la seule concernée.
 
 ## Écrans (expo-router)
 | Écran | Fichier | Endpoints |

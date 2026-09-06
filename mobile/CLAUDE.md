@@ -33,6 +33,10 @@ Elle **consomme l'API de `web/`** ; aucune logique de paiement propre.
 - **Factures = relevés de règlement** (Encaissé COD − Frais − TVA = Net à reverser · PDF/CSV).
 - **Alerte douanière** (déclenchée à la création export · 3 niveaux Info/Avertissement/Bloquant).
 - Boutiques (multi-shop), Tarifs (poids × zone), Notifications, Profil.
+  L'écran **Tarifs** sert **les deux formes** (**D4**) : le barème par zones dès que
+  `zones` n'est pas vide, sinon les quatre colonnes héritées. Ne jamais supprimer le
+  second affichage tant que l'API sert encore les colonnes — c'est ce qui permet à
+  cette version de tourner sur un serveur qui n'a pas basculé.
 
 ## Statuts colis (alignés backend)
 En attente → Ramassage assigné → Entrepôt → Livreur assigné → Livré ; + Livraison partielle, Retour.

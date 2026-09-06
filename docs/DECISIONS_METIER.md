@@ -263,9 +263,38 @@ La spec est régénérée (`openapi:generate`, 106 chemins) avec les schémas
 `DeliveryZone`, `ZoneRate`, `ZoneCountry` et `DeliveryDelay`. Aucune route
 ajoutée : l'inventaire des apps (`mobile*/src/api/endpoints.ts`) ne bouge pas.
 
-**Reste à faire** : les deux apps (lire `zones` quand il n'est pas vide,
-retomber sur les colonnes sinon), puis l'étape 6, la suppression des quatre
-colonnes — longtemps après, une fois les apps déployées.
+### Livré ensuite (étape 5, côté apps)
+
+- **`mobile/`** — l'écran *Tarifs* sert **les deux formes** : le barème par
+  zones dès que `zones` n'est pas vide, sinon les quatre colonnes, à
+  l'identique. Une zone d'export liste ses forfaits par pays, et dit
+  « aucun pays n'est encore tarifé » plutôt que d'afficher un zéro. Le
+  supplément de délai est annoncé **une fois**, en tête, jamais répété dans
+  chaque case. Les taux COD prennent le nom de leur zone via `zone_code`,
+  et gardent le libellé d'origine quand le serveur ne l'envoie pas.
+- **`mobile-livreur/`** — **rien à faire, et c'est vérifié** : aucun endpoint
+  de tarif dans son inventaire, aucun écran n'affiche `deliveryType`. Un
+  livreur encaisse un montant que le serveur a déjà calculé ; il ne consulte
+  pas la grille. Consigné dans `mobile-livreur/CLAUDE.md` pour ne pas
+  reposer la question.
+
+### ⚠️ Ce que la refonte ne fait pas encore
+
+`DeliveryChargeResolver::resolveByZone()` **n'a aucun appelant en production**.
+La grille par zones se saisit, se sert et s'affiche — elle ne **facture** pas
+encore : la création d'un colis passe toujours par `resolve()` et
+`delivery_type_id`, c'est-à-dire par les quatre colonnes.
+
+C'est cohérent avec la promesse tenue depuis l'étape 1 (aucun montant déplacé),
+mais cela précise ce qui reste : **un colis doit porter une zone et un délai**
+avant que le nouveau barème puisse s'appliquer. C'est une migration sur
+`parcels`, plus les trois chemins de création (administration, panneau
+marchand, API) et le devis. La suppression des quatre colonnes vient **après**,
+pas avant.
+
+**Reste à faire**, dans cet ordre : porter zone et délai sur le colis, brancher
+`resolveByZone()` sur le calcul, puis l'étape 6 — la suppression des quatre
+colonnes, une fois les apps déployées.
 
 ## D5 — Fiches de fraude sans `company_id` ✅
 
