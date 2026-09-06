@@ -333,8 +333,46 @@ Deux détails qui évitent un refus incompréhensible :
 Le détail d'un colis affiche sa zone et son délai quand il en porte ; un colis
 hérité garde son seul type de livraison, sans ligne vide.
 
-**Reste à faire** : l'étape 6 — la suppression des quatre colonnes, une fois les
-apps déployées.
+### La porte de l'étape 6
+
+`php artisan beninlink:bareme-herite` dit, **société par société**, ce qui
+s'appuie encore sur les quatre colonnes, et **sort en erreur** tant qu'il en
+reste — pour qu'un déploiement automatisé s'arrête là.
+
+| Constat | Effet |
+|---|---|
+| Aucune zone configurée | **bloquant** — après l'étape 6, la société ne facturerait plus rien |
+| Tranche héritée sans équivalent zoné | **bloquant** — le tarif existe dans l'ancien monde, pas dans le nouveau |
+| Barème négocié marchand non zoné | **bloquant** — le marchand perdrait son tarif sans que rien ne le dise |
+| Colis créé sans zone sur 30 jours | **bloquant** — un écran ou une app en circulation utilise encore le chemin hérité |
+| Zone d'export sans forfait | avertissement — elle n'était pas tarifée avant non plus |
+
+Le plan disait « une fois les apps déployées ». C'était une intention ; c'est
+désormais une vérification. La commande ne corrige rien : la conversion reste
+`beninlink:zones-tarifaires`, qui montre le tableau des écarts avant d'écrire.
+
+### ⚠️ Ce que l'étape 6 coûte, mesuré en l'écrivant
+
+Écrire le cœur de l'étape 6 a montré ce qu'on ne pouvait que supposer : une
+fois `resolve()` et les colonnes retirés, **`ChargeCalculator` n'a plus de
+repli** et lève dès qu'un colis n'a pas de zone. Ce n'est pas un défaut
+d'écriture, c'est la définition de l'étape — le basculement est **sec**, il n'y
+a pas de version intermédiaire.
+
+Conséquences recensées, à trancher avant de s'y engager :
+
+- toute société non convertie cesse de pouvoir créer un colis ;
+- l'**import Excel** exige une colonne de zone, et les deux fichiers modèles
+  `.xlsx` distribués doivent être régénérés ;
+- `ZoneGridConverter` et `beninlink:zones-tarifaires` partent avec les colonnes
+  qu'ils lisent : l'outil qui rend une installation éligible disparaît dans le
+  même lot. Il doit donc avoir servi **avant** ;
+- `DeliveryPricingBaselineTest`, l'étalon qui prouve depuis l'étape 1 qu'aucun
+  montant n'a bougé, perd son sujet. Il ne s'efface pas : il se **remplace** par
+  un étalon des tarifs par zones, sinon la garantie disparaît avec lui.
+
+**Reste à faire** : l'étape 6 elle-même, quand la porte est verte partout et que
+le remplacement de l'étalon est acté.
 
 ## D5 — Fiches de fraude sans `company_id` ✅
 
