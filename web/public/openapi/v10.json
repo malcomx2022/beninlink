@@ -6556,7 +6556,7 @@
                 "tags": [
                     "Référentiels"
                 ],
-                "summary": "Barème de livraison du marchand (poids × zone)",
+                "summary": "Barème du marchand : les quatre colonnes héritées et, à côté, les zones (D4)",
                 "responses": {
                     "200": {
                         "description": "Succès",
@@ -6577,6 +6577,18 @@
                                                             "type": "array",
                                                             "items": {
                                                                 "$ref": "#/components/schemas/DeliveryRate"
+                                                            }
+                                                        },
+                                                        "zones": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/DeliveryZone"
+                                                            }
+                                                        },
+                                                        "delays": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/DeliveryDelay"
                                                             }
                                                         }
                                                     }
@@ -9252,6 +9264,103 @@
                     "charge": {
                         "type": "string",
                         "description": "Taux en pourcentage"
+                    },
+                    "zone_code": {
+                        "type": "string",
+                        "description": "Code de la zone à laquelle ce taux se rattache (D4) ; null hors des trois zones nationales",
+                        "nullable": true
+                    }
+                }
+            },
+            "ZoneRate": {
+                "type": "object",
+                "properties": {
+                    "category_id": {
+                        "type": "string"
+                    },
+                    "weight": {
+                        "type": "string",
+                        "description": "Tranche comparée à l'identique, pas un plafond"
+                    },
+                    "amount": {
+                        "type": "string",
+                        "description": "FCFA entiers"
+                    }
+                }
+            },
+            "ZoneCountry": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "description": "ISO 3166-1 alpha-2"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "flat_amount": {
+                        "type": "string",
+                        "description": "Forfait en FCFA entiers, indépendant du poids"
+                    }
+                }
+            },
+            "DeliveryZone": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "Stable : le taux COD et la conversion s'y rattachent"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "position": {
+                        "type": "integer"
+                    },
+                    "export": {
+                        "type": "boolean",
+                        "description": "Zone facturée au pays, au forfait, sans regarder le poids"
+                    },
+                    "cod_key": {
+                        "type": "string",
+                        "description": "Entrée de codCharges applicable ; null sur la zone d'export, non encore tarifée",
+                        "nullable": true
+                    },
+                    "rates": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ZoneRate"
+                        }
+                    },
+                    "countries": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ZoneCountry"
+                        }
+                    }
+                }
+            },
+            "DeliveryDelay": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "surcharge": {
+                        "type": "string",
+                        "description": "Supplément GLOBAL, ajouté au montant de la zone et indépendant d'elle"
+                    },
+                    "position": {
+                        "type": "integer"
                     }
                 }
             },

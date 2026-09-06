@@ -124,7 +124,25 @@ $schemas = [
     ]),
     'PdfLink' => $obj(['url' => $str('URL signée, valable 15 minutes, à ouvrir dans un navigateur'), 'expires_at' => $str('ISO 8601')], ['url', 'expires_at']),
     'DeliveryRate' => $obj(['id' => $int(), 'category' => $str('', true), 'weight' => $str('Tranche comparée à l\'identique par le calculateur, pas un plafond', true), 'same_day' => $str(), 'next_day' => $str(), 'sub_city' => $str(), 'outside_city' => $str(), 'status' => $str(), 'statusName' => $str('', true)]),
-    'CodCharge' => $obj(['name' => $str('Libellé traduit de la zone'), 'charge' => $str('Taux en pourcentage')]),
+    'CodCharge' => $obj(['name' => $str('Libellé traduit de la zone'), 'charge' => $str('Taux en pourcentage'), 'zone_code' => $str('Code de la zone à laquelle ce taux se rattache (D4) ; null hors des trois zones nationales', true)]),
+
+    // — D4 : le barème par zones, servi À CÔTÉ des quatre colonnes -----------
+    // `zones` vide = la société n'a pas configuré de zones ; l'app reste alors
+    // sur `deliveryCharges`. C'est la période où l'API sert les deux formes,
+    // sans quoi un APK déjà installé afficherait une grille vide.
+    'ZoneRate' => $obj(['category_id' => $str(), 'weight' => $str('Tranche comparée à l\'identique, pas un plafond'), 'amount' => $str('FCFA entiers')]),
+    'ZoneCountry' => $obj(['code' => $str('ISO 3166-1 alpha-2'), 'name' => $str(), 'flat_amount' => $str('Forfait en FCFA entiers, indépendant du poids')]),
+    'DeliveryZone' => $obj([
+        'id' => $int(),
+        'code' => $str('Stable : le taux COD et la conversion s\'y rattachent'),
+        'name' => $str(),
+        'position' => $int(),
+        'export' => $bool('Zone facturée au pays, au forfait, sans regarder le poids'),
+        'cod_key' => $str('Entrée de codCharges applicable ; null sur la zone d\'export, non encore tarifée', true),
+        'rates' => $arr('ZoneRate'),
+        'countries' => $arr('ZoneCountry'),
+    ]),
+    'DeliveryDelay' => $obj(['id' => $int(), 'code' => $str(), 'name' => $str(), 'surcharge' => $str('Supplément GLOBAL, ajouté au montant de la zone et indépendant d\'elle'), 'position' => $int()]),
     'CustomsRule' => $obj(['level' => $int('1 info · 2 avertissement · 3 bloquant'), 'level_name' => $str(), 'blocking' => $bool('La création sera refusée tant que le document manque'), 'required_document' => $str('', true), 'message' => $str()]),
     'CustomsReference' => $obj(['countries' => ['type' => 'array', 'items' => $obj(['code' => $str('ISO 3166-1 alpha-2'), 'name' => $str()])], 'categories' => ['type' => 'array', 'items' => $obj(['slug' => $str(), 'name' => $str()])]]),
     'CustomsAlert' => $obj(['id' => $int(), 'parcel_id' => $int('', true), 'tracking_id' => $str('', true), 'country_code' => $str(), 'country_name' => $str(), 'goods_category' => $str(), 'category_name' => $str(), 'level' => $int(), 'level_name' => $str(), 'required_document' => $str('', true), 'message' => $str(), 'status' => $int('1 en cours · 2 traitée'), 'status_name' => $str(), 'created_at' => $str('', true)]),
@@ -185,7 +203,7 @@ $operations = [
     'GET general-settings' => ['tag' => 'Référentiels', 'summary' => 'Paramètres généraux de l\'installation', 'responses' => $ok(['type' => 'object'])],
     'GET all-currencies' => ['tag' => 'Référentiels', 'summary' => 'Devises', 'responses' => $ok(['type' => 'object'])],
     'GET settings/cod-charges' => ['tag' => 'Référentiels', 'summary' => 'Taux d\'encaissement (COD) par zone, en pourcentage', 'responses' => $ok($obj(['codCharges' => $arr('CodCharge')]))],
-    'GET settings/delivery-charges' => ['tag' => 'Référentiels', 'summary' => 'Barème de livraison du marchand (poids × zone)', 'responses' => $ok($obj(['deliveryCharges' => $arr('DeliveryRate')]))],
+    'GET settings/delivery-charges' => ['tag' => 'Référentiels', 'summary' => 'Barème du marchand : les quatre colonnes héritées et, à côté, les zones (D4)', 'responses' => $ok($obj(['deliveryCharges' => $arr('DeliveryRate'), 'zones' => $arr('DeliveryZone'), 'delays' => $arr('DeliveryDelay')]))],
 
     // — Tableau de bord et profil ------------------------------------------
     'GET dashboard' => ['tag' => 'Tableau de bord', 'summary' => 'Compteurs du tableau de bord marchand', 'responses' => $ok($ref('DashboardData'))],
