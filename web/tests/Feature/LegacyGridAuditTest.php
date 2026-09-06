@@ -6,6 +6,7 @@ use App\Enums\Status;
 use App\Models\Backend\DeliveryCharge;
 use App\Models\Backend\Deliverycategory as DeliveryCategory;
 use App\Models\Backend\DeliveryZone;
+use App\Models\Backend\DeliveryZoneCountry;
 use App\Models\Backend\GeneralSettings;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\MerchantDeliveryCharge;
@@ -140,26 +141,30 @@ class LegacyGridAuditTest extends TestCase
 
     // ---- Ce qui n'est qu'un avertissement ---------------------------------
 
-    public function test_la_cedeao_sans_forfait_avertit_sans_bloquer(): void
+    public function test_une_zone_dexport_sans_forfait_avertit_sans_bloquer(): void
     {
         $this->convertir();
+
+        // La conversion pose les forfaits tranchés par le métier ; on les
+        // retire pour retrouver le cas d'une zone d'export non tarifée.
+        $cedeao = app(DeliveryZoneInterface::class)->zoneExport();
+        DeliveryZoneCountry::where('zone_id', $cedeao->id)->delete();
+
         $audit = $this->audit();
 
-        // La zone n'était pas tarifée avant l'étape 6 non plus : elle ne peut
-        // pas bloquer une suppression qui ne la concerne pas.
+        // Une zone d'export non tarifée ne l'était pas davantage avant
+        // l'étape 6 : elle ne peut pas bloquer une suppression qui ne la
+        // concerne pas. Mais il faut la voir.
         $this->assertTrue(app(LegacyGridAudit::class)->estPrete($audit));
         $this->assertStringContainsString('aucun pays tarifé', implode(' | ', $audit['avertissements']));
     }
 
-    public function test_un_forfait_saisi_leve_lavertissement(): void
+    public function test_les_forfaits_poses_par_la_conversion_levent_lavertissement(): void
     {
         $this->convertir();
-        $cedeao = app(DeliveryZoneInterface::class)->zoneExport();
 
-        app(DeliveryZoneInterface::class)->enregistrerPays($cedeao, [
-            ['id' => '', 'code' => 'TG', 'name' => 'Togo', 'flat_amount' => 12000],
-        ]);
-
+        // Togo, Nigeria, Burkina : la décision du métier, écrite par la
+        // conversion. L'avertissement n'a donc plus lieu d'être.
         $this->assertSame([], $this->audit()['avertissements']);
     }
 
