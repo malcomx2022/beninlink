@@ -112,7 +112,8 @@ affiche une grille vide.
 | 4 | Écrans de saisie : une ligne par zone, ajout/retrait dynamique — **livré** (`admin/delivery-zone`) | oui, aucune écriture tant que rien n'est saisi |
 | 5 | API : la ressource expose `zones[]` ; `openapi:generate` ; `mobile/` — **livré** (`mobile-livreur/` n'est pas concerné) | non (contrat), mais **additif** : les quatre colonnes restent servies |
 | 5 bis | **Le colis porte une zone et un délai**, et `resolveByZone()` entre dans le calcul — **livré**, `mobile/` compris | non (migration `parcels`), mais **additive** : sans zone, le calcul est celui d'avant |
-| 6 | Suppression des quatre colonnes, une fois les apps déployées | non |
+| 6 a | **Porte** : `beninlink:bareme-herite` dit ce qui dépend encore des colonnes, et sort en erreur sinon — **livré** | oui, constat seul |
+| 6 b | Suppression des quatre colonnes, **quand la porte est verte partout** | non — et le basculement est **sec** : plus de repli, une société non convertie ne facture plus |
 
 Les étapes 1 à 3 ne changent **aucun montant** : c'est ce que l'étalon vérifie.
 Les colonnes ne disparaissent qu'à l'étape 6, longtemps après.

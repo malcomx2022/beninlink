@@ -82,6 +82,11 @@ avant les apps.
   taux COD de la zone. Une route non tarifée est **refusée**
   (`UnpricedDeliveryException`, règle `DeliveryRoutePriced`), jamais rabattue
   sur une colonne héritée. Sans zone, le calcul est celui d'avant, au franc près.
+- `php artisan beninlink:bareme-herite [--societe=]` — **porte de l'étape 6** (**D4**) :
+  dit, société par société, ce qui dépend encore des quatre colonnes héritées (pas de
+  zones, tranches non couvertes, barèmes négociés non zonés, colis récents créés sans
+  zone). **Sort en erreur** tant qu'une société n'est pas prête, pour qu'un déploiement
+  s'arrête là. Ne corrige rien : la conversion reste `beninlink:zones-tarifaires`.
 - `php artisan beninlink:journal-syscohada [--du=] [--au=] [--societe=] [--payes] [--fichier=]` —
   extrait des écritures d'une période, équilibre vérifié avant écriture. Le plan de
   comptes vit dans `config/syscohada.php` et reste une **proposition** tant que
