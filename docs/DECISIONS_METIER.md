@@ -368,11 +368,36 @@ Conséquences recensées, à trancher avant de s'y engager :
   qu'ils lisent : l'outil qui rend une installation éligible disparaît dans le
   même lot. Il doit donc avoir servi **avant** ;
 - `DeliveryPricingBaselineTest`, l'étalon qui prouve depuis l'étape 1 qu'aucun
-  montant n'a bougé, perd son sujet. Il ne s'efface pas : il se **remplace** par
-  un étalon des tarifs par zones, sinon la garantie disparaît avec lui.
+  montant n'a bougé, perd son sujet.
 
-**Reste à faire** : l'étape 6 elle-même, quand la porte est verte partout et que
-le remplacement de l'étalon est acté.
+### La relève de l'étalon — tranché le 2026-09-06
+
+Le métier a répondu : **attendre le déploiement des apps** pour la suppression,
+et **remplacer l'étalon** plutôt que l'effacer.
+
+`DeliveryZonePricingBaselineTest` est donc écrit **maintenant**, pendant que les
+deux barèmes coexistent — c'est précisément ce qui permet de le valider :
+
+- il part du barème hérité du jeu pilote et le **convertit**, plutôt que de
+  recopier une grille à la main qui pourrait diverger de ce que la conversion
+  produit ;
+- il fixe les mêmes neuf poids que l'ancien, zone par zone, et la même règle de
+  tranche (S9) ;
+- un test **pont** vérifie que les deux barèmes annoncent le même prix
+  (`next_day` ↔ Cotonou, `sub_city` ↔ Périphérie, `outside_city` ↔ Intérieur) :
+  c'est ce qui autorisera à retirer l'ancien le jour venu, au lieu de perdre la
+  garantie avec la colonne ;
+- il fixe aussi ce que l'ancien ne pouvait pas dire : le supplément **global**
+  (le même dans les trois zones), le croisement *délai × périmètre* enfin
+  possible — « jour même à l'intérieur », 3 800 F —, le forfait au pays de la
+  zone d'export, et le taux COD qui suit la zone.
+
+Vérifié en le cassant : en faisant reprendre `same_day` à Cotonou au lieu de
+`next_day`, l'étalon échoue sur chaque tranche. Il garde donc bien la
+correspondance décidée, il ne se contente pas de se confirmer lui-même.
+
+**Reste à faire** : l'étape 6 elle-même, **après le déploiement des apps** et
+quand `beninlink:bareme-herite` est vert partout.
 
 ## D5 — Fiches de fraude sans `company_id` ✅
 

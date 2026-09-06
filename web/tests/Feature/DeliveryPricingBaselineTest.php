@@ -27,7 +27,18 @@ use Tests\TestCase;
  * **avant** la refonte, qui dise ce que chaque tranche facture.
  *
  * Le jour où la refonte arrive, ce fichier ne bouge pas : si un montant se
- * déplace, c'est le test qui le dit, pas un marchand.
+ * déplace, c'est le test qui le dit, pas un marchand. Il a tenu à travers les
+ * six étapes de D4 sans qu'une ligne y soit touchée.
+ *
+ * ## Sa relève est écrite
+ *
+ * L'étape 6 supprime les quatre colonnes : le sujet de cet étalon disparaît
+ * avec elles. Il ne s'efface pas pour autant —
+ * `DeliveryZonePricingBaselineTest` prend le relais et fixe les mêmes prix
+ * dans le modèle par zones. Les deux coexistent tant que les deux barèmes
+ * coexistent, et le second vérifie explicitement qu'ils disent la **même**
+ * chose : c'est ce qui autorisera à retirer celui-ci le jour venu, plutôt que
+ * de perdre la garantie en même temps que la colonne.
  *
  * ## La grille de référence
  *
