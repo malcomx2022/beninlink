@@ -55,6 +55,9 @@ Application **livreur (coursier)**, React Native / Expo. **Consomme l'API de `we
   motif « colis en mouvement » (colis ocre barré de vert, traits de vitesse blancs) sur
   fond vert. Source unique `assets/source/generate.py` (SVG rendu par Chromium headless,
   Sora depuis node_modules) — régénérer les PNG plutôt que les retoucher à la main.
+  ⚠️ `CHROME` doit désigner un binaire **headless** : avec une interface, la capture sort
+  tronquée en bas sans erreur. Le script le refuse (contrôle `opaque=True`, ajouté le
+  2026-09-06 avec les visuels de `mobile/`).
 
 ## Statuts colis (alignés backend)
 En attente → Ramassage assigné → Entrepôt → Livreur assigné → Livré ; + Livraison partielle, Retour.

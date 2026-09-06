@@ -40,6 +40,17 @@ En attente → Ramassage assigné → Entrepôt → Livreur assigné → Livré 
 ## Design system
 Vert `#12503A` · Ocre `#E0A63C` · rouge = incident. Sora (titres/chiffres) + DM Sans (corps).
 
+### Visuels d'app
+- Motif **« la boutique qui expédie »** : auvent ocre à festons, devanture crème, et sur le
+  comptoir le **colis du livreur** (carré ocre barré de vert). Les deux apps se lisent comme
+  une famille — le livreur, c'est le colis en mouvement ; le marchand, c'est là où il part.
+- Source unique : `assets/source/generate.py` (SVG rendu par Chromium **headless**, Sora
+  depuis `node_modules`). **Régénérer les PNG plutôt que les retoucher à la main** :
+  `CHROME=/chemin/vers/headless_shell python3 assets/source/generate.py`.
+- ⚠️ Un Chromium avec interface réserve ~87 px de fenêtre : la capture sort **tronquée en
+  bas sans aucune erreur**. Le script refuse désormais ce résultat (contrôle `opaque=True`) ;
+  même garde-fou dans `mobile-livreur/`.
+
 ## Notifications poussées (D11)
 - Transport **Expo** ; l'app envoie son jeton à `POST push/register` une fois connectée,
   et appelle `push/forget` **avant** la déconnexion (`src/push`). Aucun secret côté app.

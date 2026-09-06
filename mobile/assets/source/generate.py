@@ -1,13 +1,14 @@
-"""Génère les visuels de l'app livreur (icône, adaptive icon Android, monochrome,
+"""Génère les visuels de l'app marchand (icône, adaptive icon Android, monochrome,
 splash, favicon) à partir d'un même motif SVG, rendu par Chromium headless."""
 import os, subprocess, struct, sys, zlib
 
-# Usage : CHROME=/chemin/vers/chrome python3 assets/source/generate.py (depuis mobile-livreur/).
+# Usage : CHROME=/chemin/vers/chrome python3 assets/source/generate.py (depuis mobile/).
 # ⚠️ CHROME doit désigner un binaire **headless** (headless_shell, ou chrome --headless
 # sans interface). Un Chromium complet réserve ~87 px de fenêtre à son interface : la
 # capture sort alors tronquée en bas, sans la moindre erreur. Le contrôle `opaque=True`
 # des rendus à fond plein refuse ce résultat plutôt que de livrer une icône rognée.
-# Chromium / Chrome headless suffit ; la police Sora vient de node_modules.
+# Même méthode que mobile-livreur/assets/source/generate.py : une seule source, des PNG
+# régénérables. La police Sora vient de node_modules.
 HERE = os.path.dirname(os.path.abspath(__file__))
 APP = os.path.dirname(os.path.dirname(HERE))
 SHELL = os.environ.get('CHROME', 'chromium')
@@ -16,29 +17,47 @@ OUT = os.path.dirname(HERE)
 TMP = os.path.join(HERE, '.tmp'); os.makedirs(TMP, exist_ok=True)
 GREEN, GREEN_DARK, OCRE, WHITE, CREAM = '#12503A', '#0D3B2B', '#E0A63C', '#FFFFFF', '#FBF5E8'
 
-def motif(cx, cy, s, box=OCRE, tape=GREEN, lines=WHITE, cut=False):
-    """Colis (carré arrondi) barré d'une bande adhésive, précédé de trois traits de
-    vitesse : le coursier en mouvement. `s` = côté du colis. `cut` = version
-    monochrome (la bande est évidée, pas peinte)."""
-    r = s * 0.16
-    x, y = cx - s * 0.5 + s * 0.22, cy - s * 0.5      # colis décalé à droite des traits
-    tw = s * 0.16                                    # largeur de la bande
+def motif(cx, cy, s, awning=OCRE, front=CREAM, box=OCRE, tape=GREEN, cut=False):
+    """La **boutique qui expédie** : un auvent à festons au-dessus d'une devanture, et
+    sur le comptoir le colis du livreur — même carré barré d'une bande adhésive.
+
+    Les deux apps se lisent ainsi comme une famille : le livreur, c'est le colis en
+    mouvement ; le marchand, c'est là où le colis part. `s` = côté de la devanture.
+    `cut` = version monochrome (le colis est évidé, pas peint)."""
+    x, y = cx - s * 0.5, cy - s * 0.5
     parts = []
+
+    # Auvent : bandeau plus large que la devanture, bordé de cinq festons.
+    # Deux formes plutôt qu'un seul tracé : le bandeau est un rectangle arrondi, les
+    # festons un zigzag qui part de son bord gauche et revient par le haut.
+    aw, ah = s * 1.16, s * 0.19
+    ax, ay = cx - aw / 2, y
+    parts.append(f'<rect x="{ax}" y="{ay}" width="{aw}" height="{ah}" rx="{s * 0.05}" fill="{awning}"/>')
+    dents, prof = 5, s * 0.085
+    dw = aw / dents
+    zigzag = ' '.join(f'L {ax + (i + 0.5) * dw} {ay + ah + prof} L {ax + (i + 1) * dw} {ay + ah}' for i in range(dents))
+    parts.append(f'<path d="M {ax} {ay + ah} {zigzag} Z" fill="{awning}"/>')
+
+    # Devanture, sous l'auvent, et le colis posé dessus : le carré du livreur en plus
+    # petit — c'est le même colis, vu avant le départ.
+    fy = ay + ah + s * 0.10
+    fh = s - (fy - y)
+    devanture = f'x="{x}" y="{fy}" width="{s}" height="{fh}" rx="{s * 0.09}"'
+    bs = s * 0.46
+    bx, by = cx - bs / 2, fy + fh - bs - s * 0.11
+    r, tw = bs * 0.16, bs * 0.17
+
     if cut:
-        parts.append(f'''<mask id="m"><rect x="0" y="0" width="1024" height="1024" fill="white"/>
-          <rect x="{x + s*0.5 - tw/2}" y="{y}" width="{tw}" height="{s}" fill="black"/>
-          <rect x="{x}" y="{y + s*0.5 - tw/2}" width="{s}" height="{tw}" fill="black"/></mask>''')
-        parts.append(f'<rect x="{x}" y="{y}" width="{s}" height="{s}" rx="{r}" fill="{box}" mask="url(#m)"/>')
+        # Version monochrome : le colis est **évidé** dans la devanture. Une seule
+        # couleur, le dessin vient du trou.
+        parts.append(f'<mask id="m"><rect x="0" y="0" width="1024" height="1024" fill="white"/>'
+                     f'<rect x="{bx}" y="{by}" width="{bs}" height="{bs}" rx="{r}" fill="black"/></mask>')
+        parts.append(f'<rect {devanture} fill="{front}" mask="url(#m)"/>')
     else:
-        parts.append(f'<rect x="{x}" y="{y}" width="{s}" height="{s}" rx="{r}" fill="{box}"/>')
-        parts.append(f'<rect x="{x + s*0.5 - tw/2}" y="{y}" width="{tw}" height="{s}" fill="{tape}" opacity="0.9"/>')
-        parts.append(f'<rect x="{x}" y="{y + s*0.5 - tw/2}" width="{s}" height="{tw}" fill="{tape}" opacity="0.9"/>')
-    # Traits de vitesse, à gauche, de longueur décroissante vers le bas.
-    lw = s * 0.11
-    lx1 = x - s * 0.16
-    for i, (dy, ln) in enumerate([(0.24, 0.42), (0.5, 0.30), (0.76, 0.18)]):
-        yy = y + s * dy
-        parts.append(f'<line x1="{lx1 - s*ln}" y1="{yy}" x2="{lx1}" y2="{yy}" stroke="{lines}" stroke-width="{lw}" stroke-linecap="round"/>')
+        parts.append(f'<rect {devanture} fill="{front}"/>')
+        parts.append(f'<rect x="{bx}" y="{by}" width="{bs}" height="{bs}" rx="{r}" fill="{box}"/>')
+        parts.append(f'<rect x="{bx + bs*0.5 - tw/2}" y="{by}" width="{tw}" height="{bs}" fill="{tape}" opacity="0.9"/>')
+        parts.append(f'<rect x="{bx}" y="{by + bs*0.5 - tw/2}" width="{bs}" height="{tw}" fill="{tape}" opacity="0.9"/>')
     return '\n'.join(parts)
 
 def svg(body, bg=None, size=1024):
@@ -115,7 +134,7 @@ def render(name, svg_markup, size, opaque=False):
                  'CHROME désigne-t-il bien un binaire headless ?')
     print(f'{out}: {w}x{hh}, {os.path.getsize(out)} o')
 
-# Halo radial discret pour donner du relief au fond vert sans sortir de la charte.
+# Halo radial discret, identique à l'app livreur : même fond, deux motifs.
 GLOW = f'''<defs><radialGradient id="g" cx="0.35" cy="0.3" r="0.9">
   <stop offset="0" stop-color="#1A6A4E"/><stop offset="1" stop-color="{GREEN}"/></radialGradient></defs>
   <rect width="1024" height="1024" fill="url(#g)"/>'''
@@ -125,10 +144,10 @@ render('icon', svg(GLOW + motif(512, 512, 400)), 1024, opaque=True)
 # 2. Adaptive icon Android : premier plan transparent, motif dans la zone sûre (66 % centraux).
 render('android-icon-foreground', svg(motif(512, 512, 330)), 1024)
 render('android-icon-background', svg(GLOW), 1024, opaque=True)
-render('android-icon-monochrome', svg(motif(512, 512, 330, box=WHITE, lines=WHITE, cut=True)), 1024)
+render('android-icon-monochrome', svg(motif(512, 512, 330, awning=WHITE, front=WHITE, cut=True)), 1024)
 # 3. Splash : motif + marque, sur fond transparent (le vert vient de app.json).
 wordmark = f'''<text x="512" y="700" text-anchor="middle" font-family="Sora" font-weight="700" font-size="96" fill="{WHITE}">BeninLink</text>
-<text x="512" y="790" text-anchor="middle" font-family="Sora" font-weight="500" font-size="60" letter-spacing="6" fill="{OCRE}">LIVREUR</text>'''
+<text x="512" y="790" text-anchor="middle" font-family="Sora" font-weight="500" font-size="60" letter-spacing="6" fill="{OCRE}">MARCHAND</text>'''
 render('splash-icon', svg(motif(512, 420, 300) + wordmark), 1024)
-# 4. Favicon web : colis seul.
-render('favicon', svg(f'<rect width="48" height="48" rx="10" fill="{GREEN}"/>' + motif(27, 24, 20).replace('1024', '48'), size=48), 48, opaque=True)
+# 4. Favicon web : la boutique seule, sur le vert de la charte.
+render('favicon', svg(f'<rect width="48" height="48" rx="10" fill="{GREEN}"/>' + motif(24, 25, 30).replace('1024', '48'), size=48), 48, opaque=True)
