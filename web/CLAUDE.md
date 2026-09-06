@@ -77,6 +77,11 @@ avant les apps.
   délais et leur supplément global, **forfaits CEDEAO par pays**, et la grille
   tranche × zone. Le **code** d'une zone se fixe à la création (il porte le
   rattachement du taux COD) et une zone qui porte des tarifs ne se supprime pas.
+  Un colis **facture par sa zone** dès qu'il en porte une (`parcels.zone_id`,
+  `parcels.delay_id`) : `ChargeCalculator` prend alors `resolveByZone()` et le
+  taux COD de la zone. Une route non tarifée est **refusée**
+  (`UnpricedDeliveryException`, règle `DeliveryRoutePriced`), jamais rabattue
+  sur une colonne héritée. Sans zone, le calcul est celui d'avant, au franc près.
 - `php artisan beninlink:journal-syscohada [--du=] [--au=] [--societe=] [--payes] [--fichier=]` —
   extrait des écritures d'une période, équilibre vérifié avant écriture. Le plan de
   comptes vit dans `config/syscohada.php` et reste une **proposition** tant que

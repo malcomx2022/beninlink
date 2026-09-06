@@ -2,6 +2,7 @@
 
 namespace App\Services\Parcel;
 
+use App\Exceptions\UnpricedDeliveryException;
 use App\Models\Backend\DeliveryZone;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\Packaging;
@@ -74,11 +75,22 @@ class ChargeCalculator
         $weight,
         float $cashCollection,
         ?int $packagingId = null,
-        bool $fragileLiquid = false
+        bool $fragileLiquid = false,
+        ?int $zoneId = null,
+        ?int $delayId = null,
+        ?string $country = null
     ): array {
-        $deliveryCharge = $this->deliveryCharge($merchant, $categoryId, $weight, $deliveryTypeId);
+        // D4, étape 5 bis — la route du colis, quand il en porte une.
+        // Sans zone, tout ce qui suit est le calcul d'avant, au franc près.
+        $zone = $zoneId === null ? null : DeliveryZone::companywise()->find($zoneId);
 
-        $codRate = $this->codRate($merchant, $deliveryTypeId);
+        $deliveryCharge = $zone === null
+            ? $this->deliveryCharge($merchant, $categoryId, $weight, $deliveryTypeId)
+            : $this->deliveryChargeParZone($merchant, $categoryId, $weight, $zone, $delayId, $country);
+
+        $codRate = $zone === null
+            ? $this->codRate($merchant, $deliveryTypeId)
+            : $this->codRateForZone($merchant, $zone);
         $codAmount = $this->percentage($cashCollection, $codRate);
 
         $packagingAmount = $this->packagingAmount($packagingId);
@@ -113,6 +125,32 @@ class ChargeCalculator
     private function deliveryCharge(Merchant $merchant, ?int $categoryId, $weight, int $deliveryTypeId): float
     {
         return $this->resolver->resolve($merchant->id, $categoryId, $weight, $deliveryTypeId);
+    }
+
+    /**
+     * Tarif d'une route : zone × tranche, plus le supplément du délai (**D4**).
+     *
+     * `resolveByZone()` rend `null` quand la route n'est pas tarifée — une zone
+     * sans grille, ou un pays d'export sans forfait. On **refuse** alors le
+     * calcul plutôt que de retomber sur les quatre colonnes : le colis a
+     * explicitement une zone, lui facturer le tarif d'un autre axe reviendrait
+     * à inventer un prix, et personne ne le verrait avant la facture.
+     */
+    private function deliveryChargeParZone(
+        Merchant $merchant,
+        ?int $categoryId,
+        $weight,
+        DeliveryZone $zone,
+        ?int $delayId,
+        ?string $country
+    ): float {
+        $montant = $this->resolver->resolveByZone($merchant->id, $categoryId, $weight, $zone->id, $delayId, $country);
+
+        if ($montant === null) {
+            throw UnpricedDeliveryException::pourZone($zone->id, $zone->isExport() ? $country : null);
+        }
+
+        return $montant;
     }
 
     /**

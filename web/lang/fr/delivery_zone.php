@@ -35,5 +35,11 @@ return [
     'amount_positive'    => 'Un montant ne peut pas être négatif.',
     'no_zone'            => 'Aucune zone n’est définie. Créez-les ci-dessus, ou lancez « php artisan beninlink:zones-tarifaires --appliquer » pour reprendre le barème existant.',
     'legacy_notice'      => 'Tant qu’aucune zone ne porte de montant, la facturation reste celle des quatre colonnes héritées : rien ne change sans une saisie.',
+    'zone_not_priced'    => 'Aucun tarif n’est saisi pour la zone « :zone » à ce poids. Complétez le barème avant de créer le colis.',
+    'country_not_priced' => 'Aucun forfait n’est saisi pour ce pays dans la zone « :zone ». Complétez les forfaits avant de créer le colis.',
+    'route_not_priced'   => 'Cette destination n’a pas encore de tarif. Complétez le barème ou les forfaits par pays.',
+    'zone_field'         => 'Zone de livraison',
+    'delay_field'        => 'Délai',
+    'legacy_route'       => 'Barème hérité (type de livraison)',
     'category'           => 'Catégorie',
 ];

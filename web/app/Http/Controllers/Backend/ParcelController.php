@@ -94,8 +94,12 @@ class ParcelController extends Controller
         $deliveryCategories = $this->repo->deliveryCategories();
         $deliveryCharges    = $this->repo->deliveryCharges();
         $packagings         = $this->repo->packaging();
-        $deliveryTypes      = $this->repo->deliveryTypes(); 
-        return view('backend.parcel.create',compact('merchants','deliveryCategories','deliveryCharges','deliveryTypes','packagings'));
+        $deliveryTypes      = $this->repo->deliveryTypes();
+        // D4, etape 5 bis : la route du colis. Listes vides tant que la societe
+        // n'a pas de zones — le formulaire n'affiche alors rien de plus.
+        $zones              = app(\App\Repositories\DeliveryZone\DeliveryZoneInterface::class)->zones();
+        $delais             = app(\App\Repositories\DeliveryZone\DeliveryZoneInterface::class)->delais();
+        return view('backend.parcel.create',compact('merchants','deliveryCategories','deliveryCharges','deliveryTypes','packagings','zones','delais'));
     }
 
     /**
@@ -130,7 +134,12 @@ class ParcelController extends Controller
                 $request->weight,
                 (float) $request->cash_collection,
                 $request->packaging_id ? (int) $request->packaging_id : null,
-                $request->fragileLiquid == 'on'
+                $request->fragileLiquid == 'on',
+                // D4, etape 5 bis : la route du colis. Sans zone, le calcul
+                // est celui d'avant, au franc pres.
+                $request->zone_id ? (int) $request->zone_id : null,
+                $request->delay_id ? (int) $request->delay_id : null,
+                $request->destination_country
             );
             if ($charges['total_delivery_amount'] > $merchant->wallet_balance) :
                 Toastr::error('This merchant has a low balance.', 'Error');

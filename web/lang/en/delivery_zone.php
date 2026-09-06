@@ -35,5 +35,11 @@ return [
     'amount_positive'    => 'An amount cannot be negative.',
     'no_zone'            => 'No zone is defined. Create them above, or run "php artisan beninlink:zones-tarifaires --appliquer" to carry over the existing grid.',
     'legacy_notice'      => 'As long as no zone carries an amount, billing stays on the four inherited columns: nothing changes without an entry.',
+    'zone_not_priced'    => 'No rate is set for zone ":zone" at this weight. Complete the grid before creating the parcel.',
+    'country_not_priced' => 'No flat rate is set for this country in zone ":zone". Complete the flat rates before creating the parcel.',
+    'route_not_priced'   => 'This destination has no rate yet. Complete the grid or the country flat rates.',
+    'zone_field'         => 'Delivery zone',
+    'delay_field'        => 'Delay',
+    'legacy_route'       => 'Inherited grid (delivery type)',
     'category'           => 'Category',
 ];
