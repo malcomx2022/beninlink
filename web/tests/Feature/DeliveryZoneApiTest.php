@@ -129,15 +129,8 @@ class DeliveryZoneApiTest extends TestCase
     {
         $this->convertir();
 
-        $cedeao = DeliveryZone::where('company_id', $this->merchant->company_id)
-            ->where('code', DeliveryZone::CEDEAO)->firstOrFail();
-
-        Auth::login($this->merchant->user);
-        app(DeliveryZoneInterface::class)->enregistrerPays($cedeao, [
-            ['id' => '', 'code' => 'TG', 'name' => 'Togo', 'flat_amount' => 12000],
-        ]);
-        Auth::logout();
-
+        // La conversion pose les forfaits tranchés par le métier ; rien à
+        // saisir ici, c'est justement ce que le test doit constater.
         $zones = collect($this->appel('settings/delivery-charges')->json('data.zones'))->keyBy('code');
 
         $this->assertSame(
@@ -162,7 +155,11 @@ class DeliveryZoneApiTest extends TestCase
         $export = $zones[DeliveryZone::CEDEAO];
         $this->assertTrue($export['export']);
         $this->assertNull($export['cod_key']);
-        $this->assertSame([['code' => 'TG', 'name' => 'Togo', 'flat_amount' => '12000']], $export['countries']);
+        $this->assertSame([
+            ['code' => 'BF', 'name' => 'Burkina Faso', 'flat_amount' => '15000'],
+            ['code' => 'NG', 'name' => 'Nigeria', 'flat_amount' => '18000'],
+            ['code' => 'TG', 'name' => 'Togo', 'flat_amount' => '12000'],
+        ], $export['countries'], 'les forfaits CEDEAO, triés par nom de pays');
     }
 
     public function test_le_supplement_de_delai_est_servi_une_fois_pour_toutes_les_zones(): void

@@ -77,6 +77,10 @@ avant les apps.
   délais et leur supplément global, **forfaits CEDEAO par pays**, et la grille
   tranche × zone. Le **code** d'une zone se fixe à la création (il porte le
   rattachement du taux COD) et une zone qui porte des tarifs ne se supprime pas.
+  Forfaits CEDEAO tranchés (Togo 12 000, Nigeria 18 000, Burkina Faso 15 000) :
+  ils vivent dans `ZoneGridConverter::PAYS` et sont **créés s'ils manquent, jamais
+  réécrits** — un montant ajusté à l'écran survit à une relance de la conversion.
+  Un pays hors liste reste sans tarif, et la création est refusée avec son motif.
   Un colis **facture par sa zone** dès qu'il en porte une (`parcels.zone_id`,
   `parcels.delay_id`) : `ChargeCalculator` prend alors `resolveByZone()` et le
   taux COD de la zone. Une route non tarifée est **refusée**

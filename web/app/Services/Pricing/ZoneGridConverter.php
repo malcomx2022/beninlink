@@ -6,6 +6,7 @@ use App\Enums\Status;
 use App\Models\Backend\DeliveryCharge;
 use App\Models\Backend\DeliveryDelay;
 use App\Models\Backend\DeliveryZone;
+use App\Models\Backend\DeliveryZoneCountry;
 use Illuminate\Support\Collection;
 
 /**
@@ -19,7 +20,8 @@ use Illuminate\Support\Collection;
  *     Cotonou    ← next_day       (l'intra-ville, au délai standard)
  *     Périphérie ← sub_city
  *     Intérieur  ← outside_city
- *     CEDEAO     ← forfaits par pays, à saisir
+ *     CEDEAO     ← forfaits par pays (Togo 12 000, Nigeria 18 000,
+ *                    Burkina Faso 15 000 — tranchés le 2026-09-06)
  *
  * Et un **supplément « jour même » de 300 F**, global — le même quelle que
  * soit la zone. C'est la seule chose que la refonte déplace, et elle le fait
@@ -49,6 +51,58 @@ class ZoneGridConverter
         [DeliveryDelay::NEXT_DAY, 'Lendemain'],
         [DeliveryDelay::STANDARD, 'Standard'],
     ];
+
+    /**
+     * Forfaits CEDEAO, tranchés par le métier le 2026-09-06 : **[code, pays, forfait]**.
+     *
+     * Un envoi vers la CEDEAO se facture au **pays**, forfait, sans regarder le
+     * poids — c'était la décision ; il manquait les montants. Les voici.
+     *
+     * ⚠️ Ces lignes sont **créées si elles manquent, jamais réécrites**. Le
+     * supplément de délai, lui, se réécrit à chaque passage parce que la
+     * commande le prend en option (`--supplement`) : c'est une valeur du run.
+     * Un forfait de pays n'a pas d'équivalent — un transporteur qui l'a ajusté
+     * dans l'écran de saisie ne doit pas le voir revenir à la valeur d'usine
+     * parce qu'on a relancé la conversion.
+     */
+    public const PAYS = [
+        ['TG', 'Togo', 12000],
+        ['NG', 'Nigeria', 18000],
+        ['BF', 'Burkina Faso', 15000],
+    ];
+
+    /**
+     * Forfaits de la zone d'export — **créés s'ils manquent, jamais réécrits**.
+     *
+     * Voir `PAYS` : un montant ajusté à l'écran de saisie doit survivre à une
+     * relance de la conversion.
+     *
+     * @return int nombre de pays créés
+     */
+    public function pays(?DeliveryZone $cedeao): int
+    {
+        if ($cedeao === null) {
+            return 0;
+        }
+
+        $crees = 0;
+        foreach (self::PAYS as [$code, $nom, $forfait]) {
+            if (DeliveryZoneCountry::where('zone_id', $cedeao->id)->where('code', $code)->exists()) {
+                continue;
+            }
+
+            $ligne = new DeliveryZoneCountry();
+            $ligne->zone_id = $cedeao->id;
+            $ligne->code = $code;
+            $ligne->name = $nom;
+            $ligne->flat_amount = $forfait;
+            $ligne->status = Status::ACTIVE;
+            $ligne->save();
+            $crees++;
+        }
+
+        return $crees;
+    }
 
     /** Lignes héritées d'une société : celles qui n'ont pas encore de zone. */
     public function legacyRows(int $companyId): Collection
@@ -117,6 +171,7 @@ class ZoneGridConverter
     {
         $zones = $this->zones($companyId);
         $this->delais($companyId, $supplement);
+        $this->pays($zones[DeliveryZone::CEDEAO] ?? null);
 
         $ecrites = 0;
         foreach ($this->legacyRows($companyId) as $ligne) {

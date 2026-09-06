@@ -164,10 +164,8 @@ class ParcelZoneRouteTest extends TestCase
         $this->convertir();
         $cedeao = $this->zone(DeliveryZone::CEDEAO);
 
-        app(DeliveryZoneInterface::class)->enregistrerPays($cedeao, [
-            ['id' => '', 'code' => 'TG', 'name' => 'Togo', 'flat_amount' => 12000],
-        ]);
-
+        // Le forfait du Togo vient de la décision du métier, posée par la
+        // conversion : rien à saisir ici.
         $charges = $this->calculer(['zone_id' => $cedeao->id, 'country' => 'TG', 'weight' => 10]);
 
         // Un forfait ne regarde pas le poids : 10 kg au prix du pays.
@@ -184,9 +182,9 @@ class ParcelZoneRouteTest extends TestCase
 
         $this->expectException(UnpricedDeliveryException::class);
 
-        // Aucun forfait saisi : on refuse plutôt que de retomber sur une
-        // colonne héritée, ce qui reviendrait à inventer un prix.
-        $this->calculer(['zone_id' => $this->zone(DeliveryZone::CEDEAO)->id, 'country' => 'NG']);
+        // Le Ghana n'a pas de forfait : on refuse plutôt que d'emprunter le
+        // montant d'un voisin, ce qui reviendrait à inventer un prix.
+        $this->calculer(['zone_id' => $this->zone(DeliveryZone::CEDEAO)->id, 'country' => 'GH']);
     }
 
     public function test_une_zone_sans_grille_fait_echouer_le_calcul(): void
@@ -225,7 +223,9 @@ class ParcelZoneRouteTest extends TestCase
             'customer_phone' => '0022997000041',
             'weight' => 1,
             'zone_id' => $this->zone(DeliveryZone::CEDEAO)->id,
-            'destination_country' => 'NG',
+            // Le Ghana n'a pas de forfait : c'est le cas que la règle doit
+            // attraper, sur le champ `zone_id`, avant que le calcul ne lève.
+            'destination_country' => 'GH',
             'customs_category' => 'general',
         ];
 

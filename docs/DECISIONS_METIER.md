@@ -156,7 +156,8 @@ Ce qui manque pour coder n'est donc plus une analyse : ce sont **cinq réponses*
 | Grille de prix | **les tarifs actuels sont conservés** — Cotonou ← `next_day`, Périphérie ← `sub_city`, Intérieur ← `outside_city` |
 | Supplément « jour même » | **300 F**, global |
 | Taux COD par zone | **les taux actuels sont conservés** (Cotonou ← `inside_city`, Périphérie ← `sub_city`, Intérieur ← `outside_city`) |
-| Forfaits CEDEAO par pays | ⏳ reste à fixer (pays et montants), ainsi que le taux COD de la zone |
+| Forfaits CEDEAO par pays | **Togo 12 000, Nigeria 18 000, Burkina Faso 15 000** (tranché le 2026-09-06) |
+| Taux COD de la zone CEDEAO | ⏳ reste à fixer |
 
 ### Livré le même jour (étapes 1 à 3, réversibles)
 
@@ -187,10 +188,11 @@ Tout le reste — les trois zones nationales, tous délais confondus — est
 **identique au centime près**. La commande affiche ce tableau avant d'écrire ;
 un test le fixe (`DeliveryZoneGridTest`).
 
-**Reste côté métier** : les **forfaits CEDEAO par pays** (quels pays, quels
-montants) et le **taux COD de la zone CEDEAO**. Un encaissement à l'étranger
-n'a jamais été tarifé : `codRateForZone()` rend 0 pour cette zone plutôt que
-d'emprunter le taux « hors ville » — on ne devine pas un prix.
+**Reste côté métier** : le **taux COD de la zone CEDEAO**. Un encaissement à
+l'étranger n'a jamais été tarifé : `codRateForZone()` rend 0 pour cette zone
+plutôt que d'emprunter le taux « hors ville » — on ne devine pas un prix.
+Conséquence à connaître : un envoi CEDEAO est désormais **livrable** (le
+forfait existe) mais son encaissement ne porte **aucun frais COD**.
 
 ### Livré ensuite (étape 4) — les écrans de saisie
 
@@ -369,6 +371,29 @@ Conséquences recensées, à trancher avant de s'y engager :
   même lot. Il doit donc avoir servi **avant** ;
 - `DeliveryPricingBaselineTest`, l'étalon qui prouve depuis l'étape 1 qu'aucun
   montant n'a bougé, perd son sujet.
+
+### Les forfaits CEDEAO — tranchés le 2026-09-06
+
+| Pays | Code | Forfait |
+|---|---|---|
+| Togo | TG | 12 000 F |
+| Nigeria | NG | 18 000 F |
+| Burkina Faso | BF | 15 000 F |
+
+Ils vivent dans `ZoneGridConverter::PAYS`, à côté des zones, des délais et du
+supplément — le même endroit que les autres décisions du barème — et la
+conversion les écrit.
+
+**Créés s'ils manquent, jamais réécrits.** Le supplément de délai, lui, se
+réécrit à chaque passage parce que la commande le prend en option
+(`--supplement`) : c'est une valeur du run. Un forfait de pays n'a pas
+d'équivalent, et un transporteur qui l'a ajusté à l'écran ne doit pas le voir
+revenir à la valeur d'usine parce qu'on a relancé la conversion.
+
+Un pays **hors de cette liste** — le Ghana, par exemple, membre de la CEDEAO —
+reste sans tarif : la zone ne lui applique rien plutôt que d'emprunter le
+montant d'un voisin, et la création est refusée avec son motif. C'est fixé par
+l'étalon.
 
 ### La relève de l'étalon — tranché le 2026-09-06
 

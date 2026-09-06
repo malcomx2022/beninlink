@@ -215,22 +215,28 @@ class DeliveryZonePricingBaselineTest extends TestCase
 
     /**
      * La zone d'export se facture au **pays**, forfait, sans regarder le poids.
-     * Et tant qu'un pays n'est pas tarifé, elle ne facture **rien** — elle ne
-     * devine pas.
+     *
+     * Les trois montants sont ceux tranchés par le métier le 2026-09-06 ; ils
+     * font partie de l'étalon au même titre que la grille nationale, et ne
+     * doivent pas plus bouger sans décision.
      */
-    public function test_la_zone_dexport_facture_au_forfait_du_pays(): void
+    public function test_le_forfait_de_chaque_pays_de_la_cedeao(): void
     {
-        $cedeao = $this->zone(DeliveryZone::CEDEAO);
+        foreach (['TG' => 12000, 'NG' => 18000, 'BF' => 15000] as $pays => $forfait) {
+            $this->assertEquals($forfait, $this->tarif(DeliveryZone::CEDEAO, 1, null, $pays), $pays);
+            // Un forfait ne regarde pas le poids : 1 kg et 10 kg au même prix.
+            $this->assertEquals($forfait, $this->tarif(DeliveryZone::CEDEAO, 10, null, $pays), $pays);
+        }
+    }
 
-        $this->assertNull($this->tarif(DeliveryZone::CEDEAO, 1, null, 'TG'));
-
-        app(DeliveryZoneInterface::class)->enregistrerPays($cedeao, [
-            ['id' => '', 'code' => 'TG', 'name' => 'Togo', 'flat_amount' => 12000],
-        ]);
-
-        $this->assertEquals(12000, $this->tarif(DeliveryZone::CEDEAO, 1, null, 'TG'));
-        $this->assertEquals(12000, $this->tarif(DeliveryZone::CEDEAO, 10, null, 'TG'));
-        $this->assertNull($this->tarif(DeliveryZone::CEDEAO, 1, null, 'NG'));
+    /**
+     * Un pays hors de la liste n'est **pas** facturé au hasard. Le Ghana est
+     * membre de la CEDEAO et n'a pas de forfait : la zone ne lui applique rien
+     * plutôt que d'emprunter le montant d'un voisin.
+     */
+    public function test_un_pays_hors_liste_na_pas_de_tarif(): void
+    {
+        $this->assertNull($this->tarif(DeliveryZone::CEDEAO, 1, null, 'GH'));
     }
 
     /**
