@@ -1134,7 +1134,54 @@ méthode répond toujours, la migration purge en gardant la colonne, le message
 administrateur reste enregistré **et** atteint le fil du marchand, plus les
 deux défauts ci-dessus.
 
-## 23. Ce qui reste, et n'est pas un constat
+## 23. Les envois sortent de la requête — 2026-09-05 ✅
+
+Dernière ligne du dossier ouverte par §21 et §22 : tout partait `sync`, dans la
+requête de l'agent. Le chiffre qui décide : `reveSms()` pose un
+`CURLOPT_TIMEOUT` de **80 secondes**, et un changement de statut déclenche
+jusqu'à **deux** SMS. Un opérateur lent faisait attendre, à un clic, quelqu'un
+que l'acheminement ne concerne pas.
+
+### Ce qui a été fait
+
+| Élément | Où |
+|---|---|
+| SMS | `App\Jobs\SendSms` ; `sendSms()`/`sendOtp()` gardent leurs 28 appels et mettent en file, la livraison passe en `deliverSms()`/`deliverOtp()` |
+| Push | `App\Jobs\SendPush` ; le fil (`PushChannel`) et le chemin du socle y passent tous les deux |
+| Courriels | `ContactMail`, `MerchantSignup`, `CompanySignup` en `ShouldQueue`, expéditeur figé à la construction |
+| Pilote | `QUEUE_CONNECTION=database`, table `jobs` (migration `2026_09_05_233000`) |
+| Exploitation | `php artisan beninlink:file-attente`, unité superviseur corrigée, repli cron, `queue:restart` commenté dans le script de déploiement |
+
+### Le piège du locataire
+
+Un job s'exécute hors requête : `settings()` y retombe sur la société 1. Mis en
+file sans précaution, un SMS serait parti avec le nom **et les identifiants
+d'opérateur** d'un autre transporteur — facturés à lui (constat F4, refermé
+côté requête par `forCompany()`). La société est donc résolue **à la mise en
+file** et voyage avec le job.
+
+### Le worker arrêté
+
+C'est la panne que la file introduit : l'application répond, les colis
+avancent, et plus rien ne part. `beninlink:file-attente` la nomme (en attente,
+âge du plus ancien, échoués) et sort en erreur au-delà du seuil. À brancher sur
+une alerte — la ligne de cron le dit explicitement.
+
+### Ce que ça couvre
+
+`tests/Feature/QueuedDeliveryTest` — 13 tests : mise en file au lieu de
+l'appel (SMS, OTP, push par les deux chemins, mailables), société portée par le
+job, expéditeur figé, job exécuté qui livre pour la bonne société, destinataire
+supprimé entre-temps, `sync` qui se comporte comme avant, arrivée réelle dans
+la table `jobs`, et le témoin qui détecte un worker arrêté.
+
+Un test existant a été **adapté** : `NotificationHardeningTest` vérifiait le
+courriel de contact avec `Mail::assertSent` ; il part désormais en file, donc
+`assertQueued`. La propriété vérifiée (S13 : expéditeur = plateforme, visiteur
+= adresse de réponse) est inchangée, et le test l'affirme maintenant des deux
+côtés.
+
+## 24. Ce qui reste, et n'est pas un constat
 
 - Le correctif du débit (W5) **ne rattrape pas le passé** : si la production
   tourne déjà, des colis créés depuis l'app peuvent n'avoir jamais été débités.
@@ -1146,5 +1193,6 @@ deux défauts ci-dessus.
   qui en toucherait.
 - ~~Le **push** hors service~~ ✅ **rebranché le 2026-09-05** (§21, décision
   **D11**), et le **push navigateur** du back-office ✅ **retiré le même jour**
-  (§22, décision **D12**). Reste, et n'a pas bougé : les envois **en file**
-  (tout part encore dans la requête HTTP — constat 7 de la cartographie).
+  (§22, décision **D12**), et les envois ✅ **sortis de la requête le même
+  jour** (§23, décision **D13** — constat 7 de la cartographie fermé). Reste
+  `InvoicePDFSend`, dont l'expéditeur est codé en dur : un chantier à part.

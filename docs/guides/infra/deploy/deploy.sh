@@ -8,5 +8,8 @@ composer install --no-dev --optimize-autoloader --no-interaction
 # npm ci && npm run build   # si We Courier compile ses assets
 php artisan migrate --force
 php artisan config:cache && php artisan route:cache && php artisan view:cache
+# Les workers en cours tournent avec l'ANCIEN code : `queue:restart` leur
+# demande de s'arrêter proprement à la fin du job courant ; supervisor les
+# relance sur le nouveau (D13).
 php artisan queue:restart
 php artisan up

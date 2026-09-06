@@ -1,2 +1,19 @@
-# crontab -e (utilisateur deploy) — planificateur Laravel (MRR/ARR, tâches récurrentes)
+# crontab -e (utilisateur deploy)
+
+# Planificateur Laravel (MRR/ARR, tâches récurrentes)
 * * * * * cd /var/www/beninlink/web && php artisan schedule:run >> /dev/null 2>&1
+
+# File des envois (D13) — SMS, notifications poussées, e-mails.
+#
+# À N'UTILISER QUE si l'hébergement n'a pas de superviseur : c'est un repli.
+# Le worker démarre chaque minute, vide la file et s'arrête. Conséquence
+# assumée : un envoi peut attendre jusqu'à une minute — acceptable pour un
+# SMS de statut, moins pour un code de vérification à l'inscription.
+# La bonne installation reste supervisor/ (worker permanent) ; les deux
+# ensemble feraient tourner deux workers pour rien.
+# * * * * * cd /var/www/beninlink/web && php artisan queue:work --stop-when-empty --tries=3 >> /dev/null 2>&1
+
+# Témoin de file : signale un worker arrêté (sortie 1 si le plus ancien envoi
+# attend depuis plus de 5 minutes). Rediriger vers une alerte plutôt que vers
+# /dev/null, sans quoi la panne reste silencieuse — c'est tout l'intérêt.
+*/10 * * * * cd /var/www/beninlink/web && php artisan beninlink:file-attente >> /var/log/beninlink-file.log 2>&1

@@ -1483,5 +1483,7 @@ Couverts à ce jour : signature du webhook FedaPay, **S14** (facture d'un autre 
    Le push **navigateur** du back-office a été **retiré** le même jour (décision
    **D12**, revue §22) : il inscrivait les agents au projet Firebase de l'éditeur
    et réclamait une permission pour un canal qui ne livrait rien.
-7. **Mettre les envois en file avant d'ajouter une passerelle SMS locale** : aujourd'hui
-   tout part en `sync`, dans la requête HTTP.
+7. ~~**Mettre les envois en file avant d'ajouter une passerelle SMS locale**~~ ✅
+   **fait le 2026-09-05** (décision **D13**, revue §23). SMS, push et courriels
+   passent par la file `database` ; `php artisan beninlink:file-attente` signale un
+   worker arrêté, la panne silencieuse que la file introduit.

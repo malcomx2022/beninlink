@@ -3,8 +3,8 @@
 namespace App\Http\Services;
 
 use App\Enums\UserType;
+use App\Jobs\SendPush;
 use App\Models\User;
-use App\Services\Push\PushGateway;
 use App\Services\Push\PushMessage;
 use Illuminate\Support\Facades\Log;
 
@@ -147,7 +147,10 @@ class PushNotificationService
                 return 0; // inconnu, ambigu, ou marchand déjà servi par son fil
             }
 
-            return app(PushGateway::class)->toUser($user, $construire());
+            // D13 — l'envoi quitte la requête ; en `sync`, rien ne change.
+            dispatch(SendPush::pour($user, $construire()));
+
+            return 1;
         } catch (\Throwable $e) {
             Log::warning('Push statut non émis', ['message' => $e->getMessage()]);
 

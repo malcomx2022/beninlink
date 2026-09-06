@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class MerchantSignup extends Mailable
+class MerchantSignup extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -17,8 +17,12 @@ class MerchantSignup extends Mailable
      * @return void
      */
     protected $data;
+    /** D13 — expéditeur figé dans la requête : voir ContactMail. */
+    protected ?string $expediteur = null;
+
     public function __construct($data=null)
     {
+        $this->expediteur = settings()?->email;
         $this->data = $data;
     }
 
@@ -30,7 +34,7 @@ class MerchantSignup extends Mailable
     public function build()
     {
         $data = $this->data;
-        $courier_email = settings()->email;
+        $courier_email = $this->expediteur;
         return $this->from($courier_email)->subject('Welcome to new merchant')->view('backend.merchant.mail.signup',compact('data'));
     }
 }
