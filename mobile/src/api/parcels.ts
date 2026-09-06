@@ -65,6 +65,18 @@ export type NewParcel = {
   packaging_id?: number;
   /** Le backend attend littéralement la chaîne « on ». */
   fragileLiquid?: 'on';
+  /**
+   * La route du colis (**D4**) : zone et délai.
+   *
+   * Facultative. Sans `zone_id`, le serveur facture par `delivery_type_id`,
+   * c'est-à-dire par les quatre colonnes héritées — exactement comme avant.
+   * Avec une zone, il refuse la création si la route n'est pas tarifée : il ne
+   * devine pas un prix.
+   */
+  zone_id?: number;
+  delay_id?: number;
+  destination_country?: string;
+  customs_category?: string;
 };
 
 /**
@@ -123,6 +135,12 @@ export type QuoteInput = {
   cash_collection: number;
   weight?: string | number;
   packaging_id?: number;
+  /** Route du colis (**D4**) — facultative, voir `NewParcel`. */
+  zone_id?: number;
+  delay_id?: number;
+  /** Douane : déjà envoyés par l'écran, ils manquaient au type. */
+  destination_country?: string;
+  customs_category?: string;
 };
 
 /**

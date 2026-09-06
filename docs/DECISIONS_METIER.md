@@ -314,8 +314,27 @@ une décision de format, pas une conséquence de D4. L'écran de création de
 `mobile/` garde lui aussi son sélecteur de type de livraison ; le contrat qui
 lui permet d'offrir la zone existe maintenant.
 
-**Reste à faire** : le sélecteur de zone sur `mobile/`, puis l'étape 6 — la
-suppression des quatre colonnes, une fois les apps déployées.
+### Livré ensuite — le sélecteur de zone sur `mobile/`
+
+L'écran de création propose *zone* et *délai* **dès que le serveur envoie des
+zones**, avec la même règle que le back-office : la première entrée vaut
+« barème hérité », et le colis est alors facturé par son type de livraison. Sur
+un serveur qui n'a pas basculé, les clés sont absentes, les sélecteurs ne
+s'affichent pas, l'écran est celui d'avant.
+
+Deux détails qui évitent un refus incompréhensible :
+
+- le supplément d'un délai est affiché **en regard du délai**, une fois — il est
+  global, il ne se répète pas par zone ;
+- choisir la zone d'export **sans destination** affiche un avertissement avant
+  l'envoi : le serveur refuserait la création, autant le dire au moment du
+  choix.
+
+Le détail d'un colis affiche sa zone et son délai quand il en porte ; un colis
+hérité garde son seul type de livraison, sans ligne vide.
+
+**Reste à faire** : l'étape 6 — la suppression des quatre colonnes, une fois les
+apps déployées.
 
 ## D5 — Fiches de fraude sans `company_id` ✅
 

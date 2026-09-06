@@ -40,6 +40,12 @@ export default function NewParcelScreen() {
   const [shopId, setShopId] = useState<number | null>(null);
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [typeId, setTypeId] = useState<number | null>(null);
+  /**
+   * Route du colis (**D4**) : zone et délai. `null` = barème hérité, le colis
+   * est alors facturé par son seul type de livraison, comme avant la refonte.
+   */
+  const [zoneId, setZoneId] = useState<number | null>(null);
+  const [delayId, setDelayId] = useState<number | null>(null);
   const [values, setValues] = useState({
     customer_name: '',
     customer_phone: '',
@@ -123,6 +129,8 @@ export default function NewParcelScreen() {
             ...(values.weight ? { weight: values.weight } : {}),
             ...(country ? { destination_country: country } : {}),
             ...(goods ? { customs_category: goods } : {}),
+            ...(zoneId ? { zone_id: zoneId } : {}),
+            ...(delayId ? { delay_id: delayId } : {}),
           },
           controller.signal,
         );
@@ -140,7 +148,7 @@ export default function NewParcelScreen() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [categoryId, typeId, values.cash_collection, values.weight, country, goods]);
+  }, [categoryId, typeId, values.cash_collection, values.weight, country, goods, zoneId, delayId]);
 
   const typeOptions = useMemo(() => {
     // `deliveryTypes` liste des interrupteurs de configuration : on ne garde que
@@ -150,6 +158,45 @@ export default function NewParcelScreen() {
       .map((type) => ({ value: deliveryTypeId(type.key), label: deliveryTypeLabel(type.key) }))
       .filter((option): option is { value: number; label: string } => option.value !== null);
   }, [form]);
+
+  /**
+   * Zones proposées (**D4**), la première entrée valant « barème hérité ».
+   *
+   * Vide tant que le transporteur n'a pas de zones — le sélecteur ne s'affiche
+   * alors pas du tout, et le colis suit son type de livraison.
+   */
+  const zoneOptions = useMemo(() => {
+    const zones = form?.zones ?? [];
+    if (!zones.length) return [];
+
+    return [
+      { value: 0, label: t('parcels.legacyRoute') },
+      ...zones.map((zone) => ({ value: zone.id, label: zone.name })),
+    ];
+  }, [form]);
+
+  /** Délais et leur supplément — global, donc annoncé une fois par délai. */
+  const delayOptions = useMemo(
+    () =>
+      (form?.delays ?? []).map((delay) => ({
+        value: delay.id,
+        label:
+          Number(delay.surcharge) > 0
+            ? `${delay.name} (+ ${formatAmount(delay.surcharge, false)})`
+            : delay.name,
+      })),
+    [form],
+  );
+
+  /**
+   * Zone d'export choisie sans pays de destination : le serveur refusera, on
+   * le dit avant plutôt que de laisser le marchand buter sur l'envoi.
+   */
+  const exportSansPays = useMemo(() => {
+    const zone = (form?.zones ?? []).find((z) => z.id === zoneId);
+
+    return !!zone?.export && !country;
+  }, [form, zoneId, country]);
 
   async function submit() {
     setError('');
@@ -180,6 +227,8 @@ export default function NewParcelScreen() {
         ...(values.invoice_no ? { invoice_no: values.invoice_no.trim() } : {}),
         ...(country ? { destination_country: country } : {}),
         ...(goods ? { customs_category: goods } : {}),
+        ...(zoneId ? { zone_id: zoneId } : {}),
+        ...(delayId ? { delay_id: delayId } : {}),
       });
       router.replace('/(app)/parcels');
     } catch (e) {
@@ -235,6 +284,39 @@ export default function NewParcelScreen() {
           onChange={setTypeId}
           error={fieldErrors.delivery_type_id?.[0]}
         />
+
+        {/* Barème par zones (D4). Les deux sélecteurs n'existent que si le
+            transporteur a configuré ses zones ; sinon l'écran est celui d'avant.
+            « Barème hérité » reste offert tant que le serveur sert les deux
+            formes : le colis est alors facturé par son type de livraison. */}
+        {!!zoneOptions.length && (
+          <>
+            <ChoiceGroup
+              label={t('parcels.zone')}
+              options={zoneOptions}
+              value={zoneId ?? 0}
+              onChange={(value) => {
+                setZoneId(value === 0 ? null : value);
+                if (value === 0) setDelayId(null);
+              }}
+              error={fieldErrors.zone_id?.[0]}
+            />
+
+            {!!zoneId && !!delayOptions.length && (
+              <ChoiceGroup
+                label={t('parcels.delay')}
+                options={delayOptions}
+                value={delayId}
+                onChange={setDelayId}
+                error={fieldErrors.delay_id?.[0]}
+              />
+            )}
+
+            {/* La zone d'export se facture au pays : sans destination choisie,
+                le serveur refusera la création plutôt que d'inventer un prix. */}
+            {exportSansPays && <Muted>{t('parcels.zoneNeedsCountry')}</Muted>}
+          </>
+        )}
 
         {/* Douane : listes servies par le backend (customs/reference). Le pays
             vide reste le cas normal — un colis domestique n'a rien à déclarer. */}

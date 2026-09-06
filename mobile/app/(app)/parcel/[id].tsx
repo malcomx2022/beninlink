@@ -58,6 +58,10 @@ export default function ParcelDetailScreen() {
             <Line label={t('auth.phone')} value={parcel.customer_phone ?? '—'} />
             <Line label={t('parcels.address')} value={parcel.customer_address ?? '—'} />
             <Line label={t('parcels.deliveryType')} value={parcel.deliveryType ?? '—'} />
+            {/* D4 — la route n'apparaît que sur un colis qui en porte une : un
+                colis hérité garde son seul type de livraison, sans ligne vide. */}
+            {!!parcel.zone && <Line label={t('parcels.zone')} value={parcel.zone} />}
+            {!!parcel.delay && <Line label={t('parcels.delay')} value={parcel.delay} />}
             <Line label={t('parcels.weight')} value={parcel.weight ?? '—'} />
           </Card>
 
