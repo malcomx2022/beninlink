@@ -149,12 +149,12 @@ class DeliveryZoneApiTest extends TestCase
             ->whereNull('zone_id')->where('weight', 1)->firstOrFail();
         $this->assertSame((string) (int) $herite->next_day, collect($cotonou['rates'])->firstWhere('weight', '1')['amount']);
 
-        // La zone d'export : pas de poids, un forfait par pays. `cod_key` est
-        // nul — un encaissement à l'étranger n'est pas encore tarifé, et le
-        // calcul rend 0 plutôt que d'emprunter le taux « hors ville ».
+        // La zone d'export : pas de poids, un forfait par pays. Elle a
+        // désormais sa propre clé COD — `cedeao`, 3 % depuis le 2026-09-06 —
+        // au lieu d'emprunter le taux « hors ville ».
         $export = $zones[DeliveryZone::CEDEAO];
         $this->assertTrue($export['export']);
-        $this->assertNull($export['cod_key']);
+        $this->assertSame('cedeao', $export['cod_key']);
         $this->assertSame([
             ['code' => 'BF', 'name' => 'Burkina Faso', 'flat_amount' => '15000'],
             ['code' => 'NG', 'name' => 'Nigeria', 'flat_amount' => '18000'],

@@ -194,6 +194,10 @@ class MerchantRepository implements MerchantInterface{
                 'inside_city'    => "0",
                 'sub_city'       => "0",
                 'outside_city'   => "0",
+                // D4 — la zone d'export a sa clé depuis le 2026-09-06. Comme
+                // ses trois sœurs sur ce chemin, elle part à zéro : c'est un
+                // compte créé sans formulaire de taux.
+                'cedeao'         => "0",
             );
             $merchant->address                  = $request->address;
             $merchant->opening_balance          = 0;
@@ -567,6 +571,7 @@ class MerchantRepository implements MerchantInterface{
                     'inside_city'    => "0",
                     'sub_city'       => "0",
                     'outside_city'   => "0",
+                    'cedeao'         => "0",
                 );
                 $merchant->opening_balance          = 0;
                 $merchant->vat                      = 0;

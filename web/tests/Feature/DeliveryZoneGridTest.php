@@ -276,9 +276,11 @@ class DeliveryZoneGridTest extends TestCase
         $this->assertEquals([1 => 100.0, 3 => 0.0, 5 => 0.0, 10 => -200.0], $ecarts);
     }
 
-    public function test_le_taux_cod_suit_la_zone_et_la_cedeao_reste_a_fixer(): void
+    public function test_le_taux_cod_suit_la_zone(): void
     {
-        $this->merchant->cod_charges = ['inside_city' => '1', 'sub_city' => '2', 'outside_city' => '3'];
+        $this->merchant->cod_charges = [
+            'inside_city' => '1', 'sub_city' => '2', 'outside_city' => '3', 'cedeao' => '4',
+        ];
         $this->merchant->save();
 
         $calcul = app(\App\Services\Parcel\ChargeCalculator::class);
@@ -287,8 +289,49 @@ class DeliveryZoneGridTest extends TestCase
         $this->assertEquals(2, $calcul->codRateForZone($this->merchant, $this->zone(DeliveryZone::PERIPHERIE, 'Périphérie')));
         $this->assertEquals(3, $calcul->codRateForZone($this->merchant, $this->zone(DeliveryZone::INTERIEUR, 'Intérieur')));
 
-        // Aucun taux n'a jamais été fixé pour un encaissement à l'étranger :
-        // on rend 0, pas le taux « hors ville ». On ne devine pas un prix.
+        // La zone d'export a sa propre clé depuis le 2026-09-06 : chaque zone
+        // lit la sienne, aucune n'emprunte le taux d'une autre.
+        $this->assertEquals(4, $calcul->codRateForZone($this->merchant, $this->zone(DeliveryZone::CEDEAO, 'CEDEAO')));
+    }
+
+    /**
+     * La migration pose le taux **manquant**, et ne touche pas à celui qui
+     * existe : un taux négocié ne se réécrit pas parce qu'on a passé une
+     * migration. C'est la même règle que pour les forfaits par pays.
+     */
+    public function test_la_migration_pose_le_taux_manquant_sans_ecraser_lexistant(): void
+    {
+        $migration = require base_path('database/migrations/2026_09_06_230000_add_cedeao_cod_rate_to_merchants.php');
+
+        // 1. Un marchand d'avant la décision : la clé lui manque.
+        $this->merchant->cod_charges = ['inside_city' => '1', 'sub_city' => '2', 'outside_city' => '3'];
+        $this->merchant->save();
+
+        $migration->up();
+
+        $this->assertSame('3', $this->merchant->fresh()->cod_charges['cedeao'], 'le taux par défaut comble ce qui manque');
+
+        // 2. Le même, taux négocié : un second passage ne doit pas l'écraser.
+        $negocie = $this->merchant->fresh();
+        $negocie->cod_charges = ['inside_city' => '1', 'sub_city' => '2', 'outside_city' => '3', 'cedeao' => '7'];
+        $negocie->save();
+
+        $migration->up();
+
+        $this->assertSame('7', $negocie->fresh()->cod_charges['cedeao'], 'un taux négocié survit à la migration');
+    }
+
+    /**
+     * Un marchand dont la clé n'existe pas — créé avant la décision et jamais
+     * repris par la migration — reste à zéro. On ne lui invente pas un taux.
+     */
+    public function test_un_marchand_sans_clé_cedeao_reste_a_zero(): void
+    {
+        $this->merchant->cod_charges = ['inside_city' => '1', 'sub_city' => '2', 'outside_city' => '3'];
+        $this->merchant->save();
+
+        $calcul = app(\App\Services\Parcel\ChargeCalculator::class);
+
         $this->assertEquals(0, $calcul->codRateForZone($this->merchant, $this->zone(DeliveryZone::CEDEAO, 'CEDEAO')));
     }
 

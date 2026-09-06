@@ -37,8 +37,8 @@ class ChargeCalculator
      *
      * Le métier a demandé de garder les taux actuels : les trois clés
      * existantes se rattachent aux trois zones nationales, une pour une. La
-     * CEDEAO n'y figure pas — un encaissement à l'étranger n'a jamais été
-     * tarifé ici.
+     * CEDEAO a reçu la sienne le 2026-09-06, avec son taux — **3 %** — après
+     * être restée volontairement à zéro tant qu'aucun montant n'était fixé.
      *
      * Cette table est la **seule** correspondance zone → taux : le calcul et
      * la ressource d'API la lisent toutes les deux, plutôt que d'en tenir
@@ -48,6 +48,7 @@ class ChargeCalculator
         DeliveryZone::COTONOU => 'inside_city',
         DeliveryZone::PERIPHERIE => 'sub_city',
         DeliveryZone::INTERIEUR => 'outside_city',
+        DeliveryZone::CEDEAO => 'cedeao',
     ];
 
     /** Types de livraison partageant le tarif COD « intra-ville ». */

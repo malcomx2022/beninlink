@@ -313,7 +313,7 @@ class PiloteDataset
         $merchant->wallet_use_activation = $n === self::WALLET_MERCHANT ? Status::ACTIVE : Status::INACTIVE;
         // Taux de TVA propre à 0 : c'est le taux de la société qui s'applique (D1).
         $merchant->vat = 0;
-        $merchant->cod_charges = ['inside_city' => '1', 'sub_city' => '2', 'outside_city' => '3'];
+        $merchant->cod_charges = ['inside_city' => '1', 'sub_city' => '2', 'outside_city' => '3', 'cedeao' => '3'];
         $merchant->nid_id = $upload?->id;
         $merchant->trade_license = $upload?->id;
         $merchant->address = $address;

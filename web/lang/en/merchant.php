@@ -17,6 +17,7 @@ return array (
   'sub_city'            => 'Sub city',
   'inside_city'         => 'Inside city',
   'outside_city'        => 'Outside city',
+  'cedeao'              => 'ECOWAS (export)',
   'create_delivery_charge'     => 'Create Delivery Charge',
   'edit_delivery_charge'     => 'Edit Delivery Charge',
   'create_merchant'     => 'Create Merchant',

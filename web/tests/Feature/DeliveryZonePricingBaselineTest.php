@@ -287,8 +287,9 @@ class DeliveryZonePricingBaselineTest extends TestCase
             DeliveryZone::COTONOU => (float) $taux['inside_city'],
             DeliveryZone::PERIPHERIE => (float) $taux['sub_city'],
             DeliveryZone::INTERIEUR => (float) $taux['outside_city'],
-            // La CEDEAO n'a jamais été tarifée : zéro, pas le taux « hors ville ».
-            DeliveryZone::CEDEAO => 0.0,
+            // La zone d'export a sa propre clé depuis le 2026-09-06 : elle
+            // n'emprunte pas le taux « hors ville », elle a le sien.
+            DeliveryZone::CEDEAO => (float) $taux['cedeao'],
         ];
 
         foreach ($attendu as $code => $prevu) {
