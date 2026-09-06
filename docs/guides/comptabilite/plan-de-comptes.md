@@ -1,0 +1,110 @@
+# Plan de comptes SYSCOHADA — fiche de validation
+
+> À remettre à l'expert-comptable du transporteur. Ce document sert à **arrêter**
+> le paramétrage comptable de BeninLink (décision **D2**). Tout ce qui y est
+> proposé est modifiable dans un fichier de configuration — jamais dans le code.
+>
+> Établi le 2026-09-06 · à retourner signé.
+
+## 1. Ce que le logiciel fait aujourd'hui
+
+BeninLink émet un **relevé de règlement** par marchand : les colis livrés sur la
+période, ce qui a été encaissé auprès des destinataires (COD), les frais du
+transporteur, la TVA, et le net à reverser. De ce relevé, il tire trois écritures.
+
+Exemple réel, un relevé d'un colis (montants en FCFA entiers) :
+
+| | Encaissé COD | Frais HT | TVA 18 % | Frais TTC | Net à reverser |
+|---|---|---|---|---|---|
+| Relevé n° `BL-2026-000001` | 80 000 | 1 760 | 227 | 1 987 | 78 013 |
+
+**Écriture 1 — journal des ventes (`VE`)** : la prestation facturée au marchand.
+
+| Compte | Libellé | Débit | Crédit |
+|---|---|---|---|
+| 4111 | Clients | 1 987 | |
+| 7061 | Prestations de services de livraison | | 1 760 |
+| 4431 | État, TVA facturée sur ventes | | 227 |
+
+**Écriture 2 — opérations diverses (`OD`)** : les frais sont retenus sur le COD
+encaissé pour le compte du marchand, dette constatée au 4712.
+
+| Compte | Libellé | Débit | Crédit |
+|---|---|---|---|
+| 4712 | Créditeurs divers — COD encaissé pour compte de marchands | 1 987 | |
+| 4111 | Clients | | 1 987 |
+
+**Écriture 3 — banque (`BQ`)**, émise **seulement quand le relevé est payé** :
+le reversement du net.
+
+| Compte | Libellé | Débit | Crédit |
+|---|---|---|---|
+| 4712 | Créditeurs divers | 78 013 | |
+| 521 | Banques locales | | 78 013 |
+
+Chaque pièce est équilibrée, et l'extrait vérifie l'équilibre **avant** d'écrire
+le fichier : un lot déséquilibré n'est jamais produit.
+
+## 2. Les cinq points à trancher
+
+Cocher, ou corriger dans la colonne de droite. Chaque réponse se traduit par une
+ligne de `web/config/syscohada.php`.
+
+| # | Question | Proposition du logiciel | Décision de l'expert-comptable |
+|---|---|---|---|
+| 1 | **Sous-comptes par marchand ?** Un compte collectif 4111, ou un auxiliaire par marchand (`4111PIL001`) pour lettrer sans dépouiller les libellés ? | Auxiliaire **recommandé** dès que le transporteur dépasse quelques marchands. Déjà implémenté : `SYSCOHADA_AUXILIARY=merchant_code`. Seuls les comptes de **tiers** (4111, 4712) sont suffixés ; produits et TVA restent collectifs. | ☐ collectif ☐ auxiliaire · racine : ______ |
+| 2 | **COD encaissé pour compte de tiers** : 4712 « Créditeurs divers » convient-il, ou faut-il un compte dédié (4713 / 4718), voire un 419 « Clients créditeurs » ? | 4712 par défaut. Le point n'est pas cosmétique : ces fonds **ne sont pas** un produit du transporteur, ils lui sont dus par nature. Le compte retenu doit être lisible en balance âgée. | Compte : ______ |
+| 3 | **TVA** : 4431 (TVA facturée sur ventes) ou un sous-compte propre aux prestations, selon le régime retenu pour le transport au Bénin. | 4431, taux **18 %** au niveau de la société (surchargeable par marchand). | Compte : ______ · taux : ____ % |
+| 4 | **Codes de journaux** : `VE` / `OD` / `BQ` correspondent-ils au paramétrage du logiciel comptable cible (Sage, Saari, autre) ? | VE / OD / BQ. | VE : ____ OD : ____ BQ : ____ |
+| 5 | **Date de l'écriture de banque** : elle est émise au passage du relevé au statut **payé**. Est-ce la date de valeur attendue, ou faut-il la date de l'ordre de virement ? | Date du relevé payé. | ☐ conforme ☐ autre : ______ |
+
+## 3. Ce que l'export ne couvre pas (encore)
+
+À confirmer aussi : faut-il des écritures pour ces flux, et lesquelles ?
+
+| Flux | Aujourd'hui | Remarque |
+|---|---|---|
+| Recharges de portefeuille marchand (Mobile Money) | non journalisées | ce sont des **avances reçues** du marchand, pas un produit |
+| Reversements aux livreurs, remises d'espèces | non journalisés | suivis dans les comptes internes du logiciel (soldes livreurs) |
+| Abonnements SaaS de la plateforme | non journalisés | concernent la société éditrice, pas le transporteur |
+
+Tant que ces flux ne sont pas tranchés, l'extrait couvre **le cycle marchand**,
+qui est celui que la TVA et le relevé engagent.
+
+## 4. Obtenir un extrait à valider
+
+```bash
+# le mois dernier, tous statuts, affichage seul
+php artisan beninlink:journal-syscohada
+
+# une période précise, une société, écriture du CSV
+php artisan beninlink:journal-syscohada --du=2026-08-01 --au=2026-08-31 \
+    --societe=2 --fichier=journal-aout.csv
+
+# seulement les relevés payés (les seuls à porter une écriture de banque)
+php artisan beninlink:journal-syscohada --payes
+```
+
+La commande affiche le nombre de pièces, le total débit, le total crédit et le
+détail par journal ; elle **refuse d'écrire** si une pièce ne s'équilibre pas.
+Le CSV est en point-virgule avec BOM UTF-8 (ce qu'Excel français attend).
+
+## 5. Ce qui ne dépend pas de vos réponses
+
+Quelle que soit la décision, le logiciel garantit :
+
+- des montants **entiers en FCFA**, jamais de centimes ;
+- une **numérotation continue** des relevés par société et par exercice
+  (`PREFIXE-2026-000001`), sans trou ni doublon ;
+- l'**équilibre** de chaque pièce, vérifié avant export ;
+- le taux de TVA lu au niveau de la société, surchargeable par marchand (**D1**) ;
+- l'IFU du marchand porté sur chaque ligne, pour le rapprochement tiers.
+
+## 6. Retour
+
+Une fois cette fiche complétée, deux lignes suffisent côté logiciel : les
+numéros dans `web/config/syscohada.php`, l'auxiliaire dans le `.env`
+(`SYSCOHADA_AUXILIARY=merchant_code`). Aucune modification de code, aucune
+migration.
+
+Nom et signature : ______________________  ·  Date : ____________

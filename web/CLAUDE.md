@@ -69,6 +69,10 @@ avant les apps.
   rapproche `merchants.current_balance` de son relevé (`merchant_statements`).
   Ne corrige que les écarts **entièrement expliqués** par les annulations de
   livraisons partielles ; les autres, il les montre. Décision **D9**.
+- `php artisan beninlink:journal-syscohada [--du=] [--au=] [--societe=] [--payes] [--fichier=]` —
+  extrait des écritures d'une période, équilibre vérifié avant écriture. Le plan de
+  comptes vit dans `config/syscohada.php` et reste une **proposition** tant que
+  `docs/guides/comptabilite/plan-de-comptes.md` n'est pas signé (**D2**).
 - `php artisan beninlink:file-attente [--seuil=5]` — état de la file des envois
   (SMS, push, e-mails) et détection d'un **worker arrêté** : la panne que la file
   introduit est silencieuse. Décision **D13**.

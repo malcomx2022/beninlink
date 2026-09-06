@@ -32,13 +32,14 @@ class SyscohadaJournal
         $piece = $statement['number'];
         $merchant = $statement['merchant']['name'];
         $ifu = $statement['merchant']['ifu'];
+        $auxiliaire = self::auxiliaire($invoice);
 
-        $line = function (string $journal, string $account, string $label, int $debit, int $credit) use ($accounts, $date, $piece, $ifu): array {
+        $line = function (string $journal, string $account, string $label, int $debit, int $credit) use ($accounts, $date, $piece, $ifu, $auxiliaire): array {
             return [
                 'date' => $date,
                 'journal' => $journal,
                 'piece' => $piece,
-                'compte' => $accounts[$account]['code'],
+                'compte' => self::compte($accounts[$account]['code'], $account, $auxiliaire),
                 'libelle_compte' => $accounts[$account]['label'],
                 'libelle_ecriture' => $label,
                 'debit' => $debit,
@@ -75,6 +76,69 @@ class SyscohadaJournal
         }
 
         return $lines;
+    }
+
+    /**
+     * Suffixe auxiliaire du marchand, ou `null` si l'on tient un compte collectif.
+     *
+     * Question 1 de **D2** : seuls les comptes de tiers reçoivent l'auxiliaire —
+     * un produit (7061) ou la TVA (4431) n'a pas de tiers, et le suffixer
+     * rendrait la balance illisible.
+     */
+    private static function auxiliaire(Invoice $invoice): ?string
+    {
+        if (config('syscohada.auxiliary') !== 'merchant_code') {
+            return null;
+        }
+
+        $code = (string) ($invoice->merchant?->merchant_unique_id ?? '');
+        $code = preg_replace('/[^A-Za-z0-9]/', '', $code) ?? '';
+
+        return $code === '' ? null : strtoupper($code);
+    }
+
+    /** Comptes de tiers auxiliarisés ; les autres restent collectifs. */
+    private static function compte(string $racine, string $account, ?string $auxiliaire): string
+    {
+        if ($auxiliaire === null || !in_array($account, ['customers', 'cod_liability'], true)) {
+            return $racine;
+        }
+
+        return substr($racine . $auxiliaire, 0, (int) config('syscohada.auxiliary_length', 13));
+    }
+
+    /**
+     * Contrôle d'équilibre, par pièce et en total.
+     *
+     * Un import comptable refuse un lot déséquilibré, souvent sans dire lequel.
+     * Le vérifier ici, avant l'export, coûte trois lignes.
+     *
+     * @param array<int, array<string, string|int>> $lines
+     * @return array{debit:int, credit:int, pieces:int, desequilibrees:array<int,string>}
+     */
+    public static function balance(array $lines): array
+    {
+        $parPiece = [];
+        foreach ($lines as $ligne) {
+            $cle = $ligne['journal'] . '/' . $ligne['piece'];
+            $parPiece[$cle] ??= ['debit' => 0, 'credit' => 0];
+            $parPiece[$cle]['debit'] += (int) $ligne['debit'];
+            $parPiece[$cle]['credit'] += (int) $ligne['credit'];
+        }
+
+        $desequilibrees = [];
+        foreach ($parPiece as $cle => $totaux) {
+            if ($totaux['debit'] !== $totaux['credit']) {
+                $desequilibrees[] = $cle;
+            }
+        }
+
+        return [
+            'debit' => array_sum(array_column($lines, 'debit')),
+            'credit' => array_sum(array_column($lines, 'credit')),
+            'pieces' => count($parPiece),
+            'desequilibrees' => $desequilibrees,
+        ];
     }
 
     /** Contenu CSV (séparateur et BOM selon la configuration). */

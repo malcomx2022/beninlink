@@ -199,6 +199,77 @@ class SettlementStatementTest extends TestCase
         $this->assertSame(8, substr_count($csv, "\n")); // en-tete + 7 lignes
     }
 
+    public function test_les_comptes_de_tiers_recoivent_un_auxiliaire_par_marchand(): void
+    {
+        // D2, question 1 : un transporteur qui lettre ses marchands veut
+        // « 4111 + code marchand ». Le suffixe ne touche QUE les comptes de
+        // tiers : suffixer un produit ou la TVA rendrait la balance illisible.
+        config(['syscohada.auxiliary' => 'merchant_code']);
+
+        $invoice = $this->genererReleve();
+        $invoice->status = InvoiceStatus::PAID;
+        $invoice->save();
+
+        $code = preg_replace('/[^A-Za-z0-9]/', '', (string) $this->merchant->merchant_unique_id);
+        $lines = SyscohadaJournal::linesFor($invoice->fresh());
+
+        $comptes = array_column($lines, 'compte');
+        $this->assertSame('4111' . strtoupper($code), $comptes[0], 'clients auxiliarisés');
+        $this->assertSame('7061', $comptes[1], 'un produit n\'a pas de tiers');
+        $this->assertSame('4431', $comptes[2], 'la TVA non plus');
+        $this->assertSame('4712' . strtoupper($code), $comptes[3], 'créditeurs divers auxiliarisés');
+        $this->assertSame('521', $comptes[6], 'la banque reste collective');
+
+        // L'équilibre ne dépend pas du paramétrage.
+        $this->assertSame(array_sum(array_column($lines, 'debit')), array_sum(array_column($lines, 'credit')));
+    }
+
+    public function test_le_compte_collectif_reste_le_defaut(): void
+    {
+        $this->assertNull(config('syscohada.auxiliary'));
+
+        $lines = SyscohadaJournal::linesFor($this->genererReleve());
+        $this->assertSame('4111', $lines[0]['compte']);
+    }
+
+    public function test_l_extrait_de_periode_verifie_l_equilibre_avant_d_ecrire(): void
+    {
+        $invoice = $this->genererReleve();
+        $invoice->status = InvoiceStatus::PAID;
+        $invoice->save();
+
+        $fichier = storage_path('app/journal-test.csv');
+        @unlink($fichier);
+
+        $this->artisan('beninlink:journal-syscohada', [
+            '--du' => now()->startOfMonth()->toDateString(),
+            '--au' => now()->endOfMonth()->toDateString(),
+            '--fichier' => $fichier,
+        ])
+            ->expectsOutputToContain('Équilibré')
+            ->assertSuccessful();
+
+        $this->assertFileExists($fichier);
+        $this->assertStringContainsString('4111', file_get_contents($fichier));
+        @unlink($fichier);
+    }
+
+    public function test_l_extrait_refuse_d_ecrire_un_lot_desequilibre(): void
+    {
+        // Le déséquilibre est simulé au niveau du contrôle : c'est lui qu'on
+        // vérifie, pas la capacité à fabriquer une écriture fausse.
+        $lignes = [
+            ['journal' => 'VE', 'piece' => 'A-1', 'debit' => 1000, 'credit' => 0],
+            ['journal' => 'VE', 'piece' => 'A-1', 'debit' => 0, 'credit' => 900],
+        ];
+
+        $balance = SyscohadaJournal::balance($lignes);
+
+        $this->assertSame(['VE/A-1'], $balance['desequilibrees']);
+        $this->assertSame(1000, $balance['debit']);
+        $this->assertSame(900, $balance['credit']);
+    }
+
     public function test_le_pdf_est_servi_par_lien_signe_au_marchand_proprietaire(): void
     {
         $invoice = $this->genererReleve();
