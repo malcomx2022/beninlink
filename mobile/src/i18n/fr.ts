@@ -99,6 +99,11 @@ export const fr = {
     recipient: 'Destinataire',
     name: 'Nom',
     address: 'Adresse de livraison',
+    zone: 'Zone de livraison',
+    delay: 'Délai',
+    legacyRoute: 'Barème hérité (par type de livraison)',
+    zoneNeedsCountry:
+      "Cette zone se facture au pays : choisissez une destination, sinon la création sera refusée.",
     deliveryType: 'Type de livraison',
     weight: 'Poids',
     amounts: 'Montants',

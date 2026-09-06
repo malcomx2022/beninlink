@@ -100,6 +100,12 @@ export type Parcel = {
   cash_collection: Amount;
   delivery_type_id: number;
   deliveryType: string | null;
+  /**
+   * Route du colis (**D4**), quand il en porte une. `null` sur un colis du
+   * barème hérité : il a été facturé par son seul type de livraison.
+   */
+  zone?: string | null;
+  delay?: string | null;
   status: number;
   statusName: string | null;
   pickup_date: string | null;
@@ -153,6 +159,15 @@ export type ParcelFormData = {
   packagings: { id: number; name: string; price: Amount }[];
   codCharges: { name: string; charge: string }[];
   fragileLiquid: Amount;
+  /**
+   * Le barème par zones (**D4**), servi à côté du type de livraison.
+   *
+   * **Vides** tant que le transporteur n'a pas configuré ses zones — et un
+   * serveur antérieur à la refonte n'envoie pas les clés du tout. Dans les deux
+   * cas l'écran garde son sélecteur de type, et rien ne change.
+   */
+  zones?: DeliveryZone[];
+  delays?: DeliveryDelay[];
 };
 
 export type Shop = {

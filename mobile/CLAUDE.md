@@ -37,6 +37,9 @@ Elle **consomme l'API de `web/`** ; aucune logique de paiement propre.
   `zones` n'est pas vide, sinon les quatre colonnes héritées. Ne jamais supprimer le
   second affichage tant que l'API sert encore les colonnes — c'est ce qui permet à
   cette version de tourner sur un serveur qui n'a pas basculé.
+  Même règle sur la **création** : les sélecteurs *zone* et *délai* n'apparaissent
+  que si `parcel/create` renvoie des zones, et « barème hérité » reste offert. Une
+  zone d'export sans pays est signalée **avant** l'envoi — le serveur refuserait.
 
 ## Statuts colis (alignés backend)
 En attente → Ramassage assigné → Entrepôt → Livreur assigné → Livré ; + Livraison partielle, Retour.
