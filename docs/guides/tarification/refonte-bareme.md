@@ -110,7 +110,7 @@ affiche une grille vide.
 | 2 | `delivery_charges` et `merchant_delivery_charges` gagnent `zone_id` ; chaque ligne actuelle devient **une ligne par zone**, aux montants d'aujourd'hui | oui, les colonnes restent |
 | 3 | `DeliveryChargeResolver` lit `zone_id` au lieu de la colonne ; l'étalon `DeliveryPricingBaselineTest` doit rester vert **sans être modifié** | oui |
 | 4 | Écrans de saisie : une ligne par zone, ajout/retrait dynamique — **livré** (`admin/delivery-zone`) | oui, aucune écriture tant que rien n'est saisi |
-| 5 | API : la ressource expose `zones[]` ; `openapi:generate` ; puis `mobile/` | non (contrat) |
+| 5 | API : la ressource expose `zones[]` ; `openapi:generate` — **livré** ; reste `mobile/` | non (contrat), mais **additif** : les quatre colonnes restent servies |
 | 6 | Suppression des quatre colonnes, une fois les apps déployées | non |
 
 Les étapes 1 à 3 ne changent **aucun montant** : c'est ce que l'étalon vérifie.
@@ -133,6 +133,10 @@ Les colonnes ne disparaissent qu'à l'étape 6, longtemps après.
   CEDEAO par pays** ; `admin/delivery-zone/grid` porte la grille d'une
   catégorie, une ligne par tranche et une colonne par zone. Les quatre colonnes
   héritées ne sont pas touchées : elles ne disparaissent qu'à l'étape 6.
+- **Étape 5, côté `web/`** : `GET settings/delivery-charges` sert `zones` et
+  `delays` **à côté** de `deliveryCharges`, et `GET settings/cod-charges` gagne
+  `zone_code`. `zones` vide = la société n'a rien configuré, l'app reste sur
+  les colonnes. Spec régénérée. Reste les deux apps.
 
 ## 5. Ce qu'il manque pour coder
 

@@ -98,6 +98,49 @@ class DeliveryZoneRepository implements DeliveryZoneInterface
     }
 
     /**
+     * La grille servie à un marchand : ses zones, tranche par tranche (**D4**).
+     *
+     * Même règle de priorité que `DeliveryChargeResolver::resolveByZone()` — le
+     * barème **négocié** du marchand l'emporte, sinon celui de la société. Elle
+     * est réappliquée ici plutôt qu'approchée : une liste qui n'annonce pas ce
+     * que le calculateur facturera est pire qu'une liste vide.
+     *
+     * Rend une collection **vide** quand la société n'a pas de zones. L'API
+     * sert alors les seules quatre colonnes héritées, et une app déjà
+     * installée continue d'afficher sa grille.
+     *
+     * @return Collection<int, DeliveryZone> chaque zone porte `rates` et `countries`
+     */
+    public function grilleMarchand(int $merchantId): Collection
+    {
+        $zones = DeliveryZone::companywise()
+            ->where('status', Status::ACTIVE)
+            ->with(['countries' => fn ($q) => $q->orderBy('name')])
+            ->orderBy('position')->orderBy('id')
+            ->get();
+
+        if ($zones->isEmpty()) {
+            return $zones;
+        }
+
+        $societe = DeliveryCharge::companywise()->whereNotNull('zone_id')->get()->groupBy('zone_id');
+        $negocie = MerchantDeliveryCharge::where('merchant_id', $merchantId)
+            ->whereNotNull('zone_id')->get()->groupBy('zone_id');
+
+        foreach ($zones as $zone) {
+            $lignes = $negocie->get($zone->id) ?? $societe->get($zone->id) ?? collect();
+
+            $zone->setAttribute('rates', $lignes->sortBy('weight')->values()->map(fn ($ligne) => [
+                'category_id' => (int) $ligne->category_id,
+                'weight' => (int) $ligne->weight,
+                'amount' => (float) $ligne->amount,
+            ])->all());
+        }
+
+        return $zones;
+    }
+
+    /**
      * Enregistre la liste des zones : une ligne par zone, ajout et retrait.
      *
      * @param  array<int, array<string, mixed>>  $lignes

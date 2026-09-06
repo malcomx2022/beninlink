@@ -31,6 +31,24 @@ use App\Models\Backend\Packaging;
  */
 class ChargeCalculator
 {
+    /**
+     * Clé de `merchants.cod_charges` correspondant à chaque zone (**D4**).
+     *
+     * Le métier a demandé de garder les taux actuels : les trois clés
+     * existantes se rattachent aux trois zones nationales, une pour une. La
+     * CEDEAO n'y figure pas — un encaissement à l'étranger n'a jamais été
+     * tarifé ici.
+     *
+     * Cette table est la **seule** correspondance zone → taux : le calcul et
+     * la ressource d'API la lisent toutes les deux, plutôt que d'en tenir
+     * chacune une copie qui dériverait.
+     */
+    public const COD_KEY_BY_ZONE = [
+        DeliveryZone::COTONOU => 'inside_city',
+        DeliveryZone::PERIPHERIE => 'sub_city',
+        DeliveryZone::INTERIEUR => 'outside_city',
+    ];
+
     /** Types de livraison partageant le tarif COD « intra-ville ». */
     private const INSIDE_CITY_TYPES = [1, 2];
     private const SUB_CITY_TYPE = 3;
@@ -109,13 +127,7 @@ class ChargeCalculator
     public function codRateForZone(Merchant $merchant, DeliveryZone $zone): float
     {
         $rates = $merchant->cod_charges ?? [];
-
-        $key = match ($zone->code) {
-            DeliveryZone::COTONOU => 'inside_city',
-            DeliveryZone::PERIPHERIE => 'sub_city',
-            DeliveryZone::INTERIEUR => 'outside_city',
-            default => null,
-        };
+        $key = self::COD_KEY_BY_ZONE[$zone->code] ?? null;
 
         return $key === null ? 0.0 : (float) ($rates[$key] ?? 0);
     }

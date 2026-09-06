@@ -234,9 +234,38 @@ douane.
   lors qu'on en connaissait l'identifiant. `delete()` vérifiait déjà la
   société ; `get()` non.
 
-**Reste à faire** (étapes 5 et 6) : la ressource d'API `zones[]` puis
-`openapi:generate`, les deux apps, et enfin la suppression des quatre colonnes
-— longtemps après.
+### Livré ensuite (étape 5, côté `web/`) — le contrat d'API
+
+`GET settings/delivery-charges` sert désormais **les deux formes** :
+
+| Clé | Contenu |
+|---|---|
+| `deliveryCharges` | les quatre colonnes héritées, **inchangées** |
+| `zones` | une entrée par zone : `code`, `name`, `export`, `cod_key`, ses `rates` (poids × montant) et ses `countries` (forfaits) |
+| `delays` | le **supplément global** de chaque délai |
+
+Deux règles portent la transition, et deux tests les tiennent :
+
+- **`zones` arrive vide** tant que la société n'a rien configuré. C'est le
+  signal, pour une app à jour, de rester sur l'ancien affichage — et la raison
+  pour laquelle un APK déjà installé ne voit aucune différence le jour de la
+  bascule. Sans cette période à deux formes, il afficherait une grille vide.
+- **La grille servie annonce ce que le calcul facturera** : même priorité au
+  barème négocié du marchand que `DeliveryChargeResolver::resolveByZone()`.
+  Une liste qui n'annonce pas le bon prix est pire qu'une liste vide.
+
+`GET settings/cod-charges` gagne `zone_code` sur chaque entrée. La
+correspondance vient de `ChargeCalculator::COD_KEY_BY_ZONE` — extraite du
+`match` qui vivait dans le calcul, elle est désormais **lue aux deux endroits**
+plutôt que recopiée. `null` sur la zone d'export, comme le taux lui-même.
+
+La spec est régénérée (`openapi:generate`, 106 chemins) avec les schémas
+`DeliveryZone`, `ZoneRate`, `ZoneCountry` et `DeliveryDelay`. Aucune route
+ajoutée : l'inventaire des apps (`mobile*/src/api/endpoints.ts`) ne bouge pas.
+
+**Reste à faire** : les deux apps (lire `zones` quand il n'est pas vide,
+retomber sur les colonnes sinon), puis l'étape 6, la suppression des quatre
+colonnes — longtemps après, une fois les apps déployées.
 
 ## D5 — Fiches de fraude sans `company_id` ✅
 

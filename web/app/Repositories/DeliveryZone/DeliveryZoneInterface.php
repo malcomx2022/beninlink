@@ -19,6 +19,8 @@ interface DeliveryZoneInterface
 
     public function tranches(?int $categoryId): array;
 
+    public function grilleMarchand(int $merchantId): Collection;
+
     public function enregistrerZones(array $lignes): array;
 
     public function enregistrerDelais(array $lignes): int;
