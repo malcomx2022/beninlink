@@ -16,6 +16,9 @@ class DeliveryCharge extends Model
 
         protected $fillable = [
                 'category_id',
+                // D4 — le barème par zone : une ligne = (catégorie, zone, tranche).
+                'zone_id',
+                'amount',
                 'weight',
                 'same_day',
                 'next_day',

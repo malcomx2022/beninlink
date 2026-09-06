@@ -3,6 +3,9 @@
 namespace App\Services\Parcel;
 
 use App\Models\Backend\DeliveryCharge;
+use App\Models\Backend\DeliveryDelay;
+use App\Models\Backend\DeliveryZone;
+use App\Models\Backend\DeliveryZoneCountry;
 use App\Models\Backend\MerchantDeliveryCharge;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -65,6 +68,100 @@ class DeliveryChargeResolver
         return $this->pick($merchant, $weight)
             ?? $this->pick($company, $weight)
             ?? $company->orderByDesc('weight')->first();
+    }
+
+    /**
+     * Tarif du **nouveau modèle** (D4) : une zone, un poids, un délai.
+     *
+     * Le métier a tranché le 2026-09-06 :
+     *   - quatre zones (Cotonou, Périphérie, Intérieur, CEDEAO) ;
+     *   - un **délai global** : le supplément dépend du délai, jamais de la
+     *     zone — c'est ce qui empêche de revenir aux quatre colonnes ;
+     *   - la **CEDEAO se facture au pays**, forfait, sans regarder le poids.
+     *
+     * Renvoie `null` quand la société n'a pas encore de zones : l'appelant
+     * retombe alors sur `resolve()`, c'est-à-dire sur les quatre colonnes
+     * d'origine. Une installation qui ne configure rien ne change pas de
+     * tarif — la garantie que tient `DeliveryPricingBaselineTest`.
+     */
+    public function resolveByZone(
+        int $merchantId,
+        ?int $categoryId,
+        $weight,
+        int $zoneId,
+        ?int $delayId = null,
+        ?string $country = null,
+    ): ?float {
+        $zone = DeliveryZone::find($zoneId);
+        if (blank($zone)) {
+            return null;
+        }
+
+        if ($zone->isExport()) {
+            $forfait = $this->forfaitPays($zone, $country);
+
+            // Un pays inconnu n'est pas facturé au hasard : l'appelant doit
+            // le voir, pas le découvrir sur la facture du marchand.
+            return $forfait === null ? null : $forfait + $this->supplement($delayId);
+        }
+
+        $tranche = $this->trancheDeZone($merchantId, $categoryId, $weight, $zoneId);
+        if ($tranche === null) {
+            return null;
+        }
+
+        return (float) $tranche->amount + $this->supplement($delayId);
+    }
+
+    /** Forfait du pays dans une zone d'export, ou `null` s'il n'est pas tarifé. */
+    private function forfaitPays(DeliveryZone $zone, ?string $country): ?float
+    {
+        if (blank($country)) {
+            return null;
+        }
+
+        $ligne = DeliveryZoneCountry::where('zone_id', $zone->id)
+            ->where('code', strtoupper($country))
+            ->first();
+
+        return $ligne === null ? null : (float) $ligne->flat_amount;
+    }
+
+    /** Supplément du délai — global, donc indépendant de la zone. */
+    private function supplement(?int $delayId): float
+    {
+        if ($delayId === null) {
+            return 0.0;
+        }
+
+        return (float) (DeliveryDelay::find($delayId)?->surcharge ?? 0);
+    }
+
+    /**
+     * Ligne de barème d'une zone. Même règle de poids que l'historique : le
+     * poids exact, sinon la tranche immédiatement supérieure, sinon la plus
+     * lourde (S9). Le barème négocié du marchand garde sa priorité.
+     */
+    private function trancheDeZone(int $merchantId, ?int $categoryId, $weight, int $zoneId): ?Model
+    {
+        if ($categoryId === null) {
+            return null;
+        }
+
+        $weight = max(0, (float) $weight);
+
+        $marchand = MerchantDeliveryCharge::query()
+            ->where('merchant_id', $merchantId)
+            ->where('category_id', $categoryId)
+            ->where('zone_id', $zoneId);
+
+        $societe = DeliveryCharge::query()
+            ->where('category_id', $categoryId)
+            ->where('zone_id', $zoneId);
+
+        return $this->pick($marchand, $weight)
+            ?? $this->pick($societe, $weight)
+            ?? $societe->orderByDesc('weight')->first();
     }
 
     /** Poids exact, sinon la tranche immédiatement supérieure. */

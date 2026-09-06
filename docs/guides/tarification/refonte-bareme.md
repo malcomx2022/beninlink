@@ -17,6 +17,11 @@ Les **frais COD**, eux, ont trois zones (`inside_city`, `sub_city`,
 
 ## 1. La grille à arrêter (métier)
 
+> **Tranché le 2026-09-06** : zones **Cotonou / Périphérie / Intérieur / CEDEAO** ;
+> **délai global** avec un supplément par délai ; **CEDEAO au forfait par pays**.
+> Le schéma, le résolveur et la conversion sont livrés (étapes 1 à 3 du §3).
+> Restent **la grille de prix** (1.3) et **les taux COD par zone** (1.5).
+
 ### 1.1 Zones
 
 Proposition minimale pour le Bénin. Corriger les libellés, ajouter ou retirer.
