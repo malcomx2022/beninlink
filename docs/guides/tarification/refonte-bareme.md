@@ -113,7 +113,8 @@ affiche une grille vide.
 | 5 | API : la ressource expose `zones[]` ; `openapi:generate` ; `mobile/` — **livré** (`mobile-livreur/` n'est pas concerné) | non (contrat), mais **additif** : les quatre colonnes restent servies |
 | 5 bis | **Le colis porte une zone et un délai**, et `resolveByZone()` entre dans le calcul — **livré**, `mobile/` compris | non (migration `parcels`), mais **additive** : sans zone, le calcul est celui d'avant |
 | 6 a | **Porte** : `beninlink:bareme-herite` dit ce qui dépend encore des colonnes, et sort en erreur sinon — **livré** | oui, constat seul |
-| 6 b | Suppression des quatre colonnes, **quand la porte est verte partout** | non — et le basculement est **sec** : plus de repli, une société non convertie ne facture plus |
+| 6 b | Étalon des zones (`DeliveryZonePricingBaselineTest`), écrit pendant que les deux barèmes coexistent — **livré** | oui, test seul |
+| 6 c | Suppression des quatre colonnes, **après le déploiement des apps** et quand la porte est verte partout | non — le basculement est **sec** : plus de repli, une société non convertie ne facture plus |
 
 Les étapes 1 à 3 ne changent **aucun montant** : c'est ce que l'étalon vérifie.
 Les colonnes ne disparaissent qu'à l'étape 6, longtemps après.
