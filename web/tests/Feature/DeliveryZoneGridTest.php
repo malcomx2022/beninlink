@@ -11,6 +11,7 @@ use App\Models\Backend\DeliveryZoneCountry;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\MerchantDeliveryCharge;
 use App\Services\Parcel\DeliveryChargeResolver;
+use App\Services\Pricing\ZoneGridConverter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\SeedsTenant;
 use Tests\TestCase;
@@ -32,6 +33,14 @@ class DeliveryZoneGridTest extends TestCase
 {
     use RefreshDatabase;
     use SeedsTenant;
+
+    /** Barème du jeu pilote : jour même, lendemain, périphérie, intérieur. */
+    private const PILOTE = [
+        1 => [1000, 800, 1500, 2500],
+        3 => [1500, 1200, 2000, 3500],
+        5 => [2000, 1700, 2800, 4500],
+        10 => [3000, 2500, 4000, 6500],
+    ];
 
     private Merchant $merchant;
 
@@ -189,8 +198,11 @@ class DeliveryZoneGridTest extends TestCase
             ]);
         }
 
+        // Avec le supplément retenu (300 F), le tarif « jour même » se déplace
+        // sur trois tranches : +100 sur 1 kg, 0 sur 3 et 5 kg, −200 sur 10 kg.
+        // La commande le montre au lieu de le laisser découvrir sur une facture.
         $this->artisan('beninlink:zones-tarifaires', ['--societe' => $this->merchant->company_id])
-            ->expectsOutputToContain('varie de')
+            ->expectsOutputToContain('déplace le tarif')
             ->assertSuccessful();
 
         // Constat seul : rien n'est écrit.
@@ -218,6 +230,66 @@ class DeliveryZoneGridTest extends TestCase
         // Les colonnes héritées sont intactes : le barème d'avant répond encore.
         $this->assertSame(4, DeliveryCharge::whereNull('zone_id')->count());
         $this->assertEquals(1000, DeliveryCharge::whereNull('zone_id')->where('weight', 1)->value('same_day'));
+    }
+
+    public function test_la_conversion_garde_les_tarifs_actuels_sauf_le_jour_meme(): void
+    {
+        // Décision du métier (2026-09-06) : « garde les tarifs actuels,
+        // supplément jour même 300 ». Ce test dit ce que cela donne, montant
+        // par montant — y compris là où ça bouge.
+        foreach (self::PILOTE as $poids => [$jm, $lend, $peri, $int]) {
+            DeliveryCharge::forceCreate([
+                'company_id' => $this->merchant->company_id,
+                'category_id' => $this->categoryId,
+                'weight' => $poids,
+                'same_day' => $jm, 'next_day' => $lend, 'sub_city' => $peri, 'outside_city' => $int,
+                'position' => $poids, 'status' => Status::ACTIVE,
+            ]);
+        }
+
+        app(ZoneGridConverter::class)->convert($this->merchant->company_id, ZoneGridConverter::SAME_DAY_SURCHARGE);
+
+        $resolveur = app(DeliveryChargeResolver::class);
+        $zone = fn (string $code) => DeliveryZone::where('code', $code)->value('id');
+        $jourMeme = DeliveryDelay::where('code', DeliveryDelay::SAME_DAY)->value('id');
+        $standard = DeliveryDelay::where('code', DeliveryDelay::STANDARD)->value('id');
+
+        foreach (self::PILOTE as $poids => [$jm, $lend, $peri, $int]) {
+            // Inchangé : les trois zones nationales au délai standard.
+            $this->assertEquals($lend, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, $poids, $zone(DeliveryZone::COTONOU), $standard));
+            $this->assertEquals($peri, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, $poids, $zone(DeliveryZone::PERIPHERIE), $standard));
+            $this->assertEquals($int, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, $poids, $zone(DeliveryZone::INTERIEUR), $standard));
+
+            // Déplacé, et c'est assumé : le « jour même » vaut désormais
+            // partout +300, là où le barème hérité montait de 200 à 500 selon
+            // la tranche.
+            $this->assertEquals(
+                $lend + ZoneGridConverter::SAME_DAY_SURCHARGE,
+                $resolveur->resolveByZone($this->merchant->id, $this->categoryId, $poids, $zone(DeliveryZone::COTONOU), $jourMeme),
+            );
+        }
+
+        // Le tableau des écarts, pour mémoire : +100 sur 1 kg, 0 sur 3 et
+        // 5 kg, −200 sur 10 kg.
+        $ecarts = collect(app(ZoneGridConverter::class)->ecarts($this->merchant->company_id, ZoneGridConverter::SAME_DAY_SURCHARGE))
+            ->pluck('ecart', 'weight')->all();
+        $this->assertEquals([1 => 100.0, 3 => 0.0, 5 => 0.0, 10 => -200.0], $ecarts);
+    }
+
+    public function test_le_taux_cod_suit_la_zone_et_la_cedeao_reste_a_fixer(): void
+    {
+        $this->merchant->cod_charges = ['inside_city' => '1', 'sub_city' => '2', 'outside_city' => '3'];
+        $this->merchant->save();
+
+        $calcul = app(\App\Services\Parcel\ChargeCalculator::class);
+
+        $this->assertEquals(1, $calcul->codRateForZone($this->merchant, $this->zone(DeliveryZone::COTONOU, 'Cotonou')));
+        $this->assertEquals(2, $calcul->codRateForZone($this->merchant, $this->zone(DeliveryZone::PERIPHERIE, 'Périphérie')));
+        $this->assertEquals(3, $calcul->codRateForZone($this->merchant, $this->zone(DeliveryZone::INTERIEUR, 'Intérieur')));
+
+        // Aucun taux n'a jamais été fixé pour un encaissement à l'étranger :
+        // on rend 0, pas le taux « hors ville ». On ne devine pas un prix.
+        $this->assertEquals(0, $calcul->codRateForZone($this->merchant, $this->zone(DeliveryZone::CEDEAO, 'CEDEAO')));
     }
 
     public function test_la_conversion_est_rejouable(): void
