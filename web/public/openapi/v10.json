@@ -4253,6 +4253,16 @@
                                         "type": "string",
                                         "nullable": true
                                     },
+                                    "zone_id": {
+                                        "type": "integer",
+                                        "description": "Zone de livraison (`parcel/create` → `zones`). Absente = barème hérité",
+                                        "nullable": true
+                                    },
+                                    "delay_id": {
+                                        "type": "integer",
+                                        "description": "Délai (`parcel/create` → `delays`) ; son supplément est global",
+                                        "nullable": true
+                                    },
                                     "destination_country": {
                                         "type": "string",
                                         "description": "ISO alpha-2 ; absent ou `BJ` = colis domestique. Sinon export : `customs_category` obligatoire",
@@ -4305,14 +4315,7 @@
                         "description": "Compte d'un autre type (merchant attendu) ou jeton émis pour un autre type"
                     },
                     "422": {
-                        "description": "Erreurs de validation",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ValidationError"
-                                }
-                            }
-                        }
+                        "description": "Route non tarifée (zone sans grille, ou pays d'export sans forfait) — aucun montant n'est inventé"
                     }
                 },
                 "security": [
@@ -4395,6 +4398,16 @@
                                     },
                                     "note": {
                                         "type": "string",
+                                        "nullable": true
+                                    },
+                                    "zone_id": {
+                                        "type": "integer",
+                                        "description": "Zone de livraison (`parcel/create` → `zones`). Absente = barème hérité",
+                                        "nullable": true
+                                    },
+                                    "delay_id": {
+                                        "type": "integer",
+                                        "description": "Délai (`parcel/create` → `delays`) ; son supplément est global",
                                         "nullable": true
                                     },
                                     "destination_country": {
@@ -4602,6 +4615,16 @@
                                     },
                                     "note": {
                                         "type": "string",
+                                        "nullable": true
+                                    },
+                                    "zone_id": {
+                                        "type": "integer",
+                                        "description": "Zone de livraison (`parcel/create` → `zones`). Absente = barème hérité",
+                                        "nullable": true
+                                    },
+                                    "delay_id": {
+                                        "type": "integer",
+                                        "description": "Délai (`parcel/create` → `delays`) ; son supplément est global",
                                         "nullable": true
                                     },
                                     "destination_country": {
@@ -8843,6 +8866,26 @@
                         "description": "Libellé traduit",
                         "nullable": true
                     },
+                    "zone_id": {
+                        "type": "integer",
+                        "description": "Zone de livraison ; `null` sur un colis du barème hérité",
+                        "nullable": true
+                    },
+                    "zone": {
+                        "type": "string",
+                        "description": "Libellé de la zone",
+                        "nullable": true
+                    },
+                    "delay_id": {
+                        "type": "integer",
+                        "description": "Délai ; son supplément est global",
+                        "nullable": true
+                    },
+                    "delay": {
+                        "type": "string",
+                        "description": "Libellé du délai",
+                        "nullable": true
+                    },
                     "status": {
                         "type": "integer",
                         "description": "App\\Enums\\ParcelStatus (33 constantes)"
@@ -9002,6 +9045,18 @@
                     },
                     "fragileLiquid": {
                         "$ref": "#/components/schemas/Amount"
+                    },
+                    "zones": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DeliveryZone"
+                        }
+                    },
+                    "delays": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DeliveryDelay"
+                        }
                     }
                 }
             },

@@ -81,7 +81,10 @@ class MerchantParcelController extends Controller
         $deliveryCharges = $this->repo->deliveryCharges();
         $packagings = $this->repo->packaging();
         $deliveryTypes      = $this->repo->deliveryTypes();
-        return view('backend.merchant_panel.parcel.create',compact('merchant','merchantShop','deliveryTypes','shops','deliveryCategories','deliveryCharges','packagings'));
+        // D4, etape 5 bis : la route du colis (voir ParcelController::create).
+        $zones              = app(\App\Repositories\DeliveryZone\DeliveryZoneInterface::class)->zones();
+        $delais             = app(\App\Repositories\DeliveryZone\DeliveryZoneInterface::class)->delais();
+        return view('backend.merchant_panel.parcel.create',compact('merchant','merchantShop','deliveryTypes','shops','deliveryCategories','deliveryCharges','packagings','zones','delais'));
     }
 
     public function store(StoreRequest $request)
@@ -99,7 +102,12 @@ class MerchantParcelController extends Controller
                 $request->weight,
                 (float) $request->cash_collection,
                 $request->packaging_id ? (int) $request->packaging_id : null,
-                $request->fragileLiquid == 'on'
+                $request->fragileLiquid == 'on',
+                // D4, etape 5 bis : la route du colis. Sans zone, le calcul
+                // est celui d'avant, au franc pres.
+                $request->zone_id ? (int) $request->zone_id : null,
+                $request->delay_id ? (int) $request->delay_id : null,
+                $request->destination_country
             );
             if($charges['total_delivery_amount'] > Auth::user()->merchant->wallet_balance):
                 Toastr::error('You are low on balance. Please recharge', 'Error');

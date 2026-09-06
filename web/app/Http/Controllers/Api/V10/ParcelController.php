@@ -94,7 +94,14 @@ class ParcelController extends Controller
             $deliveryCharges = DeliveryChargeResource::collection($this->merchantDeliveryCharges->getAll($merchant->id));
 
 
-            return $this->responseWithSuccess(__('parcel.parcel_create'), ['merchant'=>$merchant,'shops'=>$shops,'deliveryCategories'=>$deliveryCategories,'deliveryCharges'=>$deliveryCharges,'codCharges'=>$codCharges,'packagings'=>$packagings, 'fragileLiquid'=>$fragileLiquid, 'deliveryTypes'=>$deliveryTypes], 200);
+            // D4, etape 5 bis : la route proposee a l'ecran de creation. Listes
+            // vides tant que la societe n'a pas de zones — l'app garde alors son
+            // selecteur de type de livraison, et rien ne change.
+            $zonesRepo = app(\App\Repositories\DeliveryZone\DeliveryZoneInterface::class);
+            $zones = \App\Http\Resources\v10\DeliveryZoneResource::collection($zonesRepo->grilleMarchand($merchant->id));
+            $delays = \App\Http\Resources\v10\DeliveryDelayResource::collection($zonesRepo->delais());
+
+            return $this->responseWithSuccess(__('parcel.parcel_create'), ['merchant'=>$merchant,'shops'=>$shops,'deliveryCategories'=>$deliveryCategories,'deliveryCharges'=>$deliveryCharges,'codCharges'=>$codCharges,'packagings'=>$packagings, 'fragileLiquid'=>$fragileLiquid, 'deliveryTypes'=>$deliveryTypes, 'zones'=>$zones, 'delays'=>$delays], 200);
         }catch (\Exception $exception){
             return $this->responseWithError(__('parcel.parcel_create'), [], 500);
 
@@ -171,6 +178,10 @@ class ParcelController extends Controller
             'cash_collection'  => ['nullable','numeric','min:0'],
             'weight'           => ['nullable'],
             'packaging_id'     => ['nullable','numeric'],
+            // D4 — la route du colis. Facultative : sans zone, le devis est
+            // celui d'avant.
+            'zone_id'          => ['nullable','numeric'],
+            'delay_id'         => ['nullable','numeric'],
         ]);
 
         if ($validator->fails()) {
@@ -183,15 +194,24 @@ class ParcelController extends Controller
                 return $this->responseWithError(__('parcel.error_msg'), [], 403);
             }
 
-            $charges = $calculator->calculate(
-                $merchant,
-                (int) $request->delivery_type_id,
-                $request->category_id ? (int) $request->category_id : null,
-                $request->weight,
-                (float) $request->cash_collection,
-                $request->packaging_id ? (int) $request->packaging_id : null,
-                $request->fragileLiquid == 'on'
-            );
+            try {
+                $charges = $calculator->calculate(
+                    $merchant,
+                    (int) $request->delivery_type_id,
+                    $request->category_id ? (int) $request->category_id : null,
+                    $request->weight,
+                    (float) $request->cash_collection,
+                    $request->packaging_id ? (int) $request->packaging_id : null,
+                    $request->fragileLiquid == 'on',
+                    $request->zone_id ? (int) $request->zone_id : null,
+                    $request->delay_id ? (int) $request->delay_id : null,
+                    $request->destination_country
+                );
+            } catch (\App\Exceptions\UnpricedDeliveryException $exception) {
+                // D4 — la route n'est pas tarifee. 422 plutot qu'un montant
+                // invente : l'app doit pouvoir le dire au marchand.
+                return $this->responseWithError(__('delivery_zone.route_not_priced'), [], 422);
+            }
 
             // Somme rendue par le serveur pour qu'aucun client n'ait a decider si
             // le sous-total porte la TVA ou non.
@@ -281,7 +301,14 @@ class ParcelController extends Controller
             }
             $fragileLiquid = SettingHelper('fragile_liquid_charge');
             $deliveryCharges = DeliveryChargeResource::collection($this->merchantDeliveryCharges->getAll($merchant->id));
-            return $this->responseWithSuccess(__('parcel.parcel_edit'), ['merchant'=>$merchant,'shops'=>$shops,'deliveryCategories'=>$deliveryCategories,'codCharges'=>$codCharges,'deliveryCharges'=>$deliveryCharges,'packagings'=>$packagings,'fragileLiquid'=>$fragileLiquid,'deliveryTypes'=>$deliveryTypes,'deliveryCategoryCharges'=>$deliveryCategoryCharges], 200);
+            // D4, etape 5 bis : la route proposee a l'ecran de creation. Listes
+            // vides tant que la societe n'a pas de zones — l'app garde alors son
+            // selecteur de type de livraison, et rien ne change.
+            $zonesRepo = app(\App\Repositories\DeliveryZone\DeliveryZoneInterface::class);
+            $zones = \App\Http\Resources\v10\DeliveryZoneResource::collection($zonesRepo->grilleMarchand($merchant->id));
+            $delays = \App\Http\Resources\v10\DeliveryDelayResource::collection($zonesRepo->delais());
+
+            return $this->responseWithSuccess(__('parcel.parcel_edit'), ['merchant'=>$merchant,'shops'=>$shops,'deliveryCategories'=>$deliveryCategories,'codCharges'=>$codCharges,'deliveryCharges'=>$deliveryCharges,'packagings'=>$packagings,'fragileLiquid'=>$fragileLiquid,'deliveryTypes'=>$deliveryTypes,'deliveryCategoryCharges'=>$deliveryCategoryCharges, 'zones'=>$zones, 'delays'=>$delays], 200);
         }
         else{
             return $this->responseWithError(__('parcel.edit_error_message'), [], 422);

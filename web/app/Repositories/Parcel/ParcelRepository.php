@@ -401,6 +401,11 @@ class ParcelRepository implements ParcelInterface {
             $parcel->customer_lat           = $request->lat;
             $parcel->customer_long          = $request->long;
             $parcel->delivery_type_id       = $request->delivery_type_id;
+            // D4, etape 5 bis : la zone et le delai du colis. Nuls tant que
+            // le formulaire ne les envoie pas — le colis suit alors le
+            // bareme herite, et `delivery_type_id` reste sa seule route.
+            $parcel->zone_id                = $request->zone_id ?: null;
+            $parcel->delay_id               = $request->delay_id ?: null;
             $parcel->priority_type_id       = $request->priority_id;
             // Pickup & Delivery Time
             if($request->delivery_type_id == DeliveryType::SAMEDAY){
@@ -454,7 +459,12 @@ class ParcelRepository implements ParcelInterface {
                 $request->weight,
                 (float) $request->cash_collection,
                 $request->packaging_id ? (int) $request->packaging_id : null,
-                isset($request->fragileLiquid) && $request->fragileLiquid == 'on'
+                isset($request->fragileLiquid) && $request->fragileLiquid == 'on',
+                // D4, etape 5 bis : la route du colis. Sans zone, le calcul
+                // est celui d'avant, au franc pres.
+                $request->zone_id ? (int) $request->zone_id : null,
+                $request->delay_id ? (int) $request->delay_id : null,
+                $request->destination_country
             );
             $parcel->vat                    = $charges['vat'];
             $parcel->vat_amount             = $charges['vat_amount'];
@@ -574,6 +584,11 @@ class ParcelRepository implements ParcelInterface {
             $parcel->customer_lat           = $request->lat;
             $parcel->customer_long          = $request->long;
             $parcel->delivery_type_id       = $request->delivery_type_id;
+            // D4, etape 5 bis : la zone et le delai du colis. Nuls tant que
+            // le formulaire ne les envoie pas — le colis suit alors le
+            // bareme herite, et `delivery_type_id` reste sa seule route.
+            $parcel->zone_id                = $request->zone_id ?: null;
+            $parcel->delay_id               = $request->delay_id ?: null;
             $parcel->note                   = $request->note;
             $parcel->status                 = ParcelStatus::PENDING;
             // Pickup & Delivery Time
@@ -628,7 +643,12 @@ class ParcelRepository implements ParcelInterface {
                 $request->weight,
                 (float) $request->cash_collection,
                 $request->packaging_id ? (int) $request->packaging_id : null,
-                isset($request->fragileLiquid) && $request->fragileLiquid == 'on'
+                isset($request->fragileLiquid) && $request->fragileLiquid == 'on',
+                // D4, etape 5 bis : la route du colis. Sans zone, le calcul
+                // est celui d'avant, au franc pres.
+                $request->zone_id ? (int) $request->zone_id : null,
+                $request->delay_id ? (int) $request->delay_id : null,
+                $request->destination_country
             );
             $parcel->vat                    = $charges['vat'];
             $parcel->vat_amount             = $charges['vat_amount'];
@@ -728,6 +748,11 @@ class ParcelRepository implements ParcelInterface {
             $parcel->destination_country    = $request->destination_country;
             $parcel->customs_category       = $request->customs_category;
             $parcel->delivery_type_id       = $request->delivery_type_id;
+            // D4, etape 5 bis : la zone et le delai du colis. Nuls tant que
+            // le formulaire ne les envoie pas — le colis suit alors le
+            // bareme herite, et `delivery_type_id` reste sa seule route.
+            $parcel->zone_id                = $request->zone_id ?: null;
+            $parcel->delay_id               = $request->delay_id ?: null;
             // Pickup & Delivery Time
             if($request->delivery_type_id == DeliveryType::SAMEDAY){
                 if(date('H') < DeliveryTime::LAST_TIME){
@@ -781,7 +806,12 @@ class ParcelRepository implements ParcelInterface {
                 $request->weight,
                 (float) $request->cash_collection,
                 $request->packaging_id ? (int) $request->packaging_id : null,
-                isset($request->fragileLiquid) && $request->fragileLiquid == 'on'
+                isset($request->fragileLiquid) && $request->fragileLiquid == 'on',
+                // D4, etape 5 bis : la route du colis. Sans zone, le calcul
+                // est celui d'avant, au franc pres.
+                $request->zone_id ? (int) $request->zone_id : null,
+                $request->delay_id ? (int) $request->delay_id : null,
+                $request->destination_country
             );
             $parcel->vat                    = $charges['vat'];
             $parcel->vat_amount             = $charges['vat_amount'];

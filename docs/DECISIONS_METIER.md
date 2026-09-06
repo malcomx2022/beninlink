@@ -278,23 +278,44 @@ ajoutée : l'inventaire des apps (`mobile*/src/api/endpoints.ts`) ne bouge pas.
   pas la grille. Consigné dans `mobile-livreur/CLAUDE.md` pour ne pas
   reposer la question.
 
-### ⚠️ Ce que la refonte ne fait pas encore
+### Livré ensuite (étape 5 bis) — la grille facture
 
-`DeliveryChargeResolver::resolveByZone()` **n'a aucun appelant en production**.
-La grille par zones se saisit, se sert et s'affiche — elle ne **facture** pas
-encore : la création d'un colis passe toujours par `resolve()` et
-`delivery_type_id`, c'est-à-dire par les quatre colonnes.
+Le maillon manquant : `resolveByZone()` n'avait **aucun appelant en
+production**, parce qu'un colis ne savait pas dire dans quelle zone il va ni
+sous quel délai. Il ne portait qu'un `delivery_type_id` — l'axe mélangé que D4
+défait. La grille se saisissait, se servait, s'affichait ; elle ne facturait
+pas.
 
-C'est cohérent avec la promesse tenue depuis l'étape 1 (aucun montant déplacé),
-mais cela précise ce qui reste : **un colis doit porter une zone et un délai**
-avant que le nouveau barème puisse s'appliquer. C'est une migration sur
-`parcels`, plus les trois chemins de création (administration, panneau
-marchand, API) et le devis. La suppression des quatre colonnes vient **après**,
-pas avant.
+- **Le colis porte sa route** : `parcels.zone_id` et `parcels.delay_id`,
+  nullables, `delivery_type_id` conservé. Un colis sans zone est facturé
+  exactement comme avant.
+- **Le calcul suit la route** : avec une zone, `ChargeCalculator` prend le
+  montant de `resolveByZone()` (zone × tranche + supplément du délai, ou
+  forfait du pays) et le **taux COD de la zone** — plus celui du type de
+  livraison. Sans zone, c'est le calcul d'avant, au franc près.
+- **Une route non tarifée est refusée, jamais devinée.**
+  `UnpricedDeliveryException` arrête le calcul plutôt que de retomber sur une
+  colonne héritée, ce qui reviendrait à inventer un prix. En amont, la règle
+  `DeliveryRoutePriced` attrape le cas dans les deux `StoreRequest` — le seul
+  point commun aux **trois** chemins de création, comme `CustomsAllowed`.
+  L'opérateur voit donc un message sur le bon champ, pas une erreur serveur.
+  Le devis répond **422** avec le motif, et les deux écrans l'affichent au lieu
+  de garder les montants du devis précédent.
+- **Les écrans** : sélecteurs *zone* et *délai* sur les formulaires de création
+  de l'administration et du panneau marchand, avec le supplément du délai en
+  regard. Ils n'apparaissent que si la société a des zones.
+- **L'API** : `parcel/create` et `parcel/edit` servent `zones` et `delays` ;
+  `parcel/quote` et `parcel/store` acceptent `zone_id` et `delay_id` ;
+  `ParcelResource` expose la route du colis. Spec régénérée.
 
-**Reste à faire**, dans cet ordre : porter zone et délai sur le colis, brancher
-`resolveByZone()` sur le calcul, puis l'étape 6 — la suppression des quatre
-colonnes, une fois les apps déployées.
+**Hors périmètre, dit explicitement** : l'import Excel garde le chemin hérité —
+le format du fichier n'a pas de colonne de zone, et lui en inventer une serait
+une décision de format, pas une conséquence de D4. L'écran de création de
+`mobile/` garde lui aussi son sélecteur de type de livraison ; le contrat qui
+lui permet d'offrir la zone existe maintenant.
+
+**Reste à faire** : le sélecteur de zone sur `mobile/`, puis l'étape 6 — la
+suppression des quatre colonnes, une fois les apps déployées.
 
 ## D5 — Fiches de fraude sans `company_id` ✅
 

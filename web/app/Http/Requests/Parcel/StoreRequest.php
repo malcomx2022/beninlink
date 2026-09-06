@@ -48,6 +48,18 @@ class StoreRequest extends FormRequest
              * categorie devient obligatoire — sans elle aucune regle ne
              * s'applique et le blocage se contournerait en omettant le champ.
              */
+
+            /**
+             * D4, etape 5 bis — la route du colis : zone et delai.
+             *
+             * Facultatifs : sans zone, le colis suit le bareme herite et le
+             * `delivery_type_id` ci-dessus, exactement comme avant. Avec une
+             * zone, `DeliveryRoutePriced` verifie que la route EST tarifee —
+             * sinon `ChargeCalculator` leverait, et l'operateur verrait une
+             * erreur serveur au lieu d'un message sur le bon champ.
+             */
+            'zone_id'  => ['nullable','numeric', new \App\Rules\DeliveryRoutePriced()],
+            'delay_id' => ['nullable','numeric'],
             'destination_country' => ['nullable','string','size:2'],
             'customs_category'    => [
                 // Exigee pour un EXPORT seulement : `required_with` aurait aussi

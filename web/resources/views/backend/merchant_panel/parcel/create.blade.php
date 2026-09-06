@@ -170,6 +170,38 @@
                                     @enderror
                                 </div>
 
+                                {{-- D4, etape 5 bis : la route du colis. Facultative — sans zone,
+                                     le tarif reste celui des quatre colonnes ci-dessus. --}}
+                                @if (!empty($zones) && count($zones))
+                                    <div class="form-group col-12 col-md-6">
+                                        <label for="zone_id">{{ __('delivery_zone.zone_field') }}</label>
+                                        <select style="width: 100%" class="form-control select2" id="zone_id" name="zone_id">
+                                            <option value="">{{ __('delivery_zone.legacy_route') }}</option>
+                                            @foreach ($zones as $zone)
+                                                <option value="{{ $zone->id }}" {{ old('zone_id') == $zone->id ? 'selected' : '' }}>{{ $zone->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('zone_id')
+                                            <small class="text-danger mt-2">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                    <div class="form-group col-12 col-md-6">
+                                        <label for="delay_id">{{ __('delivery_zone.delay_field') }}</label>
+                                        <select style="width: 100%" class="form-control select2" id="delay_id" name="delay_id">
+                                            <option value="">{{ __('menus.select') }}</option>
+                                            @foreach ($delais as $delai)
+                                                <option value="{{ $delai->id }}" {{ old('delay_id') == $delai->id ? 'selected' : '' }}>
+                                                    {{ $delai->name }}@if ((int) $delai->surcharge > 0) (+ {{ formatAmount($delai->surcharge) }})@endif
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('delay_id')
+                                            <small class="text-danger mt-2">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                @endif
+
+
                                 <div class="form-group col-12 col-md-6">
                                     <label for="customer_name">{{ __('parcel.customer_name') }}</label> <span
                                         class="text-danger">*</span>
@@ -297,6 +329,10 @@
                 <div class="card">
                     <div class="card-body">
                         <h2 class="pageheader-title">{{ __('parcel.charge_details') }}</h2>
+
+                        {{-- D4 : une route sans tarif se dit ici, plutôt que de laisser
+                             à l'écran les montants du devis précédent. --}}
+                        <div class="alert alert-warning" id="quoteError" style="display:none"></div>
 
                         <ul class="list-group">
                             <li class="list-group-item profile-list-group-item">

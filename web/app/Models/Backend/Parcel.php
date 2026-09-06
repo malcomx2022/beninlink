@@ -63,6 +63,22 @@ class Parcel extends Model
     }
 
     // Delivery Category details
+    /**
+     * Zone et delai du colis (**D4**, etape 5 bis).
+     *
+     * Nuls sur un colis herite : il n'a que son `delivery_type_id`, et c'est
+     * par lui qu'il a ete facture.
+     */
+    public function zone()
+    {
+        return $this->belongsTo(DeliveryZone::class, 'zone_id', 'id');
+    }
+
+    public function delay()
+    {
+        return $this->belongsTo(DeliveryDelay::class, 'delay_id', 'id');
+    }
+
     public function deliveryCategory()
     {
         return $this->belongsTo(Deliverycategory::class, 'category_id', 'id');

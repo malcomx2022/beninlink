@@ -142,9 +142,24 @@ function refreshQuote() {
                 weight: $('#weightID').val(),
                 cash_collection: $('#cash_collection').val(),
                 packaging_id: $('#packaging_id').val(),
-                fragileLiquid: $('#fragileLiquid').is(':checked')
+                fragileLiquid: $('#fragileLiquid').is(':checked'),
+                // D4, etape 5 bis : la route du colis. Les deux champs
+                // n'existent que si la societe a des zones ; sinon le
+                // serveur recoit `undefined` et devise comme avant.
+                zone_id: $('#zone_id').val(),
+                delay_id: $('#delay_id').val(),
+                destination_country: $('#destination_country').val()
+            },
+            // Une route non tarifee rend 422 : afficher le message du
+            // serveur plutot que de garder a l'ecran les montants du
+            // devis precedent, qui ne valent plus rien.
+            error: function (xhr) {
+                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.message) {
+                    $('#quoteError').text(xhr.responseJSON.message).show();
+                }
             },
             success: function (response) {
+                $('#quoteError').hide().text('');
                 var amount = response.display;
                 $('#totalCashCollection').text(amount.cash_collection);
                 $('#deliveryChargeAmount').text(amount.delivery_charge);
@@ -162,6 +177,8 @@ function refreshQuote() {
 
 $(document).on('change', '#delivery_type_id', refreshQuote);
 $(document).on('change', '#weightID', refreshQuote);
+$(document).on('change', '#zone_id', refreshQuote);
+$(document).on('change', '#delay_id', refreshQuote);
 $(document).on('keyup change', '#cash_collection', refreshQuote);
 
 $('#packagingShow').hide();

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Enums\UserType;
+use App\Exceptions\UnpricedDeliveryException;
 use App\Http\Controllers\Controller;
 use App\Models\Backend\Merchant;
 use App\Services\Parcel\ChargeCalculator;
@@ -39,15 +40,25 @@ class ParcelQuoteController extends Controller
 
         $cashCollection = (float) $request->cash_collection;
 
-        $charges = $calculator->calculate(
-            $merchant,
-            (int) $request->delivery_type_id,
-            $request->category_id ? (int) $request->category_id : null,
-            $request->weight,
-            $cashCollection,
-            $request->packaging_id ? (int) $request->packaging_id : null,
-            $request->fragileLiquid == 'true' || $request->fragileLiquid == 'on'
-        );
+        try {
+            $charges = $calculator->calculate(
+                $merchant,
+                (int) $request->delivery_type_id,
+                $request->category_id ? (int) $request->category_id : null,
+                $request->weight,
+                $cashCollection,
+                $request->packaging_id ? (int) $request->packaging_id : null,
+                $request->fragileLiquid == 'true' || $request->fragileLiquid == 'on',
+                $request->zone_id ? (int) $request->zone_id : null,
+                $request->delay_id ? (int) $request->delay_id : null,
+                $request->destination_country
+            );
+        } catch (UnpricedDeliveryException $exception) {
+            // D4 — la route n'est pas tarifee. Le devis le DIT : afficher un
+            // zero laisserait croire a une livraison gratuite, et la creation
+            // serait refusee plus tard sans que l'ecran l'ait annonce.
+            return response()->json(['message' => __('delivery_zone.route_not_priced')], 422);
+        }
 
         // `total_delivery_amount` est le sous-total HORS TVA (comportement du
         // socle) ; l'ecran affiche aussi le total TVA comprise.

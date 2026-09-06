@@ -93,6 +93,12 @@ $schemas = [
         'total_delivery_amount' => ['allOf' => [$amount()], 'description' => 'Sous-total des frais **hors TVA**'],
         'cod_amount' => $amount(), 'vat_amount' => $amount(), 'current_payable' => $amount(), 'cash_collection' => $amount(),
         'delivery_type_id' => $int(), 'deliveryType' => $str('Libellé traduit', true),
+        // D4, etape 5 bis — nuls sur un colis herite, facture par son seul
+        // `delivery_type_id`.
+        'zone_id' => $int('Zone de livraison ; `null` sur un colis du barème hérité', true),
+        'zone' => $str('Libellé de la zone', true),
+        'delay_id' => $int('Délai ; son supplément est global', true),
+        'delay' => $str('Libellé du délai', true),
         'status' => $int('App\\Enums\\ParcelStatus (33 constantes)'), 'statusName' => $str('Libellé traduit', true),
         'pickup_date' => $str('', true), 'delivery_date' => $str('', true), 'created_at' => $str('Déjà mise en forme (« 17 Aug 2026, 09:29 PM »)', true),
         'parcel_date' => $str('', true), 'parcel_time' => $str('', true),
@@ -106,6 +112,10 @@ $schemas = [
         'packagings' => ['type' => 'array', 'items' => $obj(['id' => $int(), 'name' => $str(), 'price' => $amount()])],
         'codCharges' => ['type' => 'array', 'items' => $obj(['name' => $str(), 'charge' => $str()])],
         'fragileLiquid' => $amount(),
+        // D4 — vides tant que la societe n'a pas de zones : l'app garde alors
+        // son selecteur de type de livraison et rien ne change.
+        'zones' => $arr('DeliveryZone'),
+        'delays' => $arr('DeliveryDelay'),
     ]),
     'ParcelQuote' => $obj([
         'delivery_charge' => $amount(), 'cod_charge' => ['allOf' => [$amount()], 'description' => 'Taux en pourcentage'], 'cod_amount' => $amount(),
@@ -170,6 +180,10 @@ $parcelInput = [
     'cash_collection' => $int('Montant à encaisser (COD), entier XOF'),
     'selling_price' => $int('', true), 'invoice_no' => $str('', true), 'weight' => ['type' => 'number', 'nullable' => true],
     'packaging_id' => $int('', true), 'fragile_liquid' => $bool('Colis fragile ou liquide'), 'note' => $str('', true),
+    // D4, etape 5 bis — la route du colis. Facultative : sans `zone_id`, le
+    // tarif reste celui de `delivery_type_id`, c'est-a-dire des quatre colonnes.
+    'zone_id' => $int('Zone de livraison (`parcel/create` → `zones`). Absente = barème hérité', true),
+    'delay_id' => $int('Délai (`parcel/create` → `delays`) ; son supplément est global', true),
     'destination_country' => $str('ISO alpha-2 ; absent ou `BJ` = colis domestique. Sinon export : `customs_category` obligatoire', true),
     'customs_category' => $str('Slug de `customs/reference`', true),
 ];
@@ -232,7 +246,7 @@ $operations = [
     'GET parcel/index' => ['tag' => 'Colis', 'summary' => 'Colis du marchand', 'responses' => $ok($obj(['parcels' => $arr('Parcel')]))],
     'GET parcel/filter' => ['tag' => 'Colis', 'summary' => 'Colis filtrés', 'parameters' => [$query('status', 'Statut (App\\Enums\\ParcelStatus)', 'integer'), $query('date', 'Plage de dates'), $query('search', 'Recherche libre')], 'responses' => $ok($obj(['parcels' => $arr('Parcel')]))],
     'GET parcel/create' => ['tag' => 'Colis', 'summary' => 'Référentiels du formulaire de création', 'responses' => $ok($ref('ParcelFormData'))],
-    'POST parcel/quote' => ['tag' => 'Colis', 'summary' => 'Devis : les montants d\'un colis AVANT sa création', 'description' => 'Même `ChargeCalculator` que la création : ce que le devis annonce est ce que `parcel/store` enregistrera. N\'écrit rien. Le bloc `customs` dit si un export passe.', 'requestBody' => $body($parcelInput, ['category_id', 'delivery_type_id']), 'responses' => $ok($ref('ParcelQuote'))],
+    'POST parcel/quote' => ['tag' => 'Colis', 'summary' => 'Devis : les montants d\'un colis AVANT sa création', 'description' => 'Même `ChargeCalculator` que la création : ce que le devis annonce est ce que `parcel/store` enregistrera. N\'écrit rien. Le bloc `customs` dit si un export passe.', 'requestBody' => $body($parcelInput, ['category_id', 'delivery_type_id']), 'responses' => $ok($ref('ParcelQuote')) + ['422' => ['description' => 'Route non tarifée (zone sans grille, ou pays d\'export sans forfait) — aucun montant n\'est inventé']]],
     'POST parcel/store' => ['tag' => 'Colis', 'summary' => 'Créer un colis', 'description' => 'Tous les montants (frais, TVA, net) sont calculés **côté serveur** (S2) ; un éventuel `chargeDetails` posté est ignoré. Un export bloquant (règle douanière niveau 3) est refusé en 422. **Solde** : pour un marchand réglant par porte-monnaie prépayé, la création est refusée en 422 si `total_delivery_amount` dépasse `wallet_balance` — la règle des écrans web, qui vaut désormais ici aussi. Le solde ne descend jamais sous zéro.', 'requestBody' => $body($parcelInput, $parcelRequired), 'responses' => $empty + ['422' => ['description' => 'Export bloquant, champ invalide, ou solde insuffisant. Dans ce dernier cas `data` porte `required`, `wallet_balance` et `missing` (entiers XOF) : de quoi proposer la recharge du bon montant.']]],
     'GET parcel/details/{id}' => ['tag' => 'Colis', 'summary' => 'Détail d\'un colis', 'responses' => $ok($obj(['parcel' => $ref('Parcel')]))],
     'GET parcel/edit/{id}' => ['tag' => 'Colis', 'summary' => 'Colis et référentiels pour modification', 'responses' => $ok(['type' => 'object'])],

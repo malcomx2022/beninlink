@@ -36,6 +36,12 @@ class ParcelResource extends JsonResource
             "cash_collection"       => $this->cash_collection,
             "delivery_type_id"      => (int) $this->delivery_type_id,
             "deliveryType"          => trans("deliveryType.".$this->delivery_type_id),
+            // D4, etape 5 bis — la route du colis quand il en porte une. Nulle
+            // sur un colis herite : l'app garde alors `deliveryType` seul.
+            "zone_id"               => $this->zone_id === null ? null : (int) $this->zone_id,
+            "zone"                  => $this->zone->name ?? null,
+            "delay_id"              => $this->delay_id === null ? null : (int) $this->delay_id,
+            "delay"                 => $this->delay->name ?? null,
             "status"                => (int) $this->status,
             "statusName"            => trans("parcelStatus.".$this->status),
             'pickup_date'           => dateFormat($this->pickup_date),
