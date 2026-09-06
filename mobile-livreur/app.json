@@ -7,11 +7,6 @@
     "scheme": "beninlink-livreur",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#12503A"
-    },
     "locales": {
       "fr": "./src/i18n/expo-fr.json"
     },
@@ -22,8 +17,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png",
         "backgroundColor": "#12503A"
-      },
-      "edgeToEdgeEnabled": true
+      }
     },
     "ios": {
       "bundleIdentifier": "app.beninlink.livreur",
@@ -54,6 +48,14 @@
         "expo-notifications",
         {
           "color": "#12503A"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#12503A"
         }
       ]
     ],

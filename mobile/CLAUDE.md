@@ -70,7 +70,22 @@ Vert `#12503A` · Ocre `#E0A63C` · rouge = incident. Sora (titres/chiffres) + D
 
 ## Commandes
 - `npm install` · `npx expo start` · `npx expo lint`
+- **`npx expo-doctor` avant tout build** : il attrape les erreurs de configuration qui,
+  sinon, font échouer EAS après dix minutes de file d'attente. 21/21 au 2026-09-06.
 - Build : `eas build -p android` (APK/AAB) · `eas build -p ios`
+
+### Ce qu'un build EAS demande, et qui n'est pas dans le dépôt
+Rien de tout ceci ne peut être versionné — ce sont des secrets et des liens de compte :
+
+1. **un compte Expo** et `eas login` (ou `EXPO_TOKEN` dans l'environnement) ;
+2. **`eas init`**, qui écrit `expo.extra.eas.projectId` et `expo.owner` dans `app.json` —
+   ces deux clés sont **absentes à dessein** : elles rattachent le dépôt à un compte, et
+   le choix du compte appartient au porteur ;
+3. **`eas credentials`** : keystore Android et certificats iOS. ⚠️ Un keystore Android ne
+   se change plus une fois l'app publiée — le générer, c'est un engagement définitif ;
+4. pour le **push** (D11) : la clé de compte de service Google (FCM v1) côté Android et
+   la clé APNs côté iOS, déposées elles aussi par `eas credentials`. Le backend n'en
+   porte aucune.
 
 ## Conventions
 - Réutiliser les patterns de l'app (navigation, services d'API, i18n) ; repérer un écran
