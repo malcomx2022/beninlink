@@ -77,6 +77,9 @@ avant les apps.
   délais et leur supplément global, **forfaits CEDEAO par pays**, et la grille
   tranche × zone. Le **code** d'une zone se fixe à la création (il porte le
   rattachement du taux COD) et une zone qui porte des tarifs ne se supprime pas.
+  Zone CEDEAO entièrement tarifée : **forfait au pays** pour la livraison, **3 %**
+  de COD (clé `cedeao` de `merchants.cod_charges`, posée par migration sans écraser
+  un taux déjà négocié).
   Forfaits CEDEAO tranchés (Togo 12 000, Nigeria 18 000, Burkina Faso 15 000) :
   ils vivent dans `ZoneGridConverter::PAYS` et sont **créés s'ils manquent, jamais
   réécrits** — un montant ajusté à l'écran survit à une relance de la conversion.

@@ -17,6 +17,7 @@ return array (
   'sub_city'            => 'Sous-ville',
   'inside_city'         => 'À l\'intérieur de la ville',
   'outside_city'        => 'À l\'extérieur de la ville',
+  'cedeao'              => 'CEDEAO (export)',
   'create_delivery_charge'     => 'Créer des frais de livraison',
   'edit_delivery_charge'     => 'Modifier les frais de livraison',
   'create_merchant'     => 'Créer un marchand',

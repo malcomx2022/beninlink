@@ -157,7 +157,7 @@ Ce qui manque pour coder n'est donc plus une analyse : ce sont **cinq réponses*
 | Supplément « jour même » | **300 F**, global |
 | Taux COD par zone | **les taux actuels sont conservés** (Cotonou ← `inside_city`, Périphérie ← `sub_city`, Intérieur ← `outside_city`) |
 | Forfaits CEDEAO par pays | **Togo 12 000, Nigeria 18 000, Burkina Faso 15 000** (tranché le 2026-09-06) |
-| Taux COD de la zone CEDEAO | ⏳ reste à fixer |
+| Taux COD de la zone CEDEAO | **3 %** (tranché le 2026-09-06) |
 
 ### Livré le même jour (étapes 1 à 3, réversibles)
 
@@ -188,11 +188,8 @@ Tout le reste — les trois zones nationales, tous délais confondus — est
 **identique au centime près**. La commande affiche ce tableau avant d'écrire ;
 un test le fixe (`DeliveryZoneGridTest`).
 
-**Reste côté métier** : le **taux COD de la zone CEDEAO**. Un encaissement à
-l'étranger n'a jamais été tarifé : `codRateForZone()` rend 0 pour cette zone
-plutôt que d'emprunter le taux « hors ville » — on ne devine pas un prix.
-Conséquence à connaître : un envoi CEDEAO est désormais **livrable** (le
-forfait existe) mais son encaissement ne porte **aucun frais COD**.
+**Plus rien ne reste côté métier sur D4** : les cinq questions ouvertes du
+2026-09-06 au matin ont toutes reçu leur réponse.
 
 ### Livré ensuite (étape 4) — les écrans de saisie
 
@@ -394,6 +391,26 @@ Un pays **hors de cette liste** — le Ghana, par exemple, membre de la CEDEAO �
 reste sans tarif : la zone ne lui applique rien plutôt que d'emprunter le
 montant d'un voisin, et la création est refusée avec son motif. C'est fixé par
 l'étalon.
+
+### Le taux COD de la zone CEDEAO — tranché le 2026-09-06
+
+**3 %.** La zone d'export a désormais **sa propre clé** dans
+`merchants.cod_charges` (`cedeao`), au lieu de n'en avoir aucune :
+`ChargeCalculator::COD_KEY_BY_ZONE` la nomme comme les trois autres, et chaque
+zone lit la sienne — aucune n'emprunte le taux d'une voisine.
+
+Trois conséquences, chacune tenue par un test :
+
+- **la migration comble ce qui manque, sans écraser ce qui existe.** Un taux
+  négocié avec un marchand ne se réécrit pas parce qu'on a passé une migration ;
+  même règle que pour les forfaits par pays ;
+- **un marchand sans la clé reste à zéro.** Une colonne vide ou illisible n'est
+  pas « réparée » au passage — ce serait inventer les trois autres taux ;
+- l'écran de création d'un marchand affiche la nouvelle zone sans modification :
+  il itère `config('rxcourier.cod_charges')`, où la ligne a été ajoutée.
+
+Un envoi CEDEAO est donc désormais **entièrement tarifé** : forfait au pays pour
+la livraison, 3 % sur l'encaissement.
 
 ### La relève de l'étalon — tranché le 2026-09-06
 

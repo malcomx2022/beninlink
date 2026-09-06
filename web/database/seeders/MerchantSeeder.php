@@ -46,6 +46,7 @@ class MerchantSeeder extends Seeder
             'inside_city'    => "1",
             'sub_city'       => "2",
             'outside_city'   => "3",
+            'cedeao'         => "3",
         );
         $merchant->nid_id              = 4;
         $merchant->trade_license       = 5;

@@ -170,8 +170,8 @@ class ParcelZoneRouteTest extends TestCase
 
         // Un forfait ne regarde pas le poids : 10 kg au prix du pays.
         $this->assertSame(12000.0, $charges['delivery_charge']);
-        // Et le taux COD de cette zone n'est pas fixé : zéro, jamais emprunté.
-        $this->assertSame(0.0, $charges['cod_charge']);
+        // Et le taux COD de cette zone est le sien, pas celui de « hors ville ».
+        $this->assertSame((float) $this->merchant->cod_charges['cedeao'], $charges['cod_charge']);
     }
 
     // ---- Une route non tarifée est refusée --------------------------------

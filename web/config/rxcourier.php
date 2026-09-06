@@ -10,6 +10,10 @@ return [
         'inside_city'    => 1,
         'sub_city'       => 2,
         'outside_city'   => 3,
+        // D4 — zone d'export. 3 %, tranché le 2026-09-06. L'écran de création
+        // d'un marchand lit ces clés : ajouter la ligne ici suffit à l'y faire
+        // apparaître.
+        'cedeao'         => 3,
     ],
 
 
