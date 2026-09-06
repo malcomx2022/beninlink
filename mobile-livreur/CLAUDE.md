@@ -81,7 +81,12 @@ Icônes Ionicons ; visuels d'app générés depuis `assets/source/generate.py`.
 
 ## Commandes
 - `npm install` · `npx expo start` · `npm run typecheck` · `npx expo lint`
-- Build : `eas build -p android` (APK/AAB) · `eas build -p ios`
+- **`npx expo-doctor` avant tout build** : il attrape les erreurs de configuration qui,
+  sinon, font échouer EAS après dix minutes de file d'attente. 21/21 au 2026-09-06.
+- Build : `eas build -p android` (APK/AAB) · `eas build -p ios`.
+  Les prérequis (compte Expo, `eas init`, `eas credentials`) sont décrits dans
+  `mobile/CLAUDE.md` — ils valent à l'identique ici, avec un **keystore distinct** :
+  deux applications publiées, deux signatures.
 - `.env` : copier `.env.example` (`EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_API_KEY`).
 - Dépendances propres à cette app (en plus de `mobile/`) : `expo-location`,
   `expo-image-picker`, `@expo/vector-icons` — textes d'autorisation dans `app.json`.
