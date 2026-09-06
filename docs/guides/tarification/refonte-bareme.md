@@ -110,7 +110,8 @@ affiche une grille vide.
 | 2 | `delivery_charges` et `merchant_delivery_charges` gagnent `zone_id` ; chaque ligne actuelle devient **une ligne par zone**, aux montants d'aujourd'hui | oui, les colonnes restent |
 | 3 | `DeliveryChargeResolver` lit `zone_id` au lieu de la colonne ; l'étalon `DeliveryPricingBaselineTest` doit rester vert **sans être modifié** | oui |
 | 4 | Écrans de saisie : une ligne par zone, ajout/retrait dynamique — **livré** (`admin/delivery-zone`) | oui, aucune écriture tant que rien n'est saisi |
-| 5 | API : la ressource expose `zones[]` ; `openapi:generate` — **livré** ; reste `mobile/` | non (contrat), mais **additif** : les quatre colonnes restent servies |
+| 5 | API : la ressource expose `zones[]` ; `openapi:generate` ; `mobile/` — **livré** (`mobile-livreur/` n'est pas concerné) | non (contrat), mais **additif** : les quatre colonnes restent servies |
+| 5 bis | **Le colis porte une zone et un délai**, et `resolveByZone()` entre dans le calcul — sans quoi la grille s'affiche mais ne facture pas | non (migration `parcels`) |
 | 6 | Suppression des quatre colonnes, une fois les apps déployées | non |
 
 Les étapes 1 à 3 ne changent **aucun montant** : c'est ce que l'étalon vérifie.

@@ -258,6 +258,13 @@ export const fr = {
     weight: 'Poids',
     codTitle: "Frais d'encaissement (COD)",
     codNotice: 'Pourcentage prélevé sur le montant encaissé auprès du destinataire.',
+    delaysTitle: 'Suppléments de délai',
+    delaysNotice:
+      "Le supplément s'ajoute au tarif de la zone. Il dépend du délai choisi, jamais de la destination.",
+    noSurcharge: 'Sans supplément',
+    flatRate: 'Forfait par pays',
+    noCountry: "Aucun pays n'est encore tarifé pour cette zone.",
+    noRate: "Aucun tarif n'est encore saisi pour cette zone.",
     notice:
       'Le tarif retenu dépend de la catégorie, du poids saisi et de la zone de destination. Le montant exact est calculé par BeninLink à la création du colis.',
   },

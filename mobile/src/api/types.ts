@@ -243,6 +243,75 @@ export type CodCharge = {
   /** Libellé déjà traduit par le backend (`__('merchant.inside_city')`…). */
   name: string;
   charge: string;
+  /**
+   * Code de la zone à laquelle ce taux se rattache (**D4**).
+   *
+   * Optionnel : un serveur antérieur à la refonte ne l'envoie pas. `null` quand
+   * la clé n'appartient à aucune zone — la zone d'export, dont le taux n'est
+   * pas encore fixé.
+   */
+  zone_code?: string | null;
+};
+
+/**
+ * Le barème par **zones** (**D4**), servi à côté des quatre colonnes.
+ *
+ * Le serveur sert les deux formes pendant la transition. `zones` arrive **vide**
+ * tant que le transporteur n'a pas configuré les siennes : l'app reste alors sur
+ * `DeliveryRate`, exactement comme avant. C'est ce qui permet à cette version de
+ * tourner sur un serveur qui n'a pas encore basculé, et à l'ancienne de tourner
+ * sur un serveur qui a basculé.
+ *
+ * ⚠️ Montants en **chaînes**, FCFA entiers : passer par `toAmount()`.
+ */
+export type ZoneRate = {
+  category_id: string;
+  /** Tranche comparée à l'identique par le serveur, pas un plafond. */
+  weight: string;
+  amount: string;
+};
+
+/** Un pays d'une zone d'export et son **forfait**, indépendant du poids. */
+export type ZoneCountry = {
+  /** ISO 3166-1 alpha-2. */
+  code: string;
+  name: string;
+  flat_amount: string;
+};
+
+export type DeliveryZone = {
+  id: number;
+  /** Stable : le taux COD et la conversion s'y rattachent. */
+  code: string;
+  name: string;
+  position: number;
+  /** Zone facturée au pays, au forfait, sans regarder le poids. */
+  export: boolean;
+  /** Entrée de `CodCharge` applicable ; `null` sur la zone d'export. */
+  cod_key: string | null;
+  rates: ZoneRate[];
+  countries: ZoneCountry[];
+};
+
+/**
+ * Un délai et son supplément — **global**, jamais par zone.
+ *
+ * Il s'ajoute au montant de la zone. L'afficher dans chaque colonne redonnerait
+ * le mélange délai × périmètre que la refonte défait.
+ */
+export type DeliveryDelay = {
+  id: number;
+  code: string;
+  name: string;
+  surcharge: string;
+  position: number;
+};
+
+/** Ce que rend `GET /settings/delivery-charges` : les deux formes à la fois. */
+export type DeliveryGrid = {
+  rates: DeliveryRate[];
+  zones: DeliveryZone[];
+  delays: DeliveryDelay[];
 };
 
 /**

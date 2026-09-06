@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '../../src/api/client';
-import { fetchCodCharges, fetchDeliveryRates } from '../../src/api/merchant';
-import type { CodCharge, DeliveryRate } from '../../src/api/types';
+import { fetchCodCharges, fetchDeliveryGrid } from '../../src/api/merchant';
+import type { CodCharge, DeliveryDelay, DeliveryRate, DeliveryZone } from '../../src/api/types';
 import { Card, ErrorText, Muted, Title } from '../../src/components/ui';
 import { colors } from '../../src/theme/colors';
 import { fonts, fontSizes, spacing } from '../../src/theme/typography';
@@ -19,17 +19,25 @@ import { t } from '../../src/i18n';
  * fait qu'afficher la grille pour que le marchand sache à quoi s'attendre ; il
  * ne recalcule rien et ne sert jamais de base à un montant envoyé au serveur.
  *
+ * **Deux affichages, un seul écran (D4).** Le serveur sert les deux formes
+ * pendant la transition : les quatre colonnes héritées, et le barème par zones.
+ * L'écran choisit la seconde **dès qu'elle n'est pas vide**, et retombe sur la
+ * première sinon. Un serveur qui n'a pas encore basculé, ou un transporteur qui
+ * n'a pas configuré ses zones, donnent donc exactement l'affichage d'avant.
+ *
  * ⚠️ Le poids est une **valeur de tranche comparée à l'identique** par le
  * calculateur, pas un plafond : on écrit « 1 kg », jamais « jusqu'à 1 kg ».
  */
 
 /**
- * Les 4 zones du barème, dans l'ordre de la maquette. Les libellés viennent de
- * `domain/deliveryType` — le backend n'en fournit pas pour ces colonnes.
- * `outside_city` s'écrit `outside_City` dans l'énumération du socle (faute de
- * frappe d'origine, conservée côté contrat).
+ * Les 4 colonnes du barème hérité, dans l'ordre de la maquette. Les libellés
+ * viennent de `domain/deliveryType` — le backend n'en fournit pas pour ces
+ * colonnes. `outside_city` s'écrit `outside_City` dans l'énumération du socle
+ * (faute de frappe d'origine, conservée côté contrat).
+ *
+ * Le barème par zones, lui, **nomme ses zones** : plus rien n'est en dur.
  */
-const ZONES = [
+const COLONNES = [
   { key: 'same_day', label: deliveryTypeLabel('same_day') },
   { key: 'next_day', label: deliveryTypeLabel('next_day') },
   { key: 'sub_city', label: deliveryTypeLabel('sub_city') },
@@ -38,6 +46,8 @@ const ZONES = [
 
 export default function RatesScreen() {
   const [rates, setRates] = useState<DeliveryRate[]>([]);
+  const [zones, setZones] = useState<DeliveryZone[]>([]);
+  const [delays, setDelays] = useState<DeliveryDelay[]>([]);
   const [codCharges, setCodCharges] = useState<CodCharge[]>([]);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -46,8 +56,10 @@ export default function RatesScreen() {
     setError('');
     try {
       // Deux endpoints indépendants : en parallèle.
-      const [r, c] = await Promise.all([fetchDeliveryRates(), fetchCodCharges()]);
-      setRates(r);
+      const [grid, c] = await Promise.all([fetchDeliveryGrid(), fetchCodCharges()]);
+      setRates(grid.rates);
+      setZones(grid.zones);
+      setDelays(grid.delays);
       setCodCharges(c);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
@@ -64,6 +76,15 @@ export default function RatesScreen() {
     setRefreshing(false);
   }, [load]);
 
+  /** Le nom de zone d'un taux COD, quand le serveur l'a rattaché (`zone_code`). */
+  const zoneParCode = useMemo(
+    () => new Map(zones.map((zone) => [zone.code, zone.name])),
+    [zones],
+  );
+
+  const parZones = zones.length > 0;
+  const vide = parZones ? false : rates.length === 0;
+
   return (
     <ScrollView
       contentContainerStyle={styles.page}
@@ -72,40 +93,107 @@ export default function RatesScreen() {
       <Muted>{t('rates.subtitle')}</Muted>
       <ErrorText>{error}</ErrorText>
 
-      {rates.length === 0 && !error && <Muted>{t('rates.empty')}</Muted>}
+      {vide && !error && <Muted>{t('rates.empty')}</Muted>}
 
-      {rates.map((rate) => (
-        <Card key={rate.id}>
-          <View style={styles.head}>
-            <Title>{rate.category ?? '—'}</Title>
-            {String(rate.status) === '1' && (
-              <Text style={styles.badge}>{rate.statusName ?? ''}</Text>
-            )}
-          </View>
-          <Muted>
-            {t('rates.weight')} : {rate.weight ?? '—'} kg
-          </Muted>
-          <View style={styles.grid}>
-            {ZONES.map((zone) => (
-              <View key={zone.key} style={styles.zone}>
-                <Text style={styles.zoneLabel}>{zone.label}</Text>
-                <Text style={styles.zoneValue}>{formatAmount(rate[zone.key], false)}</Text>
-              </View>
-            ))}
-          </View>
+      {/* Le supplément dépend du délai, jamais de la zone : il est annoncé une
+          fois, en tête, et ne se répète pas dans chaque case. */}
+      {parZones && delays.length > 0 && (
+        <Card>
+          <Title>{t('rates.delaysTitle')}</Title>
+          {delays.map((delay) => (
+            <View key={delay.id} style={styles.row}>
+              <Text style={styles.rowLabel}>{delay.name}</Text>
+              <Text style={styles.rowValue}>
+                {Number(delay.surcharge) > 0
+                  ? `+ ${formatAmount(delay.surcharge, false)}`
+                  : t('rates.noSurcharge')}
+              </Text>
+            </View>
+          ))}
+          <Muted>{t('rates.delaysNotice')}</Muted>
         </Card>
-      ))}
+      )}
+
+      {parZones &&
+        zones.map((zone) => (
+          <Card key={zone.id}>
+            <View style={styles.head}>
+              <Title>{zone.name}</Title>
+              {zone.export && <Text style={styles.badge}>{t('rates.flatRate')}</Text>}
+            </View>
+
+            {/* Une zone d'export se facture au pays, forfait, sans regarder le
+                poids. Tant qu'un pays n'est pas tarifé, aucun prix ne lui est
+                appliqué — l'écran le dit plutôt que d'afficher un zéro. */}
+            {zone.export ? (
+              zone.countries.length > 0 ? (
+                zone.countries.map((pays) => (
+                  <View key={pays.code} style={styles.row}>
+                    <Text style={styles.rowLabel}>
+                      {pays.name} <Text style={styles.code}>({pays.code})</Text>
+                    </Text>
+                    <Text style={styles.rowValue}>{formatAmount(pays.flat_amount, false)}</Text>
+                  </View>
+                ))
+              ) : (
+                <Muted>{t('rates.noCountry')}</Muted>
+              )
+            ) : zone.rates.length > 0 ? (
+              <View style={styles.grid}>
+                {zone.rates.map((tarif) => (
+                  <View key={`${tarif.category_id}-${tarif.weight}`} style={styles.zone}>
+                    <Text style={styles.zoneLabel}>{tarif.weight} kg</Text>
+                    <Text style={styles.zoneValue}>{formatAmount(tarif.amount, false)}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <Muted>{t('rates.noRate')}</Muted>
+            )}
+          </Card>
+        ))}
+
+      {/* Affichage hérité : conservé tant que le transporteur n'a pas de zones. */}
+      {!parZones &&
+        rates.map((rate) => (
+          <Card key={rate.id}>
+            <View style={styles.head}>
+              <Title>{rate.category ?? '—'}</Title>
+              {String(rate.status) === '1' && (
+                <Text style={styles.badge}>{rate.statusName ?? ''}</Text>
+              )}
+            </View>
+            <Muted>
+              {t('rates.weight')} : {rate.weight ?? '—'} kg
+            </Muted>
+            <View style={styles.grid}>
+              {COLONNES.map((colonne) => (
+                <View key={colonne.key} style={styles.zone}>
+                  <Text style={styles.zoneLabel}>{colonne.label}</Text>
+                  <Text style={styles.zoneValue}>{formatAmount(rate[colonne.key], false)}</Text>
+                </View>
+              ))}
+            </View>
+          </Card>
+        ))}
 
       {codCharges.length > 0 && (
         <Card>
           <Title>{t('rates.codTitle')}</Title>
-          {codCharges.map((cod) => (
-            <View key={cod.name} style={styles.row}>
-              <Text style={styles.rowLabel}>{cod.name}</Text>
-              {/* Un taux, pas un montant : jamais de symbole monétaire ici. */}
-              <Text style={styles.rowValue}>{formatRate(cod.charge)}</Text>
-            </View>
-          ))}
+          {codCharges.map((cod) => {
+            // Le serveur rattache chaque taux à sa zone (`zone_code`) : on
+            // affiche le nom de la zone plutôt que le libellé de la colonne
+            // d'origine, quand les deux existent.
+            const zone = cod.zone_code ? zoneParCode.get(cod.zone_code) : undefined;
+
+            return (
+              <View key={cod.name} style={styles.row}>
+                <Text style={styles.rowLabel}>{zone ?? cod.name}</Text>
+                {/* Un taux, pas un montant : jamais de symbole monétaire ici. */}
+                <Text style={styles.rowValue}>{formatRate(cod.charge)}</Text>
+              </View>
+            );
+          })}
           <Muted>{t('rates.codNotice')}</Muted>
         </Card>
       )}
@@ -119,6 +207,7 @@ const styles = StyleSheet.create({
   page: { padding: spacing.md, gap: spacing.md },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   badge: { fontFamily: fonts.body, fontSize: fontSizes.xs, color: colors.accentDark },
+  code: { fontFamily: fonts.body, fontSize: fontSizes.xs, color: colors.textMuted },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   zone: { flexGrow: 1, flexBasis: '45%', gap: spacing.xs },
   zoneLabel: { fontFamily: fonts.body, fontSize: fontSizes.xs, color: colors.textMuted },
