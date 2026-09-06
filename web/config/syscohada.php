@@ -33,6 +33,24 @@ return [
         'bank' => 'BQ',
     ],
 
+    /*
+    | Sous-comptes auxiliaires par marchand (question 1 de D2).
+    |
+    | Un transporteur qui suit ses marchands compte par compte veut un
+    | auxiliaire : `4111` devient `4111` + code marchand (« 4111PIL001 »).
+    | C'est l'usage courant dans Sage et Saari, et cela rend le lettrage
+    | possible sans dépouiller les libellés.
+    |
+    |   'auxiliary' => null            → un seul compte collectif (défaut du socle)
+    |   'auxiliary' => 'merchant_code' → 4111 + `merchants.merchant_unique_id`
+    |
+    | Les caractères non alphanumériques du code sont retirés (les logiciels
+    | comptables n'acceptent pas les tirets dans un numéro de compte), et la
+    | longueur totale est bornée par `auxiliary_length`.
+    */
+    'auxiliary' => env('SYSCOHADA_AUXILIARY'),
+    'auxiliary_length' => 13,
+
     'accounts' => [
         'customers' => ['code' => '4111', 'label' => 'Clients'],
         'delivery_services' => ['code' => '7061', 'label' => 'Prestations de services de livraison'],

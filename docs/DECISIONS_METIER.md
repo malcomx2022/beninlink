@@ -2,12 +2,12 @@
 
 > Registre des décisions qui ne relèvent pas du code seul. Chaque entrée dit ce
 > qui a été **tranché** (et livré), ce qui reste **à trancher** par le métier, et
-> par qui. Mis à jour le 2026-09-05.
+> par qui. Mis à jour le 2026-09-06.
 
 | # | Sujet | État | Livré dans le code | Reste à trancher |
 |---|---|---|---|---|
 | D1 | TVA au niveau entreprise | ✅ tranché | taux société `configs.vat_rate` (18 %), surcharge par marchand | valeur par société hors Bénin, exonérations |
-| D2 | Plan de comptes SYSCOHADA | ⏳ à valider | proposition dans `config/syscohada.php`, export journal | validation par l'expert-comptable (questions ci-dessous) |
+| D2 | Plan de comptes SYSCOHADA | ⏳ à valider | config, export journal, **extrait de période**, auxiliaires par marchand, **fiche de validation** | signature de l'expert-comptable sur `docs/guides/comptabilite/plan-de-comptes.md` |
 | D3 | Dépenses d'acquisition (CAC) | ✅ tranché | chapitre « Marketing et acquisition clients » | discipline de saisie mensuelle |
 | D4 | Refonte du barème (zones, tranches) | ⏳ à décider | tranches « jusqu'à N kg » sans schéma (S9) | zones béninoises, grille tarifaire, migration |
 | D5 | Fiches de fraude sans `company_id` | ✅ tranché | migration de rattachement par l'auteur | — |
@@ -48,6 +48,24 @@ services de livraison, 4431 TVA facturée, 4712 Créditeurs divers (COD encaiss�
 compte de marchands), 521 Banques ; journaux VE, OD, BQ. L'export journal
 (`SyscohadaJournal`) est équilibré par construction et testé.
 
+**Ce qui a été fait le 2026-09-06, sans attendre l'arbitrage** — parce qu'on ne
+valide pas un plan de comptes sur du papier :
+
+- **Fiche de validation** : `docs/guides/comptabilite/plan-de-comptes.md` — les
+  trois écritures avec un exemple chiffré réel, les cinq questions ci-dessous
+  avec une proposition **et sa raison**, une case par réponse, et une signature.
+- **Extrait de période** : `php artisan beninlink:journal-syscohada [--du=]
+  [--au=] [--societe=] [--payes] [--fichier=]`. L'export n'existait que relevé
+  par relevé, depuis le back-office ; l'expert-comptable a besoin d'un mois.
+- **Équilibre vérifié avant écriture** (`SyscohadaJournal::balance()`) : un lot
+  déséquilibré n'est pas produit, plutôt que refusé à l'import sans explication.
+- **Question 1 déjà implémentée** : `SYSCOHADA_AUXILIARY=merchant_code` suffixe
+  les comptes de **tiers** (4111, 4712) du code marchand, et eux seuls — un
+  produit ou la TVA n'ont pas de tiers. Défaut inchangé : compte collectif.
+- **Ce que l'export ne couvre pas** est désormais écrit noir sur blanc dans la
+  fiche : recharges de portefeuille, reversements aux livreurs, abonnements
+  SaaS. C'est une question de plus pour l'expert-comptable, pas un oubli.
+
 **Ce que l'expert-comptable doit trancher** (modifier la config, jamais le code) :
 
 1. **Sous-comptes** : 4111 (clients) et 7061 (prestations) conviennent-ils, ou
@@ -62,6 +80,7 @@ compte de marchands), 521 Banques ; journaux VE, OD, BQ. L'export journal
    c'est la date de valeur attendue.
 
 Tant que ce n'est pas validé, l'export sert à la revue, pas à l'import comptable.
+Ce qui manque n'est plus du logiciel : c'est une signature au bas de la fiche.
 
 ## D3 — Dépenses d'acquisition pour le CAC ✅
 
