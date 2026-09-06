@@ -17,7 +17,14 @@ use App\Models\Backend\ParcelEvent;
 use App\Models\Backend\Upload;
 use App\Models\MerchantShops;
 use App\Models\User;
+use App\Enums\Wallet\WalletPaymentMethod;
+use App\Enums\Wallet\WalletStatus;
+use App\Enums\Wallet\WalletType;
+use App\Models\Backend\MerchantStatement;
+use App\Models\Backend\Wallet;
+use App\Repositories\Wallet\WalletInterface;
 use App\Services\Parcel\ChargeCalculator;
+use App\Services\Parcel\WalletDebit;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -40,6 +47,18 @@ class PiloteDataset
 {
     public const PASSWORD = 'pilote2026';
     public const TRACKING_PREFIX = 'PIL';
+
+    /**
+     * PME réglant par **portefeuille prépayé** (PIL-002), et sa recharge d'ouverture.
+     *
+     * Sans elle, la recette ne pouvait pas exercer tout un pan du produit : le débit
+     * à la création, le refus pour solde insuffisant, la recharge Mobile Money — ni
+     * la commande `beninlink:colis-non-debites`, qui s'arrêtait sur « aucun marchand
+     * ne règle par portefeuille ». Les quatre autres PME restent en règlement à la
+     * livraison : les deux modes doivent être testés.
+     */
+    public const WALLET_MERCHANT = 2;
+    public const WALLET_TOPUP = 150000;
 
     private const HUBS = [
         ['Cotonou — Ganhi', '0022921301001', 'Rue 209, Ganhi, Cotonou'],
@@ -117,6 +136,12 @@ class PiloteDataset
                 $merchants[] = $this->merchant($companyId, $i + 1, $business, $owner, $phone, $ifu, $rccm, $cnss, $address, $hubs[$hubIndex], $upload);
             }
 
+            foreach ($merchants as $merchant) {
+                if ((int) $merchant->wallet_use_activation === Status::ACTIVE) {
+                    $this->recharge($merchant);
+                }
+            }
+
             $deliverymen = [];
             foreach (self::DELIVERYMEN as $i => [$name, $phone, $hubIndex]) {
                 $deliverymen[] = $this->deliveryman($companyId, $i + 1, $name, $phone, $hubs[$hubIndex], $upload);
@@ -160,6 +185,12 @@ class PiloteDataset
             ParcelEvent::whereIn('parcel_id', $parcelIds)->delete();
             Parcel::whereIn('id', $parcelIds)->delete();
             MerchantShops::whereIn('merchant_id', $merchantIds)->delete();
+            // Les mouvements de portefeuille (recharge d'ouverture et débits des
+            // colis) référencent le marchand : sans cette ligne, `--reset` échoue
+            // sur une contrainte de clé étrangère depuis que PIL-002 règle par
+            // portefeuille.
+            Wallet::whereIn('merchant_id', $merchantIds)->delete();
+            MerchantStatement::whereIn('merchant_id', $merchantIds)->delete();
             Merchant::whereIn('id', $merchantIds)->delete();
             $userIds = User::where('company_id', $companyId)->where(function ($q) {
                 $q->where('unique_id', 'like', 'PIL-%')->orWhere('unique_id', 'like', 'LIV-%');
@@ -266,6 +297,8 @@ class PiloteDataset
         $merchant->cnss = $cnss ?: null;
         $merchant->current_balance = 0;
         $merchant->opening_balance = 0;
+        $merchant->wallet_balance = 0;
+        $merchant->wallet_use_activation = $n === self::WALLET_MERCHANT ? Status::ACTIVE : Status::INACTIVE;
         // Taux de TVA propre à 0 : c'est le taux de la société qui s'applique (D1).
         $merchant->vat = 0;
         $merchant->cod_charges = ['inside_city' => '1', 'sub_city' => '2', 'outside_city' => '3'];
@@ -284,6 +317,29 @@ class PiloteDataset
         $shop->save();
 
         return $merchant;
+    }
+
+    /**
+     * Recharge d'ouverture du portefeuille, par le **chemin réel** : un mouvement en
+     * attente, puis son approbation. C'est ce que fait le webhook FedaPay ; le solde
+     * ne bouge nulle part ailleurs (`WalletRepository::approved()` est le seul point
+     * de crédit du socle).
+     */
+    private function recharge(Merchant $merchant): void
+    {
+        $wallet = new Wallet();
+        $wallet->company_id = $merchant->company_id;
+        $wallet->merchant_id = $merchant->id;
+        $wallet->user_id = $merchant->user_id;
+        $wallet->amount = self::WALLET_TOPUP;
+        $wallet->type = WalletType::INCOME;
+        $wallet->status = WalletStatus::PENDING;
+        $wallet->payment_method = WalletPaymentMethod::OFFLINE;
+        $wallet->source = 'Recharge de recette';
+        $wallet->transaction_id = 'PIL-RECHARGE-' . $merchant->merchant_unique_id;
+        $wallet->save();
+
+        app(WalletInterface::class)->approved($wallet->id);
     }
 
     private function deliveryman(int $companyId, int $n, string $name, string $phone, Hub $hub, ?Upload $upload): DeliveryMan
@@ -363,6 +419,13 @@ class PiloteDataset
         $parcel->status = $status;
         $parcel->note = $seq % 3 === 0 ? 'Appeler avant de livrer.' : null;
         $parcel->save();
+
+        // Un marchand au portefeuille est débité à la création (D7) : le jeu de
+        // données doit sortir cohérent, sinon `beninlink:colis-non-debites` signale
+        // à juste titre des colis jamais facturés.
+        if ((int) $merchant->wallet_use_activation === Status::ACTIVE) {
+            app(WalletDebit::class)->apply($parcel);
+        }
 
         $this->events($parcel, $status, $deliveryman, $merchant->user);
 

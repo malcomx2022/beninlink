@@ -18,7 +18,7 @@ Nginx que la production (`docs/guides/infra/nginx/beninlink.conf` couvre déjà
 | `API_KEY` | valeur **propre à la recette** (`php -r 'echo "blk_".bin2hex(random_bytes(16));'`) | embarquée dans les APK de recette, distincte de la production |
 | `FEDAPAY_ENVIRONMENT` | `sandbox` | aucun argent réel ; clés sandbox du tableau de bord FedaPay |
 | `FEDAPAY_PUBLIC_KEY` / `FEDAPAY_SECRET_KEY` / `FEDAPAY_WEBHOOK_SECRET` | clés **sandbox** | le webhook doit pointer sur `https://recette.beninlink.app/fedapay/webhook` |
-| `QUEUE_CONNECTION` | `redis` (ou `sync` faute de Redis) | le socle envoie SMS et e-mails dans la requête ; en recette, `sync` suffit |
+| `QUEUE_CONNECTION` | `database` (ou `sync` sans worker) | depuis **D13** les envois (SMS, push, e-mails) passent par la file ; en `database`, lancer le worker et surveiller avec `php artisan beninlink:file-attente` — sinon plus rien ne part, en silence |
 | `MAIL_MAILER` | `log` | aucun e-mail réel n'atteint les PME pendant la recette |
 
 Le reste du `.env` suit `docs/guides/infra/.env.example`.
@@ -78,6 +78,13 @@ statuts (en attente, ramassage, entrepôt, livreur assigné, livré, retour), av
 leurs événements de suivi. Les montants sont calculés par `ChargeCalculator`, comme
 en production.
 
+**PIL-002 règle par portefeuille prépayé** (`wallet_use_activation`), avec une
+recharge d'ouverture de **150 000 FCFA** écrite par le vrai chemin de crédit ; ses
+colis sont débités à la création, comme en production. Les quatre autres PME
+règlent au relevé. Les deux modes se testent donc côté recette — et sans ce
+marchand, `beninlink:colis-non-debites` s'arrête sur « aucun marchand ne règle par
+portefeuille », c'est-à-dire sans rien vérifier.
+
 Comptes créés (mot de passe commun : `pilote2026`) :
 
 | App | Identifiant | Compte |
@@ -86,6 +93,47 @@ Comptes créés (mot de passe commun : `pilote2026`) :
 | Livreur | `LIV-001` … `LIV-003` | Kossi Agbodjan, Ismaël Yacoubou, Bernadette Sossou |
 
 ⚠️ Recette uniquement : la commande refuse `APP_ENV=production`.
+
+## 3 bis. Régularisations (D7 et D9)
+
+Deux commandes rattrapent ce que le code d'avant les correctifs a pu laisser en
+base. Elles **constatent** par défaut et n'écrivent que sur demande explicite.
+
+```bash
+php artisan beninlink:colis-non-debites                      # constat
+php artisan beninlink:colis-non-debites --marchand=13 --regulariser
+php artisan beninlink:ecarts-marchands                       # constat
+php artisan beninlink:ecarts-marchands --corriger
+```
+
+Sur un jeu pilote fraîchement créé, les deux doivent répondre :
+
+```
+Aucun colis non débité : cette installation est à jour.
+Aucun écart : chaque solde répond à son relevé.
+```
+
+C'est le point de départ : **un constat non vide, sur ce jeu de données, est un
+vrai problème**, pas du bruit historique.
+
+### Vérifier que les deux commandes font bien leur travail
+
+Rejoué le 2026-09-06 sur le jeu pilote, en injectant les deux dégâts d'origine :
+
+| Dégât injecté | Ce que le constat affiche | Après correction |
+|---|---|---|
+| Un colis créé sans débit du portefeuille (chemin W5 de l'API mobile) | `1 colis jamais facturés, pour 2 035 FCFA` — Bio Fresh Bénin | `1 débit(s) écrit(s)` ; portefeuille 130 565 → 128 530 F |
+| Une annulation de livraison partielle qui crédite la TVA **recalculée** (216) au lieu de celle prélevée (201,60) | `Écart 14,40 · Partielles annulées : 1 colis / 14,40 · Expliqué : oui` | `1 solde(s) réaligné(s)` ; solde 14,40 → 0 |
+
+Puis les deux commandes reviennent à « rien à régulariser ». La colonne
+**Expliqué** est ce qui autorise `--corriger` : un écart qui ne correspond pas,
+au centime près, aux annulations de partielles est **montré et laissé tel quel** —
+il vient d'ailleurs (retrait par passerelle en ligne, fiche marchand
+ré-enregistrée avec un solde d'ouverture), et c'est à un humain de trancher.
+
+⚠️ En production, `--regulariser` et `--corriger` demandent `--force`. Régulariser
+**marchand par marchand** (`--marchand=<id>`) plutôt que d'un bloc : le constat se
+relit, une écriture ne se relit pas.
 
 ## 4. Scénarios de recette
 
@@ -127,6 +175,8 @@ Cocher chaque scénario sur un appareil réel, en réseau mobile (pas seulement 
 - [ ] Un jeton marchand sur `/api/v10/deliveryman/dashboard` → 403 ; un jeton livreur sur `/api/v10/parcel/index` → 403.
 - [ ] `parcel/details/{id}` d'un colis d'une autre PME → 404.
 - [ ] `php artisan test` vert sur la version déployée (`web/`).
+- [ ] `php artisan beninlink:colis-non-debites` et `beninlink:ecarts-marchands` : deux constats vides (voir §3 bis).
+- [ ] `php artisan beninlink:file-attente` : file traitée, worker vivant (D13).
 
 ## 5. Critères de sortie de recette
 

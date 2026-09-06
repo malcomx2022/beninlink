@@ -32,7 +32,7 @@ class MerchantSettingSeeder extends Seeder
         MerchantSetting::create(['merchant_id'=>1,'key' => 'sslcommerz_store_id',        'value' => 'wemax635e0bd65804e']);
         MerchantSetting::create(['merchant_id'=>1,'key' => 'sslcommerz_store_password',  'value' => 'wemax635e0bd65804e@ssl']);
         MerchantSetting::create(['merchant_id'=>1,'key' => 'sslcommerz_testmode',        'value' => 1]);
-        MerchantSetting::create(['merchant_id'=>1,'key' => 'sslcommerz_status',          'value' => 0] // S21 : passerelle désactivée);
+        MerchantSetting::create(['merchant_id'=>1,'key' => 'sslcommerz_status',          'value' => 0]); // S21 : passerelle désactivée
 
         //paypal
         MerchantSetting::create(['merchant_id'=>1,'key' => 'paypal_client_id',              'value' => 'ASNysE4ENGfyplv-cNRife5zi8137rEh21yoK4cBZvuy1JWEm-v_DdmfBKVedtmadG1VPgXxUjRg6Q_3']);
@@ -64,7 +64,7 @@ class MerchantSettingSeeder extends Seeder
         MerchantSetting::create(['merchant_id'=>1,'key' => 'aamarpay_store_id',        'value' => 'aamarypay']);
         MerchantSetting::create(['merchant_id'=>1,'key' => 'aamarpay_signature_key',   'value' => '28c78bb1f45112f5d40b956fe104645a']);
         MerchantSetting::create(['merchant_id'=>1,'key' => 'aamarpay_sendbox_mode',    'value' => 1]);
-        MerchantSetting::create(['merchant_id'=>1,'key' => 'aamarpay_status',          'value' => 0] // S21 : passerelle désactivée);
+        MerchantSetting::create(['merchant_id'=>1,'key' => 'aamarpay_status',          'value' => 0]); // S21 : passerelle désactivée
 
 
         //===== Merchant payment  setup ==================================
