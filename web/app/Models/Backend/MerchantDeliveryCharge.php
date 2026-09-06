@@ -14,7 +14,9 @@ class MerchantDeliveryCharge extends Model
     use HasFactory,LogsActivity;
 
     protected $table = 'merchant_delivery_charges';
-    protected $fillable = ['merchant_id','status','delivery_charge_id','weight','same_day','next_day','sub_city','outside_city'];
+    // `zone_id` et `amount` : le barème par zone (D4) ; les quatre colonnes
+    // restent tant que les écrans de saisie ne sont pas repris.
+    protected $fillable = ['merchant_id','status','delivery_charge_id','category_id','zone_id','amount','weight','same_day','next_day','sub_city','outside_city'];
 
 
     public function getActivitylogOptions(): LogOptions

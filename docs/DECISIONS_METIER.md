@@ -9,7 +9,7 @@
 | D1 | TVA au niveau entreprise | ✅ tranché | taux société `configs.vat_rate` (18 %), surcharge par marchand | valeur par société hors Bénin, exonérations |
 | D2 | Plan de comptes SYSCOHADA | ⏳ à valider | config, export journal, **extrait de période**, auxiliaires par marchand, **fiche de validation** | signature de l'expert-comptable sur `docs/guides/comptabilite/plan-de-comptes.md` |
 | D3 | Dépenses d'acquisition (CAC) | ✅ tranché | chapitre « Marketing et acquisition clients » | discipline de saisie mensuelle |
-| D4 | Refonte du barème (zones, tranches) | ⏳ à décider | tranches « jusqu'à N kg » (S9), **étalon des tarifs**, **étude d'impact** | zones béninoises, grille tarifaire, délai par zone, CEDEAO |
+| D4 | Refonte du barème (zones, tranches) | ⏳ en cours | zones/délais/forfaits pays **en base**, résolveur, conversion, étalon | **la grille de prix** et les taux COD par zone ; puis écrans, API, apps |
 | D5 | Fiches de fraude sans `company_id` | ✅ tranché | migration de rattachement par l'auteur | — |
 
 ---
@@ -145,6 +145,42 @@ ce que le barème contient.
   sur le délai, la CEDEAO et les taux COD.
 
 Ce qui manque pour coder n'est donc plus une analyse : ce sont **cinq réponses**.
+
+### Tranché par le métier le 2026-09-06
+
+| Question | Réponse |
+|---|---|
+| Zones | **Cotonou, Périphérie, Intérieur, CEDEAO** |
+| Délai | **global** — les mêmes délais partout, avec un **supplément par délai** indépendant de la zone |
+| CEDEAO | **forfait par pays** (Togo, Nigeria, Burkina…), pas de tarif au poids |
+| Grille de prix | ⏳ reste à fixer |
+| Taux COD par zone | ⏳ reste à fixer |
+
+### Livré le même jour (étapes 1 à 3, réversibles)
+
+- **Schéma** — `delivery_zones`, `delivery_delays` (avec leur supplément),
+  `delivery_zone_countries` (le forfait par pays), et `zone_id` + `amount` sur
+  les deux tables de barème. Migration **additive** : les quatre colonnes
+  restent, personne ne les lit autrement tant qu'une société n'a pas de zones.
+- **Résolution** — `DeliveryChargeResolver::resolveByZone()` : zone × tranche,
+  plus le supplément du délai ; forfait du pays pour la CEDEAO ; priorité au
+  barème négocié du marchand ; `null` sans zones, donc repli sur l'existant.
+- **Conversion** — `php artisan beninlink:zones-tarifaires [--societe=]
+  [--supplement=] [--appliquer]` : constate, puis écrit une ligne par zone aux
+  montants d'aujourd'hui (Cotonou ← `next_day`, Périphérie ← `sub_city`,
+  Intérieur ← `outside_city`, CEDEAO ← 0).
+
+**Ce que la conversion ne masque pas.** Le supplément « jour même » vaut
+aujourd'hui 200, 300, 300 puis 500 F selon la tranche. Le modèle retenu n'en
+admet **qu'un seul**, global : aucune valeur unique ne reproduit les quatre. La
+commande affiche l'écart tranche par tranche et propose la médiane, mais ne
+pose rien d'autorité — c'est un prix, il appartient au métier. Sans
+`--supplement=`, les délais sont créés à 0.
+
+**Reste à faire** (étapes 4 à 6, dans cet ordre) : les écrans de saisie
+(une ligne par zone, ajout dynamique), la ressource d'API `zones[]` puis
+`openapi:generate`, les deux apps, et enfin la suppression des quatre colonnes
+— longtemps après.
 
 ## D5 — Fiches de fraude sans `company_id` ✅
 
