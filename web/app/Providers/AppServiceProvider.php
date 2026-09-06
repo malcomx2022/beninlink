@@ -55,6 +55,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind('App\Repositories\Parcel\ParcelInterface', 'App\Repositories\Parcel\ParcelRepository');
         $this->app->bind('App\Repositories\DeliveryCategory\DeliveryCategoryInterface', 'App\Repositories\DeliveryCategory\DeliveryCategoryRepository');
         $this->app->bind('App\Repositories\DeliveryCharge\DeliveryChargeInterface', 'App\Repositories\DeliveryCharge\DeliveryChargeRepository');
+        $this->app->bind('App\Repositories\DeliveryZone\DeliveryZoneInterface', 'App\Repositories\DeliveryZone\DeliveryZoneRepository');
         $this->app->bind('App\Repositories\Packaging\PackagingInterface', 'App\Repositories\Packaging\PackagingRepository');
         $this->app->bind('App\Repositories\MerchantPayment\PaymentInterface', 'App\Repositories\MerchantPayment\PaymentRepository');
         $this->app->bind('App\Repositories\Account\AccountInterface', 'App\Repositories\Account\AccountRepository');

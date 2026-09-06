@@ -105,8 +105,10 @@
                                     <td>{{$delivery_charge->weight ?? 0}}</td>
                                     <td>{{$delivery_charge->position}}</td>
                                     <td>{!! $delivery_charge->my_status !!}</td>
-                                    <td>{{ formatAmount($delivery_charge->next_day) }}</td>
+                                    {{-- Les deux colonnes étaient interverties : l'en-tête
+                                         « jour même » affichait le tarif du lendemain. --}}
                                     <td>{{ formatAmount($delivery_charge->same_day) }}</td>
+                                    <td>{{ formatAmount($delivery_charge->next_day) }}</td>
                                     <td>{{ formatAmount($delivery_charge->sub_city) }}</td>
                                     <td>{{ formatAmount($delivery_charge->outside_city) }}</td>
                                     @if(hasPermission('delivery_charge_update') == true || hasPermission('delivery_charge_delete') == true)

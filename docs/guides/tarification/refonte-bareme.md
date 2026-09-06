@@ -109,7 +109,7 @@ affiche une grille vide.
 | 1 | Table `delivery_zones` (société, code, libellé, position), seedée avec les zones arrêtées en 1.1 | oui, table additive |
 | 2 | `delivery_charges` et `merchant_delivery_charges` gagnent `zone_id` ; chaque ligne actuelle devient **une ligne par zone**, aux montants d'aujourd'hui | oui, les colonnes restent |
 | 3 | `DeliveryChargeResolver` lit `zone_id` au lieu de la colonne ; l'étalon `DeliveryPricingBaselineTest` doit rester vert **sans être modifié** | oui |
-| 4 | Écrans de saisie : une ligne par zone, ajout/retrait dynamique | — |
+| 4 | Écrans de saisie : une ligne par zone, ajout/retrait dynamique — **livré** (`admin/delivery-zone`) | oui, aucune écriture tant que rien n'est saisi |
 | 5 | API : la ressource expose `zones[]` ; `openapi:generate` ; puis `mobile/` | non (contrat) |
 | 6 | Suppression des quatre colonnes, une fois les apps déployées | non |
 
@@ -124,6 +124,15 @@ Les colonnes ne disparaissent qu'à l'étape 6, longtemps après.
   changer pendant.
 - La lecture est déjà unique (S8/S9), et le poids déjà traité en tranches
   « jusqu'à N kg ».
+- **Étapes 1 à 3** : le schéma (`delivery_zones`, `delivery_delays`,
+  `delivery_zone_countries`), `DeliveryChargeResolver::resolveByZone()` et la
+  conversion `beninlink:zones-tarifaires`. Aucun montant déplacé, sauf le
+  supplément « jour même » ramené à 300 F par décision du métier.
+- **Étape 4** : les deux écrans de saisie, sous *Réglages → Zones et barème*.
+  `admin/delivery-zone/index` porte les zones, les délais et les **forfaits
+  CEDEAO par pays** ; `admin/delivery-zone/grid` porte la grille d'une
+  catégorie, une ligne par tranche et une colonne par zone. Les quatre colonnes
+  héritées ne sont pas touchées : elles ne disparaissent qu'à l'étape 6.
 
 ## 5. Ce qu'il manque pour coder
 

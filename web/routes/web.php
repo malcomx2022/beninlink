@@ -41,6 +41,7 @@ use App\Http\Controllers\Backend\ParcelQuoteController;
 use App\Http\Controllers\Backend\CustomsController;
 use App\Http\Controllers\Backend\DeliverycategoryController;
 use App\Http\Controllers\Backend\DeliveryChargeController;
+use App\Http\Controllers\Backend\DeliveryZoneController;
 use App\Http\Controllers\Backend\MerchantShopsController;
 use App\Http\Controllers\Backend\PackagingController;
 use App\Http\Controllers\Backend\RoleController;
@@ -497,6 +498,15 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('delivery-charge/view/{id}',     [DeliveryChargeController::class, 'view'])->name('delivery-charge.view');
                         Route::put('delivery-charge/update',        [DeliveryChargeController::class, 'update'])->name('delivery-charge.update')->middleware('hasPermission:delivery_charge_update');
                         Route::delete('delivery-charge/delete/{id}', [DeliveryChargeController::class, 'destroy'])->name('delivery-charge.delete')->middleware('hasPermission:delivery_charge_delete');
+                        // Zones tarifaires (D4, étape 4) — référentiel et grille.
+                        // Permissions empruntées à `delivery_charge_*` : voir
+                        // le commentaire de tête de DeliveryZoneController.
+                        Route::get('delivery-zone/index',           [DeliveryZoneController::class, 'index'])->name('delivery-zone.index')->middleware('hasPermission:delivery_charge_read');
+                        Route::put('delivery-zone/zones',           [DeliveryZoneController::class, 'zones'])->name('delivery-zone.zones')->middleware('hasPermission:delivery_charge_update');
+                        Route::put('delivery-zone/delays',          [DeliveryZoneController::class, 'delais'])->name('delivery-zone.delays')->middleware('hasPermission:delivery_charge_update');
+                        Route::put('delivery-zone/countries/{id}',  [DeliveryZoneController::class, 'pays'])->name('delivery-zone.countries')->middleware('hasPermission:delivery_charge_update');
+                        Route::get('delivery-zone/grid',            [DeliveryZoneController::class, 'grid'])->name('delivery-zone.grid')->middleware('hasPermission:delivery_charge_read');
+                        Route::put('delivery-zone/grid',            [DeliveryZoneController::class, 'gridUpdate'])->name('delivery-zone.grid.update')->middleware('hasPermission:delivery_charge_update');
                         //delivery type
                         Route::get('delivery-type/index', [DeliveryTypeController::class, 'index'])->name('delivery-type.index')->middleware('hasPermission:delivery_type_read');
                         Route::post('delivery-type/status', [DeliveryTypeController::class, 'status'])->name('delivery-type.status')->middleware('hasPermission:delivery_type_status_change');

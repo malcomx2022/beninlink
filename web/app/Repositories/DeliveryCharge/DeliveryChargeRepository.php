@@ -48,8 +48,13 @@ class DeliveryChargeRepository implements DeliveryChargeInterface{
         })->get();
     }
 
+    /**
+     * S8 — le repli n'était pas scopé par société : l'écran d'édition ouvrait
+     * la ligne de barème d'un autre transporteur dès lors qu'on en connaissait
+     * l'identifiant. `delete()` vérifiait déjà la société ; `get()` non.
+     */
     public function get($id){
-        return DeliveryCharge::find($id);
+        return DeliveryCharge::companywise()->find($id);
     }
 
     public function store($request){

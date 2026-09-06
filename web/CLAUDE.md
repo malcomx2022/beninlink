@@ -73,6 +73,10 @@ avant les apps.
   convertit le barème hérité (4 colonnes) en barème par **zones** (**D4**) : constate,
   puis écrit une ligne par zone aux montants d'aujourd'hui. Migration additive : sans
   zones configurées, le tarif reste celui des colonnes.
+  Saisie à la main : *Réglages → Zones et barème* (`admin/delivery-zone`) — zones,
+  délais et leur supplément global, **forfaits CEDEAO par pays**, et la grille
+  tranche × zone. Le **code** d'une zone se fixe à la création (il porte le
+  rattachement du taux COD) et une zone qui porte des tarifs ne se supprime pas.
 - `php artisan beninlink:journal-syscohada [--du=] [--au=] [--societe=] [--payes] [--fichier=]` —
   extrait des écritures d'une période, équilibre vérifié avant écriture. Le plan de
   comptes vit dans `config/syscohada.php` et reste une **proposition** tant que

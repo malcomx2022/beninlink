@@ -192,8 +192,49 @@ montants) et le **taux COD de la zone CEDEAO**. Un encaissement à l'étranger
 n'a jamais été tarifé : `codRateForZone()` rend 0 pour cette zone plutôt que
 d'emprunter le taux « hors ville » — on ne devine pas un prix.
 
-**Reste à faire** (étapes 4 à 6, dans cet ordre) : les écrans de saisie
-(une ligne par zone, ajout dynamique), la ressource d'API `zones[]` puis
+### Livré ensuite (étape 4) — les écrans de saisie
+
+Une décision qu'aucun écran ne peut enregistrer n'est pas appliquée : elle est
+en attente. Jusqu'ici, seule `beninlink:zones-tarifaires` savait écrire ces
+tables, et **rien** ne savait saisir les forfaits CEDEAO — précisément la
+valeur que le métier doit encore fixer.
+
+Deux écrans, sous *Réglages → Zones et barème* :
+
+| Écran | Ce qu'on y saisit |
+|---|---|
+| `admin/delivery-zone/index` | les **zones** (une ligne par zone, ajout et retrait), les **délais** et leur supplément global, les **forfaits CEDEAO par pays** |
+| `admin/delivery-zone/grid` | la **grille** d'une catégorie : une ligne par tranche de poids, une colonne par zone |
+
+Trois garde-fous, chacun couvert par `DeliveryZoneScreensTest` :
+
+- **le code d'une zone se fixe à la création et ne change plus.**
+  `ChargeCalculator::codRateForZone()` et `ZoneGridConverter` reconnaissent une
+  zone à son code ; le renommer détacherait le taux COD en silence. Le libellé,
+  lui, se modifie librement ;
+- **une zone qui porte des tarifs ne se supprime pas.** `zone_id` est en
+  `nullOnDelete` : la supprimer transformerait ses lignes en lignes héritées
+  portant un `amount` que plus personne ne lit — un tarif changé sans que
+  personne l'ait demandé. L'écran refuse et nomme les zones concernées ;
+- **la grille n'écrit que des lignes zonées.** Les quatre colonnes héritées ne
+  bougent pas : une installation qui ne saisit rien facture comme avant.
+
+Les routes empruntent les permissions `delivery_charge_*` plutôt que d'en
+introduire de nouvelles — `PermissionSeeder` fait des `new Permission()` sans
+garde d'unicité, et une permission neuve qu'aucun rôle ne porte rendrait
+l'écran inaccessible à tout le monde. Même raisonnement que le back-office
+douane.
+
+**Deux défauts trouvés en passant sur l'écran hérité**, corrigés ici :
+
+- `delivery_charges/index` affichait le tarif du **lendemain** sous l'en-tête
+  « jour même » et inversement — les deux cellules étaient interverties ;
+- `DeliveryChargeRepository::get()` n'était pas scopé par société (S8) :
+  l'écran d'édition ouvrait la ligne de barème d'un autre transporteur dès
+  lors qu'on en connaissait l'identifiant. `delete()` vérifiait déjà la
+  société ; `get()` non.
+
+**Reste à faire** (étapes 5 et 6) : la ressource d'API `zones[]` puis
 `openapi:generate`, les deux apps, et enfin la suppression des quatre colonnes
 — longtemps après.
 
