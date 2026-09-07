@@ -53,6 +53,8 @@ avant les apps.
 
 ## Commandes
 - `composer install` · `php artisan migrate` · `php artisan test` (avant tout commit) · `php -l <fichier>`
+  La suite tourne aussi dans GitHub Actions : **rien ne part en production sans
+  elle** (`.github/workflows/deploy.yml`, un push sur `main` déploie).
 - `php artisan openapi:generate` après tout changement de `routes/api.php` ou de
   `resources/openapi/overlay.php` (régénère `public/openapi/v10.json`, versionné).
 - `php artisan beninlink:pilote [--company=] [--reset]` : jeu de données béninois de recette

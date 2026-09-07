@@ -6,7 +6,12 @@
   builds EAS, jeu de données béninois (`php artisan beninlink:pilote`), scénarios,
   critères de sortie.
 - `infra/`  Fichiers de déploiement VPS Infomaniak (Nginx multi-tenant, Supervisor,
-  deploy.sh, GitHub Actions, .env.example, .gitignore, cron du scheduler).
+  deploy.sh, .env.example, .gitignore, cron du scheduler).
+  ⚠️ Le workflow GitHub Actions n'est plus un modèle : il vit à
+  `.github/workflows/deploy.yml` et **un push sur `main` déploie en
+  production**, après la suite de tests. Les secrets `SSH_HOST`, `SSH_USER`,
+  `SSH_KEY` (et `SSH_PORT`, facultatif) se renseignent dans
+  *Settings → Secrets and variables → Actions*.
 - `../../web/CARTOGRAPHIE.md`  Relevé de l'Étape 0 sur le socle We Courier
   (blocs A-I, constats de sécurité, routes mortes). À lire en premier.
 
