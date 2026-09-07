@@ -633,6 +633,37 @@ rendu l'argent au solde pour le reprendre au relevé suivant.
 
 **Neuf tests**, tous rouges sur le code d'origine avant de passer.
 
+**Et le passé.** Le correctif arrête l'hémorragie, il ne rend pas ce qui a déjà
+été prélevé. `php artisan beninlink:retours-annules` s'en charge, sur le modèle
+des deux régularisations existantes : constat par défaut, écriture sur
+`--corriger`, refus en production sans `--force`.
+
+Un cas se reconnaît sans deviner. Les écritures de retour portent une `note` qui
+est **la clé de traduction elle-même** — `statementNote.return_received_by_merchant_statment`
+n'existe dans aucun fichier de langue, donc `__()` rend la clé, identique en
+français comme en anglais. C'est ce marqueur stable qui permet d'isoler les
+lignes de retour parmi les autres mouvements d'un colis (une livraison partielle
+peut précéder un retour). Pour chaque colis :
+
+    prélevé = Σ(dépenses) − Σ(recettes)   sur les lignes de retour du colis
+    dû      = frais du colis si le retour tient encore, 0 sinon
+
+La différence est ce qu'il faut rendre — et la formule couvre les deux dégâts
+d'un coup : l'annulation jamais inversée (dû = 0, tout revient) comme le double
+prélèvement (dû = un frais, le second revient).
+
+| Point | Choix |
+|---|---|
+| Montant rendu | celui **prélevé**, jamais recalculé — `merchants.return_charges` est un pourcentage qui a pu changer depuis |
+| Frais résiduel | remis à zéro sur le colis : sans quoi le relevé suivant le refacture |
+| Relevé déjà émis | **montré, jamais touché**. Le relevé a facturé le retour ; rendre l'argent au solde sans rien dire du document mettrait les deux en désaccord — l'invariant de D9. Un avoir se décide avec l'expert-comptable |
+| Trace | des contreparties, pas des suppressions : les deux lignes coexistent |
+
+**Dix tests**, qui partent du **dégât d'origine réinjecté** — l'événement
+supprimé, le statut reculé, l'argent en place. Une fois le code corrigé, c'est le
+seul moyen honnête de vérifier une reprise du passé : on ne peut plus produire le
+dégât en appelant l'étape.
+
 ## D9 — Le solde d'un marchand est un cache ; le relevé est la vérité ✅
 
 **Constat.** `merchants.current_balance` et `merchant_statements` doivent

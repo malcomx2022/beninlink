@@ -94,9 +94,9 @@ Comptes créés (mot de passe commun : `pilote2026`) :
 
 ⚠️ Recette uniquement : la commande refuse `APP_ENV=production`.
 
-## 3 bis. Régularisations (D7 et D9)
+## 3 bis. Régularisations (D7, D9 et D8)
 
-Deux commandes rattrapent ce que le code d'avant les correctifs a pu laisser en
+Trois commandes rattrapent ce que le code d'avant les correctifs a pu laisser en
 base. Elles **constatent** par défaut et n'écrivent que sur demande explicite.
 
 ```bash
@@ -104,13 +104,16 @@ php artisan beninlink:colis-non-debites                      # constat
 php artisan beninlink:colis-non-debites --marchand=13 --regulariser
 php artisan beninlink:ecarts-marchands                       # constat
 php artisan beninlink:ecarts-marchands --corriger
+php artisan beninlink:retours-annules                        # constat
+php artisan beninlink:retours-annules --societe=2 --corriger
 ```
 
-Sur un jeu pilote fraîchement créé, les deux doivent répondre :
+Sur un jeu pilote fraîchement créé, les trois doivent répondre :
 
 ```
 Aucun colis non débité : cette installation est à jour.
 Aucun écart : chaque solde répond à son relevé.
+Aucun retour annulé sans réversion : chaque frais prélevé est dû ou a été rendu.
 ```
 
 C'est le point de départ : **un constat non vide, sur ce jeu de données, est un
@@ -175,7 +178,7 @@ Cocher chaque scénario sur un appareil réel, en réseau mobile (pas seulement 
 - [ ] Un jeton marchand sur `/api/v10/deliveryman/dashboard` → 403 ; un jeton livreur sur `/api/v10/parcel/index` → 403.
 - [ ] `parcel/details/{id}` d'un colis d'une autre PME → 404.
 - [ ] `php artisan test` vert sur la version déployée (`web/`).
-- [ ] `php artisan beninlink:colis-non-debites` et `beninlink:ecarts-marchands` : deux constats vides (voir §3 bis).
+- [ ] `php artisan beninlink:colis-non-debites`, `beninlink:ecarts-marchands` et `beninlink:retours-annules` : trois constats vides (voir §3 bis).
 - [ ] `php artisan beninlink:file-attente` : file traitée, worker vivant (D13).
 
 ## 5. Critères de sortie de recette
