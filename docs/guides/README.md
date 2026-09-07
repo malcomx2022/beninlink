@@ -7,9 +7,12 @@
   critères de sortie.
 - `infra/`  Fichiers de déploiement VPS Infomaniak (Nginx multi-tenant, Supervisor,
   deploy.sh, .env.example, .gitignore, cron du scheduler).
-  ⚠️ **`infra/php/` se lit AVANT le premier déploiement** : depuis la n° 62 le
-  backend ne s'installe plus en PHP 8.2, et `deploy.sh` s'arrête sur un serveur
-  qui n'est pas en 8.3 — avant même de couper le site.
+  ⚠️ **Deux guides se lisent AVANT le premier déploiement, dans cet ordre :**
+  `infra/php/` — depuis la n° 62 le backend ne s'installe plus en PHP 8.2, et
+  `deploy.sh` s'arrête sur un serveur qui n'est pas en 8.3, avant même de couper
+  le site ; puis `infra/env/` — le `.env` de production, dont la ligne
+  `APP_INSTALLED=yes` : sans elle, un déploiement réussi sert l'installateur
+  We Courier au lieu de l'application.
   ⚠️ Le workflow GitHub Actions n'est plus un modèle : il vit à
   `.github/workflows/deploy.yml` et **un push sur `main` déploie en
   production**, après la suite de tests. Les secrets `SSH_HOST`, `SSH_USER`,
