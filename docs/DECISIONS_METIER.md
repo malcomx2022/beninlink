@@ -78,6 +78,22 @@ valide pas un plan de comptes sur du papier :
    comptable cible (Sage, Saari, autre) ?
 5. **Écriture de banque** : émise seulement au statut PAYÉ du relevé — confirmer que
    c'est la date de valeur attendue.
+6. **Frais de retour et TVA** — question ajoutée le 2026-09-07, en relisant la
+   fiche : un colis retourné est facturé au marchand (`return_charges`) mais
+   `InvoiceRepository` force `vat_amount = 0`. Le socle traite donc le retour
+   **hors champ**, sans que ce choix ait jamais été posé. Si l'expert-comptable
+   le juge taxable, l'assiette déclarée est aujourd'hui sous-évaluée du montant
+   des retours — et c'est la **seule** des six réponses qui demande du code,
+   pas du paramétrage.
+
+**Défaut corrigé le 2026-09-07 dans la fiche.** L'exemple chiffré annonçait « un
+relevé d'un colis » alors que ses montants étaient les **totaux de trois colis**,
+dont un retour. Lu tel quel, il affichait 227 F de TVA sur 1 760 F de base, soit
+**12,9 %**, quand la question 3 de la même page annonce 18 % : le premier
+contrôle qu'un comptable effectue mettait la fiche en défaut. Le détail est
+désormais donné colis par colis — 18 % se recompose sur les deux livrés, et la
+ligne de retour porte zéro. C'est en cherchant d'où venait l'écart qu'on a trouvé
+la sixième question : elle était cachée dans un total.
 
 Tant que ce n'est pas validé, l'export sert à la revue, pas à l'import comptable.
 Ce qui manque n'est plus du logiciel : c'est une signature au bas de la fiche.
