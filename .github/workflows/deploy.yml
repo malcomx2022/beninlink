@@ -1,0 +1,87 @@
+name: Déploiement BeninLink (VPS Infomaniak)
+
+# Un push sur `main` déploie en production. Le déclenchement manuel sert à
+# rejouer un déploiement sans avoir à pousser un commit.
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Deux déploiements simultanés couperaient et remonteraient le site en
+# parallèle, avec deux `artisan migrate` concurrents sur la même base. On les
+# sérialise, et on n'annule pas celui qui tourne : l'interrompre entre `down`
+# et `up` laisserait le site en maintenance.
+concurrency:
+  group: deploiement-production
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    name: Suite de tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, gd, json, mbstring, mysqli, pdo, pdo_sqlite, bcmath, intl, zip
+          coverage: none
+
+      - name: Dépendances
+        working-directory: web
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Clé d'application
+        working-directory: web
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+
+      # La suite tourne sur SQLite en mémoire (`phpunit.xml`) : aucun service
+      # externe à démarrer, et c'est ce qui rend cette étape tenable.
+      - name: php artisan test
+        working-directory: web
+        run: php artisan test
+
+  deploy:
+    name: Déploiement sur le VPS
+    # Rien ne part en production sans que la suite soit passée. Le dépôt n'a
+    # jamais eu de garde automatique : c'est ici qu'il en gagne un.
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Les secrets sont-ils en place ?
+        env:
+          HOTE: ${{ secrets.SSH_HOST }}
+          UTILISATEUR: ${{ secrets.SSH_USER }}
+          CLE: ${{ secrets.SSH_KEY }}
+        run: |
+          manquants=""
+          [ -n "$HOTE" ] || manquants="$manquants SSH_HOST"
+          [ -n "$UTILISATEUR" ] || manquants="$manquants SSH_USER"
+          [ -n "$CLE" ] || manquants="$manquants SSH_KEY"
+          if [ -n "$manquants" ]; then
+            echo "::error::Secrets de dépôt manquants :$manquants — à renseigner dans Settings → Secrets and variables → Actions. (SSH_PORT est facultatif, 22 par défaut.)"
+            exit 1
+          fi
+
+      - name: Déploiement par SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd /var/www/beninlink
+            # Le script de déploiement est pris à la version qu'on déploie, et
+            # non à celle laissée par le déploiement précédent : sans cela, une
+            # correction du script ne s'appliquerait qu'au déploiement suivant
+            # — c'est-à-dire jamais à celui qui la transporte.
+            git fetch origin main
+            git checkout FETCH_HEAD -- docs/guides/infra/deploy/deploy.sh
+            bash docs/guides/infra/deploy/deploy.sh
