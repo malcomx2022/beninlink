@@ -1744,16 +1744,33 @@ class ParcelRepository implements ParcelInterface {
     }
 
 
+    /**
+     * Retour recu par le marchand — l'etape facture au marchand le retour de
+     * son colis (`merchants.return_charges` est un POURCENTAGE du tarif de
+     * livraison) et paie au livreur sa course de retour.
+     *
+     * Elle deplace donc de l'argent reel, et rejoint le 2026-09-07 les quatre
+     * etapes deja mises aux normes de **D8** — elle n'en faisait pas partie :
+     *
+     * 1. **Une seule fois.** Aucun controle de statut : rappeler l'etape
+     *    debitait le marchand une seconde fois du meme retour.
+     * 2. **Chez soi.** Deja acquis (`companywise()`), au contraire de
+     *    l'annulation qui lisait encore `Parcel::find($id)` nu.
+     * 3. **Tout ou rien.** Les trois jeux d'ecritures — marchand, livreur,
+     *    transporteur — s'ecrivaient hors transaction.
+     */
     public function returnReceivedByMerchant($id,$request){
 
-        // Le colis doit etre chez nous. Le socle lisait `Parcel::find($id)` nu :
-        // un administrateur faisait avancer le colis d'un autre transporteur —
-        // et designait au passage qui y serait paye.
+        // Le colis doit etre chez nous, et ne pas avoir deja ete rendu. Le
+        // socle lisait `Parcel::find($id)` nu : un administrateur faisait
+        // avancer le colis d'un autre transporteur — et designait au passage
+        // qui y serait paye.
         $colis = Parcel::companywise()->find($id);
-        if(blank($colis)){
+        if(blank($colis) || (int) $colis->status === ParcelStatus::RETURN_RECEIVED_BY_MERCHANT){
             return false;
         }
         try {
+            return DB::transaction(function () use ($id, $request) {
             $returnReceived                 = new ParcelEvent();
             $returnReceived->parcel_id      = $id;
             $returnReceived->note           = $request->note;
@@ -1854,20 +1871,119 @@ class ParcelRepository implements ParcelInterface {
             $parcel->save();
 
             return true;
+
+            });
         } catch (\Throwable $th) {
+            Log::error('Retour recu par le marchand abandonne', ['parcel_id' => $id, 'message' => $th->getMessage()]);
 
             return false;
         }
 
     }
 
+    /**
+     * Annulation du retour recu — le miroir de l'etape ci-dessus.
+     *
+     * Le socle n'inversait **rien** : il supprimait l'evenement et reculait le
+     * statut. Le marchand restait debite de son frais de retour, le livreur
+     * gardait sa course, le transporteur gardait son produit. Or reception du
+     * retour → annulation → reception a nouveau tient en deux clics dans le
+     * back-office : le marchand payait alors deux fois le meme retour, sans
+     * qu'aucun ecran ne le dise.
+     *
+     * Deux choix, pris comme ailleurs dans le socle :
+     *
+     * - **on inverse, on n'efface pas.** Chaque mouvement recoit sa
+     *   contrepartie de sens oppose, comme `parcelDeliveredCancel`. Les
+     *   releves restent lisibles pour qui veut comprendre apres coup ;
+     * - **on rend ce qui a ete preleve, pas ce qu'on recalculerait.** Le
+     *   montant vient de `parcels.return_charges`, ecrit au moment du retour,
+     *   jamais d'un nouveau calcul : `merchants.return_charges` est un
+     *   pourcentage qui peut avoir change entre-temps, et un taux revise
+     *   laisserait un residu au marchand. C'est la lecon des 14,40 F de la
+     *   livraison partielle.
+     *
+     * Le frais est aussi **efface du colis** : le releve rassemble les colis en
+     * retour par statut — `RETURN_ASSIGN_TO_MERCHANT` en fait partie — et
+     * facture `parcels.return_charges`. Le laisser en place aurait rendu
+     * l'argent au solde pour le reprendre au prochain releve.
+     */
     public function returnReceivedByMerchantCancel($id,$request){
+
+        // On n'annule que ce qui a eu lieu, et seulement chez nous.
+        $colis = Parcel::companywise()->find($id);
+        if(blank($colis) || (int) $colis->status !== ParcelStatus::RETURN_RECEIVED_BY_MERCHANT){
+            return false;
+        }
+
         try {
-            $parcel = Parcel::find($id);
-            if($parcel->status == ParcelStatus::RETURN_RECEIVED_BY_MERCHANT){
-                $pickupAsisgn = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=>$parcel->status])->first();
+            return DB::transaction(function () use ($id) {
+
+            $parcel       = Parcel::find($id);
+            $pickupAsisgn = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=>ParcelStatus::RETURN_RECEIVED_BY_MERCHANT])->first();
+            if($pickupAsisgn){
                 ParcelEvent::destroy($pickupAsisgn->id);
             }
+
+            // La course de retour reprise au livreur — celui-la meme que
+            // l'aller a paye, retrouve par le meme chemin.
+            $reSceduleDeliveryman = ParcelEvent::Where('parcel_id',$id)->where('parcel_status',ParcelStatus::DELIVERY_RE_SCHEDULE)->first();
+            $affectation = $reSceduleDeliveryman
+                ?: ParcelEvent::where('parcel_id',$id)->where('parcel_status',ParcelStatus::DELIVERY_MAN_ASSIGN)->first();
+
+            $livreur = $affectation->deliveryMan;
+
+            $deliveryManStatement                       = new DeliverymanStatement();
+            $deliveryManStatement->company_id           = settings()->id;
+            $deliveryManStatement->parcel_id            = $id;
+            $deliveryManStatement->delivery_man_id      = $livreur->id;
+            $deliveryManStatement->amount               = $livreur->return_charge;
+            $deliveryManStatement->type                 = StatementType::EXPENSE;
+            $deliveryManStatement->date                 = date('Y-m-d H:i:s');
+            $deliveryManStatement->note                 = __('statementNote.return_to_merchant_deliveryman_statement');
+            $deliveryManStatement->save();
+
+            $deliveryMan                                = DeliveryMan::find($livreur->id);
+            $deliveryMan->current_balance               = $deliveryMan->current_balance - $deliveryManStatement->amount;
+            $deliveryMan->save();
+
+            $courierStatement                       = new CourierStatement();
+            $courierStatement->company_id           = settings()->id;
+            $courierStatement->parcel_id            = $id;
+            $courierStatement->delivery_man_id      = $deliveryManStatement->delivery_man_id;
+            $courierStatement->amount               = $deliveryManStatement->amount;
+            $courierStatement->type                 = StatementType::INCOME;
+            $courierStatement->date                 = date('Y-m-d H:i:s');
+            $courierStatement->note                 = __('statementNote.return_to_merchant_deliveryman_statement');
+            $courierStatement->save();
+
+            // Le frais de retour rendu au marchand — au montant preleve.
+            $return_delivery_charge = (double) $parcel->return_charges;
+
+            $merchantStatement                   = new MerchantStatement();
+            $merchantStatement->company_id       = settings()->id;
+            $merchantStatement->merchant_id      = $parcel->merchant_id;
+            $merchantStatement->parcel_id        = $id;
+            $merchantStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
+            $merchantStatement->amount           = $return_delivery_charge;
+            $merchantStatement->type             = StatementType::INCOME;
+            $merchantStatement->date             = date('Y-m-d H:i:s');
+            $merchantStatement->note             = __('statementNote.return_received_by_merchant_statment');
+            $merchantStatement->save();
+
+            $merchantCost                  = Merchant::find($parcel->merchant_id);
+            $merchantCost->current_balance = ((double) $merchantCost->current_balance + $return_delivery_charge);
+            $merchantCost->save();
+
+            $courier_statement                  = new CourierStatement();
+            $courier_statement->company_id      = settings()->id;
+            $courier_statement->parcel_id       = $id;
+            $courier_statement->delivery_man_id = $merchantStatement->delivery_man_id;
+            $courier_statement->amount          = $return_delivery_charge;
+            $courier_statement->type            = StatementType::EXPENSE;
+            $courier_statement->date            = date('Y-m-d H:i:s');
+            $courier_statement->note            = __('statementNote.return_received_by_statement');
+            $courier_statement->save();
 
             $returnreschedule     = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=>ParcelStatus::RETURN_MERCHANT_RE_SCHEDULE])->first();
             if($returnreschedule){
@@ -1875,9 +1991,15 @@ class ParcelRepository implements ParcelInterface {
             }else{
                 $parcel->status   = ParcelStatus::RETURN_ASSIGN_TO_MERCHANT;
             }
+            // Sans quoi le prochain releve refacturerait le retour annule.
+            $parcel->return_charges = 0;
             $parcel->save();
+
             return true;
+
+            });
         } catch (\Throwable $th) {
+            Log::error('Annulation de retour recu abandonnee', ['parcel_id' => $id, 'message' => $th->getMessage()]);
 
             return false;
         }

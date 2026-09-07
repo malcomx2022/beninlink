@@ -597,6 +597,42 @@ transaction, un incident au milieu laisse un état que **relancer aggrave** —
 la correction défait une seconde fois. Une étape qui inverse puis refait est
 la plus exposée des trois règles à la fois.
 
+### La cinquième étape — le retour reçu, 2026-09-07
+
+D8 avait couvert **quatre** étapes. Le **retour reçu par le marchand** n'en
+faisait pas partie, et il portait les trois défauts en entier — découvert en
+chiffrant la question 6 de D2, qui vient s'écrire exactement là.
+
+L'annulation était la plus grave : elle n'inversait **rien**. Elle supprimait
+l'événement, reculait le statut, et laissait le marchand débité de son frais de
+retour, le livreur payé de sa course, le transporteur créditeur. Or la séquence
+*réception → annulation → réception* tient en deux clics dans le back-office :
+
+| | Solde du marchand |
+|---|---|
+| Retour reçu | − 500 |
+| Annulé | − 500 *(inchangé)* |
+| Reçu à nouveau | **− 1 000** |
+
+Deux règles posées à cette occasion, toutes deux tenues par un test :
+
+- **on inverse, on n'efface pas** — chaque mouvement reçoit sa contrepartie de
+  sens opposé, comme `parcelDeliveredCancel`. Supprimer les lignes aurait rendu
+  le relevé illisible pour qui cherche à comprendre après coup ;
+- **on rend ce qui a été prélevé, pas ce qu'on recalculerait.** Le montant vient
+  de `parcels.return_charges`, écrit au moment du retour.
+  `merchants.return_charges` est un **pourcentage** du tarif de livraison, qui
+  peut avoir changé entre-temps : réverser un montant recalculé laisserait un
+  résidu au marchand — précisément le défaut des 14,40 F de D9, sur une autre
+  étape.
+
+Le frais est aussi **effacé du colis** à l'annulation. Le relevé rassemble les
+colis en retour **par statut**, et `RETURN_ASSIGN_TO_MERCHANT` — là où
+l'annulation les renvoie — en fait partie : laisser le montant en place aurait
+rendu l'argent au solde pour le reprendre au relevé suivant.
+
+**Neuf tests**, tous rouges sur le code d'origine avant de passer.
+
 ## D9 — Le solde d'un marchand est un cache ; le relevé est la vérité ✅
 
 **Constat.** `merchants.current_balance` et `merchant_statements` doivent
