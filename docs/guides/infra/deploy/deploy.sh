@@ -4,6 +4,27 @@ set -euo pipefail
 cd /var/www/beninlink/web
 
 # ---------------------------------------------------------------------------
+# Le serveur sert-il la bonne version de PHP ?
+#
+# `composer.json` fixe `config.platform.php` à 8.3.0 : composer résout et
+# installe **comme si** la machine était en 8.3, sans jamais regarder sa vraie
+# version. Sur un serveur resté en 8.2, `composer install` réussirait donc sans
+# broncher, et l'application casserait au premier appel d'un paquet qui exige
+# 8.3 — en production, pas ici.
+#
+# Ce garde est le seul maillon de la chaîne qui lise le PHP *réellement*
+# exécuté : `composer.json` et le workflow ne décrivent qu'une intention.
+# Il passe AVANT la coupure — mieux vaut ne pas déployer que couper le service
+# pour rien — et donc avant le filet, qui n'aurait rien à remonter.
+# ---------------------------------------------------------------------------
+php -r 'exit(PHP_VERSION_ID >= 80300 ? 0 : 1);' || {
+    echo "❌ Ce serveur exécute PHP $(php -r 'echo PHP_VERSION;') ; 8.3 est le minimum." >&2
+    echo "   Installer php8.3-fpm et ses extensions, basculer le pool nginx, puis relancer." >&2
+    echo "   Rien n'a été touché : le site n'a pas été coupé." >&2
+    exit 1
+}
+
+# ---------------------------------------------------------------------------
 # Le filet : si quoi que ce soit échoue après la coupure, le site remonte.
 #
 # Sans lui, un échec entre `down` et `up` laisse l'application **en

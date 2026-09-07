@@ -11,7 +11,7 @@
 
 | Composante | Techno | Rôle | État |
 |---|---|---|---|
-| `web/` | Laravel 10 · PHP 8.2 | Backend We Courier + modules BeninLink. **Le contrat.** | Actif — chantiers 1 à 7 livrés |
+| `web/` | Laravel 10 · PHP 8.3 | Backend We Courier + modules BeninLink. **Le contrat.** | Actif — chantiers 1 à 7 livrés |
 | `web/` (back-office Blade) | Blade + JS compilé dans `public/` | Panneaux Admin, Marchand, Hub, Super-admin, site vitrine | Actif (socle) |
 | `mobile/` | React Native · Expo 57 · expo-router · TypeScript | App **marchand** (PME) | Actif — les 15 écrans de la maquette codés |
 | `mobile-livreur/` | React Native · Expo 57 · expo-router · TypeScript | App **livreur** | Actif — v1 et v2 livrées le 2026-09-05 (7 écrans, fenêtre Création) |

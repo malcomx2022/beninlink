@@ -28,17 +28,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # PHP 8.2, et non 8.3 : `composer.lock` verrouille `lcobucci/clock 2.3.0`,
-      # qui déclare `~8.1.0 || ~8.2.0`. Un `composer install` depuis ce lock
-      # **refuse** de s'installer au-delà de 8.2. Trois autres paquets plafonnent
-      # à 8.3 (`ezyang/htmlpurifier`, `laminas-diactoros`, `nette/schema`).
-      # Installer avec `--ignore-platform-reqs` masquerait une incompatibilité
-      # réelle : mieux vaut que l'intégration teste ce que le projet peut
-      # vraiment installer.
+      # PHP 8.3 — la version que le VPS doit servir. Elle est écrite à trois
+      # endroits qui doivent rester d'accord : ici, `config.platform.php` dans
+      # `web/composer.json` (ce que composer résout), et le garde en tête de
+      # `deploy.sh` (ce que le serveur exécute réellement).
+      #
+      # Le plafond précédent était 8.2, tenu par `lcobucci/clock 2.3.0` — tiré
+      # par `lcobucci/jwt`, lui-même tiré par le seul `vonage/client`. Monter
+      # le SDK Vonage a levé le plafond ; `lcobucci/clock` a disparu du lock.
+      #
+      # Pas de `--ignore-platform-reqs` : l'intégration doit tester ce que le
+      # projet peut **vraiment** installer.
       - name: PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.3'
           extensions: curl, gd, json, mbstring, mysqli, pdo, pdo_sqlite, bcmath, intl, zip
           coverage: none
 
