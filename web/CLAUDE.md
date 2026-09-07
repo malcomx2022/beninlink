@@ -106,15 +106,22 @@ avant les apps.
 - `php artisan beninlink:file-attente [--seuil=5]` — état de la file des envois
   (SMS, push, e-mails) et détection d'un **worker arrêté** : la panne que la file
   introduit est silencieuse. Décision **D13**.
-- **Version PHP : 8.2.** `composer.json` déclare `^8.1`, mais `composer.lock`
-  verrouille `lcobucci/clock 2.3.0`, qui déclare `~8.1.0 || ~8.2.0` : un
-  `composer install` depuis ce lock **refuse** de s'installer au-delà de 8.2.
-  Trois autres paquets plafonnent à 8.3 (`ezyang/htmlpurifier`,
-  `laminas-diactoros`, `nette/schema`). C'est la version que l'intégration
-  continue utilise, et celle que le VPS doit servir : au-delà, le
-  `composer install` de `deploy.sh` échouerait.
-  Relever ce plafond demande de mettre à jour ces paquets — un chantier en soi,
-  qui touche la chaîne JWT.
+- **Version PHP : 8.3.** Elle est écrite à **trois** endroits, et ils doivent
+  rester d'accord : `config.platform.php` dans `composer.json` (ce que composer
+  résout), `php-version` dans `.github/workflows/deploy.yml` (ce que l'intégration
+  exécute), et le garde en tête de `deploy.sh` (ce que le serveur exécute
+  vraiment). Le troisième est le seul qui puisse constater un désaccord : les
+  deux premiers décrivent une intention, lui lit le `php` de la machine.
+  **Ne pas lire `composer.json` seul pour deviner la version** : sa clause
+  `require.php` a longtemps dit `^8.1` alors que le lock imposait 8.2, et c'est
+  exactement ce qui a fait tomber la première exécution de l'intégration continue.
+  Les deux disent maintenant la même chose.
+  Le plafond 8.2 tenait à `lcobucci/clock 2.3.0`, tiré par `lcobucci/jwt`, tiré
+  par le seul `vonage/client` — le SDK SMS, pas l'authentification, qui passe par
+  Sanctum. Monter Vonage (4.0 → 4.3) a fait disparaître `lcobucci/clock` du lock.
+  **8.4 reste fermé** : `nette/utils` déclare `<8.4`, `ezyang/htmlpurifier` et
+  `nette/schema` s'arrêtent à 8.3, et `nette/*` remonte à `league/commonmark`,
+  donc au cœur de Laravel. C'est un autre chantier.
 
 ## Conventions
 - Réutiliser les conventions We Courier (repérer un exemple avant d'écrire du neuf).

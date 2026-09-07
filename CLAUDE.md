@@ -8,7 +8,7 @@
 ## Structure (active)
 | Dossier | Techno | Rôle | Financement |
 |---|---|---|---|
-| `web/` | Laravel / **PHP 8.2** | Backend We Courier : multi-tenant, API, paiements, facturation. **Cœur / contrat.** | Ligne 10 (backend MVP) |
+| `web/` | Laravel / **PHP 8.3** | Backend We Courier : multi-tenant, API, paiements, facturation. **Cœur / contrat.** | Ligne 10 (backend MVP) |
 | `mobile/` | React Native / Expo | App **marchand** (PME) : colis, wallet, factures, douane. | **Ligne 11 / TDR-L8 — financé** |
 | `mobile-livreur/` | React Native / Expo | App **livreur** : courses, statuts, encaissement COD, gains. | **Fenêtre Création ouverte le 2026-09-05** (v1 à v3 et visuels livrés, hors ligne 11) |
 
