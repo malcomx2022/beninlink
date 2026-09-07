@@ -337,6 +337,210 @@ class DeliveryCancellationAccountingTest extends TestCase
         $this->assertSame(ParcelStatus::RETURN_ASSIGN_TO_MERCHANT, (int) Parcel::find($colisAilleurs->id)->status);
     }
 
+    // ---- le retour reçu par le marchand -----------------------------------
+
+    /**
+     * Le retour facturé au marchand : `merchants.return_charges` est un
+     * **pourcentage** du tarif de livraison du colis (50 % de 1 000 F ici), et
+     * le livreur touche un forfait pour la course de retour.
+     */
+    private function colisEnRetour(string $suivi = 'BL-RETOUR'): Parcel
+    {
+        $this->marchand->return_charges = 50;
+        $this->marchand->save();
+
+        $this->livreur->return_charge = 400;
+        $this->livreur->save();
+
+        $colis = Parcel::find($this->colis->id);
+        $colis->status = ParcelStatus::RETURN_ASSIGN_TO_MERCHANT;
+        $colis->tracking_id = $suivi;
+        $colis->save();
+
+        return $colis->fresh();
+    }
+
+    private function retourRecu(?int $id = null): bool
+    {
+        return app(ParcelInterface::class)->returnReceivedByMerchant($id ?? $this->colis->id, new Request());
+    }
+
+    private function annulerRetour(?int $id = null): bool
+    {
+        return app(ParcelInterface::class)->returnReceivedByMerchantCancel($id ?? $this->colis->id, new Request());
+    }
+
+    /**
+     * La propriété qui résume tout, côté retour : encaisser le frais de retour
+     * puis annuler ne laisse aucun solde déplacé.
+     *
+     * Le socle n'inversait **rien** — l'annulation se contentait de supprimer
+     * l'événement et de reculer le statut. Le marchand restait débité de son
+     * frais de retour, le livreur restait payé de sa course, et aucun écran ne
+     * le disait.
+     */
+    public function test_cancelling_a_return_gives_the_merchant_back_what_it_paid(): void
+    {
+        $this->colisEnRetour();
+
+        $this->assertTrue($this->retourRecu());
+        $this->assertSame(-500.0, $this->soldeMarchand(), 'le retour coûte 50 % de 1 000 F');
+        $this->assertSame(400.0, $this->soldeLivreur(), 'le livreur touche sa course de retour');
+
+        $this->assertTrue($this->annulerRetour());
+
+        $this->assertSame(0.0, $this->soldeMarchand());
+        $this->assertSame(0.0, $this->soldeLivreur());
+        $this->assertSame(ParcelStatus::RETURN_ASSIGN_TO_MERCHANT, (int) Parcel::find($this->colis->id)->status);
+    }
+
+    /**
+     * Le scénario atteignable en deux clics dans le back-office : réception du
+     * retour, annulation, réception à nouveau. Sans réversion à l'annulation,
+     * le marchand payait **deux fois** le même retour.
+     */
+    public function test_cancelling_then_confirming_a_return_charges_the_merchant_once(): void
+    {
+        $this->colisEnRetour();
+
+        $this->retourRecu();
+        $this->annulerRetour();
+        $this->assertTrue($this->retourRecu());
+
+        $this->assertSame(-500.0, $this->soldeMarchand());
+        $this->assertSame(400.0, $this->soldeLivreur());
+    }
+
+    /** Une seule fois : le socle ne vérifiait pas le statut à l'aller non plus. */
+    public function test_a_return_received_twice_is_only_charged_once(): void
+    {
+        $this->colisEnRetour();
+
+        $this->assertTrue($this->retourRecu());
+        $this->assertFalse($this->retourRecu(), 'le second appel ne doit rien écrire');
+
+        $this->assertSame(-500.0, $this->soldeMarchand());
+        $this->assertSame(400.0, $this->soldeLivreur());
+    }
+
+    /** ... et une seule fois à l'envers : annuler deux fois ne rend pas double. */
+    public function test_cancelling_a_return_twice_reverses_once(): void
+    {
+        $this->colisEnRetour();
+        $this->retourRecu();
+
+        $this->assertTrue($this->annulerRetour());
+        $this->assertFalse($this->annulerRetour());
+
+        $this->assertSame(0.0, $this->soldeMarchand());
+        $this->assertSame(0.0, $this->soldeLivreur());
+    }
+
+    /** On n'annule que ce qui a eu lieu. */
+    public function test_cancelling_a_return_that_never_happened_changes_nothing(): void
+    {
+        $this->colisEnRetour();
+
+        $this->assertFalse($this->annulerRetour());
+
+        $this->assertSame(0.0, $this->soldeMarchand());
+        $this->assertSame(ParcelStatus::RETURN_ASSIGN_TO_MERCHANT, (int) Parcel::find($this->colis->id)->status);
+    }
+
+    /**
+     * Le frais de retour est **effacé du colis** à l'annulation, et pas
+     * seulement rendu au solde. Le relevé rassemble les colis en retour par
+     * leur statut — `RETURN_ASSIGN_TO_MERCHANT` en fait partie — et facture
+     * `parcels.return_charges`. Laisser le montant en place rendait l'argent
+     * d'un côté pour le reprendre de l'autre, au prochain relevé.
+     */
+    public function test_cancelling_a_return_clears_the_charge_the_statement_would_bill(): void
+    {
+        $this->colisEnRetour();
+        $this->retourRecu();
+
+        $this->assertSame(500.0, (float) Parcel::find($this->colis->id)->return_charges);
+
+        $this->annulerRetour();
+
+        $this->assertSame(0.0, (float) Parcel::find($this->colis->id)->return_charges);
+    }
+
+    /** Chez soi : l'annulation lisait `Parcel::find($id)` nu. */
+    public function test_a_return_of_another_company_cannot_be_cancelled(): void
+    {
+        $ailleurs = $this->marchandDUneAutreSociete('R');
+        $ailleurs->return_charges = 50;
+        $ailleurs->save();
+
+        $livreurAilleurs = $this->livreur('9', $ailleurs->company_id);
+        $livreurAilleurs->return_charge = 400;
+        $livreurAilleurs->current_balance = 400;
+        $livreurAilleurs->save();
+
+        $colisAilleurs = $this->colisConfie($ailleurs, $livreurAilleurs, 'BL-RECU-AILLEURS', [
+            'company_id' => $ailleurs->company_id,
+            'status' => ParcelStatus::RETURN_RECEIVED_BY_MERCHANT,
+            'return_charges' => 500,
+        ]);
+        // Sans cet événement, l'annulation échouerait de toute façon en ne le
+        // trouvant pas : le test passerait alors sans rien prouver du scope.
+        $this->evenement($colisAilleurs, $livreurAilleurs, ParcelStatus::RETURN_RECEIVED_BY_MERCHANT);
+
+        $ailleurs->current_balance = -500;
+        $ailleurs->save();
+
+        $this->assertFalse($this->annulerRetour($colisAilleurs->id));
+
+        $this->assertSame(-500.0, $this->soldeMarchand($ailleurs));
+        $this->assertSame(400.0, $this->soldeLivreur($livreurAilleurs));
+        $this->assertSame(ParcelStatus::RETURN_RECEIVED_BY_MERCHANT, (int) Parcel::find($colisAilleurs->id)->status);
+    }
+
+    /** Tout ou rien : une réversion qui échoue en cours de route n'écrit rien. */
+    public function test_a_failing_return_cancellation_leaves_the_books_as_they_were(): void
+    {
+        $this->colisEnRetour();
+        $this->retourRecu();
+
+        $soldeMarchand = $this->soldeMarchand();
+        $soldeLivreur = $this->soldeLivreur();
+        $ecritures = MerchantStatement::count();
+
+        // Priver l'affectation de son livreur fait échouer la reprise de sa
+        // course, après la remise du solde marchand : sans transaction, le
+        // marchand était remboursé et le livreur gardait sa course.
+        ParcelEvent::where('parcel_id', $this->colis->id)
+            ->where('parcel_status', ParcelStatus::DELIVERY_MAN_ASSIGN)
+            ->update(['delivery_man_id' => null]);
+
+        $this->assertFalse($this->annulerRetour());
+
+        $this->assertSame($soldeMarchand, $this->soldeMarchand());
+        $this->assertSame($soldeLivreur, $this->soldeLivreur());
+        $this->assertSame($ecritures, MerchantStatement::count());
+        $this->assertSame(ParcelStatus::RETURN_RECEIVED_BY_MERCHANT, (int) Parcel::find($this->colis->id)->status);
+        $this->assertSame(500.0, (float) Parcel::find($this->colis->id)->return_charges);
+    }
+
+    /**
+     * Chaque écriture du retour a sa contrepartie à l'annulation — c'est ce qui
+     * rend le mouvement lisible pour qui relit les relevés, plutôt que de faire
+     * disparaître les lignes.
+     */
+    public function test_every_return_statement_has_its_counterpart(): void
+    {
+        $this->colisEnRetour();
+        $this->retourRecu();
+        $this->annulerRetour();
+
+        $this->assertSame(0.0, $this->solde(MerchantStatement::class));
+        $this->assertSame(0.0, $this->solde(DeliverymanStatement::class));
+        $this->assertSame(0.0, $this->solde(CourierStatement::class));
+        // Les lignes restent : on inverse, on n'efface pas.
+        $this->assertSame(2, MerchantStatement::where('parcel_id', $this->colis->id)->count());
+    }
+
     /** L'événement de ramassage, que l'annulation d'entrepôt relit. */
     private function evenementRamassage(Parcel $colis, DeliveryMan $ramasseur): void
     {

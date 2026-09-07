@@ -12,11 +12,25 @@ BeninLink émet un **relevé de règlement** par marchand : les colis livrés su
 période, ce qui a été encaissé auprès des destinataires (COD), les frais du
 transporteur, la TVA, et le net à reverser. De ce relevé, il tire trois écritures.
 
-Exemple réel, un relevé d'un colis (montants en FCFA entiers) :
+Exemple réel, un relevé de **trois colis** (montants en FCFA entiers). Le détail
+est donné colis par colis parce que le total, seul, ne se recompose pas au taux
+de 18 % — et c'est la première chose qu'un comptable vérifie :
 
-| | Encaissé COD | Frais HT | TVA 18 % | Frais TTC | Net à reverser |
+| Colis | Encaissé COD | Frais HT | TVA | Taux | Frais TTC |
 |---|---|---|---|---|---|
-| Relevé n° `BL-2026-000001` | 80 000 | 1 760 | 227 | 1 987 | 78 013 |
+| `BL-1` livré | 50 000 | 560 | 101 | 18 % | 661 |
+| `BL-2` livré | 30 000 | 700 | 126 | 18 % | 826 |
+| `BL-3` **retourné** | — | 500 | **0** | **aucun** | 500 |
+| **Relevé n° `CO-2026-000001`** | **80 000** | **1 760** | **227** | *12,9 % apparent* | **1 987** |
+
+**Net à reverser : 80 000 − 1 987 = 78 013.**
+
+Le taux apparent du relevé (12,9 %) n'est pas une erreur de calcul : il vient de
+la troisième ligne. **Les frais de retour sortent de l'assiette de TVA** —
+`InvoiceRepository` force `vat_amount = 0` sur un colis retourné et retient le
+seul `return_charges`. C'est le comportement du socle repris tel quel, et il fait
+l'objet de la **question 6** ci-dessous : un retour est une prestation
+effectivement rendue, la traiter hors champ n'a rien d'évident.
 
 **Écriture 1 — journal des ventes (`VE`)** : la prestation facturée au marchand.
 
@@ -45,7 +59,7 @@ le reversement du net.
 Chaque pièce est équilibrée, et l'extrait vérifie l'équilibre **avant** d'écrire
 le fichier : un lot déséquilibré n'est jamais produit.
 
-## 2. Les cinq points à trancher
+## 2. Les six points à trancher
 
 Cocher, ou corriger dans la colonne de droite. Chaque réponse se traduit par une
 ligne de `web/config/syscohada.php`.
@@ -57,6 +71,7 @@ ligne de `web/config/syscohada.php`.
 | 3 | **TVA** : 4431 (TVA facturée sur ventes) ou un sous-compte propre aux prestations, selon le régime retenu pour le transport au Bénin. | 4431, taux **18 %** au niveau de la société (surchargeable par marchand). | Compte : ______ · taux : ____ % |
 | 4 | **Codes de journaux** : `VE` / `OD` / `BQ` correspondent-ils au paramétrage du logiciel comptable cible (Sage, Saari, autre) ? | VE / OD / BQ. | VE : ____ OD : ____ BQ : ____ |
 | 5 | **Date de l'écriture de banque** : elle est émise au passage du relevé au statut **payé**. Est-ce la date de valeur attendue, ou faut-il la date de l'ordre de virement ? | Date du relevé payé. | ☐ conforme ☐ autre : ______ |
+| 6 | **Frais de retour dans l'assiette de TVA ?** Un colis retourné est facturé au marchand (`return_charges`) mais **sans TVA** : le logiciel force le montant à zéro et ne retient que le frais. | Comportement hérité du socle, **non arbitré**. Un retour est pourtant une prestation rendue contre rémunération ; s'il est taxable, l'assiette déclarée est aujourd'hui sous-évaluée du montant des retours. | ☐ hors champ ☐ taxable au taux normal · si taxable : reprise du passé ☐ oui ☐ non |
 
 ## 3. Ce que l'export ne couvre pas (encore)
 
@@ -102,9 +117,16 @@ Quelle que soit la décision, le logiciel garantit :
 
 ## 6. Retour
 
-Une fois cette fiche complétée, deux lignes suffisent côté logiciel : les
-numéros dans `web/config/syscohada.php`, l'auxiliaire dans le `.env`
-(`SYSCOHADA_AUXILIARY=merchant_code`). Aucune modification de code, aucune
-migration.
+Une fois cette fiche complétée, les questions **1 à 5** se règlent en deux
+lignes côté logiciel : les numéros dans `web/config/syscohada.php`, l'auxiliaire
+dans le `.env` (`SYSCOHADA_AUXILIARY=merchant_code`). Aucune modification de
+code, aucune migration.
+
+La **question 6** est la seule exception, et c'est pourquoi elle est posée à
+part : répondre « taxable » change l'assiette, donc le calcul — une TVA sur le
+frais de retour dans `InvoiceRepository`, et, si la reprise du passé est
+demandée, une régularisation des relevés déjà émis. Ce n'est pas un
+paramétrage ; c'est un chantier court mais réel, à chiffrer une fois la réponse
+connue.
 
 Nom et signature : ______________________  ·  Date : ____________
