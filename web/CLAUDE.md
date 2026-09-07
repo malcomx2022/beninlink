@@ -106,7 +106,15 @@ avant les apps.
 - `php artisan beninlink:file-attente [--seuil=5]` — état de la file des envois
   (SMS, push, e-mails) et détection d'un **worker arrêté** : la panne que la file
   introduit est silencieuse. Décision **D13**.
-- Version PHP réelle : voir `web/composer.json`.
+- **Version PHP : 8.2.** `composer.json` déclare `^8.1`, mais `composer.lock`
+  verrouille `lcobucci/clock 2.3.0`, qui déclare `~8.1.0 || ~8.2.0` : un
+  `composer install` depuis ce lock **refuse** de s'installer au-delà de 8.2.
+  Trois autres paquets plafonnent à 8.3 (`ezyang/htmlpurifier`,
+  `laminas-diactoros`, `nette/schema`). C'est la version que l'intégration
+  continue utilise, et celle que le VPS doit servir : au-delà, le
+  `composer install` de `deploy.sh` échouerait.
+  Relever ce plafond demande de mettre à jour ces paquets — un chantier en soi,
+  qui touche la chaîne JWT.
 
 ## Conventions
 - Réutiliser les conventions We Courier (repérer un exemple avant d'écrire du neuf).
