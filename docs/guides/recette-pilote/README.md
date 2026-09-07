@@ -179,6 +179,9 @@ Cocher chaque scénario sur un appareil réel, en réseau mobile (pas seulement 
 - [ ] `parcel/details/{id}` d'un colis d'une autre PME → 404.
 - [ ] `php artisan test` vert sur la version déployée (`web/`).
 - [ ] `php artisan beninlink:colis-non-debites`, `beninlink:ecarts-marchands` et `beninlink:retours-annules` : trois constats vides (voir §3 bis).
+- [ ] `php artisan beninlink:tarification-prete` : sort en **succès** — chaque société peut facturer (**D4**, étape 6).
+- [ ] Un colis créé **sans zone** est refusé sur le champ, à l'écran comme par l'API : depuis l'étape 6, la route est le seul axe de tarification.
+- [ ] Import Excel : le fichier modèle porte la colonne `zone_code`, et un fichier sans elle n'importe rien.
 - [ ] `php artisan beninlink:file-attente` : file traitée, worker vivant (D13).
 
 ## 5. Critères de sortie de recette

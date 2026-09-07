@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'zone'               => 'Zone',
+    'amount'             => 'Montant',
+    'aucune_grille'      => 'Le barème n’est pas encore saisi.',
     'title'              => 'Zones de livraison',
     'menu'               => 'Zones et barème',
     'reference'          => 'Référentiel des zones',

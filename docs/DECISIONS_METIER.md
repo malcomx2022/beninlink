@@ -112,7 +112,7 @@ reconnaît par le mot-clé « acquisition » (`config/saas_reporting.php`).
 plateforme (id 1), les dépenses de marketing, publicité, communication et
 prospection. Sans saisie, le CAC reste « non disponible » — jamais zéro, c'est voulu.
 
-## D4 — Refonte du barème de livraison ⏳
+## D4 — Refonte du barème de livraison ✅
 
 **Ce qui existe.** Une ligne de barème = catégorie × poids, avec **quatre colonnes**
 qui mélangent délai et périmètre (`same_day`, `next_day`, `sub_city`, `outside_city`).
@@ -454,8 +454,62 @@ Vérifié en le cassant : en faisant reprendre `same_day` à Cotonou au lieu de
 `next_day`, l'étalon échoue sur chaque tranche. Il garde donc bien la
 correspondance décidée, il ne se contente pas de se confirmer lui-même.
 
-**Reste à faire** : l'étape 6 elle-même, **après le déploiement des apps** et
-quand `beninlink:bareme-herite` est vert partout.
+**Fait le 2026-09-07** — voir la section suivante. La porte est passée du
+constat à la migration : c'est elle, désormais, qui refuse de retirer les
+colonnes tant qu'une société en dépend.
+
+### L'étape 6 — les quatre colonnes sont retirées, 2026-09-07
+
+`same_day`, `next_day`, `sub_city` et `outside_city` ont quitté
+`delivery_charges` et `merchant_delivery_charges`. La refonte est **terminée** :
+il n'existe plus qu'un seul axe de tarification, la **route** — zone × tranche,
+plus le supplément global du délai.
+
+**Ce que la bascule change, en une phrase.** Un colis sans zone n'est plus
+facturé « à l'ancien tarif » : il n'a **pas de tarif**. `ChargeCalculator` lève
+`UnpricedDeliveryException::sansZone()` plutôt que de rendre zéro, `zone_id` est
+`required` à la création, et l'import Excel lit une colonne `zone_code` — les
+deux fichiers modèles la portent.
+
+**La migration refuse de s'exécuter** tant que quelque chose dépend encore des
+colonnes : pas de zones, une tranche tarifée dans une zone et pas dans une
+autre, un barème négocié sans zone, un colis créé sans zone sur trente jours.
+Elle reprend les règles de `beninlink:tarification-prete`, volontairement
+réécrites en SQL nu : une migration est jouée une fois, parfois des années après
+avoir été écrite, et la faire dépendre d'un service applicatif reviendrait à
+accepter qu'une refonte de ce service casse l'installation d'un nouveau client.
+
+> ⚠️ **Mise à niveau en deux temps.** Le code qui lisait les colonnes part avec
+> elles : une installation qui n'a pas converti doit rester sur la version
+> précédente, y poser ses zones et sa grille, vérifier avec
+> `beninlink:tarification-prete`, puis déployer celle-ci. Le message d'erreur de
+> la migration le rappelle mot pour mot.
+
+**Ce que l'étape emporte, et ce qu'elle garde.**
+
+| Ce qui part | Ce qui prend la relève |
+|---|---|
+| `DeliveryChargeResolver::resolve()` et ses quatre colonnes | `resolveByZone()`, seul chemin |
+| Les deux points AJAX `parcel/delivery-charge` | morts depuis l'étape 5 bis, remplacés par le devis complet |
+| `ZoneGridConverter` (il convertissait) | `ZoneCatalog` : le **catalogue** des zones, délais et forfaits, en un seul endroit |
+| `beninlink:bareme-herite` | `beninlink:tarification-prete` — même question, devenue permanente |
+| `DeliveryPricingBaselineTest` | `DeliveryZonePricingBaselineTest`, après que le test **pont** eut vérifié que les deux barèmes annonçaient le même prix |
+| Le 2ᵉ paramètre de `calculate()` | rien : il ne servait qu'à choisir une colonne |
+
+**Les garanties, elles, ne partent pas.** S8 (le barème d'un autre locataire) et
+S9 (un colis lourd au tarif le plus léger) valaient sur le résolveur hérité ;
+elles sont réécrites mot pour mot sur le résolveur par zones. Le défaut des
+colonnes interverties à l'écran — l'en-tête annonçait un tarif, la cellule en
+affichait un autre — garde lui aussi son test, sur les deux colonnes qui
+restent. Changer de modèle n'était pas une raison de perdre ce qu'on avait
+appris.
+
+**Une seule chose diffère, et c'est délibéré** : là où le résolveur hérité
+rendait **0** quand il ne trouvait rien, celui-ci rend **`null`**. Zéro est un
+prix ; l'absence de prix n'en est pas un, et l'appelant doit refuser plutôt que
+de facturer gratuitement.
+
+**442 tests**, dont sept sur le refus de la migration elle-même.
 
 ## D5 — Fiches de fraude sans `company_id` ✅
 

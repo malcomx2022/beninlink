@@ -30,10 +30,7 @@ class MerchantDeliveryChargeRepository implements MerchantDeliveryChargeInterfac
                 $deliveryCharge->delivery_charge_id  = $request->delivery_charge_id;
                 $deliveryCharge->category_id         = $deliverycharge->category_id;
                 $deliveryCharge->weight              = $deliverycharge->weight;
-                $deliveryCharge->same_day            = $request->same_day;
-                $deliveryCharge->next_day            = $request->next_day;
-                $deliveryCharge->sub_city            = $request->sub_city;
-                $deliveryCharge->outside_city        = $request->outside_city;
+                $deliveryCharge->amount              = $request->amount;
                 $deliveryCharge->status              = $request->status;
                 $deliveryCharge->save();
                  return true;
@@ -53,10 +50,7 @@ class MerchantDeliveryChargeRepository implements MerchantDeliveryChargeInterfac
                 $deliveryCharge->delivery_charge_id  = $request->delivery_charge_id;
                 $deliveryCharge->category_id         = $deliverycharge->category_id;
                 $deliveryCharge->weight              = $deliverycharge->weight;
-                $deliveryCharge->same_day            = $request->same_day;
-                $deliveryCharge->next_day            = $request->next_day;
-                $deliveryCharge->sub_city            = $request->sub_city;
-                $deliveryCharge->outside_city        = $request->outside_city;
+                $deliveryCharge->amount              = $request->amount;
                 $deliveryCharge->status              = $request->status;
                 $deliveryCharge->save();
 

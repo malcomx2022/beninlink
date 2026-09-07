@@ -52,20 +52,28 @@
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
                                 </div>
+
                                 <div class="form-group">
-                                    <label for="same_day">{{ __('levels.same_day') }}</label> <span class="text-danger">*</span>
-                                    <input id="same_day" type="number" name="same_day" data-parsley-trigger="change" placeholder="{{ __('placeholder.enter_same_day') }}" autocomplete="off" class="form-control" value="{{old('same_day')}}" require>
-                                    @error('same_day')
-                                        <small class="text-danger mt-2">{{ $message }}</small>
+                                    <label for="zone">{{ __('delivery_zone.zone') }}</label> <span class="text-danger">*</span>
+                                    <select id="zone" name="zone" class="form-control @error('zone') is-invalid @enderror">
+                                        <option value="">{{ __('levels.select') }}</option>
+                                        @foreach($zones as $zone)
+                                            <option {{ (old('zone') == $zone->id) ? 'selected' : '' }} value="{{ $zone->id }}">{{ $zone->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('zone')
+                                    <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
+
                                 <div class="form-group">
-                                    <label for="next_day">{{ __('levels.next_day') }}</label> <span class="text-danger">*</span>
-                                    <input id="next_day" type="number" name="next_day" data-parsley-trigger="change" placeholder="{{ __('placeholder.enter_next_day') }}" autocomplete="off" class="form-control" value="{{old('next_day')}}" require>
-                                    @error('next_day')
-                                        <small class="text-danger mt-2">{{ $message }}</small>
+                                    <label for="amount">{{ __('delivery_zone.amount') }}</label> <span class="text-danger">*</span>
+                                    <input id="amount" type="number" name="amount" data-parsley-trigger="change" placeholder="{{ __('delivery_zone.amount') }}" autocomplete="off" class="form-control" value="{{ old('amount') }}" require>
+                                    @error('amount')
+                                    <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
+
                             </div>
                             <div class="col-6">
                                 <div class="form-group">
@@ -77,20 +85,6 @@
                                     </select>
                                     @error('status')
                                     <small class="text-danger mt-2">{{ $message }}</small>
-                                    @enderror
-                                </div>
-                                <div class="form-group">
-                                    <label for="sub_city">{{ __('levels.sub_city') }}</label> <span class="text-danger">*</span>
-                                    <input id="sub_city" type="number" name="sub_city" data-parsley-trigger="change" placeholder="{{ __('placeholder.enter_sub_city') }}" autocomplete="off" class="form-control" value="{{old('sub_city')}}" require>
-                                    @error('sub_city')
-                                        <small class="text-danger mt-2">{{ $message }}</small>
-                                    @enderror
-                                </div>
-                                <div class="form-group">
-                                    <label for="outside_city">{{ __('levels.outside_city') }}</label> <span class="text-danger">*</span>
-                                    <input id="outside_city" type="number" name="outside_city" data-parsley-trigger="change" placeholder="{{ __('placeholder.enter_outside_city') }}" autocomplete="off" class="form-control" value="{{old('outside_city')}}" require>
-                                    @error('outside_city')
-                                        <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
                                 </div>
                                 <div class="form-group">

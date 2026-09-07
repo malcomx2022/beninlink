@@ -6,6 +6,7 @@ use App\Models\Backend\DeliveryCategory;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\Parcel;
 use App\Models\MerchantShops;
+use App\Models\Backend\DeliveryZone;
 use App\Services\Parcel\ChargeCalculator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -44,6 +45,8 @@ class ParcelQuoteTest extends TestCase
             'delivery_type_id' => 1,
             'cash_collection' => 50000,
             'weight' => 1,
+            // D4, étape 6 : un devis sans route n'a pas de réponse possible.
+            'zone_id' => DeliveryZone::where('code', DeliveryZone::COTONOU)->firstOrFail()->id,
         ];
     }
 
@@ -59,10 +62,12 @@ class ParcelQuoteTest extends TestCase
         // Reference : le service qui fait foi, appele directement.
         $expected = app(ChargeCalculator::class)->calculate(
             $merchant,
-            $payload['delivery_type_id'],
             $payload['category_id'],
             $payload['weight'],
-            (float) $payload['cash_collection']
+            (float) $payload['cash_collection'],
+            null,
+            false,
+            $payload['zone_id'],
         );
 
         // Comparaison souple : JSON rend 50.0 sous la forme 50, l'egalite stricte

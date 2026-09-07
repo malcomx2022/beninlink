@@ -129,14 +129,12 @@ class ParcelController extends Controller
         if ($merchant->wallet_use_activation == Status::ACTIVE) :
             $charges = app(\App\Services\Parcel\ChargeCalculator::class)->calculate(
                 $merchant,
-                (int) $request->delivery_type_id,
                 $request->category_id ? (int) $request->category_id : null,
                 $request->weight,
                 (float) $request->cash_collection,
                 $request->packaging_id ? (int) $request->packaging_id : null,
                 $request->fragileLiquid == 'on',
-                // D4, etape 5 bis : la route du colis. Sans zone, le calcul
-                // est celui d'avant, au franc pres.
+                // D4, etape 6 : la route du colis, desormais son seul tarif.
                 $request->zone_id ? (int) $request->zone_id : null,
                 $request->delay_id ? (int) $request->delay_id : null,
                 $request->destination_country
@@ -480,20 +478,6 @@ class ParcelController extends Controller
             }
         }
         return '';
-    }
-
-    /**
-     * Devis AJAX du tarif de livraison (nombre brut, contrat des écrans).
-     * S8 / S9 : passait par `DeliveryCharge::where(...)` sans société ni poids ;
-     * délègue désormais au résolveur unique.
-     */
-    public function deliveryCharge(Request $request, \App\Services\Parcel\DeliveryChargeResolver $resolver)
-    {
-        if (!request()->ajax() || !$request->merchant_id || !$request->category_id || !$request->delivery_type_id) {
-            return 0;
-        }
-
-        return $resolver->resolve((int) $request->merchant_id, (int) $request->category_id, $request->weight, (int) $request->delivery_type_id);
     }
 
 

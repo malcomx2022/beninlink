@@ -9288,17 +9288,18 @@
                         "description": "Tranche comparée à l'identique par le calculateur, pas un plafond",
                         "nullable": true
                     },
-                    "same_day": {
-                        "type": "string"
+                    "zone_id": {
+                        "type": "string",
+                        "nullable": true
                     },
-                    "next_day": {
-                        "type": "string"
+                    "zone_code": {
+                        "type": "string",
+                        "description": "Code de la zone : cotonou, peripherie, interieur, cedeao",
+                        "nullable": true
                     },
-                    "sub_city": {
-                        "type": "string"
-                    },
-                    "outside_city": {
-                        "type": "string"
+                    "amount": {
+                        "type": "string",
+                        "description": "Montant de la tranche pour cette zone (D4, étape 6)"
                     },
                     "status": {
                         "type": "string"

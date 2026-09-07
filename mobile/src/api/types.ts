@@ -245,10 +245,10 @@ export type DeliveryRate = {
   id: number;
   category: string | null;
   weight: string | null;
-  same_day: string;
-  next_day: string;
-  sub_city: string;
-  outside_city: string;
+  /** D4, étape 6 : une ligne = une zone et un montant, plus quatre colonnes. */
+  zone_id: string | null;
+  zone_code: string | null;
+  amount: string;
   status: string;
   statusName: string | null;
 };

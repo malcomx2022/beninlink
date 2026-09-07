@@ -11,7 +11,7 @@ use App\Models\Backend\DeliveryZoneCountry;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\MerchantDeliveryCharge;
 use App\Services\Parcel\DeliveryChargeResolver;
-use App\Services\Pricing\ZoneGridConverter;
+use App\Services\Pricing\ZoneCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\SeedsTenant;
 use Tests\TestCase;
@@ -58,15 +58,17 @@ class DeliveryZoneGridTest extends TestCase
         DeliveryCharge::query()->delete();
     }
 
+    /**
+     * Depuis l'étape 6, le jeu d'amorçage installe déjà les quatre zones : le
+     * code est unique par société, on reprend donc celle qui existe plutôt que
+     * d'en créer une seconde.
+     */
     private function zone(string $code, string $nom): DeliveryZone
     {
-        return $this->zones[$code] ??= DeliveryZone::create([
-            'company_id' => $this->merchant->company_id,
-            'code' => $code,
-            'name' => $nom,
-            'position' => count($this->zones),
-            'status' => Status::ACTIVE,
-        ]);
+        return $this->zones[$code] ??= DeliveryZone::firstOrCreate(
+            ['company_id' => $this->merchant->company_id, 'code' => $code],
+            ['name' => $nom, 'position' => count($this->zones), 'status' => Status::ACTIVE],
+        );
     }
 
     private function tarif(string $codeZone, int $poids, float $montant): void
@@ -84,14 +86,18 @@ class DeliveryZoneGridTest extends TestCase
 
     private function delai(string $code, float $supplement): DeliveryDelay
     {
-        return DeliveryDelay::create([
-            'company_id' => $this->merchant->company_id,
-            'code' => $code,
-            'name' => $code,
-            'surcharge' => $supplement,
-            'position' => 0,
-            'status' => Status::ACTIVE,
-        ]);
+        $delai = DeliveryDelay::firstOrNew(
+            ['company_id' => $this->merchant->company_id, 'code' => $code],
+        );
+        $delai->company_id = $this->merchant->company_id;
+        $delai->code = $code;
+        $delai->name = $code;
+        $delai->surcharge = $supplement;
+        $delai->position = 0;
+        $delai->status = Status::ACTIVE;
+        $delai->save();
+
+        return $delai;
     }
 
     public function test_le_tarif_vient_de_la_zone_et_de_la_tranche(): void
@@ -135,8 +141,14 @@ class DeliveryZoneGridTest extends TestCase
     public function test_la_cedeao_se_facture_au_forfait_du_pays_pas_au_poids(): void
     {
         $cedeao = $this->zone(DeliveryZone::CEDEAO, 'CEDEAO');
-        DeliveryZoneCountry::create(['zone_id' => $cedeao->id, 'code' => 'TG', 'name' => 'Togo', 'flat_amount' => 15000, 'status' => Status::ACTIVE]);
-        DeliveryZoneCountry::create(['zone_id' => $cedeao->id, 'code' => 'NG', 'name' => 'Nigeria', 'flat_amount' => 25000, 'status' => Status::ACTIVE]);
+        // Les forfaits du métier sont déjà posés par l'installation : ce test
+        // fixe les siens pour rester lisible sans dépendre de leurs montants.
+        $forfait = fn (string $code, string $nom, int $montant) => DeliveryZoneCountry::updateOrCreate(
+            ['zone_id' => $cedeao->id, 'code' => $code],
+            ['name' => $nom, 'flat_amount' => $montant, 'status' => Status::ACTIVE],
+        );
+        $forfait('TG', 'Togo', 15000);
+        $forfait('NG', 'Nigeria', 25000);
 
         $resolveur = app(DeliveryChargeResolver::class);
 
@@ -181,99 +193,6 @@ class DeliveryZoneGridTest extends TestCase
         $this->assertNull(
             app(DeliveryChargeResolver::class)->resolveByZone($this->merchant->id, $this->categoryId, 3, 999999),
         );
-    }
-
-    public function test_la_conversion_annonce_l_ecart_que_le_supplement_unique_ne_rend_pas(): void
-    {
-        // Barème hérité du jeu pilote : l'écart « jour même » vaut 200, 300,
-        // 300 puis 500 selon la tranche. Un supplément global ne peut pas
-        // reproduire les quatre — la commande doit le dire, pas le masquer.
-        foreach ([1 => [1000, 800, 1500, 2500], 3 => [1500, 1200, 2000, 3500], 5 => [2000, 1700, 2800, 4500], 10 => [3000, 2500, 4000, 6500]] as $poids => [$jm, $lend, $peri, $int]) {
-            DeliveryCharge::forceCreate([
-                'company_id' => $this->merchant->company_id,
-                'category_id' => $this->categoryId,
-                'weight' => $poids,
-                'same_day' => $jm, 'next_day' => $lend, 'sub_city' => $peri, 'outside_city' => $int,
-                'position' => $poids, 'status' => Status::ACTIVE,
-            ]);
-        }
-
-        // Avec le supplément retenu (300 F), le tarif « jour même » se déplace
-        // sur trois tranches : +100 sur 1 kg, 0 sur 3 et 5 kg, −200 sur 10 kg.
-        // La commande le montre au lieu de le laisser découvrir sur une facture.
-        $this->artisan('beninlink:zones-tarifaires', ['--societe' => $this->merchant->company_id])
-            ->expectsOutputToContain('déplace le tarif')
-            ->assertSuccessful();
-
-        // Constat seul : rien n'est écrit.
-        $this->assertSame(0, DeliveryZone::count());
-
-        $this->artisan('beninlink:zones-tarifaires', [
-            '--societe' => $this->merchant->company_id,
-            '--supplement' => 300,
-            '--appliquer' => true,
-        ])->assertSuccessful();
-
-        $this->assertSame(4, DeliveryZone::count(), 'les quatre zones');
-        $this->assertSame(16, DeliveryCharge::whereNotNull('zone_id')->count(), 'quatre tranches × quatre zones');
-
-        // Les montants convertis sont ceux d'aujourd'hui, colonne par zone.
-        $cotonou = DeliveryZone::where('code', DeliveryZone::COTONOU)->firstOrFail();
-        $this->assertEquals(
-            800,
-            DeliveryCharge::where('zone_id', $cotonou->id)->where('weight', 1)->value('amount'),
-            'Cotonou reprend le tarif « lendemain »',
-        );
-
-        $this->assertEquals(300, DeliveryDelay::where('code', DeliveryDelay::SAME_DAY)->value('surcharge'));
-
-        // Les colonnes héritées sont intactes : le barème d'avant répond encore.
-        $this->assertSame(4, DeliveryCharge::whereNull('zone_id')->count());
-        $this->assertEquals(1000, DeliveryCharge::whereNull('zone_id')->where('weight', 1)->value('same_day'));
-    }
-
-    public function test_la_conversion_garde_les_tarifs_actuels_sauf_le_jour_meme(): void
-    {
-        // Décision du métier (2026-09-06) : « garde les tarifs actuels,
-        // supplément jour même 300 ». Ce test dit ce que cela donne, montant
-        // par montant — y compris là où ça bouge.
-        foreach (self::PILOTE as $poids => [$jm, $lend, $peri, $int]) {
-            DeliveryCharge::forceCreate([
-                'company_id' => $this->merchant->company_id,
-                'category_id' => $this->categoryId,
-                'weight' => $poids,
-                'same_day' => $jm, 'next_day' => $lend, 'sub_city' => $peri, 'outside_city' => $int,
-                'position' => $poids, 'status' => Status::ACTIVE,
-            ]);
-        }
-
-        app(ZoneGridConverter::class)->convert($this->merchant->company_id, ZoneGridConverter::SAME_DAY_SURCHARGE);
-
-        $resolveur = app(DeliveryChargeResolver::class);
-        $zone = fn (string $code) => DeliveryZone::where('code', $code)->value('id');
-        $jourMeme = DeliveryDelay::where('code', DeliveryDelay::SAME_DAY)->value('id');
-        $standard = DeliveryDelay::where('code', DeliveryDelay::STANDARD)->value('id');
-
-        foreach (self::PILOTE as $poids => [$jm, $lend, $peri, $int]) {
-            // Inchangé : les trois zones nationales au délai standard.
-            $this->assertEquals($lend, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, $poids, $zone(DeliveryZone::COTONOU), $standard));
-            $this->assertEquals($peri, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, $poids, $zone(DeliveryZone::PERIPHERIE), $standard));
-            $this->assertEquals($int, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, $poids, $zone(DeliveryZone::INTERIEUR), $standard));
-
-            // Déplacé, et c'est assumé : le « jour même » vaut désormais
-            // partout +300, là où le barème hérité montait de 200 à 500 selon
-            // la tranche.
-            $this->assertEquals(
-                $lend + ZoneGridConverter::SAME_DAY_SURCHARGE,
-                $resolveur->resolveByZone($this->merchant->id, $this->categoryId, $poids, $zone(DeliveryZone::COTONOU), $jourMeme),
-            );
-        }
-
-        // Le tableau des écarts, pour mémoire : +100 sur 1 kg, 0 sur 3 et
-        // 5 kg, −200 sur 10 kg.
-        $ecarts = collect(app(ZoneGridConverter::class)->ecarts($this->merchant->company_id, ZoneGridConverter::SAME_DAY_SURCHARGE))
-            ->pluck('ecart', 'weight')->all();
-        $this->assertEquals([1 => 100.0, 3 => 0.0, 5 => 0.0, 10 => -200.0], $ecarts);
     }
 
     public function test_le_taux_cod_suit_la_zone(): void
@@ -335,21 +254,21 @@ class DeliveryZoneGridTest extends TestCase
         $this->assertEquals(0, $calcul->codRateForZone($this->merchant, $this->zone(DeliveryZone::CEDEAO, 'CEDEAO')));
     }
 
-    public function test_la_conversion_est_rejouable(): void
+    /**
+     * L'installation des zones est **rejouable**. Elle l'était comme
+     * conversion, elle doit le rester comme installation : un déploiement qui
+     * la relance ne doit pas doubler les zones ni les forfaits.
+     */
+    public function test_l_installation_des_zones_est_rejouable(): void
     {
-        DeliveryCharge::forceCreate([
-            'company_id' => $this->merchant->company_id,
-            'category_id' => $this->categoryId,
-            'weight' => 1,
-            'same_day' => 1000, 'next_day' => 800, 'sub_city' => 1500, 'outside_city' => 2500,
-            'position' => 1, 'status' => Status::ACTIVE,
-        ]);
-
-        $arguments = ['--societe' => $this->merchant->company_id, '--supplement' => 300, '--appliquer' => true];
+        $arguments = ['--societe' => $this->merchant->company_id, '--supplement' => 300, '--installer' => true];
         $this->artisan('beninlink:zones-tarifaires', $arguments)->assertSuccessful();
         $this->artisan('beninlink:zones-tarifaires', $arguments)->assertSuccessful();
 
-        $this->assertSame(4, DeliveryZone::count(), 'pas de zones en double');
-        $this->assertSame(4, DeliveryCharge::whereNotNull('zone_id')->count(), 'pas de lignes en double');
+        $this->assertSame(4, DeliveryZone::where('company_id', $this->merchant->company_id)->count(), 'pas de zones en double');
+        $this->assertSame(3, DeliveryDelay::where('company_id', $this->merchant->company_id)->count(), 'pas de délais en double');
+        $cedeao = DeliveryZone::where('company_id', $this->merchant->company_id)
+            ->where('code', DeliveryZone::CEDEAO)->firstOrFail();
+        $this->assertSame(3, DeliveryZoneCountry::where('zone_id', $cedeao->id)->count(), 'pas de forfaits en double');
     }
 }

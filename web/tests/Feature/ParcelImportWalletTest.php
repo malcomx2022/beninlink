@@ -9,6 +9,8 @@ use App\Models\Backend\GeneralSettings;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\Parcel;
 use App\Models\Backend\Wallet;
+use App\Exceptions\UnpricedDeliveryException;
+use App\Models\Backend\DeliveryZone;
 use App\Models\MerchantShops;
 use App\Services\Parcel\ChargeCalculator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -71,13 +73,14 @@ class ParcelImportWalletTest extends TestCase
      */
     private const COLONNES_MARCHAND = [
         'customer_name', 'customer_phone', 'customer_address', 'customer_lat',
-        'customer_long', 'invoice_no', 'weight', 'cash_collection', 'selling_price', 'note',
+        // D4, étape 6 : la zone est une colonne du fichier comme les autres.
+        'customer_long', 'invoice_no', 'zone_code', 'weight', 'cash_collection', 'selling_price', 'note',
     ];
 
     private const COLONNES_BACKOFFICE = [
         'merchant_id', 'shop_id', 'pickup_address', 'pickup_phone', 'pickup_lat',
         'pickup_long', 'customer_name', 'customer_phone', 'customer_address',
-        'customer_lat', 'customer_long', 'invoice_no', 'category_id', 'weight',
+        'customer_lat', 'customer_long', 'invoice_no', 'category_id', 'zone_code', 'weight',
         'delivery_type_id', 'cash_collection', 'selling_price', 'packaging_id',
         'liquid_fragile', 'note',
     ];
@@ -88,6 +91,7 @@ class ParcelImportWalletTest extends TestCase
             'shop_id' => MerchantShops::firstOrFail()->id,
             'category_id' => 1,
             'delivery_type_id' => 1,
+            'zone_code' => DeliveryZone::COTONOU,
             'weight' => 1,
             'cash_collection' => 50000,
             'customer_name' => 'Aicha Kora',
@@ -124,15 +128,22 @@ class ParcelImportWalletTest extends TestCase
      * ⚠️ Quand c'est un marchand qui importe, le socle **ignore** la catégorie
      * et le type de livraison du fichier : catégorie 1, type 2 (lendemain).
      * Comportement d'origine, conservé — le back-office, lui, lit le fichier.
+     * La **zone**, elle, est lue dans les deux cas depuis l'étape 6 : c'est
+     * elle qui tarife.
      */
-    private function frais(int $typeDeLivraison = 2): float
+    private function frais(?string $zone = null): float
     {
+        $zoneId = DeliveryZone::where('company_id', $this->merchant->company_id)
+            ->where('code', $zone ?? DeliveryZone::COTONOU)->value('id');
+
         return (float) app(ChargeCalculator::class)->calculate(
             $this->merchant->fresh(),
-            $typeDeLivraison,
             1,
             1,
             50000.0,
+            null,
+            false,
+            $zoneId,
         )['total_delivery_amount'];
     }
 
@@ -202,10 +213,33 @@ class ParcelImportWalletTest extends TestCase
 
         $this->importer(
             [$this->ligne()],
-            ['customer_name', 'customer_phone', 'customer_address', 'cash_collection'],
+            ['customer_name', 'customer_phone', 'customer_address', 'cash_collection', 'zone_code'],
         );
 
         $this->assertSame(1, Parcel::count());
+    }
+
+    /**
+     * La zone n'est **pas** une colonne facultative depuis l'étape 6 (D4).
+     *
+     * C'est la conséquence visible du retrait des quatre colonnes : un fichier
+     * qui ne dit pas où va le colis ne peut plus être tarifé, et l'import
+     * s'arrête plutôt que de facturer au hasard. Le modèle livré dans
+     * `public/sample-parcel/` porte la colonne ; un ancien fichier doit être
+     * complété.
+     */
+    public function test_a_file_without_a_zone_imports_nothing(): void
+    {
+        $this->actingAs($this->merchant->user->fresh());
+
+        $this->expectException(UnpricedDeliveryException::class);
+
+        $this->importer(
+            [$this->ligne()],
+            ['customer_name', 'customer_phone', 'customer_address', 'cash_collection'],
+        );
+
+        $this->assertSame(0, Parcel::count());
     }
 
     // ---- Q2 : refus total, ou lignes couvertes ? -------------------------
@@ -221,11 +255,13 @@ class ParcelImportWalletTest extends TestCase
      */
     public function test_a_file_the_wallet_cannot_cover_imports_nothing(): void
     {
+        // Se connecter d'abord : `frais()` résout la zone par `companywise()`,
+        // qui retombe sur la société 1 hors session authentifiée.
+        $this->actingAs($this->merchant->user->fresh());
+
         $this->merchant->wallet_balance = $this->frais() * 1.5;
         $this->merchant->save();
         $solde = $this->soldeActuel();
-
-        $this->actingAs($this->merchant->user->fresh());
 
         try {
             $this->importer([$this->ligne(), $this->ligne()]);
@@ -311,8 +347,10 @@ class ParcelImportWalletTest extends TestCase
         $this->importer([$this->ligne(['merchant_id' => $this->merchant->id])], self::COLONNES_BACKOFFICE);
 
         $this->assertSame($this->merchant->id, Parcel::firstOrFail()->merchant_id);
-        // Le back-office, lui, lit le type de livraison du fichier.
-        $this->assertSame(100000 - $this->frais(1), $this->soldeActuel());
+        // Le back-office comme le marchand facturent par la zone du fichier :
+        // depuis l'étape 6, c'est elle qui donne le tarif, pas le type.
+        $this->assertSame(100000 - $this->frais(), $this->soldeActuel());
+        $this->assertNotNull(Parcel::firstOrFail()->zone_id, 'le colis importé porte sa zone');
     }
 
     // ---- fixtures --------------------------------------------------------

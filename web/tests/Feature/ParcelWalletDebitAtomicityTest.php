@@ -11,6 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\Sanctum;
 use Tests\Concerns\SeedsTenant;
+use App\Models\Backend\DeliveryZone;
 use Tests\TestCase;
 
 /**
@@ -56,6 +57,7 @@ class ParcelWalletDebitAtomicityTest extends TestCase
         return $this->postJson('/api/v10/parcel/store', [
             'category_id' => 1,
             'delivery_type_id' => 1,
+            'zone_id' => DeliveryZone::where('code', DeliveryZone::COTONOU)->value('id'),
             'cash_collection' => 50000,
             'weight' => 1,
             'shop_id' => MerchantShops::firstOrFail()->id,

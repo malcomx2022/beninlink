@@ -18,6 +18,18 @@ use RuntimeException;
  */
 class UnpricedDeliveryException extends RuntimeException
 {
+    /**
+     * Aucune zone sur le colis (**D4, étape 6**).
+     *
+     * Depuis le retrait des quatre colonnes, il n'existe plus qu'un seul axe
+     * de tarification. Un colis sans zone n'est donc pas « à l'ancien tarif » :
+     * il n'a pas de tarif du tout, et le dire vaut mieux que rendre zéro.
+     */
+    public static function sansZone(): self
+    {
+        return new self("Aucune zone de livraison n'est indiquée : le tarif ne peut pas être déterminé.");
+    }
+
     public static function pourZone(int $zoneId, ?string $pays = null): self
     {
         return new self($pays === null

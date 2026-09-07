@@ -133,7 +133,7 @@ $schemas = [
         'parcels' => ['nullable' => true, 'description' => 'Toujours `null` (accesseur absent du modèle) — ne pas afficher'],
     ]),
     'PdfLink' => $obj(['url' => $str('URL signée, valable 15 minutes, à ouvrir dans un navigateur'), 'expires_at' => $str('ISO 8601')], ['url', 'expires_at']),
-    'DeliveryRate' => $obj(['id' => $int(), 'category' => $str('', true), 'weight' => $str('Tranche comparée à l\'identique par le calculateur, pas un plafond', true), 'same_day' => $str(), 'next_day' => $str(), 'sub_city' => $str(), 'outside_city' => $str(), 'status' => $str(), 'statusName' => $str('', true)]),
+    'DeliveryRate' => $obj(['id' => $int(), 'category' => $str('', true), 'weight' => $str('Tranche comparée à l\'identique par le calculateur, pas un plafond', true), 'zone_id' => $str('', true), 'zone_code' => $str('Code de la zone : cotonou, peripherie, interieur, cedeao', true), 'amount' => $str('Montant de la tranche pour cette zone (D4, étape 6)'), 'status' => $str(), 'statusName' => $str('', true)]),
     'CodCharge' => $obj(['name' => $str('Libellé traduit de la zone'), 'charge' => $str('Taux en pourcentage'), 'zone_code' => $str('Code de la zone à laquelle ce taux se rattache (D4) ; null hors des trois zones nationales', true)]),
 
     // — D4 : le barème par zones, servi À CÔTÉ des quatre colonnes -----------

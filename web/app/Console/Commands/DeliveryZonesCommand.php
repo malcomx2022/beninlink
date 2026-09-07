@@ -2,38 +2,47 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Backend\DeliveryZone;
 use App\Models\Backend\GeneralSettings;
-use App\Services\Pricing\ZoneGridConverter;
+use App\Services\Pricing\ZoneCatalog;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 /**
- * `php artisan beninlink:zones-tarifaires` — passer le barème aux zones (**D4**).
+ * `php artisan beninlink:zones-tarifaires` — installer le modèle par zones (**D4**).
  *
- * ## Ce que le métier a tranché (2026-09-06)
+ * ## Ce qu'elle faisait, et ce qu'elle fait
  *
- *   - zones **Cotonou, Périphérie, Intérieur, CEDEAO** ;
- *   - **délai global** : un supplément par délai, indépendant de la zone ;
- *   - **CEDEAO au forfait par pays**, pas au poids ;
- *   - **on garde les tarifs actuels**, avec un supplément « jour même » de
- *     **300 F**.
+ * Jusqu'à l'étape 6, elle **convertissait** le barème hérité : elle lisait les
+ * quatre colonnes et en tirait une ligne par zone. Ces colonnes ont disparu le
+ * 2026-09-07 ; il n'y a plus rien à convertir, et une commande qui prétendrait
+ * le faire mentirait.
  *
- * La correspondance et l'écriture vivent dans `ZoneGridConverter` — le jeu de
- * recette s'en sert aussi. Ici, seulement le dialogue : constater, montrer ce
- * que le supplément unique déplace, puis écrire sur demande.
+ * Ce qu'elle fait désormais est ce dont une installation neuve a besoin :
+ * poser les **quatre zones**, les **trois délais** avec le supplément « jour
+ * même », et les **forfaits CEDEAO**. Sans cela une société ne peut plus rien
+ * facturer — depuis l'étape 6, un colis sans zone n'a pas de tarif.
+ *
+ * ## Ce qu'elle ne fait pas
+ *
+ * Elle n'écrit **aucun montant de grille**. Les tranches × zones se saisissent
+ * dans *Réglages → Zones et barème* : ces montants appartiennent au
+ * transporteur, pas au logiciel. La commande pose le cadre, pas les prix.
+ *
+ * Les forfaits CEDEAO sont l'exception assumée — ils ont été tranchés par le
+ * métier — et restent **créés s'ils manquent, jamais réécrits**.
  */
 class DeliveryZonesCommand extends Command
 {
     protected $signature = 'beninlink:zones-tarifaires
         {--societe= : société à traiter ; par défaut toutes}
         {--supplement= : supplément « jour même », en FCFA entiers (défaut : 300, décision du métier)}
-        {--appliquer : écrire les zones, les délais et le barème converti}';
+        {--installer : écrire les zones, les délais et les forfaits}';
 
-    protected $description = 'Convertit le barème hérité en zones (D4) : constate, puis écrit sur demande';
+    protected $description = 'Installe les zones, délais et forfaits CEDEAO d\'une société (D4)';
 
-    public function handle(ZoneGridConverter $converter): int
+    public function handle(ZoneCatalog $catalogue): int
     {
-        $supplement = (float) ($this->option('supplement') ?? ZoneGridConverter::SAME_DAY_SURCHARGE);
+        $supplement = (float) ($this->option('supplement') ?? ZoneCatalog::SAME_DAY_SURCHARGE);
 
         $societes = $this->option('societe')
             ? GeneralSettings::where('id', (int) $this->option('societe'))->get()
@@ -46,60 +55,39 @@ class DeliveryZonesCommand extends Command
         }
 
         foreach ($societes as $societe) {
-            $this->traiter($converter, $societe, $supplement);
+            $this->traiter($catalogue, $societe, $supplement);
         }
 
-        if (!$this->option('appliquer')) {
+        if (!$this->option('installer')) {
             $this->newLine();
-            $this->comment('Constat seul. Ajouter --appliquer pour écrire.');
+            $this->comment('Constat seul. Ajouter --installer pour écrire.');
         }
 
         return self::SUCCESS;
     }
 
-    private function traiter(ZoneGridConverter $converter, GeneralSettings $societe, float $supplement): void
+    private function traiter(ZoneCatalog $catalogue, GeneralSettings $societe, float $supplement): void
     {
-        $lignes = $converter->legacyRows($societe->id);
+        $existantes = DeliveryZone::where('company_id', $societe->id)->pluck('code')->all();
 
         $this->newLine();
-        $this->line("<options=bold>{$societe->name}</> — {$lignes->count()} ligne(s) héritée(s)");
-
-        if ($lignes->isEmpty()) {
-            return;
-        }
+        $this->line("<options=bold>{$societe->name}</>");
 
         $this->table(
-            ['Tranche', 'Cotonou', 'Périphérie', 'Intérieur', '« Jour même » aujourd\'hui', 'Retenu', 'Écart'],
-            collect($converter->ecarts($societe->id, $supplement))
-                ->zip($lignes)
-                ->map(function ($paire) {
-                    [$ecart, $ligne] = $paire;
-
-                    return [
-                        $ecart['weight'] . ' kg',
-                        formatAmount((float) $ligne->next_day),
-                        formatAmount((float) $ligne->sub_city),
-                        formatAmount((float) $ligne->outside_city),
-                        formatAmount($ecart['actuel']),
-                        formatAmount($ecart['retenu']),
-                        ($ecart['ecart'] > 0 ? '+' : '') . formatAmount($ecart['ecart']),
-                    ];
-                })->all(),
+            ['Zone', 'État'],
+            collect(ZoneCatalog::ZONES)->map(fn (array $zone) => [
+                $zone[1],
+                in_array($zone[0], $existantes, true) ? 'déjà posée' : 'à créer',
+            ])->all(),
         );
 
-        $deplaces = collect($converter->ecarts($societe->id, $supplement))->filter(fn (array $e) => abs($e['ecart']) > 0.001);
-        if ($deplaces->isNotEmpty()) {
-            $this->warn("Le supplément unique déplace le tarif « jour même » de {$deplaces->count()} tranche(s).");
-            $this->line('Les autres tarifs (Cotonou, Périphérie, Intérieur, tous délais confondus) sont inchangés.');
-        }
+        $this->line(sprintf('Supplément « jour même » : %s', formatAmount($supplement)));
 
-        if (!$this->option('appliquer')) {
+        if (!$this->option('installer')) {
             return;
         }
 
-        $ecrites = DB::transaction(fn () => $converter->convert($societe->id, $supplement));
-
-        $this->info("{$ecrites} ligne(s) de barème par zone écrites ; les colonnes héritées sont intactes.");
-        $this->comment('CEDEAO : forfaits par pays à saisir (table `delivery_zone_countries`).');
+        $catalogue->installer($societe->id, $supplement);
+        $this->info('Zones, délais et forfaits CEDEAO en place. La grille se saisit à l\'écran.');
     }
 }

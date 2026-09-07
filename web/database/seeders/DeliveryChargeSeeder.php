@@ -2,139 +2,72 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\Backend\DeliveryCharge;
 use App\Enums\Status;
+use App\Models\Backend\DeliveryCharge;
+use App\Models\Backend\DeliveryZone;
+use App\Services\Pricing\ZoneCatalog;
+use Illuminate\Database\Seeder;
 
+/**
+ * Barème de démonstration — **par zones** depuis l'étape 6 (**D4**).
+ *
+ * Le seeder du socle écrivait les quatre colonnes héritées. Elles n'existent
+ * plus, et poser une grille sans zones aurait été pire que de ne rien poser :
+ * depuis l'étape 6, un colis sans zone n'a **pas de tarif**, et une
+ * installation neuve n'aurait pas pu créer un seul colis.
+ *
+ * Il pose donc d'abord le cadre — zones, délais, forfaits CEDEAO, par
+ * `ZoneCatalog`, le seul endroit qui les définit — puis une grille de
+ * démonstration reprenant les montants d'origine, colonne par zone selon la
+ * correspondance actée : Cotonou ← `next_day`, Périphérie ← `sub_city`,
+ * Intérieur ← `outside_city`.
+ */
 class DeliveryChargeSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
-    {
-        $delivery_charge               = new DeliveryCharge();
-        $delivery_charge->company_id  = 2;
-        $delivery_charge->category_id  = 1;
-        $delivery_charge->weight       = 1;
-        $delivery_charge->same_day     = 50;
-        $delivery_charge->next_day     = 60;
-        $delivery_charge->sub_city     = 70;
-        $delivery_charge->outside_city = 80;
-        $delivery_charge->position     = 1;
-        $delivery_charge->status       = Status::ACTIVE;
-        $delivery_charge->save();
-        
-        $delivery_charge               = new DeliveryCharge();
-        $delivery_charge->company_id  = 2;
-        $delivery_charge->category_id  = 1;
-        $delivery_charge->weight       = 2;
-        $delivery_charge->same_day     = 90;
-        $delivery_charge->next_day     = 100;
-        $delivery_charge->sub_city     = 110;
-        $delivery_charge->outside_city = 120;
-        $delivery_charge->position     = 2;
-        $delivery_charge->status       = Status::ACTIVE;
-        $delivery_charge->save();
-        
-        $delivery_charge               = new DeliveryCharge();
-        $delivery_charge->company_id  = 2;
-        $delivery_charge->category_id  = 1;
-        $delivery_charge->weight       = 3;
-        $delivery_charge->same_day     = 130;
-        $delivery_charge->next_day     = 140;
-        $delivery_charge->sub_city     = 150;
-        $delivery_charge->outside_city = 160;
-        $delivery_charge->position     = 3;
-        $delivery_charge->status       = Status::ACTIVE;
-        $delivery_charge->save();
-        
-        $delivery_charge               = new DeliveryCharge();
-        $delivery_charge->company_id  = 2;
-        $delivery_charge->category_id  = 1;
-        $delivery_charge->weight       = 4;
-        $delivery_charge->same_day     = 170;
-        $delivery_charge->next_day     = 180;
-        $delivery_charge->sub_city     = 190;
-        $delivery_charge->outside_city = 200;
-        $delivery_charge->position     = 4;
-        $delivery_charge->status       = Status::ACTIVE;
-        $delivery_charge->save();
-        
-        $delivery_charge               = new DeliveryCharge();
-        $delivery_charge->company_id  = 2;
-        $delivery_charge->category_id  = 1;
-        $delivery_charge->weight       = 5;
-        $delivery_charge->same_day     = 210;
-        $delivery_charge->next_day     = 220;
-        $delivery_charge->sub_city     = 230;
-        $delivery_charge->outside_city = 240;
-        $delivery_charge->position     = 5;
-        $delivery_charge->status       = Status::ACTIVE;
-        $delivery_charge->save();
-        
-        $delivery_charge               = new DeliveryCharge();
-        $delivery_charge->company_id  = 2;
-        $delivery_charge->category_id  = 1;
-        $delivery_charge->weight       = 6;
-        $delivery_charge->same_day     = 250;
-        $delivery_charge->next_day     = 260;
-        $delivery_charge->sub_city     = 270;
-        $delivery_charge->outside_city = 280;
-        $delivery_charge->position     = 6;
-        $delivery_charge->status       = Status::ACTIVE;
-        $delivery_charge->save();
-        
-        $delivery_charge               = new DeliveryCharge();
-        $delivery_charge->company_id  = 2;
-        $delivery_charge->category_id  = 1;
-        $delivery_charge->weight       = 7;
-        $delivery_charge->same_day     = 290;
-        $delivery_charge->next_day     = 300;
-        $delivery_charge->sub_city     = 310;
-        $delivery_charge->outside_city = 320;
-        $delivery_charge->position     = 7;
-        $delivery_charge->status       = Status::ACTIVE;
-        $delivery_charge->save();
-        
-        $delivery_charge               = new DeliveryCharge();
-        $delivery_charge->company_id  = 2;
-        $delivery_charge->category_id  = 1;
-        $delivery_charge->weight       = 8;
-        $delivery_charge->same_day     = 340;
-        $delivery_charge->next_day     = 350;
-        $delivery_charge->sub_city     = 360;
-        $delivery_charge->outside_city = 370;
-        $delivery_charge->position     = 8;
-        $delivery_charge->status       = Status::ACTIVE;
-        $delivery_charge->save();
-        
-        $delivery_charge               = new DeliveryCharge();
-        $delivery_charge->company_id  = 2;
-        $delivery_charge->category_id  = 1;
-        $delivery_charge->weight       = 9;
-        $delivery_charge->same_day     = 380;
-        $delivery_charge->next_day     = 390;
-        $delivery_charge->sub_city     = 400;
-        $delivery_charge->outside_city = 410;
-        $delivery_charge->position     = 9;
-        $delivery_charge->status       = Status::ACTIVE;
-        $delivery_charge->save();
-        
-        $delivery_charge               = new DeliveryCharge();
-        $delivery_charge->company_id  = 2;
-        $delivery_charge->category_id  = 1;
-        $delivery_charge->weight       = 10;
-        $delivery_charge->same_day     = 420;
-        $delivery_charge->next_day     = 430;
-        $delivery_charge->sub_city     = 440;
-        $delivery_charge->outside_city = 450;
-        $delivery_charge->position     = 10;
-        $delivery_charge->status       = Status::ACTIVE;
-        $delivery_charge->save();
+    private const SOCIETE = 2;
 
+    private const CATEGORIE = 1;
+
+    /** [poids, Cotonou, Périphérie, Intérieur] — les montants du socle. */
+    private const GRILLE = [
+        [1, 60, 70, 80],
+        [2, 100, 110, 120],
+        [3, 140, 150, 160],
+        [4, 180, 190, 200],
+        [5, 220, 230, 240],
+        [6, 260, 270, 280],
+        [7, 300, 310, 320],
+        [8, 350, 360, 370],
+        [9, 390, 400, 410],
+        [10, 430, 440, 450],
+    ];
+
+    public function run(): void
+    {
+        $zones = app(ZoneCatalog::class)->installer(self::SOCIETE);
+
+        $nationales = [
+            DeliveryZone::COTONOU,
+            DeliveryZone::PERIPHERIE,
+            DeliveryZone::INTERIEUR,
+        ];
+
+        foreach (self::GRILLE as $position => $ligne) {
+            $poids = array_shift($ligne);
+
+            foreach ($nationales as $rang => $code) {
+                // Pas d'`updateOrCreate` : `company_id` n'est pas assignable en
+                // masse sur ce modèle du socle.
+                $tarif = new DeliveryCharge();
+                $tarif->company_id = self::SOCIETE;
+                $tarif->category_id = self::CATEGORIE;
+                $tarif->zone_id = $zones[$code]->id;
+                $tarif->weight = $poids;
+                $tarif->amount = $ligne[$rang];
+                $tarif->position = $position + 1;
+                $tarif->status = Status::ACTIVE;
+                $tarif->save();
+            }
+        }
     }
 }

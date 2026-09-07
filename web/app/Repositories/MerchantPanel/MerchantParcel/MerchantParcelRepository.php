@@ -316,14 +316,12 @@ class MerchantParcelRepository implements MerchantParcelInterface {
             // a reverser fabriques par le navigateur : le client choisissait sa facture.
             $charges = app(\App\Services\Parcel\ChargeCalculator::class)->calculate(
                 \App\Models\Backend\Merchant::find(Auth::user()->merchant->id),
-                (int) $request->delivery_type_id,
                 $request->category_id ? (int) $request->category_id : null,
                 $request->weight,
                 (float) $request->cash_collection,
                 $request->packaging_id ? (int) $request->packaging_id : null,
                 isset($request->fragileLiquid) && $request->fragileLiquid == 'on',
-                // D4, etape 5 bis : la route du colis. Sans zone, le calcul
-                // est celui d'avant, au franc pres.
+                // D4, etape 6 : la route du colis, desormais son seul tarif.
                 $request->zone_id ? (int) $request->zone_id : null,
                 $request->delay_id ? (int) $request->delay_id : null,
                 $request->destination_country
@@ -479,14 +477,12 @@ class MerchantParcelRepository implements MerchantParcelInterface {
             // a reverser fabriques par le navigateur : le client choisissait sa facture.
             $charges = app(\App\Services\Parcel\ChargeCalculator::class)->calculate(
                 \App\Models\Backend\Merchant::find(Auth::user()->merchant->id),
-                (int) $request->delivery_type_id,
                 $request->category_id ? (int) $request->category_id : null,
                 $request->weight,
                 (float) $request->cash_collection,
                 $request->packaging_id ? (int) $request->packaging_id : null,
                 isset($request->fragileLiquid) && $request->fragileLiquid == 'on',
-                // D4, etape 5 bis : la route du colis. Sans zone, le calcul
-                // est celui d'avant, au franc pres.
+                // D4, etape 6 : la route du colis, desormais son seul tarif.
                 $request->zone_id ? (int) $request->zone_id : null,
                 $request->delay_id ? (int) $request->delay_id : null,
                 $request->destination_country
@@ -665,14 +661,12 @@ class MerchantParcelRepository implements MerchantParcelInterface {
                 // a reverser fabriques par le navigateur : le client choisissait sa facture.
                 $charges = app(\App\Services\Parcel\ChargeCalculator::class)->calculate(
                     \App\Models\Backend\Merchant::find(Auth::user()->merchant->id),
-                    (int) $request->delivery_type_id,
                     $request->category_id ? (int) $request->category_id : null,
                     $request->weight,
                     (float) $request->cash_collection,
                     $request->packaging_id ? (int) $request->packaging_id : null,
                     isset($request->fragileLiquid) && $request->fragileLiquid == 'on',
-                    // D4, etape 5 bis : la route du colis. Sans zone, le calcul
-                    // est celui d'avant, au franc pres.
+                    // D4, etape 6 : la route du colis, desormais son seul tarif.
                     $request->zone_id ? (int) $request->zone_id : null,
                     $request->delay_id ? (int) $request->delay_id : null,
                     $request->destination_country

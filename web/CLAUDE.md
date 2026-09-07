@@ -69,31 +69,34 @@ avant les apps.
   rapproche `merchants.current_balance` de son relevé (`merchant_statements`).
   Ne corrige que les écarts **entièrement expliqués** par les annulations de
   livraisons partielles ; les autres, il les montre. Décision **D9**.
-- `php artisan beninlink:zones-tarifaires [--societe=] [--supplement=] [--appliquer]` —
-  convertit le barème hérité (4 colonnes) en barème par **zones** (**D4**) : constate,
-  puis écrit une ligne par zone aux montants d'aujourd'hui. Migration additive : sans
-  zones configurées, le tarif reste celui des colonnes.
-  Saisie à la main : *Réglages → Zones et barème* (`admin/delivery-zone`) — zones,
-  délais et leur supplément global, **forfaits CEDEAO par pays**, et la grille
-  tranche × zone. Le **code** d'une zone se fixe à la création (il porte le
-  rattachement du taux COD) et une zone qui porte des tarifs ne se supprime pas.
-  Zone CEDEAO entièrement tarifée : **forfait au pays** pour la livraison, **3 %**
-  de COD (clé `cedeao` de `merchants.cod_charges`, posée par migration sans écraser
-  un taux déjà négocié).
-  Forfaits CEDEAO tranchés (Togo 12 000, Nigeria 18 000, Burkina Faso 15 000) :
-  ils vivent dans `ZoneGridConverter::PAYS` et sont **créés s'ils manquent, jamais
-  réécrits** — un montant ajusté à l'écran survit à une relance de la conversion.
-  Un pays hors liste reste sans tarif, et la création est refusée avec son motif.
-  Un colis **facture par sa zone** dès qu'il en porte une (`parcels.zone_id`,
-  `parcels.delay_id`) : `ChargeCalculator` prend alors `resolveByZone()` et le
-  taux COD de la zone. Une route non tarifée est **refusée**
-  (`UnpricedDeliveryException`, règle `DeliveryRoutePriced`), jamais rabattue
-  sur une colonne héritée. Sans zone, le calcul est celui d'avant, au franc près.
-- `php artisan beninlink:bareme-herite [--societe=]` — **porte de l'étape 6** (**D4**) :
-  dit, société par société, ce qui dépend encore des quatre colonnes héritées (pas de
-  zones, tranches non couvertes, barèmes négociés non zonés, colis récents créés sans
-  zone). **Sort en erreur** tant qu'une société n'est pas prête, pour qu'un déploiement
-  s'arrête là. Ne corrige rien : la conversion reste `beninlink:zones-tarifaires`.
+- `php artisan beninlink:zones-tarifaires [--societe=] [--supplement=] [--installer]` —
+  installe le modèle par **zones** (**D4**) : les quatre zones (Cotonou, Périphérie,
+  Intérieur, CEDEAO), les trois délais avec le supplément « jour même » (300 F), et les
+  **forfaits CEDEAO par pays** (Togo 12 000, Nigeria 18 000, Burkina Faso 15 000).
+  Elle n'écrit **aucun montant de grille** : les tranches × zones se saisissent dans
+  *Réglages → Zones et barème* (`admin/delivery-zone`) — ces montants appartiennent au
+  transporteur. Les forfaits CEDEAO sont l'exception (tranchés par le métier) et restent
+  **créés s'ils manquent, jamais réécrits**.
+  Le **code** d'une zone se fixe à la création (il porte le rattachement du taux COD) et
+  une zone qui porte des tarifs ne se supprime pas. Les définitions vivent en un seul
+  endroit : `App\Services\Pricing\ZoneCatalog`.
+  **Depuis l'étape 6 (2026-09-07), la route est le seul axe de tarification.** Un colis
+  porte sa zone et son délai (`parcels.zone_id`, `parcels.delay_id`) ; sans zone,
+  `ChargeCalculator` **refuse** (`UnpricedDeliveryException::sansZone()`) plutôt que de
+  rendre zéro, et `zone_id` est `required` à la création. Une route non tarifée est
+  refusée de même (règle `DeliveryRoutePriced`), jamais rabattue sur une voisine.
+  L'import Excel lit une colonne **`zone_code`** (ou `zone_id`) ; les deux fichiers
+  modèles de `public/sample-parcel/` la portent.
+- `php artisan beninlink:tarification-prete [--societe=]` — dit, société par société,
+  si la tarification est **en état de facturer** (**D4**) : zones absentes, tranches
+  tarifées dans une zone et pas dans une autre, barèmes négociés sans zone, colis
+  récents créés sans zone. **Sort en erreur** tant qu'une société n'est pas prête, pour
+  qu'un déploiement s'arrête là. Ne corrige rien.
+  (S'appelait `beninlink:bareme-herite` tant qu'elle gardait la porte de l'étape 6.)
+- `php artisan beninlink:retours-annules [--societe=] [--marchand=] [--corriger] [--force]` —
+  rend au marchand le frais de retour qu'une annulation ne lui a jamais rendu, et le
+  reprend au livreur. Un colis dont le **relevé est déjà émis** est montré, jamais
+  touché : un avoir se décide avec l'expert-comptable (**D8**, **D9**).
 - `php artisan beninlink:journal-syscohada [--du=] [--au=] [--societe=] [--payes] [--fichier=]` —
   extrait des écritures d'une période, équilibre vérifié avant écriture. Le plan de
   comptes vit dans `config/syscohada.php` et reste une **proposition** tant que

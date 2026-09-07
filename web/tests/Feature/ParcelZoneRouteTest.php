@@ -12,7 +12,7 @@ use App\Models\Backend\DeliveryZone;
 use App\Models\Backend\Merchant;
 use App\Repositories\DeliveryZone\DeliveryZoneInterface;
 use App\Services\Parcel\ChargeCalculator;
-use App\Services\Pricing\ZoneGridConverter;
+use App\Services\Pricing\ZoneCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -60,12 +60,13 @@ class ParcelZoneRouteTest extends TestCase
         Auth::login($this->merchant->user);
     }
 
-    private function convertir(): void
+    /** Le montant zoné du jeu d'amorçage, pour une zone et une tranche. */
+    private function montantZone(string $code, int $poids = 1): float
     {
-        app(ZoneGridConverter::class)->convert(
-            (int) $this->merchant->company_id,
-            ZoneGridConverter::SAME_DAY_SURCHARGE
-        );
+        return (float) DeliveryCharge::companywise()
+            ->where('category_id', $this->categoryId)
+            ->where('zone_id', $this->zone($code)->id)
+            ->where('weight', $poids)->firstOrFail()->amount;
     }
 
     private function zone(string $code): DeliveryZone
@@ -77,7 +78,6 @@ class ParcelZoneRouteTest extends TestCase
     {
         return app(ChargeCalculator::class)->calculate(
             $this->merchant,
-            $route['delivery_type_id'] ?? 2,
             $this->categoryId,
             $route['weight'] ?? 1,
             $route['cash_collection'] ?? 10000,
@@ -102,50 +102,40 @@ class ParcelZoneRouteTest extends TestCase
 
     // ---- Sans zone, rien ne change ----------------------------------------
 
-    public function test_sans_zone_le_calcul_est_celui_du_bareme_herite(): void
+    /**
+     * Étape 6 : il n'y a plus de repli. Un colis sans zone n'est pas facturé
+     * « à l'ancien tarif », il n'a **pas de tarif** — et le calculateur le dit
+     * plutôt que de rendre zéro.
+     */
+    public function test_sans_zone_le_calcul_refuse(): void
     {
-        $this->convertir();
+        $this->expectException(UnpricedDeliveryException::class);
 
-        $herite = DeliveryCharge::companywise()->whereNull('zone_id')
-            ->where('category_id', $this->categoryId)->where('weight', 1)->firstOrFail();
-
-        // `delivery_type_id` = 2 → colonne `next_day`, comme depuis toujours.
-        $this->assertSame((float) $herite->next_day, $this->calculer()['delivery_charge']);
+        $this->calculer();
     }
 
     // ---- Avec une zone, c'est la grille qui facture ------------------------
 
     public function test_avec_une_zone_le_tarif_vient_de_la_grille(): void
     {
-        $this->convertir();
-
-        $herite = DeliveryCharge::companywise()->whereNull('zone_id')
-            ->where('category_id', $this->categoryId)->where('weight', 1)->firstOrFail();
-
         $peripherie = $this->calculer(['zone_id' => $this->zone(DeliveryZone::PERIPHERIE)->id]);
 
-        // La conversion a repris `sub_city` pour la Périphérie : le colis est
-        // désormais facturé par la ligne de zone, pas par la colonne.
-        $this->assertSame((float) $herite->sub_city, $peripherie['delivery_charge']);
+        $this->assertSame($this->montantZone(DeliveryZone::PERIPHERIE), $peripherie['delivery_charge']);
     }
 
     public function test_le_supplement_du_delai_sajoute_au_tarif_de_la_zone(): void
     {
-        $this->convertir();
-
         $zoneId = $this->zone(DeliveryZone::COTONOU)->id;
         $jourMeme = DeliveryDelay::companywise()->where('code', DeliveryDelay::SAME_DAY)->firstOrFail();
 
         $sans = $this->calculer(['zone_id' => $zoneId])['delivery_charge'];
         $avec = $this->calculer(['zone_id' => $zoneId, 'delay_id' => $jourMeme->id])['delivery_charge'];
 
-        $this->assertSame((float) ZoneGridConverter::SAME_DAY_SURCHARGE, $avec - $sans);
+        $this->assertSame((float) ZoneCatalog::SAME_DAY_SURCHARGE, $avec - $sans);
     }
 
     public function test_le_taux_cod_suit_la_zone_et_non_le_type_de_livraison(): void
     {
-        $this->convertir();
-
         $taux = $this->merchant->cod_charges;
 
         // `delivery_type_id` = 4 donnerait « hors ville » ; la zone Cotonou dit
@@ -161,7 +151,6 @@ class ParcelZoneRouteTest extends TestCase
 
     public function test_la_cedeao_facture_le_forfait_du_pays(): void
     {
-        $this->convertir();
         $cedeao = $this->zone(DeliveryZone::CEDEAO);
 
         // Le forfait du Togo vient de la décision du métier, posée par la
@@ -178,8 +167,6 @@ class ParcelZoneRouteTest extends TestCase
 
     public function test_un_pays_non_tarife_fait_echouer_le_calcul(): void
     {
-        $this->convertir();
-
         $this->expectException(UnpricedDeliveryException::class);
 
         // Le Ghana n'a pas de forfait : on refuse plutôt que d'emprunter le
@@ -212,8 +199,6 @@ class ParcelZoneRouteTest extends TestCase
 
     public function test_la_validation_refuse_une_route_non_tarifee(): void
     {
-        $this->convertir();
-
         $base = [
             'merchant_id' => $this->merchant->id,
             'category_id' => $this->categoryId,
@@ -237,8 +222,6 @@ class ParcelZoneRouteTest extends TestCase
 
     public function test_la_validation_laisse_passer_une_route_tarifee(): void
     {
-        $this->convertir();
-
         $validation = $this->valider([
             'merchant_id' => $this->merchant->id,
             'category_id' => $this->categoryId,
@@ -253,10 +236,13 @@ class ParcelZoneRouteTest extends TestCase
         $this->assertFalse($validation->fails(), (string) $validation->errors());
     }
 
-    public function test_sans_zone_la_validation_ne_dit_rien(): void
+    /**
+     * Il n'y a plus de chemin exempt : sans zone, la création est refusée sur
+     * le champ plutôt que de remonter une erreur serveur depuis le
+     * calculateur.
+     */
+    public function test_sans_zone_la_validation_refuse(): void
     {
-        // Le chemin hérité doit rester exempt : la règle ne s'applique qu'à un
-        // colis qui a explicitement choisi une zone.
         $validation = $this->valider([
             'shop_id' => 1,
             'category_id' => $this->categoryId,
@@ -266,6 +252,7 @@ class ParcelZoneRouteTest extends TestCase
             'customer_phone' => '0022997000041',
         ], StoreRequestMarchand::class);
 
-        $this->assertFalse($validation->fails(), (string) $validation->errors());
+        $this->assertTrue($validation->fails());
+        $this->assertArrayHasKey('zone_id', $validation->errors()->toArray());
     }
 }

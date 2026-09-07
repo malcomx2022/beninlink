@@ -4,13 +4,14 @@ namespace Tests\Feature;
 
 use App\Enums\Status;
 use App\Models\Backend\DeliveryCharge;
+use App\Models\Backend\DeliveryDelay;
 use App\Models\Backend\Deliverycategory as DeliveryCategory;
 use App\Models\Backend\DeliveryZone;
 use App\Models\Backend\GeneralSettings;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\MerchantDeliveryCharge;
 use App\Repositories\DeliveryZone\DeliveryZoneInterface;
-use App\Services\Pricing\ZoneGridConverter;
+use App\Services\Pricing\ZoneCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\Sanctum;
@@ -50,6 +51,11 @@ class DeliveryZoneApiTest extends TestCase
         config(['rxcourier.api_key' => self::API_KEY]);
 
         $this->merchant = Merchant::firstOrFail();
+
+        // Le jeu d'amorçage donne au marchand de démonstration un barème
+        // négocié complet. Ces tests posent le leur : on part d'une table nette
+        // pour que ce soit bien la ligne du test qui réponde.
+        MerchantDeliveryCharge::query()->delete();
         $this->categoryId = DeliveryCategory::firstOrFail()->id;
     }
 
@@ -84,51 +90,61 @@ class DeliveryZoneApiTest extends TestCase
         return $ligne;
     }
 
-    private function convertir(float $supplement = ZoneGridConverter::SAME_DAY_SURCHARGE): void
+    private function convertir(float $supplement = ZoneCatalog::SAME_DAY_SURCHARGE): void
     {
         Auth::login($this->merchant->user);
-        app(ZoneGridConverter::class)->convert((int) $this->merchant->company_id, $supplement);
+        app(ZoneCatalog::class)->installer((int) $this->merchant->company_id, $supplement);
         Auth::logout();
     }
 
     // ---- La transition -----------------------------------------------------
 
-    public function test_sans_zones_le_contrat_herite_ne_bouge_pas(): void
+    /**
+     * Une société sans zones sert un contrat vide plutôt que d'inventer une
+     * grille. Depuis l'étape 6 elle ne peut plus rien facturer non plus — c'est
+     * ce que `beninlink:tarification-prete` signale.
+     */
+    public function test_sans_zones_le_contrat_reste_bien_forme(): void
     {
+        DeliveryCharge::query()->delete();
+        DeliveryZone::where('company_id', $this->merchant->company_id)->delete();
+        DeliveryDelay::where('company_id', $this->merchant->company_id)->delete();
+
         $reponse = $this->appel('settings/delivery-charges');
 
-        // Le tableau est là, vide ou non, avec ses clés d'origine.
         $reponse->assertJsonStructure(['data' => ['deliveryCharges', 'zones', 'delays']]);
         $this->assertSame([], $reponse->json('data.zones'));
         $this->assertSame([], $reponse->json('data.delays'));
     }
 
-    public function test_les_quatre_colonnes_restent_servies_apres_la_bascule(): void
+    /**
+     * Le contrat d'un barème négocié suit le modèle : une zone, un montant.
+     *
+     * Les quatre colonnes ont été servies aux apps tant qu'un APK posé pouvait
+     * les lire. L'étape 6 les retire du barème le 2026-09-07 ; les servir plus
+     * longtemps aurait été annoncer un prix que le serveur ne sait plus
+     * calculer.
+     */
+    public function test_le_bareme_negocie_est_servi_par_zone(): void
     {
-        // Un barème négocié, forme héritée : c'est ce que lit un APK déjà posé.
-        $negocie = $this->chargeNegociee([
-            'weight' => 1,
-            'same_day' => 1000, 'next_day' => 800, 'sub_city' => 1500, 'outside_city' => 2500,
-        ]);
-
-        $this->convertir();
+        $cotonou = DeliveryZone::where('company_id', $this->merchant->company_id)
+            ->where('code', DeliveryZone::COTONOU)->firstOrFail();
+        $negocie = $this->chargeNegociee(['zone_id' => $cotonou->id, 'weight' => 1, 'amount' => 800]);
 
         $ligne = $this->appel('settings/delivery-charges')->json('data.deliveryCharges.0');
 
         foreach (['id', 'merchant_id', 'category_id', 'delivery_charge_id', 'category', 'weight',
-            'same_day', 'next_day', 'sub_city', 'outside_city', 'status', 'statusName'] as $cle) {
-            $this->assertArrayHasKey($cle, $ligne, "clé {$cle} disparue du contrat hérité");
+            'zone_id', 'zone_code', 'amount', 'status', 'statusName'] as $cle) {
+            $this->assertArrayHasKey($cle, $ligne, "clé {$cle} absente du contrat");
         }
-        // Même valeur, même forme qu'avant : c'est ce que lit l'APK déjà posé.
-        $this->assertSame((string) $negocie->fresh()->same_day, $ligne['same_day']);
+        $this->assertSame((string) $negocie->fresh()->amount, $ligne['amount']);
+        $this->assertSame(DeliveryZone::COTONOU, $ligne['zone_code']);
     }
 
     // ---- Ce que `zones` annonce -------------------------------------------
 
     public function test_les_zones_portent_leur_grille_et_leurs_forfaits(): void
     {
-        $this->convertir();
-
         // La conversion pose les forfaits tranchés par le métier ; rien à
         // saisir ici, c'est justement ce que le test doit constater.
         $zones = collect($this->appel('settings/delivery-charges')->json('data.zones'))->keyBy('code');
@@ -143,11 +159,10 @@ class DeliveryZoneApiTest extends TestCase
         $this->assertFalse($cotonou['export']);
         $this->assertSame('inside_city', $cotonou['cod_key']);
         $this->assertSame([], $cotonou['countries']);
-        // Le montant attendu est celui du barème en base : la conversion
-        // reprend `next_day` pour Cotonou, sans rien déplacer.
-        $herite = DeliveryCharge::where('company_id', $this->merchant->company_id)
-            ->whereNull('zone_id')->where('weight', 1)->firstOrFail();
-        $this->assertSame((string) (int) $herite->next_day, collect($cotonou['rates'])->firstWhere('weight', '1')['amount']);
+        // Le montant attendu est celui de la grille zonée en base.
+        $grille = DeliveryCharge::where('company_id', $this->merchant->company_id)
+            ->where('zone_id', $zones[DeliveryZone::COTONOU]['id'])->where('weight', 1)->firstOrFail();
+        $this->assertSame((string) (int) $grille->amount, collect($cotonou['rates'])->firstWhere('weight', '1')['amount']);
 
         // La zone d'export : pas de poids, un forfait par pays. Elle a
         // désormais sa propre clé COD — `cedeao`, 3 % depuis le 2026-09-06 —
@@ -164,8 +179,6 @@ class DeliveryZoneApiTest extends TestCase
 
     public function test_le_supplement_de_delai_est_servi_une_fois_pour_toutes_les_zones(): void
     {
-        $this->convertir();
-
         $delais = collect($this->appel('settings/delivery-charges')->json('data.delays'))->keyBy('code');
 
         $this->assertSame('300', $delais['same_day']['surcharge']);
@@ -182,8 +195,6 @@ class DeliveryZoneApiTest extends TestCase
 
     public function test_la_grille_servie_est_celle_que_le_marchand_paiera(): void
     {
-        $this->convertir();
-
         $cotonou = DeliveryZone::where('company_id', $this->merchant->company_id)
             ->where('code', DeliveryZone::COTONOU)->firstOrFail();
 
@@ -195,15 +206,16 @@ class DeliveryZoneApiTest extends TestCase
         $this->assertSame('650', collect($zones[DeliveryZone::COTONOU]['rates'])->firstWhere('weight', '1')['amount']);
 
         // Les autres zones gardent le barème de la société.
-        $herite = DeliveryCharge::where('company_id', $this->merchant->company_id)
-            ->whereNull('zone_id')->where('weight', 1)->firstOrFail();
-        $this->assertSame((string) (int) $herite->sub_city, collect($zones[DeliveryZone::PERIPHERIE]['rates'])->firstWhere('weight', '1')['amount']);
+        $peripherie = DeliveryCharge::where('company_id', $this->merchant->company_id)
+            ->where('zone_id', $zones[DeliveryZone::PERIPHERIE]['id'])->where('weight', 1)->firstOrFail();
+        $this->assertSame(
+            (string) (int) $peripherie->amount,
+            collect($zones[DeliveryZone::PERIPHERIE]['rates'])->firstWhere('weight', '1')['amount'],
+        );
     }
 
     public function test_une_zone_dune_autre_societe_nest_jamais_servie(): void
     {
-        $this->convertir();
-
         $voisine = GeneralSettings::findOrFail($this->merchant->company_id)->replicate();
         $voisine->name = 'Transporteur voisin';
         $voisine->save();

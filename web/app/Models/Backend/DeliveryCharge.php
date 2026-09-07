@@ -20,10 +20,6 @@ class DeliveryCharge extends Model
                 'zone_id',
                 'amount',
                 'weight',
-                'same_day',
-                'next_day',
-                'sub_city',
-                'outside_city',
                 'position',
             ];
 
@@ -33,10 +29,6 @@ class DeliveryCharge extends Model
             $logAttributes = [
                 'category.name',
                 'weight',
-                'same_day',
-                'next_day',
-                'sub_city',
-                'outside_city',
                 'position',
             ];
             return LogOptions::defaults()
@@ -45,6 +37,12 @@ class DeliveryCharge extends Model
                 ->setDescriptionForEvent(fn(string $eventName) => "{$eventName}");
         }
 
+
+    /** La zone de la ligne (D4) — une ligne de barème = catégorie × zone × tranche. */
+    public function zone()
+    {
+        return $this->belongsTo(DeliveryZone::class, 'zone_id');
+    }
 
     public function getMyStatusAttribute()
     {

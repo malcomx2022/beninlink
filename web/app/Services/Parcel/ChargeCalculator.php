@@ -51,11 +51,6 @@ class ChargeCalculator
         DeliveryZone::CEDEAO => 'cedeao',
     ];
 
-    /** Types de livraison partageant le tarif COD « intra-ville ». */
-    private const INSIDE_CITY_TYPES = [1, 2];
-    private const SUB_CITY_TYPE = 3;
-    private const OUTSIDE_CITY_TYPE = 4;
-
     public function __construct(private ?DeliveryChargeResolver $resolver = null)
     {
         $this->resolver ??= new DeliveryChargeResolver();
@@ -71,7 +66,6 @@ class ChargeCalculator
      */
     public function calculate(
         Merchant $merchant,
-        int $deliveryTypeId,
         ?int $categoryId,
         $weight,
         float $cashCollection,
@@ -81,17 +75,16 @@ class ChargeCalculator
         ?int $delayId = null,
         ?string $country = null
     ): array {
-        // D4, étape 5 bis — la route du colis, quand il en porte une.
-        // Sans zone, tout ce qui suit est le calcul d'avant, au franc près.
+        // D4, étape 6 — il n'existe plus qu'un axe de tarification : la route.
+        // Un colis sans zone n'a pas de tarif, et le dire vaut mieux que zéro.
         $zone = $zoneId === null ? null : DeliveryZone::companywise()->find($zoneId);
 
-        $deliveryCharge = $zone === null
-            ? $this->deliveryCharge($merchant, $categoryId, $weight, $deliveryTypeId)
-            : $this->deliveryChargeParZone($merchant, $categoryId, $weight, $zone, $delayId, $country);
+        if ($zone === null) {
+            throw UnpricedDeliveryException::sansZone();
+        }
 
-        $codRate = $zone === null
-            ? $this->codRate($merchant, $deliveryTypeId)
-            : $this->codRateForZone($merchant, $zone);
+        $deliveryCharge = $this->deliveryChargeParZone($merchant, $categoryId, $weight, $zone, $delayId, $country);
+        $codRate = $this->codRateForZone($merchant, $zone);
         $codAmount = $this->percentage($cashCollection, $codRate);
 
         $packagingAmount = $this->packagingAmount($packagingId);
@@ -117,15 +110,6 @@ class ChargeCalculator
             'total_delivery_amount' => $subTotal,
             'current_payable' => $cashCollection - ($subTotal + $vatAmount),
         ];
-    }
-
-    /**
-     * Tarif de livraison : barème du marchand, sinon barème de la société,
-     * par tranche de poids — voir `DeliveryChargeResolver` (S8, S9).
-     */
-    private function deliveryCharge(Merchant $merchant, ?int $categoryId, $weight, int $deliveryTypeId): float
-    {
-        return $this->resolver->resolve($merchant->id, $categoryId, $weight, $deliveryTypeId);
     }
 
     /**
@@ -169,21 +153,6 @@ class ChargeCalculator
         $key = self::COD_KEY_BY_ZONE[$zone->code] ?? null;
 
         return $key === null ? 0.0 : (float) ($rates[$key] ?? 0);
-    }
-
-    /** Taux COD du marchand, en pourcentage, selon la zone de livraison. */
-    private function codRate(Merchant $merchant, int $deliveryTypeId): float
-    {
-        $rates = $merchant->cod_charges ?? [];
-
-        $key = match (true) {
-            in_array($deliveryTypeId, self::INSIDE_CITY_TYPES, true) => 'inside_city',
-            $deliveryTypeId === self::SUB_CITY_TYPE => 'sub_city',
-            $deliveryTypeId === self::OUTSIDE_CITY_TYPE => 'outside_city',
-            default => null,
-        };
-
-        return $key !== null ? (float) ($rates[$key] ?? 0) : 0.0;
     }
 
     private function packagingAmount(?int $packagingId): float

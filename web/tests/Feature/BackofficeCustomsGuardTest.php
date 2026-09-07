@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Tests\Concerns\SeedsTenant;
+use App\Models\Backend\DeliveryZone;
 use Tests\TestCase;
 
 /**
@@ -65,6 +66,7 @@ class BackofficeCustomsGuardTest extends TestCase
             'merchant_id' => Merchant::firstOrFail()->id,
             'category_id' => 1,
             'delivery_type_id' => 1,
+            'zone_id' => DeliveryZone::where('code', DeliveryZone::COTONOU)->value('id'),
             'customer_name' => 'Aicha Kora',
             'customer_address' => 'Cotonou, Akpakpa',
             'customer_phone' => '0022997000041',
@@ -121,6 +123,7 @@ class BackofficeCustomsGuardTest extends TestCase
             'shop_id' => MerchantShops::firstOrFail()->id,
             'category_id' => 1,
             'delivery_type_id' => 1,
+            'zone_id' => DeliveryZone::where('code', DeliveryZone::COTONOU)->value('id'),
             'customer_name' => 'Aicha Kora',
             'customer_address' => 'Cotonou, Akpakpa',
             'customer_phone' => '0022997000041',

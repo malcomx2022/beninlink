@@ -40,10 +40,8 @@
                                     <th>{{ __('levels.id') }}</th>
                                     <th>{{ __('levels.category') }}</th>
                                     <th>{{ __('levels.weight') }}</th>
-                                    <th>{{ __('levels.same_day') }}</th>
-                                    <th>{{ __('levels.next_day') }}</th>
-                                    <th>{{ __('levels.sub_city') }}</th>
-                                    <th>{{ __('levels.outside_city') }}</th>
+                                    <th>{{ __('delivery_zone.zone') }}</th>
+                                    <th>{{ __('delivery_zone.amount') }}</th>
                                     <th>{{ __('levels.status') }}</th>
                                 </tr>
                             </thead>
@@ -54,10 +52,8 @@
                                     <td>{{$i++}}</td>
                                     <td>{{$delivery_charge->deliveryCharge->category->title}}</td>
                                     <td>{{$delivery_charge->deliveryCharge->weight ?? 0}}</td>
-                                    <td>{{ formatAmount($delivery_charge->same_day) }}</td>
-                                    <td>{{ formatAmount($delivery_charge->next_day) }}</td>
-                                    <td>{{ formatAmount($delivery_charge->sub_city) }}</td>
-                                    <td>{{ formatAmount($delivery_charge->outside_city) }}</td>
+                                    <td>{{ $delivery_charge->zone?->name ?? '—' }}</td>
+                                    <td>{{ formatAmount($delivery_charge->amount) }}</td>
                                     <td>{!! $delivery_charge->my_status !!}</td>
                                 </tr>
                                 @endforeach

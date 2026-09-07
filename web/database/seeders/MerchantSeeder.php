@@ -53,22 +53,23 @@ class MerchantSeeder extends Seeder
         $merchant->address             = "Dhaka";
         $merchant->save();
 
-        $deliveryCharges =  DeliveryCharge::with('category')->orderBy('position')->get();
+        // Barème négocié : une ligne par tranche ET par zone depuis l'étape 6
+        // (D4). Le marchand de démonstration reprend les montants de la
+        // société — ce qui compte ici est que le chemin négocié existe, pas
+        // qu'il soit avantageux.
+        $deliveryCharges = DeliveryCharge::with('category')->orderBy('position')->get();
 
-        if(!blank($deliveryCharges)){
-            foreach ($deliveryCharges as $delivery){
-                $deliveryCharge                      = new MerchantDeliveryCharge();
-                $deliveryCharge->merchant_id         = $merchant->id;
-                $deliveryCharge->delivery_charge_id  = $delivery->id;
-                $deliveryCharge->category_id         = $delivery->category_id;
-                $deliveryCharge->weight              = $delivery->weight;
-                $deliveryCharge->same_day            = $delivery->same_day;
-                $deliveryCharge->next_day            = $delivery->next_day;
-                $deliveryCharge->sub_city            = $delivery->sub_city;
-                $deliveryCharge->outside_city        = $delivery->outside_city;
-                $deliveryCharge->status              = Status::ACTIVE;
-                $deliveryCharge->save();
-            }
+        foreach ($deliveryCharges as $delivery) {
+            $deliveryCharge                      = new MerchantDeliveryCharge();
+            $deliveryCharge->company_id          = $delivery->company_id;
+            $deliveryCharge->merchant_id         = $merchant->id;
+            $deliveryCharge->delivery_charge_id  = $delivery->id;
+            $deliveryCharge->category_id         = $delivery->category_id;
+            $deliveryCharge->zone_id             = $delivery->zone_id;
+            $deliveryCharge->weight              = $delivery->weight;
+            $deliveryCharge->amount              = $delivery->amount;
+            $deliveryCharge->status              = Status::ACTIVE;
+            $deliveryCharge->save();
         }
     }
 }

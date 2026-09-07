@@ -457,7 +457,6 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::post('parcel/hub',                               [ParcelController::class, 'getHub'])->name('parcel.hub.get');
                         Route::post('parcel/merchant/shops',                    [ParcelController::class, 'merchantShops'])->name('parcel.merchant.shops');
                         Route::post('parcel/delivery-category',                 [ParcelController::class, 'deliveryWeight'])->name('parcel.deliveryCategory.deliveryWeight');
-                        Route::post('parcel/delivery-charge',                   [ParcelController::class, 'deliveryCharge'])->name('parcel.deliveryCharge.get');
                         Route::post('parcel/quote',                             ParcelQuoteController::class)->name('parcel.quote');
                         // Chantier 5 — douane. Les ecrans empruntent les permissions
                         // parcel_* : PermissionSeeder n'est pas rejouable, voir le controleur.
@@ -902,7 +901,6 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::post('parcel/merchant',          [MerchantParcelController::class, 'getMerchant'])->name('merchant-panel.parcel.merchant.get');
                         Route::post('parcel/merchant/shops',    [MerchantParcelController::class, 'merchantShops'])->name('merchant-panel.parcel.merchant.shops');
                         Route::post('parcel/delivery-category', [MerchantParcelController::class, 'deliveryWeight'])->name('merchant-panel.parcel.deliveryCategory.deliveryWeight');
-                        Route::post('parcel/delivery-charge',   [MerchantParcelController::class, 'deliveryCharge'])->name('merchant-panel.parcel.deliveryCharge.get');
                         Route::post('parcel/quote',             ParcelQuoteController::class)->name('merchant-panel.parcel.quote');
                         //import
                         Route::get('parcel/import-parcel',  [MerchantParcelController::class, 'parcelImportExport'])->name('merchant-panel.parcel.parcel-import');
