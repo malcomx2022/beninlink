@@ -22,54 +22,18 @@ use Illuminate\Database\Eloquent\Model;
  *   - S9 : le repli ignorait le poids et rendait la **première ligne** de la
  *     catégorie — un colis lourd passait au tarif le plus léger, en silence.
  *
- * Règle appliquée ici, sans changer le schéma (une ligne = un poids entier) :
- * chaque ligne vaut « jusqu'à N kg ». On cherche le poids exact, sinon la
- * **tranche immédiatement supérieure**, sinon la **plus lourde** du barème.
- * Un colis n'est jamais facturé à une tranche plus légère que son poids.
- * Le barème négocié du marchand a priorité sur celui de la société.
+ * La règle de poids qui corrigeait S9 **survit au changement de modèle**, et
+ * c'est délibéré : une ligne vaut « jusqu'à N kg », on cherche le poids exact,
+ * sinon la tranche immédiatement supérieure, sinon la plus lourde. Un colis
+ * n'est jamais facturé à une tranche plus légère que son poids. Le barème
+ * négocié du marchand garde sa priorité sur celui de la société.
+ *
+ * Depuis l'**étape 6** (2026-09-07), il n'y a plus qu'un seul chemin : la
+ * route. Les quatre colonnes héritées et le `resolve()` qui les lisait ont
+ * disparu avec elles.
  */
 class DeliveryChargeResolver
 {
-    /** Colonne tarifaire par type de livraison (`App\Enums\DeliveryType`). */
-    private const COLUMNS = [
-        1 => 'same_day',
-        2 => 'next_day',
-        3 => 'sub_city',
-        4 => 'outside_city',
-    ];
-
-    public function resolve(int $merchantId, ?int $categoryId, $weight, int $deliveryTypeId): float
-    {
-        $tier = $this->tier($merchantId, $categoryId, $weight);
-        $column = self::COLUMNS[$deliveryTypeId] ?? null;
-
-        if ($tier === null || $column === null) {
-            return 0.0;
-        }
-
-        return (float) ($tier->{$column} ?? 0);
-    }
-
-    /** Ligne de barème applicable, ou null si aucun barème n'existe. */
-    public function tier(int $merchantId, ?int $categoryId, $weight): ?Model
-    {
-        if ($categoryId === null) {
-            return null;
-        }
-
-        $weight = max(0, (float) $weight);
-
-        $merchant = MerchantDeliveryCharge::query()
-            ->where('merchant_id', $merchantId)
-            ->where('category_id', $categoryId);
-
-        $company = DeliveryCharge::companywise()->where('category_id', $categoryId);
-
-        return $this->pick($merchant, $weight)
-            ?? $this->pick($company, $weight)
-            ?? $company->orderByDesc('weight')->first();
-    }
-
     /**
      * Tarif du **nouveau modèle** (D4) : une zone, un poids, un délai.
      *
@@ -79,10 +43,10 @@ class DeliveryChargeResolver
      *     zone — c'est ce qui empêche de revenir aux quatre colonnes ;
      *   - la **CEDEAO se facture au pays**, forfait, sans regarder le poids.
      *
-     * Renvoie `null` quand la société n'a pas encore de zones : l'appelant
-     * retombe alors sur `resolve()`, c'est-à-dire sur les quatre colonnes
-     * d'origine. Une installation qui ne configure rien ne change pas de
-     * tarif — la garantie que tient `DeliveryPricingBaselineTest`.
+     * Renvoie `null` quand la route n'est pas tarifée — zone sans grille, ou
+     * pays d'export sans forfait. Il n'y a plus de repli depuis l'étape 6 :
+     * l'appelant **refuse** le calcul plutôt que d'emprunter un montant
+     * voisin. On ne devine pas un prix.
      */
     public function resolveByZone(
         int $merchantId,

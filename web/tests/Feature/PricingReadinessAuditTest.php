@@ -12,8 +12,7 @@ use App\Models\Backend\Merchant;
 use App\Models\Backend\MerchantDeliveryCharge;
 use App\Models\Backend\Parcel;
 use App\Repositories\DeliveryZone\DeliveryZoneInterface;
-use App\Services\Pricing\LegacyGridAudit;
-use App\Services\Pricing\ZoneGridConverter;
+use App\Services\Pricing\PricingReadinessAudit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Tests\Concerns\SeedsTenant;
@@ -32,7 +31,7 @@ use Tests\TestCase;
  * **sorte en erreur** tant qu'une société n'est pas prête — pour qu'un
  * déploiement automatisé s'arrête plutôt que de continuer.
  */
-class LegacyGridAuditTest extends TestCase
+class PricingReadinessAuditTest extends TestCase
 {
     use RefreshDatabase;
     use SeedsTenant;
@@ -58,28 +57,34 @@ class LegacyGridAuditTest extends TestCase
 
     private function audit(): array
     {
-        return app(LegacyGridAudit::class)->auditerSociete($this->societe->fresh());
+        return app(PricingReadinessAudit::class)->auditerSociete($this->societe->fresh());
     }
 
-    private function convertir(): void
+    /**
+     * Depuis l'étape 6, le jeu d'amorçage installe les zones et écrit une
+     * grille zonée : une société fraîchement semée est **déjà** en état de
+     * facturer. Les tests partent donc de là et cassent une chose à la fois.
+     */
+    private function retirerLesZones(): void
     {
-        app(ZoneGridConverter::class)->convert((int) $this->societe->id, ZoneGridConverter::SAME_DAY_SURCHARGE);
+        DeliveryCharge::where('company_id', $this->societe->id)->delete();
+        DeliveryZone::where('company_id', $this->societe->id)->delete();
     }
 
     // ---- Ce qui bloque -----------------------------------------------------
 
     public function test_une_societe_sans_zone_nest_pas_prete(): void
     {
+        $this->retirerLesZones();
         $audit = $this->audit();
 
-        $this->assertFalse(app(LegacyGridAudit::class)->estPrete($audit));
-        $this->assertStringContainsString('aucune zone configurée', $audit['blocages'][0]);
+        $this->assertFalse(app(PricingReadinessAudit::class)->estPrete($audit));
+        $this->assertStringContainsString('ne peut facturer aucun colis', $audit['blocages'][0]);
     }
 
-    public function test_une_tranche_heritee_sans_equivalent_zone_bloque(): void
+    public function test_une_tranche_sans_tarif_zone_bloque(): void
     {
-        $this->convertir();
-        $this->assertTrue(app(LegacyGridAudit::class)->estPrete($this->audit()));
+        $this->assertTrue(app(PricingReadinessAudit::class)->estPrete($this->audit()));
 
         // Une tranche zonée qui disparaît : le tarif existe dans l'ancien monde
         // et plus dans le nouveau. Après l'étape 6, la création serait refusée.
@@ -88,35 +93,34 @@ class LegacyGridAuditTest extends TestCase
         DeliveryCharge::where('zone_id', $cotonou->id)->orderBy('weight')->first()->delete();
 
         $audit = $this->audit();
-        $this->assertFalse(app(LegacyGridAudit::class)->estPrete($audit));
+        $this->assertFalse(app(PricingReadinessAudit::class)->estPrete($audit));
         $this->assertStringContainsString('sans tarif zoné', implode(' | ', $audit['blocages']));
     }
 
-    public function test_un_bareme_negocie_reste_sur_les_colonnes_bloque(): void
+    public function test_un_bareme_negocie_sans_zone_bloque(): void
     {
-        $this->convertir();
-
         $ligne = new MerchantDeliveryCharge();
         $ligne->company_id = $this->societe->id;
         $ligne->merchant_id = $this->merchant->id;
         $ligne->delivery_charge_id = DeliveryCharge::where('company_id', $this->societe->id)
-            ->whereNull('zone_id')->orderBy('weight')->firstOrFail()->id;
+            ->orderBy('weight')->firstOrFail()->id;
         $ligne->category_id = $this->categoryId;
         $ligne->weight = 1;
-        $ligne->same_day = 900;
+        // Sans zone : le marchand a perdu son tarif négocié et retombe sur
+        // celui de la société, sans que rien ne le dise.
+        $ligne->amount = 900;
         $ligne->status = Status::ACTIVE;
         $ligne->save();
 
         $audit = $this->audit();
-        $this->assertFalse(app(LegacyGridAudit::class)->estPrete($audit));
+        $this->assertFalse(app(PricingReadinessAudit::class)->estPrete($audit));
         // Le marchand perdrait son tarif négocié sans que rien ne le dise.
         $this->assertStringContainsString('négocié', implode(' | ', $audit['blocages']));
     }
 
     public function test_un_colis_recent_sans_zone_bloque(): void
     {
-        $this->convertir();
-        $this->assertTrue(app(LegacyGridAudit::class)->estPrete($this->audit()));
+        $this->assertTrue(app(PricingReadinessAudit::class)->estPrete($this->audit()));
 
         $colis = new Parcel();
         $colis->forceFill([
@@ -133,18 +137,17 @@ class LegacyGridAuditTest extends TestCase
 
         $audit = $this->audit();
 
-        // Le signal le plus honnête sur l'état du parc : un écran ou une app en
-        // circulation utilise encore le chemin hérité.
+        // Le signal le plus honnête sur l'état du parc : un colis sans zone ne
+        // devrait plus pouvoir naître — un chemin de création contourne le
+        // calculateur.
         $this->assertSame(1, $audit['colis_sans_zone']);
-        $this->assertFalse(app(LegacyGridAudit::class)->estPrete($audit));
+        $this->assertFalse(app(PricingReadinessAudit::class)->estPrete($audit));
     }
 
     // ---- Ce qui n'est qu'un avertissement ---------------------------------
 
     public function test_une_zone_dexport_sans_forfait_avertit_sans_bloquer(): void
     {
-        $this->convertir();
-
         // La conversion pose les forfaits tranchés par le métier ; on les
         // retire pour retrouver le cas d'une zone d'export non tarifée.
         $cedeao = app(DeliveryZoneInterface::class)->zoneExport();
@@ -155,16 +158,14 @@ class LegacyGridAuditTest extends TestCase
         // Une zone d'export non tarifée ne l'était pas davantage avant
         // l'étape 6 : elle ne peut pas bloquer une suppression qui ne la
         // concerne pas. Mais il faut la voir.
-        $this->assertTrue(app(LegacyGridAudit::class)->estPrete($audit));
+        $this->assertTrue(app(PricingReadinessAudit::class)->estPrete($audit));
         $this->assertStringContainsString('aucun pays tarifé', implode(' | ', $audit['avertissements']));
     }
 
-    public function test_les_forfaits_poses_par_la_conversion_levent_lavertissement(): void
+    public function test_les_forfaits_poses_a_l_installation_levent_lavertissement(): void
     {
-        $this->convertir();
-
-        // Togo, Nigeria, Burkina : la décision du métier, écrite par la
-        // conversion. L'avertissement n'a donc plus lieu d'être.
+        // Togo, Nigeria, Burkina : la décision du métier, posée par
+        // `ZoneCatalog`. L'avertissement n'a donc plus lieu d'être.
         $this->assertSame([], $this->audit()['avertissements']);
     }
 
@@ -172,18 +173,18 @@ class LegacyGridAuditTest extends TestCase
 
     public function test_la_commande_sort_en_erreur_tant_quune_societe_nest_pas_prete(): void
     {
+        $this->retirerLesZones();
+
         // Un déploiement automatisé doit s'arrêter là, pas continuer.
-        $this->artisan('beninlink:bareme-herite', ['--societe' => $this->societe->id])
-            ->expectsOutputToContain('aucune zone configurée')
+        $this->artisan('beninlink:tarification-prete', ['--societe' => $this->societe->id])
+            ->expectsOutputToContain('ne peut facturer aucun colis')
             ->assertFailed();
     }
 
-    public function test_la_commande_reussit_une_fois_la_conversion_faite(): void
+    public function test_la_commande_reussit_sur_une_societe_en_etat_de_facturer(): void
     {
-        $this->convertir();
-
-        $this->artisan('beninlink:bareme-herite', ['--societe' => $this->societe->id])
-            ->expectsOutputToContain("l'étape 6 peut être envisagée")
+        $this->artisan('beninlink:tarification-prete', ['--societe' => $this->societe->id])
+            ->expectsOutputToContain('tarife par zones')
             ->assertSuccessful();
     }
 }

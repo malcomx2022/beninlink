@@ -10,8 +10,10 @@ use App\Models\Backend\Merchant;
 use App\Models\Backend\Parcel;
 use App\Models\Backend\Wallet;
 use App\Models\User;
+use App\Services\Parcel\DeliveryChargeResolver;
 use App\Services\Pilote\PiloteDataset;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\Sanctum;
 use Tests\Concerns\SeedsTenant;
 use Tests\TestCase;
@@ -51,11 +53,24 @@ class PiloteDatasetTest extends TestCase
         $this->assertSame('3202600010001', $merchant->ifu);
         $this->assertSame((int) $this->companyId, (int) $merchant->company_id);
 
-        // Montants calculés : barème FCFA par tranche (2 kg → « jusqu'à 3 kg »,
-        // jour même = 1 500), TVA société 18 %.
+        // Montants calculés par le serveur : depuis l'étape 6 (D4), le tarif
+        // est celui de la **route** du colis — la tranche de sa zone, plus le
+        // supplément de son délai. On le relit en base plutôt que de recopier
+        // un montant : c'est la grille qui fait foi, pas ce test.
         $parcel = Parcel::where('merchant_id', $merchant->id)->where('status', ParcelStatus::PENDING)->firstOrFail();
         $this->assertEquals(2, (int) $parcel->weight);
-        $this->assertEquals(1500, (float) $parcel->delivery_charge);
+        $this->assertNotNull($parcel->zone_id, 'un colis du jeu de recette porte sa route');
+
+        Auth::login($merchant->user);
+        $attendu = app(DeliveryChargeResolver::class)->resolveByZone(
+            $merchant->id,
+            (int) $parcel->category_id,
+            $parcel->weight,
+            (int) $parcel->zone_id,
+            $parcel->delay_id,
+        );
+
+        $this->assertEquals($attendu, (float) $parcel->delivery_charge);
         $this->assertEquals(18, (float) $parcel->vat);
         $this->assertGreaterThan(0, (float) $parcel->vat_amount);
         $this->assertEquals(

@@ -13,7 +13,7 @@ use App\Models\Backend\Merchant;
 use App\Repositories\DeliveryCharge\DeliveryChargeInterface;
 use App\Repositories\DeliveryZone\DeliveryZoneInterface;
 use App\Services\Parcel\DeliveryChargeResolver;
-use App\Services\Pricing\ZoneGridConverter;
+use App\Services\Pricing\ZoneCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Tests\Concerns\SeedsTenant;
@@ -56,6 +56,12 @@ class DeliveryZoneScreensTest extends TestCase
         $this->seedTenant();
 
         $this->merchant = Merchant::firstOrFail();
+
+        // Le jeu d'amorçage donne au marchand un barème négocié complet, qui
+        // l'emporte sur celui de la société. Ces tests parlent de la grille de
+        // la société : on écarte le négocié pour que ce soit bien elle qui
+        // réponde.
+        \App\Models\Backend\MerchantDeliveryCharge::query()->delete();
         $this->categoryId = DeliveryCategory::firstOrFail()->id;
 
         // `settings()` retombe sur la société 1 hors requête : on ouvre une
@@ -74,6 +80,11 @@ class DeliveryZoneScreensTest extends TestCase
 
     public function test_la_saisie_cree_une_zone_et_fige_son_code(): void
     {
+        // Le jeu d'amorçage installe les quatre zones ; ce test parle de la
+        // **saisie**, il repart donc de rien.
+        DeliveryCharge::where('company_id', $this->societe())->delete();
+        DeliveryZone::where('company_id', $this->societe())->delete();
+
         $resultat = $this->repo->enregistrerZones([
             ['id' => '', 'name' => 'Cotonou', 'status' => Status::ACTIVE],
         ]);
@@ -98,8 +109,6 @@ class DeliveryZoneScreensTest extends TestCase
 
     public function test_une_zone_qui_porte_des_tarifs_nest_pas_supprimee(): void
     {
-        app(ZoneGridConverter::class)->convert($this->societe(), ZoneGridConverter::SAME_DAY_SURCHARGE);
-
         $cotonou = DeliveryZone::where('company_id', $this->societe())
             ->where('code', DeliveryZone::COTONOU)->firstOrFail();
         $lignes = DeliveryCharge::where('zone_id', $cotonou->id)->count();
@@ -158,7 +167,6 @@ class DeliveryZoneScreensTest extends TestCase
 
     public function test_le_supplement_saisi_est_global_a_toutes_les_zones(): void
     {
-        app(ZoneGridConverter::class)->convert($this->societe(), 0);
 
         $jourMeme = DeliveryDelay::where('company_id', $this->societe())
             ->where('code', DeliveryDelay::SAME_DAY)->firstOrFail();
@@ -186,8 +194,6 @@ class DeliveryZoneScreensTest extends TestCase
 
     public function test_le_forfait_dun_pays_se_saisit_et_devient_le_tarif(): void
     {
-        app(ZoneGridConverter::class)->convert($this->societe(), ZoneGridConverter::SAME_DAY_SURCHARGE);
-
         $cedeao = $this->repo->zoneExport();
         $this->assertNotNull($cedeao);
 
@@ -217,7 +223,6 @@ class DeliveryZoneScreensTest extends TestCase
 
     public function test_un_pays_saisi_deux_fois_ne_fait_pas_doublon(): void
     {
-        app(ZoneGridConverter::class)->convert($this->societe(), 0);
         $cedeao = $this->repo->zoneExport();
 
         $this->repo->enregistrerPays($cedeao, [
@@ -232,11 +237,10 @@ class DeliveryZoneScreensTest extends TestCase
 
     // ---- La grille ---------------------------------------------------------
 
-    public function test_la_grille_ecrit_par_zone_sans_toucher_aux_colonnes_heritees(): void
+    public function test_la_grille_ecrit_une_ligne_par_zone(): void
     {
-        $heritee = DeliveryCharge::where('company_id', $this->societe())
-            ->whereNull('zone_id')->orderBy('weight')->firstOrFail();
-        $avant = $heritee->only(['same_day', 'next_day', 'sub_city', 'outside_city']);
+        $poids = (int) DeliveryCharge::where('company_id', $this->societe())
+            ->orderBy('weight')->firstOrFail()->weight;
 
         $this->repo->enregistrerZones([
             ['id' => '', 'name' => 'Cotonou'],
@@ -245,7 +249,7 @@ class DeliveryZoneScreensTest extends TestCase
         $zones = $this->repo->zones();
 
         $ecrites = $this->repo->enregistrerGrille($this->categoryId, [
-            ['weight' => $heritee->weight, 'amounts' => [
+            ['weight' => $poids, 'amounts' => [
                 $zones[0]->id => 900,
                 $zones[1]->id => 1600,
             ]],
@@ -254,14 +258,14 @@ class DeliveryZoneScreensTest extends TestCase
         $this->assertSame(2, $ecrites);
 
         $resolveur = new DeliveryChargeResolver();
-        $this->assertSame(900.0, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, $heritee->weight, $zones[0]->id));
-        $this->assertSame(1600.0, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, $heritee->weight, $zones[1]->id));
+        $this->assertSame(900.0, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, $poids, $zones[0]->id));
+        $this->assertSame(1600.0, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, $poids, $zones[1]->id));
 
-        // La ligne héritée est intacte : c'est elle que facture une société qui
-        // n'a pas encore de zones, et c'est ce que fige l'étalon.
-        $heritee->refresh();
-        $this->assertSame($avant, $heritee->only(['same_day', 'next_day', 'sub_city', 'outside_city']));
-        $this->assertNull($heritee->zone_id);
+        // Chaque ligne écrite porte sa zone : depuis l'étape 6, une ligne de
+        // barème sans zone n'a plus de sens — `beninlink:tarification-prete`
+        // la signalerait comme une impasse.
+        $this->assertSame(0, DeliveryCharge::where('company_id', $this->societe())
+            ->where('category_id', $this->categoryId)->whereNull('zone_id')->count());
     }
 
     public function test_la_grille_est_rejouable_sans_doublon(): void
@@ -281,24 +285,29 @@ class DeliveryZoneScreensTest extends TestCase
         $this->assertSame($this->societe(), (int) $lignes->first()->company_id);
     }
 
-    public function test_retirer_une_tranche_ne_retire_que_les_lignes_zonees(): void
+    /**
+     * Retirer une tranche retire **toutes** ses lignes de zone, et celles-là
+     * seulement : les autres tranches restent.
+     */
+    public function test_retirer_une_tranche_ne_touche_pas_les_autres(): void
     {
-        app(ZoneGridConverter::class)->convert($this->societe(), ZoneGridConverter::SAME_DAY_SURCHARGE);
-
         $poids = (int) DeliveryCharge::where('company_id', $this->societe())
-            ->whereNull('zone_id')->orderBy('weight')->firstOrFail()->weight;
+            ->orderBy('weight')->firstOrFail()->weight;
+        $autres = DeliveryCharge::where('company_id', $this->societe())
+            ->where('category_id', $this->categoryId)
+            ->where('weight', '!=', $poids)->count();
 
         $this->repo->enregistrerGrille($this->categoryId, [['weight' => $poids, 'delete' => '1']]);
 
         $this->assertSame(0, DeliveryCharge::where('company_id', $this->societe())
             ->where('category_id', $this->categoryId)
-            ->whereNotNull('zone_id')->where('weight', $poids)->count());
-        $this->assertSame(1, DeliveryCharge::where('company_id', $this->societe())
+            ->where('weight', $poids)->count());
+        $this->assertSame($autres, DeliveryCharge::where('company_id', $this->societe())
             ->where('category_id', $this->categoryId)
-            ->whereNull('zone_id')->where('weight', $poids)->count());
+            ->where('weight', '!=', $poids)->count());
     }
 
-    // ---- L'écran hérité, au passage ---------------------------------------
+    // ---- L'écran de saisie d'une ligne, au passage -------------------------
 
     public function test_lecran_dedition_nouvre_plus_le_bareme_dune_autre_societe(): void
     {
@@ -310,7 +319,7 @@ class DeliveryZoneScreensTest extends TestCase
             'company_id' => $voisine->id,
             'category_id' => $this->categoryId,
             'weight' => 1,
-            'same_day' => 1, 'next_day' => 1, 'sub_city' => 1, 'outside_city' => 1,
+            'amount' => 1,
             'position' => 1,
             'status' => Status::ACTIVE,
         ]);
@@ -359,20 +368,24 @@ class DeliveryZoneScreensTest extends TestCase
         }
     }
 
-    public function test_la_liste_heritee_affiche_chaque_tarif_sous_son_intitule(): void
+    /**
+     * Le défaut d'origine : sur la liste du barème, « jour même » et
+     * « lendemain » étaient **interverties** — l'écran annonçait un tarif et en
+     * affichait un autre. Les quatre colonnes ont disparu à l'étape 6, mais la
+     * garde reste : ce qui est annoncé en en-tête doit être ce qui est affiché
+     * en cellule, dans le même ordre.
+     */
+    public function test_la_liste_affiche_chaque_valeur_sous_son_intitule(): void
     {
         $vue = file_get_contents(resource_path('views/backend/delivery_charge/index.blade.php'));
 
-        preg_match_all("/__\('levels\.(same_day|next_day|sub_city|outside_city)'\)/", $vue, $entetes);
-        preg_match_all('/formatAmount\(\$delivery_charge->(same_day|next_day|sub_city|outside_city)\)/', $vue, $cellules);
+        preg_match_all("/__\('delivery_zone\.(zone|amount)'\)/", $vue, $entetes);
+        preg_match_all('/\$delivery_charge->(zone|amount)/', $vue, $cellules);
 
-        // Les colonnes « jour même » et « lendemain » étaient interverties :
-        // l'écran annonçait un tarif et en affichait un autre.
-        $this->assertSame(
-            ['same_day', 'next_day', 'sub_city', 'outside_city'],
-            $entetes[1],
-            "l'ordre des en-têtes du barème hérité a changé"
-        );
-        $this->assertSame($entetes[1], $cellules[1], 'un tarif est affiché sous le mauvais intitulé');
+        $this->assertSame(['zone', 'amount'], $entetes[1], "l'ordre des en-têtes a changé");
+        $this->assertSame($entetes[1], $cellules[1], 'une valeur est affichée sous le mauvais intitulé');
+
+        // Et plus aucune trace des quatre colonnes retirées.
+        $this->assertDoesNotMatchRegularExpression('/same_day|next_day|sub_city|outside_city/', $vue);
     }
 }

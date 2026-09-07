@@ -114,28 +114,56 @@ affiche une grille vide.
 | 5 bis | **Le colis porte une zone et un délai**, et `resolveByZone()` entre dans le calcul — **livré**, `mobile/` compris | non (migration `parcels`), mais **additive** : sans zone, le calcul est celui d'avant |
 | 6 a | **Porte** : `beninlink:bareme-herite` dit ce qui dépend encore des colonnes, et sort en erreur sinon — **livré** | oui, constat seul |
 | 6 b | Étalon des zones (`DeliveryZonePricingBaselineTest`), écrit pendant que les deux barèmes coexistent — **livré** | oui, test seul |
-| 6 c | Suppression des quatre colonnes, **après le déploiement des apps** et quand la porte est verte partout | non — le basculement est **sec** : plus de repli, une société non convertie ne facture plus |
+| 6 c | Suppression des quatre colonnes — **livré le 2026-09-07** | non — le basculement est **sec** : plus de repli |
 
-Les étapes 1 à 3 ne changent **aucun montant** : c'est ce que l'étalon vérifie.
-Les colonnes ne disparaissent qu'à l'étape 6, longtemps après.
+Les étapes 1 à 3 n'ont changé **aucun montant** : c'est ce que l'étalon a
+vérifié, et le test **pont** l'a confirmé avant que l'ancien étalon ne parte.
+
+## 3 bis. L'étape 6, telle qu'elle a été jouée
+
+La porte est devenue une **ceinture de sécurité dans la migration elle-même** :
+elle reprend les mêmes règles en SQL nu et **refuse de retirer les colonnes**
+tant qu'une société en dépend. Un déploiement qui échoue proprement vaut mieux
+qu'une facturation morte en silence.
+
+> ⚠️ **Mise à niveau en deux temps.** Le code qui lisait les colonnes part avec
+> elles. Une installation non convertie reste sur la version précédente, y pose
+> ses zones et sa grille, vérifie avec `beninlink:tarification-prete`, puis
+> déploie celle-ci.
+
+Ce que la bascule change pour de bon :
+
+- un colis **sans zone n'a pas de tarif** — `UnpricedDeliveryException::sansZone()`,
+  et `zone_id` devient `required` à la création ;
+- l'import Excel lit une colonne **`zone_code`** ; les deux fichiers modèles de
+  `public/sample-parcel/` la portent ;
+- `beninlink:zones-tarifaires` n'est plus une **conversion** mais une
+  **installation** : zones, délais, forfaits CEDEAO. La grille se saisit à
+  l'écran — ces montants appartiennent au transporteur ;
+- `beninlink:bareme-herite` devient `beninlink:tarification-prete` : la question
+  « cette société peut-elle facturer ? » est désormais permanente ;
+- la page tarifs publique montre **un onglet par zone**, au lieu de quatre
+  onglets qui mélangeaient un délai et un périmètre.
 
 ## 4. Ce qui est déjà fait
 
-- **L'étalon** : `tests/Feature/DeliveryPricingBaselineTest` fixe le tarif de
+- **L'étalon** : `tests/Feature/DeliveryPricingBaselineTest` fixait le tarif de
   neuf poids × quatre types, le devis complet TVA comprise, et le fait qu'aucune
-  case ne croise délai et périmètre. Écrit **avant** la refonte, il ne devra pas
-  changer pendant.
+  case ne croisait délai et périmètre. Écrit **avant** la refonte, il n'a pas
+  changé d'une ligne pendant. Il est parti à l'étape 6 avec son sujet, après que
+  le test **pont** de son successeur eut vérifié que les deux barèmes annonçaient
+  le même prix — c'est ce qui a autorisé son retrait.
 - La lecture est déjà unique (S8/S9), et le poids déjà traité en tranches
   « jusqu'à N kg ».
 - **Étapes 1 à 3** : le schéma (`delivery_zones`, `delivery_delays`,
   `delivery_zone_countries`), `DeliveryChargeResolver::resolveByZone()` et la
-  conversion `beninlink:zones-tarifaires`. Aucun montant déplacé, sauf le
-  supplément « jour même » ramené à 300 F par décision du métier.
+  conversion (devenue `beninlink:zones-tarifaires`, qui **installe** désormais).
+  Aucun montant déplacé, sauf le supplément « jour même » ramené à 300 F par
+  décision du métier.
 - **Étape 4** : les deux écrans de saisie, sous *Réglages → Zones et barème*.
   `admin/delivery-zone/index` porte les zones, les délais et les **forfaits
   CEDEAO par pays** ; `admin/delivery-zone/grid` porte la grille d'une
-  catégorie, une ligne par tranche et une colonne par zone. Les quatre colonnes
-  héritées ne sont pas touchées : elles ne disparaissent qu'à l'étape 6.
+  catégorie, une ligne par tranche et une colonne par zone.
 - **Étape 5, côté `web/`** : `GET settings/delivery-charges` sert `zones` et
   `delays` **à côté** de `deliveryCharges`, et `GET settings/cod-charges` gagne
   `zone_code`. `zones` vide = la société n'a rien configuré, l'app reste sur

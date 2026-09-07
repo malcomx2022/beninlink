@@ -269,6 +269,7 @@ export const fr = {
     noSurcharge: 'Sans supplément',
     flatRate: 'Forfait par pays',
     noCountry: "Aucun pays n'est encore tarifé pour cette zone.",
+    noZone: 'Aucune zone n’est configurée : demandez à votre transporteur de saisir son barème.',
     noRate: "Aucun tarif n'est encore saisi pour cette zone.",
     notice:
       'Le tarif retenu dépend de la catégorie, du poids saisi et de la zone de destination. Le montant exact est calculé par BeninLink à la création du colis.',

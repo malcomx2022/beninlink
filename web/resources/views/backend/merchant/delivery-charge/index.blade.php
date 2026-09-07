@@ -22,10 +22,8 @@
                         <th>{{ __('levels.id') }}</th>
                         <th>{{ __('merchant.category') }}</th>
                         <th>{{ __('merchant.weight') }}</th>
-                        <th>{{ __('merchant.same_day') }}</th>
-                        <th>{{ __('merchant.next_day') }}</th>
-                        <th>{{ __('merchant.sub_city') }}</th>
-                        <th>{{ __('merchant.outside_city') }}</th>
+                        <th>{{ __('delivery_zone.zone') }}</th>
+                        <th>{{ __('delivery_zone.amount') }}</th>
                         <th>{{ __('levels.status') }}</th>
                         @if(
                          hasPermission('merchant_delivery_charge_update') == true ||
@@ -42,10 +40,8 @@
                             <td>{{$i++}}</td>
                             <td>{{$merchantDeliveryCharge->deliveryCharge->category->title}}</td>
                             <td>{{$merchantDeliveryCharge->deliveryCharge->weight ?? 0}}</td>
-                            <td>{{$merchantDeliveryCharge->same_day}}</td>
-                            <td>{{$merchantDeliveryCharge->next_day}}</td>
-                            <td>{{$merchantDeliveryCharge->sub_city}}</td>
-                            <td>{{$merchantDeliveryCharge->outside_city}}</td>
+                            <td>{{ $merchantDeliveryCharge->zone?->name ?? '—' }}</td>
+                            <td>{{ formatAmount($merchantDeliveryCharge->amount) }}</td>
                             <td>
                                 {!! $merchantDeliveryCharge->my_status !!}
                             </td>

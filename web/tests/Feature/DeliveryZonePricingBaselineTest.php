@@ -11,7 +11,7 @@ use App\Models\Backend\Merchant;
 use App\Repositories\DeliveryZone\DeliveryZoneInterface;
 use App\Services\Parcel\ChargeCalculator;
 use App\Services\Parcel\DeliveryChargeResolver;
-use App\Services\Pricing\ZoneGridConverter;
+use App\Services\Pricing\ZoneCatalog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Tests\Concerns\SeedsTenant;
@@ -38,27 +38,25 @@ use Tests\TestCase;
  *
  * ## La grille de référence
  *
- * Celle du jeu pilote, convertie par `ZoneGridConverter` selon la décision du
- * métier du 2026-09-06 : **les tarifs actuels sont conservés** — Cotonou reprend
- * `next_day`, Périphérie `sub_city`, Intérieur `outside_city` — et le
- * « jour même » devient un **supplément global de 300 F**.
+ * Celle du jeu pilote, selon la décision du métier du 2026-09-06 : **les
+ * tarifs actuels sont conservés** — Cotonou reprend `next_day`, Périphérie
+ * `sub_city`, Intérieur `outside_city` — et le « jour même » devient un
+ * **supplément global de 300 F**.
+ *
+ * L'étape 6 a retiré les colonnes le 2026-09-07. L'ancien étalon est parti
+ * avec elles, après que le test pont eut vérifié que les deux barèmes
+ * annonçaient bien le même prix : c'est ce qui a autorisé son retrait.
  */
 class DeliveryZonePricingBaselineTest extends TestCase
 {
     use RefreshDatabase;
     use SeedsTenant;
 
-    /** Barème du jeu pilote, forme héritée : [jour même, lendemain, périphérie, intérieur]. */
-    private const GRILLE_HERITEE = [
-        1 => [1000, 800, 1500, 2500],
-        3 => [1500, 1200, 2000, 3500],
-        5 => [2000, 1700, 2800, 4500],
-        10 => [3000, 2500, 4000, 6500],
-    ];
-
     /**
-     * Le même barème, en zones. C'est **l'étalon** : ces montants ne doivent
-     * plus bouger sans décision, et surtout pas au passage de l'étape 6.
+     * Le barème, en zones. C'est **l'étalon** : ces montants ne doivent plus
+     * bouger sans décision. Ce sont ceux du jeu pilote d'origine, à la
+     * correspondance actée en D4 — Cotonou ← `next_day`, Périphérie ←
+     * `sub_city`, Intérieur ← `outside_city`.
      *
      * Tranche => [Cotonou, Périphérie, Intérieur].
      */
@@ -86,25 +84,35 @@ class DeliveryZonePricingBaselineTest extends TestCase
 
         Auth::login($this->merchant->user);
 
-        // On part du barème hérité du jeu pilote, puis on convertit : l'étalon
-        // décrit ainsi le chemin réel d'une installation, pas une grille écrite
-        // à la main qui pourrait diverger de ce que la conversion produit.
+        // Jusqu'à l'étape 6, ce décor partait du barème hérité et le
+        // convertissait : c'était le chemin réel d'une installation. Les
+        // colonnes parties, il n'y a plus de conversion — la grille zonée
+        // s'écrit directement, et c'est elle le référentiel.
+        //
+        // Les montants n'ont pas bougé d'un franc au passage : ce sont ceux
+        // que la conversion produisait, et que le test pont vérifiait avant
+        // que l'ancien étalon ne parte.
         DeliveryCharge::query()->delete();
-        foreach (self::GRILLE_HERITEE as $poids => [$jourMeme, $lendemain, $peripherie, $interieur]) {
-            DeliveryCharge::forceCreate([
-                'company_id' => settings()->id,
-                'category_id' => $this->categoryId,
-                'weight' => $poids,
-                'same_day' => $jourMeme,
-                'next_day' => $lendemain,
-                'sub_city' => $peripherie,
-                'outside_city' => $interieur,
-                'position' => $poids,
-                'status' => Status::ACTIVE,
-            ]);
-        }
+        app(ZoneCatalog::class)->installer((int) settings()->id, self::SUPPLEMENT_JOUR_MEME);
 
-        app(ZoneGridConverter::class)->convert((int) settings()->id, self::SUPPLEMENT_JOUR_MEME);
+        $zones = [
+            DeliveryZone::COTONOU,
+            DeliveryZone::PERIPHERIE,
+            DeliveryZone::INTERIEUR,
+        ];
+        foreach (self::GRILLE_ZONES as $poids => $montants) {
+            foreach ($zones as $rang => $code) {
+                DeliveryCharge::forceCreate([
+                    'company_id' => settings()->id,
+                    'category_id' => $this->categoryId,
+                    'zone_id' => $this->zone($code)->id,
+                    'weight' => $poids,
+                    'amount' => $montants[$rang],
+                    'position' => $poids,
+                    'status' => Status::ACTIVE,
+                ]);
+            }
+        }
     }
 
     private function zone(string $code): DeliveryZone
@@ -159,29 +167,6 @@ class DeliveryZonePricingBaselineTest extends TestCase
      * ils disent la même chose. C'est ce qui justifie de remplacer l'ancien
      * plutôt que de simplement l'effacer.
      */
-    public function test_les_deux_baremes_disent_le_meme_prix(): void
-    {
-        $herite = app(DeliveryChargeResolver::class);
-
-        foreach (array_keys(self::GRILLE_HERITEE) as $poids) {
-            $this->assertEquals(
-                $herite->resolve($this->merchant->id, $this->categoryId, $poids, 2),
-                $this->tarif(DeliveryZone::COTONOU, $poids),
-                "lendemain ↔ Cotonou, {$poids} kg",
-            );
-            $this->assertEquals(
-                $herite->resolve($this->merchant->id, $this->categoryId, $poids, 3),
-                $this->tarif(DeliveryZone::PERIPHERIE, $poids),
-                "sous-ville ↔ Périphérie, {$poids} kg",
-            );
-            $this->assertEquals(
-                $herite->resolve($this->merchant->id, $this->categoryId, $poids, 4),
-                $this->tarif(DeliveryZone::INTERIEUR, $poids),
-                "hors ville ↔ Intérieur, {$poids} kg",
-            );
-        }
-    }
-
     /**
      * Le supplément est **global** : le même dans toutes les zones. C'est la
      * propriété qui empêche de revenir aux quatre colonnes, et c'est donc elle
@@ -250,7 +235,6 @@ class DeliveryZonePricingBaselineTest extends TestCase
     {
         $calcul = app(ChargeCalculator::class)->calculate(
             $this->merchant,
-            4,
             $this->categoryId,
             8,          // → tranche 10 kg
             50000,      // encaissement COD

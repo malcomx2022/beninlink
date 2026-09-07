@@ -48,7 +48,10 @@ class StoreRequest extends FormRequest
              * sinon `ChargeCalculator` leverait, et le marchand verrait une
              * erreur serveur au lieu d'un message sur le bon champ.
              */
-            'zone_id'  => ['nullable','numeric', new \App\Rules\DeliveryRoutePriced()],
+            // D4, étape 6 : la zone n'est plus une option. Sans elle, le
+            // calculateur refuse — autant le dire sur le champ plutôt que de
+            // laisser remonter une erreur serveur.
+            'zone_id'  => ['required','numeric', new \App\Rules\DeliveryRoutePriced()],
             'delay_id' => ['nullable','numeric'],
             'destination_country' => ['nullable','string','size:2'],
             'customs_category'    => [

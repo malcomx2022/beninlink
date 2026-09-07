@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'zone'               => 'Zone',
+    'amount'             => 'Amount',
+    'aucune_grille'      => 'The rate grid has not been entered yet.',
     'title'              => 'Delivery zones',
     'menu'               => 'Zones and pricing',
     'reference'          => 'Zone reference data',

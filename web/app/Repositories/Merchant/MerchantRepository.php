@@ -134,10 +134,8 @@ class MerchantRepository implements MerchantInterface{
                     $deliveryCharge->delivery_charge_id  = $delivery->id;
                     $deliveryCharge->weight              = $delivery->weight;
                     $deliveryCharge->category_id         = $delivery->category_id;
-                    $deliveryCharge->same_day            = $delivery->same_day;
-                    $deliveryCharge->next_day            = $delivery->next_day;
-                    $deliveryCharge->sub_city            = $delivery->sub_city;
-                    $deliveryCharge->outside_city        = $delivery->outside_city;
+                    $deliveryCharge->zone_id             = $delivery->zone_id;
+                    $deliveryCharge->amount              = $delivery->amount;
                     $deliveryCharge->status              = Status::ACTIVE;
                     $deliveryCharge->save();
                 }
@@ -227,10 +225,8 @@ class MerchantRepository implements MerchantInterface{
                     $deliveryCharge->delivery_charge_id  = $delivery->id;
                     $deliveryCharge->weight              = $delivery->weight;
                     $deliveryCharge->category_id         = $delivery->category_id;
-                    $deliveryCharge->same_day            = $delivery->same_day;
-                    $deliveryCharge->next_day            = $delivery->next_day;
-                    $deliveryCharge->sub_city            = $delivery->sub_city;
-                    $deliveryCharge->outside_city        = $delivery->outside_city;
+                    $deliveryCharge->zone_id             = $delivery->zone_id;
+                    $deliveryCharge->amount              = $delivery->amount;
                     $deliveryCharge->status              = Status::ACTIVE;
                     $deliveryCharge->save();
                 }
@@ -592,10 +588,8 @@ class MerchantRepository implements MerchantInterface{
                         $deliveryCharge->delivery_charge_id  = $delivery->id;
                         $deliveryCharge->weight              = $delivery->weight;
                         $deliveryCharge->category_id         = $delivery->category_id;
-                        $deliveryCharge->same_day            = $delivery->same_day;
-                        $deliveryCharge->next_day            = $delivery->next_day;
-                        $deliveryCharge->sub_city            = $delivery->sub_city;
-                        $deliveryCharge->outside_city        = $delivery->outside_city;
+                        $deliveryCharge->zone_id             = $delivery->zone_id;
+                        $deliveryCharge->amount              = $delivery->amount;
                         $deliveryCharge->status              = Status::ACTIVE;
                         $deliveryCharge->save();
                     }

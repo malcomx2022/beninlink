@@ -24,7 +24,9 @@ use App\Models\Backend\MerchantStatement;
 use App\Models\Backend\Wallet;
 use App\Repositories\Wallet\WalletInterface;
 use App\Services\Parcel\ChargeCalculator;
-use App\Services\Pricing\ZoneGridConverter;
+use App\Models\Backend\DeliveryDelay;
+use App\Models\Backend\DeliveryZone;
+use App\Services\Pricing\ZoneCatalog;
 use App\Services\Parcel\WalletDebit;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -70,11 +72,19 @@ class PiloteDataset
     ];
 
     /** Tranches « jusqu'à N kg » : jour même, lendemain, périphérie, intérieur. */
+    /**
+     * Grille zonée du jeu pilote : poids => [Cotonou, Périphérie, Intérieur].
+     *
+     * Ce sont les montants de l'ancienne grille, à la correspondance actée en
+     * D4 : Cotonou ← `next_day`, Périphérie ← `sub_city`, Intérieur ←
+     * `outside_city`. Le « jour même » est devenu le supplément global de
+     * `ZoneCatalog::SAME_DAY_SURCHARGE`.
+     */
     private const GRID = [
-        1 => [1000, 800, 1500, 2500],
-        3 => [1500, 1200, 2000, 3500],
-        5 => [2000, 1700, 2800, 4500],
-        10 => [3000, 2500, 4000, 6500],
+        1 => [800, 1500, 2500],
+        3 => [1200, 2000, 3500],
+        5 => [1700, 2800, 4500],
+        10 => [2500, 4000, 6500],
     ];
 
     private const PACKAGING = [['Sachet', 100], ['Carton', 300], ['Carton renforcé', 500]];
@@ -147,12 +157,6 @@ class PiloteDataset
             foreach (self::DELIVERYMEN as $i => [$name, $phone, $hubIndex]) {
                 $deliverymen[] = $this->deliveryman($companyId, $i + 1, $name, $phone, $hubs[$hubIndex], $upload);
             }
-
-            // D4 — le jeu de recette naît avec ses zones : sans elles, la
-            // recette ne peut pas exercer le nouveau barème (zones, supplément
-            // de délai, forfaits CEDEAO). Les montants sont ceux du barème
-            // hérité, décision du métier du 2026-09-06.
-            app(ZoneGridConverter::class)->convert($companyId, ZoneGridConverter::SAME_DAY_SURCHARGE);
 
             $parcels = 0;
             foreach ($merchants as $mi => $merchant) {
@@ -246,19 +250,29 @@ class PiloteDataset
         $category->position = 1;
         $category->save();
 
+        // Le cadre d'abord : sans zones, un colis n'a plus de tarif du tout
+        // depuis l'étape 6, et le jeu de recette ne créerait pas un seul colis.
+        $zones = app(ZoneCatalog::class)->installer($companyId);
+        $nationales = [DeliveryZone::COTONOU, DeliveryZone::PERIPHERIE, DeliveryZone::INTERIEUR];
+
         $position = 1;
-        foreach (self::GRID as $weight => [$sameDay, $nextDay, $subCity, $outsideCity]) {
-            $row = DeliveryCharge::where('company_id', $companyId)->where('category_id', $category->id)->where('weight', $weight)->first() ?? new DeliveryCharge();
-            $row->company_id = $companyId;
-            $row->category_id = $category->id;
-            $row->weight = $weight;
-            $row->same_day = $sameDay;
-            $row->next_day = $nextDay;
-            $row->sub_city = $subCity;
-            $row->outside_city = $outsideCity;
-            $row->position = $position++;
-            $row->status = Status::ACTIVE;
-            $row->save();
+        foreach (self::GRID as $weight => $montants) {
+            foreach ($nationales as $rang => $code) {
+                $zoneId = $zones[$code]->id;
+                $row = DeliveryCharge::where('company_id', $companyId)
+                    ->where('category_id', $category->id)
+                    ->where('zone_id', $zoneId)
+                    ->where('weight', $weight)->first() ?? new DeliveryCharge();
+                $row->company_id = $companyId;
+                $row->category_id = $category->id;
+                $row->zone_id = $zoneId;
+                $row->weight = $weight;
+                $row->amount = $montants[$rang];
+                $row->position = $position;
+                $row->status = Status::ACTIVE;
+                $row->save();
+            }
+            $position++;
         }
 
         return $category;
@@ -395,7 +409,25 @@ class PiloteDataset
         // Même calcul qu'en production : le marchand connecté résout société,
         // barème et taux de TVA.
         Auth::login($merchant->user);
-        $charges = app(ChargeCalculator::class)->calculate($merchant, $deliveryType, $category->id, $weight, (float) $cash, $packaging->id);
+        // D4, étape 6 : un colis porte sa route. La zone tourne avec le rang
+        // pour que la recette exerce les trois zones nationales, et le délai
+        // suit le type de livraison du plan.
+        $zone = DeliveryZone::where('company_id', $companyId)
+            ->whereIn('code', [DeliveryZone::COTONOU, DeliveryZone::PERIPHERIE, DeliveryZone::INTERIEUR])
+            ->orderBy('position')->get()[$seq % 3];
+        // Le délai suit le type de livraison du plan : le jeu de recette
+        // exerce ainsi les trois délais, et pas seulement le premier.
+        $codeDelai = match ((int) $deliveryType) {
+            1 => DeliveryDelay::SAME_DAY,
+            2 => DeliveryDelay::NEXT_DAY,
+            default => DeliveryDelay::STANDARD,
+        };
+        $delay = DeliveryDelay::where('company_id', $companyId)->where('code', $codeDelai)->first();
+
+        $charges = app(ChargeCalculator::class)->calculate(
+            $merchant, $category->id, $weight, (float) $cash, $packaging->id, false,
+            $zone->id, $delay?->id,
+        );
 
         $shop = MerchantShops::where('merchant_id', $merchant->id)->firstOrFail();
         $parcel = new Parcel();
@@ -411,6 +443,8 @@ class PiloteDataset
         $parcel->category_id = $category->id;
         $parcel->weight = $weight;
         $parcel->delivery_type_id = $deliveryType;
+        $parcel->zone_id = $zone->id;
+        $parcel->delay_id = $delay?->id;
         $parcel->packaging_id = $packaging->id;
         $parcel->cash_collection = $cash;
         $parcel->selling_price = $cash;

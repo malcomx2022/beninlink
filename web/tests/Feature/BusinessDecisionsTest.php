@@ -7,6 +7,7 @@ use App\Models\Backend\DeliveryCategory;
 use App\Models\Backend\Fraud;
 use App\Models\Backend\Merchant;
 use App\Models\Config;
+use App\Models\Backend\DeliveryZone;
 use App\Services\Parcel\ChargeCalculator;
 use App\Services\Parcel\VatRate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -52,9 +53,20 @@ class BusinessDecisionsTest extends TestCase
         }
     }
 
+    /**
+     * Depuis l'étape 6 (D4), un colis sans zone n'a pas de tarif : le devis
+     * passe donc par une route. Ce qui est testé ici reste la **TVA**, pas le
+     * tarif — la zone n'est qu'un préalable devenu obligatoire.
+     */
     private function devis(): array
     {
-        return app(ChargeCalculator::class)->calculate($this->merchant->fresh(), 1, DeliveryCategory::firstOrFail()->id, 1, 10000);
+        $zone = DeliveryZone::where('company_id', $this->merchant->company_id)
+            ->where('code', DeliveryZone::COTONOU)->firstOrFail();
+
+        return app(ChargeCalculator::class)->calculate(
+            $this->merchant->fresh(), DeliveryCategory::firstOrFail()->id, 1, 10000,
+            null, false, $zone->id,
+        );
     }
 
     // ---- TVA -------------------------------------------------------------
@@ -107,6 +119,8 @@ class BusinessDecisionsTest extends TestCase
             'delivery_type_id' => 1,
             'cash_collection' => 10000,
             'weight' => 1,
+            // D4, étape 6 : le devis se refuse sans route.
+            'zone_id' => DeliveryZone::where('code', DeliveryZone::COTONOU)->firstOrFail()->id,
         ], ['apiKey' => self::API_KEY])->assertOk()->assertJsonPath('data.vat', 18);
     }
 

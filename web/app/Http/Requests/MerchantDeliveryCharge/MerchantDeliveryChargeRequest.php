@@ -27,10 +27,8 @@ class MerchantDeliveryChargeRequest extends FormRequest
     {
         return [
             'delivery_charge_id' => ['required', 'numeric'],
-            'same_day'           => ['required','numeric'],
-            'next_day'           => ['required','numeric'],
-            'sub_city'           => ['required','numeric'],
-            'outside_city'       => ['required','numeric'],
+            // D4, étape 6 : un montant par zone, plus quatre colonnes.
+            'amount'             => ['required','numeric'],
             'status'             => ['required','numeric'],
         ];
     }
@@ -40,10 +38,7 @@ class MerchantDeliveryChargeRequest extends FormRequest
         return [
             'delivery_charge_id'         => trans('validation.attributes.delivery_category'),
             'status'                     => trans('validation.attributes.status'),
-            'same_day'                   => trans('validation.attributes.same_day'),
-            'next_day'                   => trans('validation.attributes.next_day'),
-            'sub_city'                   => trans('validation.attributes.sub_city'),
-            'outside_city'               => trans('validation.attributes.outside_city'),
+            'amount'                     => trans('delivery_zone.amount'),
         ];
     }
 

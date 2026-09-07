@@ -11,24 +11,23 @@ use App\Models\Backend\Parcel;
 use Illuminate\Support\Carbon;
 
 /**
- * Ce qui dépend encore des **quatre colonnes héritées** (**D4**, préalable à
- * l'étape 6).
+ * **Une société peut-elle facturer ?** (**D4**)
  *
- * L'étape 6 supprime `same_day`, `next_day`, `sub_city` et `outside_city` des
- * deux tables de barème. Elle est **irréversible** et **sèche** : une fois ces
- * colonnes parties, `ChargeCalculator` n'a plus de repli, et une société qui
- * n'a pas converti son barème ne peut plus créer un colis du tout.
+ * Cette classe est née comme la porte de l'étape 6 : elle disait ce qui
+ * dépendait encore des quatre colonnes héritées avant qu'on ne les retire. Les
+ * colonnes sont parties le 2026-09-07, et ses règles n'ont pas perdu leur
+ * objet — elles ont changé de sens.
  *
- * Le plan disait « une fois les apps déployées ». C'est une intention, pas une
- * vérification : personne ne pouvait répondre, installation par installation,
- * à la question « est-ce que quelque chose s'appuie encore sur ces colonnes ? ».
- * Cette classe y répond, par société, et nomme chaque blocage.
+ * Depuis l'étape 6, il n'existe qu'un seul axe de tarification : la route. Une
+ * ligne de barème sans zone, un barème négocié sans zone, un colis créé sans
+ * zone ne sont plus « l'ancien monde » : ce sont des **impasses**. Une société
+ * sans zone ne facture plus rien du tout, et le découvre au premier colis.
  *
- * Elle ne corrige rien : c'est un constat. La conversion reste le travail de
- * `beninlink:zones-tarifaires`, qui affiche le tableau des écarts avant
- * d'écrire — un tarif qui se déplace doit être lu, pas subi.
+ * L'audit répond donc à une question devenue permanente, société par société,
+ * et nomme chaque blocage. Il ne corrige rien : l'installation des zones est le
+ * travail de `beninlink:zones-tarifaires`, la grille se saisit à l'écran.
  */
-class LegacyGridAudit
+class PricingReadinessAudit
 {
     /** Fenêtre d'observation des créations récentes, en jours. */
     public const FENETRE_JOURS = 30;
@@ -56,21 +55,29 @@ class LegacyGridAudit
         $zones = DeliveryZone::where('company_id', $societe->id)
             ->where('status', Status::ACTIVE)->get();
 
-        // 1. Aucune zone : la société facture entièrement par les colonnes.
-        //    C'est le blocage le plus grave, et le plus silencieux à venir —
-        //    après l'étape 6, elle ne facturerait plus rien du tout.
+        // 1. Aucune zone : la société ne peut plus facturer un seul colis.
+        //    C'est le blocage le plus grave, et le plus silencieux : rien ne
+        //    le dit avant la première création refusée.
         if ($zones->isEmpty()) {
-            $blocages[] = 'aucune zone configurée — la société facture encore par les quatre colonnes';
+            $blocages[] = 'aucune zone configurée — la société ne peut facturer aucun colis';
 
             return compact('societe', 'blocages', 'avertissements') + ['colis_sans_zone' => $this->colisSansZone($societe)];
         }
 
         $nationales = $zones->reject(fn (DeliveryZone $zone) => $zone->isExport());
 
-        // 2. Tranches héritées sans équivalent zoné : le tarif existerait dans
-        //    l'ancien monde et pas dans le nouveau. `resolveByZone()` rendrait
-        //    `null`, et la création serait refusée.
-        foreach ($this->tranchesHeritees($societe) as $categoryId => $poids) {
+        // 2. Une tranche tarifée dans une zone et pas dans une autre.
+        //
+        //    Tant que les quatre colonnes existaient, cette règle se lisait par
+        //    comparaison : chaque tranche héritée devait avoir son équivalent
+        //    zoné. Les colonnes parties, le référentiel a disparu — mais pas le
+        //    défaut. Une catégorie tarifée à Cotonou et pas à l'Intérieur laisse
+        //    un trou, et c'est le marchand qui le trouve : `resolveByZone()`
+        //    rend `null`, et la création est refusée.
+        //
+        //    Le référentiel devient donc la grille elle-même : ce qui est
+        //    tarifé quelque part doit l'être partout.
+        foreach ($this->tranchesParCategorie($societe, $nationales) as $categoryId => $poids) {
             foreach ($nationales as $zone) {
                 $manquantes = array_values(array_filter(
                     $poids,
@@ -92,14 +99,14 @@ class LegacyGridAudit
             }
         }
 
-        // 3. Barèmes négociés restés sur les colonnes : le marchand perdrait
-        //    son tarif négocié et retomberait sur celui de la société, sans
-        //    que rien ne le dise.
+        // 3. Barèmes négociés sans zone : le marchand a perdu son tarif
+        //    négocié et retombe sur celui de la société, sans que rien ne le
+        //    dise.
         $negocies = MerchantDeliveryCharge::where('company_id', $societe->id)
             ->whereNull('zone_id')->count();
 
         if ($negocies > 0) {
-            $blocages[] = "{$negocies} barème(s) négocié(s) marchand encore sur les colonnes héritées";
+            $blocages[] = "{$negocies} barème(s) négocié(s) marchand sans zone";
         }
 
         // 4. Zone d'export sans forfait : elle existe mais ne peut rien
@@ -117,9 +124,9 @@ class LegacyGridAudit
     /**
      * Colis créés **sans zone** sur la fenêtre récente.
      *
-     * Le signal le plus honnête sur l'état du parc : tant que des colis
-     * arrivent sans zone, un écran ou une app en circulation utilise encore le
-     * chemin hérité, quoi que dise le calendrier de déploiement.
+     * Le signal le plus honnête sur l'état du parc : un colis sans zone ne
+     * devrait plus pouvoir naître. S'il en arrive, un chemin de création
+     * contourne le calculateur — c'est un défaut, pas un retard.
      */
     public function colisSansZone(GeneralSettings $societe): int
     {
@@ -130,17 +137,21 @@ class LegacyGridAudit
     }
 
     /**
-     * Tranches de poids du barème hérité, par catégorie.
+     * Tranches de poids tarifées, par catégorie, toutes zones nationales
+     * confondues — le référentiel de complétude de la grille.
      *
+     * @param \Illuminate\Support\Collection<int, DeliveryZone> $nationales
      * @return array<int, array<int, int>>
      */
-    private function tranchesHeritees(GeneralSettings $societe): array
+    private function tranchesParCategorie(GeneralSettings $societe, $nationales): array
     {
         $tranches = [];
 
-        foreach (DeliveryCharge::where('company_id', $societe->id)->whereNull('zone_id')->get() as $ligne) {
-            $categoryId = (int) $ligne->category_id;
-            $tranches[$categoryId][] = (int) $ligne->weight;
+        $lignes = DeliveryCharge::where('company_id', $societe->id)
+            ->whereIn('zone_id', $nationales->pluck('id'))->get();
+
+        foreach ($lignes as $ligne) {
+            $tranches[(int) $ligne->category_id][] = (int) $ligne->weight;
         }
 
         foreach ($tranches as $categoryId => $poids) {
@@ -150,7 +161,7 @@ class LegacyGridAudit
         return $tranches;
     }
 
-    /** Une société est prête quand plus rien ne s'appuie sur les colonnes. */
+    /** Une société est prête quand tout ce qui tarife porte une zone. */
     public function estPrete(array $audit): bool
     {
         return $audit['blocages'] === [] && $audit['colis_sans_zone'] === 0;

@@ -100,6 +100,12 @@ class ParcelImport implements ToModel, WithHeadingRow ,WithValidation , SkipsEmp
         // un marchand — mais `companywise()`, donc seulement chez lui.
         $merchant = $this->resoudreMarchand($row);
 
+        // D4, étape 6 : un colis importé porte sa zone comme un colis saisi.
+        // La colonne est lue telle quelle ; `zone_code` est accepté en plus de
+        // `zone_id` parce qu'un fichier rempli à la main écrit « cotonou »,
+        // pas un identifiant technique.
+        $zone_id = $this->resoudreZone($row, $merchant);
+
         if(auth()->user()->merchant):
             $category_id      = 1;
             $delivery_type_id = 2;
@@ -133,12 +139,14 @@ class ParcelImport implements ToModel, WithHeadingRow ,WithValidation , SkipsEmp
         // c'est le montant de l'import qui sera debite.
         $charges = app(\App\Services\Parcel\ChargeCalculator::class)->calculate(
             $merchant,
-            (int) $delivery_type_id,
             blank($category_id) ? null : (int) $category_id,
             $row['weight'] ?? null,
             (float) ($row['cash_collection'] ?? 0),
             blank($packaging_id) ? null : (int) $packaging_id,
-            (bool) $liquid_fragile
+            (bool) $liquid_fragile,
+            $zone_id,
+            blank($row['delay_id'] ?? null) ? null : (int) $row['delay_id'],
+            $row['destination_country'] ?? null,
         );
 
         $deliveryChargeAmount = $charges['delivery_charge'];
@@ -243,6 +251,7 @@ class ParcelImport implements ToModel, WithHeadingRow ,WithValidation , SkipsEmp
             'customer_lat'      => $row['customer_lat'] ?? null,
             'customer_long'     => $row['customer_long'] ?? null,
             'delivery_type_id'  => $delivery_type_id,
+            'zone_id'           => $zone_id,
             'pickup_date'       => $deliveryTime['pickup'],
             'delivery_date'     => $deliveryTime['delivery'],
             'vat'               => $vat,
@@ -286,6 +295,34 @@ class ParcelImport implements ToModel, WithHeadingRow ,WithValidation , SkipsEmp
         }
 
         return Merchant::companywise()->findOrFail($row['merchant_id']);
+    }
+
+    /**
+     * La zone du colis importé — **obligatoire depuis l'étape 6** (D4).
+     *
+     * Deux écritures acceptées, parce qu'un fichier se remplit à la main :
+     * `zone_code` (« cotonou », « interieur »…) ou `zone_id`. La zone est
+     * cherchée **chez le transporteur du marchand**, jamais globalement : un
+     * identifiant emprunté à une autre société ne doit pas tarifer ici.
+     *
+     * Sans zone reconnue, l'import échoue sur cette ligne — c'est
+     * `ChargeCalculator` qui refusera, avec son motif. Deviner une zone
+     * reviendrait à inventer un prix, et personne ne le verrait avant la
+     * facture du marchand.
+     */
+    private function resoudreZone(array $row, Merchant $merchant): ?int
+    {
+        $requete = \App\Models\Backend\DeliveryZone::where('company_id', $merchant->company_id);
+
+        if (!blank($row['zone_code'] ?? null)) {
+            return $requete->where('code', strtolower(trim((string) $row['zone_code'])))->value('id');
+        }
+
+        if (!blank($row['zone_id'] ?? null)) {
+            return $requete->whereKey((int) $row['zone_id'])->value('id');
+        }
+
+        return null;
     }
 
     public function rules(): array

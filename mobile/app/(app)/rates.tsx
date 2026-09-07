@@ -7,7 +7,6 @@ import type { CodCharge, DeliveryDelay, DeliveryRate, DeliveryZone } from '../..
 import { Card, ErrorText, Muted, Title } from '../../src/components/ui';
 import { colors } from '../../src/theme/colors';
 import { fonts, fontSizes, spacing } from '../../src/theme/typography';
-import { deliveryTypeLabel } from '../../src/domain/deliveryType';
 import { formatAmount, formatRate } from '../../src/domain/money';
 import { t } from '../../src/i18n';
 
@@ -28,21 +27,6 @@ import { t } from '../../src/i18n';
  * ⚠️ Le poids est une **valeur de tranche comparée à l'identique** par le
  * calculateur, pas un plafond : on écrit « 1 kg », jamais « jusqu'à 1 kg ».
  */
-
-/**
- * Les 4 colonnes du barème hérité, dans l'ordre de la maquette. Les libellés
- * viennent de `domain/deliveryType` — le backend n'en fournit pas pour ces
- * colonnes. `outside_city` s'écrit `outside_City` dans l'énumération du socle
- * (faute de frappe d'origine, conservée côté contrat).
- *
- * Le barème par zones, lui, **nomme ses zones** : plus rien n'est en dur.
- */
-const COLONNES = [
-  { key: 'same_day', label: deliveryTypeLabel('same_day') },
-  { key: 'next_day', label: deliveryTypeLabel('next_day') },
-  { key: 'sub_city', label: deliveryTypeLabel('sub_city') },
-  { key: 'outside_city', label: deliveryTypeLabel('outside_City') },
-] as const;
 
 export default function RatesScreen() {
   const [rates, setRates] = useState<DeliveryRate[]>([]);
@@ -153,29 +137,10 @@ export default function RatesScreen() {
           </Card>
         ))}
 
-      {/* Affichage hérité : conservé tant que le transporteur n'a pas de zones. */}
-      {!parZones &&
-        rates.map((rate) => (
-          <Card key={rate.id}>
-            <View style={styles.head}>
-              <Title>{rate.category ?? '—'}</Title>
-              {String(rate.status) === '1' && (
-                <Text style={styles.badge}>{rate.statusName ?? ''}</Text>
-              )}
-            </View>
-            <Muted>
-              {t('rates.weight')} : {rate.weight ?? '—'} kg
-            </Muted>
-            <View style={styles.grid}>
-              {COLONNES.map((colonne) => (
-                <View key={colonne.key} style={styles.zone}>
-                  <Text style={styles.zoneLabel}>{colonne.label}</Text>
-                  <Text style={styles.zoneValue}>{formatAmount(rate[colonne.key], false)}</Text>
-                </View>
-              ))}
-            </View>
-          </Card>
-        ))}
+      {/* Le barème négocié du marchand, quand il en a un : mêmes zones, ses
+          montants. Le serveur le sert déjà résolu dans `zones[].rates`, ce
+          bloc ne fait que le nommer pour que le marchand sache qu'il existe. */}
+      {!parZones && rates.length > 0 && <Muted>{t('rates.noZone')}</Muted>}
 
       {codCharges.length > 0 && (
         <Card>

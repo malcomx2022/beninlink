@@ -3,47 +3,36 @@
 namespace App\Services\Pricing;
 
 use App\Enums\Status;
-use App\Models\Backend\DeliveryCharge;
 use App\Models\Backend\DeliveryDelay;
 use App\Models\Backend\DeliveryZone;
 use App\Models\Backend\DeliveryZoneCountry;
-use Illuminate\Support\Collection;
 
 /**
- * Passage du barème hérité au barème par zones (**D4**).
+ * Le catalogue du modèle par zones (**D4**) : quelles zones existent, quels
+ * délais, quels pays d'export, et à quels forfaits.
  *
- * ## La correspondance, décidée par le métier
+ * Cette classe s'appelait `ZoneGridConverter` tant qu'elle **convertissait** le
+ * barème hérité. L'étape 6 a retiré les quatre colonnes le 2026-09-07 : il n'y
+ * a plus rien à convertir, et le nom mentirait. Ce qui reste — et qui n'a
+ * jamais dépendu des colonnes — est la **définition** du modèle, en un seul
+ * endroit, pour que le jeu d'amorçage, la commande d'installation et les tests
+ * ne tiennent pas trois copies qui dériveraient.
  *
- * Les quatre colonnes mélangeaient délai et périmètre. Le métier a tranché le
- * 2026-09-06 : **on garde les tarifs actuels**, ce qui fixe la correspondance.
- *
- *     Cotonou    ← next_day       (l'intra-ville, au délai standard)
- *     Périphérie ← sub_city
- *     Intérieur  ← outside_city
- *     CEDEAO     ← forfaits par pays (Togo 12 000, Nigeria 18 000,
- *                    Burkina Faso 15 000 — tranchés le 2026-09-06)
- *
- * Et un **supplément « jour même » de 300 F**, global — le même quelle que
- * soit la zone. C'est la seule chose que la refonte déplace, et elle le fait
- * sciemment : aujourd'hui ce supplément vaut 200 F sur 1 kg et 500 F sur
- * 10 kg. Un modèle à supplément unique ne peut pas rendre les deux ;
- * `écarts()` dit exactement ce que chaque tranche gagne ou perd.
- *
- * Ce service est le seul endroit qui connaît cette correspondance : la
- * commande `beninlink:zones-tarifaires` et le jeu de recette l'appellent tous
- * les deux.
+ * La correspondance historique reste consignée dans `docs/DECISIONS_METIER.md`
+ * (D4) : Cotonou ← `next_day`, Périphérie ← `sub_city`, Intérieur ←
+ * `outside_city`, et un supplément « jour même » global de 300 F.
  */
-class ZoneGridConverter
+class ZoneCatalog
 {
     /** Supplément « jour même » retenu par le métier, en FCFA entiers. */
     public const SAME_DAY_SURCHARGE = 300;
 
-    /** [code, libellé, colonne héritée] — `null` = zone sans équivalent. */
+    /** [code, libellé] — l'ordre fixe la position à l'écran. */
     public const ZONES = [
-        [DeliveryZone::COTONOU, 'Cotonou', 'next_day'],
-        [DeliveryZone::PERIPHERIE, 'Périphérie', 'sub_city'],
-        [DeliveryZone::INTERIEUR, 'Intérieur', 'outside_city'],
-        [DeliveryZone::CEDEAO, 'CEDEAO', null],
+        [DeliveryZone::COTONOU, 'Cotonou'],
+        [DeliveryZone::PERIPHERIE, 'Périphérie'],
+        [DeliveryZone::INTERIEUR, 'Intérieur'],
+        [DeliveryZone::CEDEAO, 'CEDEAO'],
     ];
 
     public const DELAIS = [
@@ -104,33 +93,11 @@ class ZoneGridConverter
         return $crees;
     }
 
-    /** Lignes héritées d'une société : celles qui n'ont pas encore de zone. */
-    public function legacyRows(int $companyId): Collection
-    {
-        return DeliveryCharge::where('company_id', $companyId)->whereNull('zone_id')
-            ->orderBy('category_id')->orderBy('weight')->get();
-    }
-
-    /**
-     * Ce que le supplément unique change, tranche par tranche.
-     *
-     * @return array<int, array{weight:int, actuel:float, retenu:float, ecart:float}>
-     */
-    public function ecarts(int $companyId, float $supplement): array
-    {
-        return $this->legacyRows($companyId)->map(fn (DeliveryCharge $ligne) => [
-            'weight' => (int) $ligne->weight,
-            'actuel' => (float) $ligne->same_day - (float) $ligne->next_day,
-            'retenu' => $supplement,
-            'ecart' => $supplement - ((float) $ligne->same_day - (float) $ligne->next_day),
-        ])->all();
-    }
-
     /** @return array<string, DeliveryZone> */
     public function zones(int $companyId): array
     {
         $out = [];
-        foreach (self::ZONES as $position => [$code, $nom, $colonne]) {
+        foreach (self::ZONES as $position => [$code, $nom]) {
             // Pas d'`updateOrCreate` : `company_id` n'est pas assignable en
             // masse sur ces modèles du socle — la ligne partirait sans société,
             // et une seconde exécution en créerait une de plus.
@@ -163,37 +130,20 @@ class ZoneGridConverter
     }
 
     /**
-     * Écrit une ligne de barème par zone, aux montants d'aujourd'hui.
+     * Installe le modèle par zones d'une société : les quatre zones, les trois
+     * délais, et les forfaits CEDEAO.
      *
-     * @return int nombre de lignes écrites
+     * C'est ce dont une installation neuve a besoin pour facturer quoi que ce
+     * soit — depuis l'étape 6, un colis sans zone n'a pas de tarif. La grille
+     * elle-même (tranche × zone) se saisit ensuite à l'écran : ses montants
+     * appartiennent au transporteur, pas au logiciel.
      */
-    public function convert(int $companyId, float $supplement): int
+    public function installer(int $companyId, float $supplement = self::SAME_DAY_SURCHARGE): array
     {
         $zones = $this->zones($companyId);
         $this->delais($companyId, $supplement);
         $this->pays($zones[DeliveryZone::CEDEAO] ?? null);
 
-        $ecrites = 0;
-        foreach ($this->legacyRows($companyId) as $ligne) {
-            foreach (self::ZONES as [$code, $nom, $colonne]) {
-                $cible = DeliveryCharge::where('company_id', $companyId)
-                    ->where('category_id', $ligne->category_id)
-                    ->where('zone_id', $zones[$code]->id)
-                    ->where('weight', $ligne->weight)
-                    ->first() ?? new DeliveryCharge();
-
-                $cible->company_id = $companyId;
-                $cible->category_id = $ligne->category_id;
-                $cible->zone_id = $zones[$code]->id;
-                $cible->weight = $ligne->weight;
-                $cible->amount = $colonne === null ? 0 : (float) $ligne->{$colonne};
-                $cible->position = $ligne->position;
-                $cible->status = Status::ACTIVE;
-                $cible->save();
-                $ecrites++;
-            }
-        }
-
-        return $ecrites;
+        return $zones;
     }
 }

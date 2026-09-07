@@ -8,6 +8,7 @@ use App\Models\MerchantShops;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\Concerns\SeedsTenant;
+use App\Models\Backend\DeliveryZone;
 use Tests\TestCase;
 
 /**
@@ -74,6 +75,7 @@ class ParcelScopeTest extends TestCase
             'customer_address' => 'Porto-Novo',
             'category_id' => 1,
             'delivery_type_id' => 1,
+            'zone_id' => DeliveryZone::where('code', DeliveryZone::COTONOU)->value('id'),
             'cash_collection' => 50000,
             'current_payable' => 49450,
             'tracking_id' => 'TEST-VOISIN',
@@ -118,6 +120,7 @@ class ParcelScopeTest extends TestCase
             'shop_id' => MerchantShops::firstOrFail()->id,
             'category_id' => 1,
             'delivery_type_id' => 1,
+            'zone_id' => DeliveryZone::where('code', DeliveryZone::COTONOU)->value('id'),
             'customer_name' => 'Detourne',
             'customer_phone' => '0022995000000',
             'customer_address' => 'Cotonou',

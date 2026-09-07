@@ -32,7 +32,8 @@ class DeliveryChargeController extends Controller
     public function create()
     {
         $categories = $this->repo->categories();
-        return view('backend.delivery_charge.create',compact('categories'));
+        $zones = \App\Models\Backend\DeliveryZone::companywise()->orderBy('position')->get();
+        return view('backend.delivery_charge.create',compact('categories','zones'));
     }
 
     public function store(StoreRequest $request)
@@ -50,7 +51,8 @@ class DeliveryChargeController extends Controller
     {
         $categories = $this->repo->categories();
         $delivery_charge = $this->repo->get($id);
-        return view('backend.delivery_charge.edit',compact('delivery_charge', 'categories'));
+        $zones = \App\Models\Backend\DeliveryZone::companywise()->orderBy('position')->get();
+        return view('backend.delivery_charge.edit',compact('delivery_charge', 'categories', 'zones'));
     }
 
     public function update(UpdateRequest $request)

@@ -15,6 +15,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Laravel\Sanctum\Sanctum;
 use Tests\Concerns\SeedsTenant;
+use App\Models\Backend\DeliveryZone;
 use Tests\TestCase;
 
 /**
@@ -60,15 +61,28 @@ class ParcelWalletBalanceGuardTest extends TestCase
         $this->merchant->save();
     }
 
-    /** Les frais que le serveur appliquera au colis du scénario, au franc près. */
+    /**
+     * Les frais que le serveur appliquera au colis du scénario, au franc près.
+     *
+     * Le marchand est connecté avant le calcul : `ChargeCalculator` relit la
+     * zone en `companywise()` — une garantie voulue, de la même famille que
+     * S8 — et le scope retomberait sinon sur la société 1.
+     */
     private function frais(): float
     {
+        Sanctum::actingAs($this->merchant->user->fresh(), ['merchant']);
+
+        $zoneId = DeliveryZone::where('company_id', $this->merchant->company_id)
+            ->where('code', DeliveryZone::COTONOU)->value('id');
+
         return (float) app(ChargeCalculator::class)->calculate(
             $this->merchant->fresh(),
             1,
             1,
-            1,
             50000.0,
+            null,
+            false,
+            $zoneId,
         )['total_delivery_amount'];
     }
 
@@ -90,6 +104,7 @@ class ParcelWalletBalanceGuardTest extends TestCase
         return $this->postJson('/api/v10/parcel/store', [
             'category_id' => 1,
             'delivery_type_id' => 1,
+            'zone_id' => DeliveryZone::where('code', DeliveryZone::COTONOU)->value('id'),
             'cash_collection' => 50000,
             'weight' => 1,
             'shop_id' => MerchantShops::firstOrFail()->id,
@@ -252,6 +267,7 @@ class ParcelWalletBalanceGuardTest extends TestCase
             'parcel_id' => $original->id,
             'category_id' => 1,
             'delivery_type_id' => 1,
+            'zone_id' => DeliveryZone::where('code', DeliveryZone::COTONOU)->value('id'),
             'cash_collection' => 50000,
             'weight' => 1,
             'shop_id' => MerchantShops::firstOrFail()->id,

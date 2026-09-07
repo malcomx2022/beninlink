@@ -66,10 +66,8 @@ class DeliveryChargeRepository implements DeliveryChargeInterface{
             if($request->category == 1):
                 $delivery_charge->weight   = $request->weight;
             endif;
-            $delivery_charge->same_day     = $request->same_day;
-            $delivery_charge->next_day     = $request->next_day;
-            $delivery_charge->sub_city     = $request->sub_city;
-            $delivery_charge->outside_city = $request->outside_city;
+            $delivery_charge->zone_id      = $request->zone;
+            $delivery_charge->amount       = $request->amount;
             $delivery_charge->position     = $request->position;
             $delivery_charge->status       = $request->status;
             $delivery_charge->save();
@@ -90,10 +88,8 @@ class DeliveryChargeRepository implements DeliveryChargeInterface{
             if($request->category == 1):
                 $delivery_charge->weight   = $request->weight;
             endif;
-            $delivery_charge->same_day     = $request->same_day;
-            $delivery_charge->next_day     = $request->next_day;
-            $delivery_charge->sub_city     = $request->sub_city;
-            $delivery_charge->outside_city = $request->outside_city;
+            $delivery_charge->zone_id      = $request->zone;
+            $delivery_charge->amount       = $request->amount;
             $delivery_charge->position     = $request->position;
             $delivery_charge->status       = $request->status;
             $delivery_charge->save();

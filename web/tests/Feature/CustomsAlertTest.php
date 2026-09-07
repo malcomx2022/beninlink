@@ -12,6 +12,7 @@ use App\Models\MerchantShops;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\Concerns\SeedsTenant;
+use App\Models\Backend\DeliveryZone;
 use Tests\TestCase;
 
 /**
@@ -53,6 +54,7 @@ class CustomsAlertTest extends TestCase
             'shop_id' => MerchantShops::firstOrFail()->id,
             'category_id' => DeliveryCategory::firstOrFail()->id,
             'delivery_type_id' => 1,
+            'zone_id' => DeliveryZone::where('code', DeliveryZone::COTONOU)->value('id'),
             'customer_name' => 'Aicha Kora',
             'customer_phone' => '0022997000001',
             'customer_address' => 'Cotonou, Akpakpa',
@@ -118,6 +120,7 @@ class CustomsAlertTest extends TestCase
         $reponse = $this->postJson('/api/v10/parcel/quote', [
             'category_id' => DeliveryCategory::firstOrFail()->id,
             'delivery_type_id' => 1,
+            'zone_id' => DeliveryZone::where('code', DeliveryZone::COTONOU)->value('id'),
             'cash_collection' => 50000,
             'destination_country' => 'NG',
             'customs_category' => 'alimentaire',
@@ -133,6 +136,7 @@ class CustomsAlertTest extends TestCase
         $this->postJson('/api/v10/parcel/quote', [
             'category_id' => DeliveryCategory::firstOrFail()->id,
             'delivery_type_id' => 1,
+            'zone_id' => DeliveryZone::where('code', DeliveryZone::COTONOU)->value('id'),
             'cash_collection' => 50000,
         ], $this->entetes())->assertOk()->assertJsonPath('data.customs', null);
     }

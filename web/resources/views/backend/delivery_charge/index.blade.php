@@ -87,10 +87,8 @@
                                     <th>{{ __('levels.weight') }}</th>
                                     <th>{{ __('levels.position') }}</th>
                                     <th>{{ __('levels.status') }}</th>
-                                    <th>{{ __('levels.same_day') }}</th>
-                                    <th>{{ __('levels.next_day') }}</th>
-                                    <th>{{ __('levels.sub_city') }}</th>
-                                    <th>{{ __('levels.outside_city') }}</th>
+                                    <th>{{ __('delivery_zone.zone') }}</th>
+                                    <th>{{ __('delivery_zone.amount') }}</th>
                                     @if(hasPermission('delivery_charge_update') == true || hasPermission('delivery_charge_delete') == true)
                                     <th>{{ __('levels.actions') }}</th>
                                     @endif
@@ -107,10 +105,8 @@
                                     <td>{!! $delivery_charge->my_status !!}</td>
                                     {{-- Les deux colonnes étaient interverties : l'en-tête
                                          « jour même » affichait le tarif du lendemain. --}}
-                                    <td>{{ formatAmount($delivery_charge->same_day) }}</td>
-                                    <td>{{ formatAmount($delivery_charge->next_day) }}</td>
-                                    <td>{{ formatAmount($delivery_charge->sub_city) }}</td>
-                                    <td>{{ formatAmount($delivery_charge->outside_city) }}</td>
+                                    <td>{{ $delivery_charge->zone?->name ?? '—' }}</td>
+                                    <td>{{ formatAmount($delivery_charge->amount) }}</td>
                                     @if(hasPermission('delivery_charge_update') == true || hasPermission('delivery_charge_delete') == true)
                                     <td>
                                         <div class="row">

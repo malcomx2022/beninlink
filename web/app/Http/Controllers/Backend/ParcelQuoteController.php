@@ -43,7 +43,6 @@ class ParcelQuoteController extends Controller
         try {
             $charges = $calculator->calculate(
                 $merchant,
-                (int) $request->delivery_type_id,
                 $request->category_id ? (int) $request->category_id : null,
                 $request->weight,
                 $cashCollection,

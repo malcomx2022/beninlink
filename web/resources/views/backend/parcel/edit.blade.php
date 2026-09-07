@@ -449,7 +449,6 @@
         var mapLong = '{{ $parcel->customer_long }}';
     </script>
     <script>
-        var deliverChargeUrl = '{{ route('parcel.deliveryCharge.get') }}';
         var merchantUrl = '{{ route('parcel.merchant.get') }}';
         var quoteUrl = '{{ route('parcel.quote') }}';
         var category_id = '{{ $parcel->category_id }}';

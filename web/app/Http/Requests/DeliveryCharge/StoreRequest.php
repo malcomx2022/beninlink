@@ -29,10 +29,9 @@ class StoreRequest extends FormRequest
             return [
                 'category'      => ['required'],
                 'weight'        => ['required','numeric'],
-                'same_day'      => ['required','numeric',],
-                'next_day'      => ['required','numeric',],
-                'sub_city'      => ['required','numeric',],
-                'outside_city'  => ['required','numeric',],
+                // D4, étape 6 : une ligne = catégorie × zone × tranche.
+                'zone'          => ['required','numeric',],
+                'amount'        => ['required','numeric',],
                 'position'      => ['required','numeric',],
                 'status'        => ['required','numeric',],
             ];
@@ -40,10 +39,9 @@ class StoreRequest extends FormRequest
         else {
             return [
                 'category'      => ['required', 'numeric'],
-                'same_day'      => ['required','numeric',],
-                'next_day'      => ['required','numeric',],
-                'sub_city'      => ['required','numeric',],
-                'outside_city'  => ['required','numeric',],
+                // D4, étape 6 : une ligne = catégorie × zone × tranche.
+                'zone'          => ['required','numeric',],
+                'amount'        => ['required','numeric',],
                 'position'      => ['required','numeric',],
                 'status'        => ['required','numeric',],
             ];
@@ -67,6 +65,9 @@ class StoreRequest extends FormRequest
 
         $queryArray['company_id']               = settings()->id; 
         $queryArray['category_id']              = $this->category;
+        // L'unicité porte désormais la zone : la même tranche existe dans
+        // chacune, à des montants différents — c'est tout l'objet du modèle.
+        $queryArray['zone_id']                  = $this->zone;
         $queryArray['weight']                   = $this->weight;
         $deliverycharge                         = DeliveryCharge::where($queryArray)->first();
         if (blank($deliverycharge)) {
