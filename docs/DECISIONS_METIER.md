@@ -949,6 +949,16 @@ guide d'infra fournit l'unité superviseur (corrigée au passage : elle visait
 `queue:work redis`, que l'application n'utilise pas — le worker n'aurait rien
 traité) et un repli cron pour un hébergement sans superviseur.
 
+**Le modèle d'environnement disait le contraire — corrigé le 2026-09-07.**
+`docs/guides/infra/.env.example` déclarait `QUEUE_CONNECTION=redis`,
+`SESSION_DRIVER=redis` et `CACHE_STORE=redis`. Une installation montée dessus
+aurait exigé `php8.3-redis` et un serveur Redis que rien n'utilise :
+`RedisTenancyBootstrapper` est commenté dans `config/tenancy.php`, aucun paquet
+`predis` n'est installé, et `web/.env.example` — le socle — dit `file`,
+`database`, `file`. La troisième ligne ne faisait même rien : Laravel 10 lit
+`CACHE_DRIVER`, pas `CACHE_STORE` (nom apparu en Laravel 11), donc le cache
+retombait sur `file` en silence. Le modèle suit désormais cette décision.
+
 **Ce qui reste inline, et pourquoi.** `InvoicePDFSend` : son expéditeur est
 codé en dur (`admin@example.com`) et le PDF voyagerait dans la charge du job.
 Le corriger est un chantier à part, pas un effet de bord de celui-ci.

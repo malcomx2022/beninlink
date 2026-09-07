@@ -225,28 +225,28 @@ Garder l'ancien FPM installé une semaine avant `sudo apt purge php8.2-*`.
 
 ---
 
-## Deux points à trancher avant, qui ne relèvent pas de PHP
+## Redis : tranché, et il n'y en a pas
 
-Le provisionnement les révèle, sans pouvoir les résoudre.
+La question se posait parce que `infra/.env.example` déclarait
+`QUEUE_CONNECTION=redis` et `SESSION_DRIVER=redis`. **Elle est tranchée :
+`database` pour la file, conformément à D13**, et le modèle a été corrigé.
 
-**1. Redis ou pas.** `infra/.env.example` déclare `QUEUE_CONNECTION=redis` et
-`SESSION_DRIVER=redis`, alors que la décision **D13** a retenu la file
-`database`, et que le commentaire de `supervisor/beninlink-worker.conf` dit que
-l'application « n'utilise pas » Redis. Les deux fichiers se contredisent.
+Il n'y a donc **ni `php8.3-redis` ni serveur Redis à installer**. Trois indices
+concordants le confirmaient déjà dans le dépôt :
 
-- Si le `.env` de production garde `redis` : il faut **`php8.3-redis`** et un
-  serveur Redis, sans quoi la session casse au premier visiteur (aucun paquet
-  `predis` n'est installé — Laravel passera par l'extension `phpredis`).
-- S'il suit D13 (`database` partout) : rien à installer de plus, et
-  `.env.example` est à corriger.
+- `config/tenancy.php` laisse `RedisTenancyBootstrapper` **commenté**, avec la
+  mention « phpredis is needed » ;
+- aucun paquet `predis` n'est installé — Laravel serait passé par l'extension ;
+- `web/.env.example`, celui du socle, dit `file`, `database`, `file`.
 
-**Ce guide part de D13** et n'installe pas Redis. À confirmer avant le premier
-déploiement.
+Trois lignes annonçaient une architecture que rien n'implémentait. L'une d'elles
+ne servait même à rien : Laravel 10 lit `CACHE_DRIVER`, pas `CACHE_STORE` — nom
+apparu en Laravel 11. La variable était ignorée et le cache retombait sur
+`file`, silencieusement.
 
-**2. Un réglage sans effet.** `.env.example` écrit `CACHE_STORE=redis`, mais
-Laravel 10 lit `CACHE_DRIVER` (`config/cache.php` ligne 18). La variable est
-donc ignorée et le cache retombe sur `file` — silencieusement. Que l'on choisisse
-`redis` ou `file`, cette ligne ne dit pas ce qu'elle a l'air de dire.
+Le cache reste `file` plutôt que `database` : il n'existe aucune migration de
+table `cache` dans ce dépôt. Il demeure cloisonné par société — c'est
+`CacheTenancyBootstrapper`, actif, qui préfixe les clés.
 
 ---
 
