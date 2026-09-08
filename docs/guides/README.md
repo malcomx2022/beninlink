@@ -16,6 +16,11 @@
   3. `infra/env/` — le `.env` de production, dont la ligne `APP_INSTALLED=yes` :
      sans elle, un déploiement réussi sert l'installateur We Courier au lieu de
      l'application.
+  4. `infra/nginx/` — le service web et le certificat. Le certificat est
+     **générique** (`*.beninlink.app`) : il ne s'obtient que par défi DNS-01,
+     donc pas avec `certbot --nginx`, et son renouvellement demande un accès à
+     la zone DNS. Il doit exister **avant** que la configuration soit posée,
+     sans quoi nginx refuse de démarrer.
   ⚠️ Le workflow GitHub Actions n'est plus un modèle : il vit à
   `.github/workflows/deploy.yml` et **un push sur `main` déploie en
   production**, après la suite de tests. Les secrets `SSH_HOST`, `SSH_USER`,
