@@ -47,10 +47,13 @@ php artisan key:generate                      # écrit APP_KEY dans le .env
 php -r 'echo "blk_".bin2hex(random_bytes(16)), PHP_EOL;'   # à coller dans API_KEY
 ```
 
-**`APP_KEY`** chiffre les sessions et les colonnes `encrypted`. Deux règles :
-elle se génère **sur le serveur** — jamais recopiée d'un poste de développement
-— et elle ne change **jamais** ensuite. La changer sur une base existante rend
-illisible tout ce qu'elle a chiffré.
+**`APP_KEY`** signe les cookies et chiffre les sessions. Elle se génère **sur le
+serveur** — jamais recopiée d'un poste de développement.
+
+La changer déconnecte tout le monde et invalide les URL signées ; elle ne
+détruit **aucune donnée**, ce projet n'ayant aucune colonne `encrypted`
+(vérifié sur `app/` et `database/`). C'est une gêne, pas un incident — mais une
+gêne sans contrepartie, donc on ne la change pas sans raison.
 
 **`API_KEY`** est la clé que les applications mobiles présentent à chaque
 requête. Le socle en livrait une **en dur, identique pour toutes les
@@ -149,7 +152,7 @@ php artisan beninlink:tarification-prete
 
 | Valeur | Effet du changement |
 |---|---|
-| `APP_KEY` | **irréversible** : rend illisible tout ce qu'elle a chiffré. Ne se change pas sur une base vivante |
+| `APP_KEY` | déconnecte tous les utilisateurs et invalide les URL signées. Aucune perte de données — aucune colonne n'est chiffrée |
 | `API_KEY` | impose de **republier les deux apps mobiles** ; les versions installées cessent d'être servies |
 | `FEDAPAY_WEBHOOK_SECRET` | à changer **en même temps** que dans le Workbench FedaPay ; entre les deux, aucun webhook n'est accepté |
 | `MAIL_*` | sans effet sur les jobs déjà en échec — les relancer avec `queue:retry all` |
