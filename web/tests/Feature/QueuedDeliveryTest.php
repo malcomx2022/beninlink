@@ -268,6 +268,12 @@ class QueuedDeliveryTest extends TestCase
 
         $this->artisan('beninlink:file-attente')
             ->expectsOutputToContain('Le worker est probablement arrêté')
+            // Le nom du service est épinglé : la commande a longtemps renvoyé
+            // vers `systemctl status beninlink-queue`, qui n'existe nulle part.
+            // Le dépôt livre un programme SUPERVISOR nommé `beninlink-worker`.
+            // Un témoin qui se déclenche pendant une panne ne peut pas envoyer
+            // sur une fausse piste.
+            ->expectsOutputToContain('supervisorctl status beninlink-worker')
             ->assertFailed();
     }
 

@@ -79,7 +79,9 @@ class QueueHealthCommand extends Command
 
         if ($enAttente > 0 && $ageMinutes >= $seuil) {
             $this->error("Le plus ancien envoi attend depuis {$ageMinutes} min (seuil : {$seuil}).");
-            $this->line('Le worker est probablement arrêté : `systemctl status beninlink-queue`.');
+            $this->line('Le worker est probablement arrêté.');
+            $this->line('  État  : `sudo supervisorctl status beninlink-worker`');
+            $this->line('  Guide : docs/guides/infra/supervisor/README.md');
 
             return self::FAILURE;
         }
