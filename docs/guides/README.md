@@ -21,6 +21,11 @@
      donc pas avec `certbot --nginx`, et son renouvellement demande un accès à
      la zone DNS. Il doit exister **avant** que la configuration soit posée,
      sans quoi nginx refuse de démarrer.
+
+  Puis, APRÈS le premier déploiement : `infra/supervisor/` — le worker de la
+  file (D13). Sans lui, l'application répond normalement et **plus aucun SMS ne
+  part** ; l'installer sans installer sa surveillance ne fait que déplacer le
+  problème.
   ⚠️ Le workflow GitHub Actions n'est plus un modèle : il vit à
   `.github/workflows/deploy.yml` et **un push sur `main` déploie en
   production**, après la suite de tests. Les secrets `SSH_HOST`, `SSH_USER`,
