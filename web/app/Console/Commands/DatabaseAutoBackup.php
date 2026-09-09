@@ -2,88 +2,53 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Categorys;
 use Illuminate\Console\Command;
 
-use Illuminate\Support\Facades\Mail;
+/**
+ * `database:autobackup` — NEUTRALISÉE le 2026-09-09.
+ *
+ * Cette commande du socle We Courier construisait un dump SQL à la main, en
+ * PHP, et l'envoyait **par courriel**. Elle produisait des sauvegardes que l'on
+ * ne découvre inutilisables qu'au moment de restaurer — c'est-à-dire au pire
+ * moment possible :
+ *
+ *   $connect = new PDO("…;charset=utf8", …);            // la base est en utf8mb4
+ *   $output .= "'" . implode("','", $valeurs) . "');";  // AUCUN échappement
+ *
+ *   - Aucun échappement : une seule apostrophe — « L'Express », « Cotonou
+ *     l'Ancien » — produit un fichier SQL irrécupérable. Le français en est
+ *     plein.
+ *   - `charset=utf8` sur une base `utf8mb4` : les caractères sur quatre octets
+ *     sont tronqués à la lecture.
+ *   - `NULL` devient la chaîne vide : une date nulle restaurée en `''`.
+ *   - Le dump entier est construit en mémoire PHP avant d'être expédié — et
+ *     expédié EN CLAIR, avec les pièces d'identité des marchands.
+ *
+ * Elle était planifiée quotidiennement dans `Console\Kernel`. La planification
+ * est retirée ; le corps refuse. La classe reste pour que
+ * `php artisan database:autobackup` réponde à qui la connaît, au lieu de
+ * disparaître sans explication.
+ *
+ * La sauvegarde du projet : docs/guides/infra/sauvegarde/
+ */
 class DatabaseAutoBackup extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'database:autobackup';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Command description';
+    protected $description = 'Retirée : sauvegarde défectueuse du socle — voir docs/guides/infra/sauvegarde/';
 
-    /**
-     * Execute the console command.
-     *
-     * @return int
-     */
-    public function handle()
+    public function handle(): int
     {
-        $mysqlHostName      = env('DB_HOST');
-        $mysqlUserName      = env('DB_USERNAME');
-        $mysqlPassword      = env('DB_PASSWORD');
-        $DbName             = env('DB_DATABASE');
- 
+        $this->error('Cette commande est retirée : ses sauvegardes sont inutilisables.');
+        $this->newLine();
+        $this->line('Elle assemblait le SQL sans échapper les valeurs : une apostrophe');
+        $this->line('— « L\'Express » — suffit à rendre le fichier irrécupérable. Elle');
+        $this->line('lisait en `utf8` une base `utf8mb4`, transformait les NULL en chaînes');
+        $this->line('vides, et expédiait toute la base en clair par courriel.');
+        $this->newLine();
+        $this->line('La sauvegarde du projet : docs/guides/infra/sauvegarde/');
+        $this->line('  script : /usr/local/bin/beninlink-sauvegarde');
 
-        $tables = array();
-
-        $connect = new \PDO("mysql:host=$mysqlHostName;dbname=$DbName;charset=utf8", "$mysqlUserName", "$mysqlPassword",array(\PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8'"));
-        $get_all_table_query = "SHOW TABLES";
-        $statement = $connect->prepare($get_all_table_query);
-        $statement->execute();
-        $result = $statement->fetchAll();
-
-        foreach ($result as $row) {
-            $tables[] = $row[0];
-        }
-
-        $output = '';
-        foreach($tables as $table)
-        {
-            $show_table_query = "SHOW CREATE TABLE " . $table . "";
-            $statement = $connect->prepare($show_table_query);
-            $statement->execute();
-            $show_table_result = $statement->fetchAll();
-
-            foreach($show_table_result as $show_table_row)
-            {
-                $output .= "\n\n" . $show_table_row["Create Table"] . ";\n\n";
-            }
-            $select_query = "SELECT * FROM " . $table . "";
-            $statement = $connect->prepare($select_query);
-            $statement->execute();
-            $total_row = $statement->rowCount();
-
-            for($count=0; $count<$total_row; $count++)
-            {
-                $single_result = $statement->fetch(\PDO::FETCH_ASSOC);
-                $table_column_array = array_keys($single_result);
-                $table_value_array = array_values($single_result);
-                $output .= "\nINSERT INTO $table (";
-                $output .= "" . implode(", ", $table_column_array) . ") VALUES (";
-                $output .= "'" . implode("','", $table_value_array) . "');\n";
-            }
-        }
-        $file_name = 'database_backup_on_' . date('y-m-d-his') . '.sql';
-     
-        //send to mail pdf file
-        Mail::send('backend.merchant.invoice.invoice_mail_pdf',[], function ($message) use ($output,$file_name) {
-            $message->to(settings()->email, settings()->name)
-                    ->subject('Database Backup - '.date('Y-m-d h:i:s'))
-                    ->from(settings()->email,settings()->name)
-                    ->attachData($output, $file_name);
-        });
-        //end send to mail pdf file
-
+        return self::FAILURE;
     }
 }

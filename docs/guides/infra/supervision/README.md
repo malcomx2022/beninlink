@@ -149,5 +149,9 @@ sur un cron. Elle construit un dump à la main et l'envoie **par courriel** :
 - `NULL` devient la chaîne vide ;
 - le dump entier tient en mémoire PHP avant d'être expédié.
 
+Elle était en outre **planifiée quotidiennement** — donc active partout où le
+cron lance `schedule:run`. Depuis le 2026-09-09 elle **refuse de s'exécuter** et
+n'est plus planifiée ; il n'y a donc plus rien à surveiller de ce côté.
+
 La sauvegarde du projet est `infra/sauvegarde/` : `mysqldump`, sur disque, avec
 un exercice de restauration. Voir ce guide, § « Ce qu'il ne faut pas utiliser ».

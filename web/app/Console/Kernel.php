@@ -17,7 +17,15 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
-        $schedule->command('database:autobackup')->daily();
+
+        // `database:autobackup` tournait ici chaque nuit. Retirée le 2026-09-09 :
+        // elle assemblait le SQL sans échapper les valeurs, lisait en `utf8` une
+        // base `utf8mb4`, et expédiait toute la base en clair par courriel. Ses
+        // sauvegardes ne se révélaient inutilisables qu'à la restauration.
+        // La laisser planifiée aurait fait échouer une tâche par nuit, en
+        // silence — `schedule:run` écrit dans /dev/null.
+        // La sauvegarde du projet : docs/guides/infra/sauvegarde/
+
         $schedule->command('invoice:generate')->daily('13:00');
     }
 
