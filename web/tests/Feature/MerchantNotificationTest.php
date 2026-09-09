@@ -71,9 +71,17 @@ class MerchantNotificationTest extends TestCase
         return $parcel;
     }
 
+    /**
+     * Les genres du fil, du plus ancien au plus recent.
+     *
+     * `notifications()` est declaree `->latest()` par le socle Laravel : un
+     * `orderBy('created_at')` ajoute derriere ne renverse rien, il devient un
+     * second critere que le premier rend inutile. Il faut `reorder()`, qui
+     * efface le tri de la relation avant de poser le sien.
+     */
     private function kinds(): array
     {
-        return $this->merchant->user->notifications()->orderBy('created_at')->get()
+        return $this->merchant->user->notifications()->reorder('created_at')->get()
             ->map(fn ($n) => $n->data['kind'])->all();
     }
 
@@ -138,6 +146,12 @@ class MerchantNotificationTest extends TestCase
             'status' => \App\Enums\InvoiceStatus::UNPAID,
         ])->save();
 
+        // `notifications.created_at` s'ecrit a la seconde : deux ecritures dans
+        // la meme seconde portent la meme valeur, et l'ordre revient alors au
+        // hasard du tri. La suite complete a fini par le montrer. Une seconde
+        // d'ecart rend l'ordre verifiable au lieu de le tirer au sort.
+        $this->travel(1)->second();
+
         $parcel = $this->colis('BL-EXPORT-1');
         CustomsAlert::create([
             'company_id' => $this->merchant->company_id,
@@ -168,6 +182,12 @@ class MerchantNotificationTest extends TestCase
             'description' => 'Le service sera interrompu de 2h a 4h.',
             'type' => 'all',
         ])->save();
+
+        // `notifications.created_at` s'ecrit a la seconde : deux ecritures dans
+        // la meme seconde portent la meme valeur, et l'ordre revient alors au
+        // hasard du tri. La suite complete a fini par le montrer. Une seconde
+        // d'ecart rend l'ordre verifiable au lieu de le tirer au sort.
+        $this->travel(1)->second();
 
         $payment = new Payment();
         $payment->forceFill([
