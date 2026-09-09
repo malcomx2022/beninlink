@@ -30,6 +30,11 @@
     n'est **jamais** dans git : les signatures de livraison n'existent que sur
     le serveur. Le guide porte surtout sur l'**exercice de restauration** — une
     sauvegarde jamais restaurée n'est pas une sauvegarde, c'est un fichier.
+  - `infra/supervision/` — ce qui se surveille, et **ce qui n'a pas de
+    détecteur**. Sur les neuf commandes `beninlink:*`, **trois seulement** ont
+    une sortie 1 qui signale un incident ; les autres la réservent aux erreurs
+    d'appel, et deux constats renvoient SUCCESS *même quand ils trouvent des
+    écarts*. Les brancher sur un cron produirait un vert permanent.
   ⚠️ Le workflow GitHub Actions n'est plus un modèle : il vit à
   `.github/workflows/deploy.yml` et **un push sur `main` déploie en
   production**, après la suite de tests. Les secrets `SSH_HOST`, `SSH_USER`,
