@@ -1,19 +1,43 @@
 # crontab -e (utilisateur deploy)
+#
+# CE FICHIER EST LE CRONTAB COMPLET. Le guide infra/supervision/ explique
+# chaque ligne ; il n'en ajoute aucune. Ne pas cumuler les deux, sous peine de
+# faire tourner les constats en double.
 
-# Planificateur Laravel (MRR/ARR, tâches récurrentes)
+MAILTO=""
+ALERTE_MAIL=exploitation@beninlink.app
+
+# --- Planificateur Laravel ---------------------------------------------------
+# MRR/ARR et tâches récurrentes. Sans rapport avec la supervision, mais
+# indispensable : sans lui, aucune tâche planifiée ne s'exécute.
 * * * * * cd /var/www/beninlink/web && php artisan schedule:run >> /dev/null 2>&1
 
-# File des envois (D13) — SMS, notifications poussées, e-mails.
-#
-# À N'UTILISER QUE si l'hébergement n'a pas de superviseur : c'est un repli.
-# Le worker démarre chaque minute, vide la file et s'arrête. Conséquence
-# assumée : un envoi peut attendre jusqu'à une minute — acceptable pour un
-# SMS de statut, moins pour un code de vérification à l'inscription.
-# La bonne installation reste supervisor/ (worker permanent) ; les deux
-# ensemble feraient tourner deux workers pour rien.
+# --- File des envois (D13) ---------------------------------------------------
+# Repli SANS superviseur seulement — c'est l'un OU l'autre, jamais les deux.
+# Le worker démarre chaque minute, vide la file et s'arrête : un envoi peut
+# attendre jusqu'à une minute. Acceptable pour un SMS de statut, moins pour un
+# code de vérification. La bonne installation reste supervisor/.
 # * * * * * cd /var/www/beninlink/web && php artisan queue:work --stop-when-empty --tries=3 >> /dev/null 2>&1
 
-# Témoin de file : signale un worker arrêté (sortie 1 si le plus ancien envoi
-# attend depuis plus de 5 minutes). Rediriger vers une alerte plutôt que vers
-# /dev/null, sans quoi la panne reste silencieuse — c'est tout l'intérêt.
-*/10 * * * * cd /var/www/beninlink/web && php artisan beninlink:file-attente >> /var/log/beninlink-file.log 2>&1
+# --- Supervision -------------------------------------------------------------
+# `beninlink-surveiller` n'écrit et n'alerte QUE sur échec : une alerte qui
+# arrive tous les jours cesse d'être lue en une semaine.
+#
+# Ces trois commandes sont les SEULES dont la sortie 1 signale un incident.
+# Les six autres réservent leur code 1 aux erreurs d'appel, et deux constats
+# renvoient SUCCESS même quand ils trouvent des écarts : les brancher ici
+# produirait un vert permanent. Voir supervision/README.md.
+
+# Worker arrêté : l'application répond, et plus aucun SMS ne part.
+*/10 * * * * /usr/local/bin/beninlink-surveiller beninlink:file-attente >> /var/log/beninlink-supervision.log 2>&1
+
+# Une société ne peut plus facturer : la création de colis est refusée.
+30 6 * * * /usr/local/bin/beninlink-surveiller beninlink:tarification-prete >> /var/log/beninlink-supervision.log 2>&1
+
+# --- Sauvegarde (infra/sauvegarde/) ------------------------------------------
+15 2 * * * /usr/local/bin/beninlink-sauvegarde >> /var/log/beninlink-sauvegarde.log 2>&1
+
+# --- Le cron lui-même --------------------------------------------------------
+# Un cron qui cesse de tourner ne produit AUCUNE alerte. Seul un service
+# extérieur qui attend un signal peut le dire. Décommenter avec une vraie sonde.
+# */15 * * * * curl -fsS -m 10 --retry 3 https://<sonde>/<identifiant> > /dev/null

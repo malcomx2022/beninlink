@@ -27,6 +27,32 @@ contenu ne l'est **jamais**. On y trouve :
 Une sauvegarde de base seule laisserait donc, après restauration, des colis
 livrés sans preuve et des marchands sans dossier.
 
+## Ce qu'il ne faut pas utiliser
+
+Le socle We Courier livre une commande `database:autobackup`. **Ne pas la
+brancher sur un cron.** Elle construit un dump à la main, en PHP, et l'envoie
+**par courriel** à l'adresse des réglages. Quatre défauts, dont un rédhibitoire :
+
+```php
+$connect = new \PDO("mysql:host=$mysqlHostName;dbname=$DbName;charset=utf8", …);
+…
+$output .= "'" . implode("','", $table_value_array) . "');\n";
+```
+
+- **Aucun échappement.** Les valeurs sont assemblées par `implode("','", …)` :
+  une seule apostrophe — « L'Express », « Cotonou l'Ancien » — produit un fichier
+  SQL **irrécupérable**. Le français en est plein, et l'erreur ne se voit qu'à la
+  restauration.
+- **`charset=utf8`** alors que la base est en `utf8mb4` : les caractères sur
+  quatre octets sont tronqués à la lecture.
+- **`NULL` devient la chaîne vide** — une date nulle restaurée en `''`.
+- Le dump entier est construit **en mémoire PHP** puis expédié en pièce jointe :
+  au-delà de quelques milliers de lignes, la commande meurt ; en deçà, elle
+  envoie toute la base — pièces d'identité comprises — en clair par courriel.
+
+Le script de ce guide fait le même travail avec `mysqldump`, sur disque, et avec
+un exercice de restauration qui prouve le résultat.
+
 ## Ce qu'il est inutile de sauvegarder
 
 `vendor/` se réinstalle (`composer install`), le code est dans git, le
