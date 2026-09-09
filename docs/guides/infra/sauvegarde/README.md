@@ -50,6 +50,16 @@ $output .= "'" . implode("','", $table_value_array) . "');\n";
   au-delà de quelques milliers de lignes, la commande meurt ; en deçà, elle
   envoie toute la base — pièces d'identité comprises — en clair par courriel.
 
+Elle était de surcroît **planifiée quotidiennement** dans `Console\Kernel` :
+sur toute installation dont le cron lance `schedule:run`, elle tournait chaque
+nuit — et échouait en silence, la vue de courriel qu'elle appelle n'existant même
+pas.
+
+**Depuis le 2026-09-09, elle refuse de s'exécuter et n'est plus planifiée.** La
+classe reste, pour que `php artisan database:autobackup` réponde à qui la
+connaît au lieu de disparaître sans explication. Deux tests l'épinglent : le
+refus, et l'absence de planification.
+
 Le script de ce guide fait le même travail avec `mysqldump`, sur disque, et avec
 un exercice de restauration qui prouve le résultat.
 
