@@ -4,10 +4,11 @@
   test PHPUnit, README d'intégration). À déposer dans web/ aux mêmes chemins.
 - `recette-pilote/`  Préparation des tests pilotes : environnement de recette,
   builds EAS, jeu de données béninois (`php artisan beninlink:pilote`), scénarios,
-  critères de sortie.
+  critères de sortie. Le jeu pose le **modèle par zones** au complet (D4, étape 6) :
+  sans zone, un colis n'a plus de tarif, donc plus de recette.
 - `infra/`  Fichiers de déploiement VPS Infomaniak (Nginx multi-tenant, Supervisor,
   deploy.sh, .env.example, .gitignore, cron du scheduler).
-  ⚠️ **Trois guides se lisent AVANT le premier déploiement, dans cet ordre :**
+  ⚠️ **Quatre guides se lisent AVANT le premier déploiement, dans cet ordre :**
   1. `infra/php/` — depuis la n° 62 le backend ne s'installe plus en PHP 8.2, et
      `deploy.sh` s'arrête sur un serveur qui n'est pas en 8.3, avant même de
      couper le site.

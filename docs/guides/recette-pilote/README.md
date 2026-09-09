@@ -2,7 +2,7 @@
 
 > Guide opérationnel pour monter l'environnement de recette, produire les
 > applications de test et dérouler les scénarios avec les PME pilotes et les
-> livreurs. Mis à jour le 2026-09-05.
+> livreurs. Mis à jour le 2026-09-09.
 
 ## 1. Environnement de recette (`web/`)
 
@@ -15,18 +15,27 @@ Nginx que la production (`docs/guides/infra/nginx/beninlink.conf` couvre déjà
 | `APP_ENV` | `staging` | `beninlink:pilote` refuse de tourner en `production` |
 | `APP_URL` | `https://recette.beninlink.app` | liens signés (PDF), retours FedaPay |
 | `APP_DEBUG` | `false` | même en recette : les erreurs vont dans les journaux |
+| `APP_INSTALLED` | `yes` | sans elle, `IsInstalledMiddleware` renvoie **chaque requête** vers `/install` : la recette sert l'installateur We Courier, qui propose de recréer la base |
 | `API_KEY` | valeur **propre à la recette** (`php -r 'echo "blk_".bin2hex(random_bytes(16));'`) | embarquée dans les APK de recette, distincte de la production |
 | `FEDAPAY_ENVIRONMENT` | `sandbox` | aucun argent réel ; clés sandbox du tableau de bord FedaPay |
 | `FEDAPAY_PUBLIC_KEY` / `FEDAPAY_SECRET_KEY` / `FEDAPAY_WEBHOOK_SECRET` | clés **sandbox** | le webhook doit pointer sur `https://recette.beninlink.app/fedapay/webhook` |
-| `QUEUE_CONNECTION` | `database` (ou `sync` sans worker) | depuis **D13** les envois (SMS, push, e-mails) passent par la file ; en `database`, lancer le worker et surveiller avec `php artisan beninlink:file-attente` — sinon plus rien ne part, en silence |
+| `QUEUE_CONNECTION` | `database` (ou `sync` sans worker) | depuis **D13** les envois (SMS, push, e-mails) passent par la file ; en `database`, lancer le worker (`docs/guides/infra/supervisor/`) et le surveiller avec `php artisan beninlink:file-attente` — sinon plus rien ne part, en silence |
 | `MAIL_MAILER` | `log` | aucun e-mail réel n'atteint les PME pendant la recette |
 
-Le reste du `.env` suit `docs/guides/infra/.env.example`.
+Le reste du `.env` suit `docs/guides/infra/.env.example`, commenté ligne à ligne
+dans `docs/guides/infra/env/`.
 
 ### Installation
 
+Le serveur de recette a **les mêmes prérequis que la production**, et se monte
+dans le même ordre : `infra/php/` (**PHP 8.3** depuis la n° 62 — `deploy.sh`
+s'arrête sur un serveur en 8.2), `infra/mysql/` (base `utf8mb4_unicode_ci`,
+séparée de la production), `infra/env/`, puis `infra/nginx/`. Monter la recette
+sur un socle plus permissif ne prouverait rien de la production.
+
 ```bash
 cd /var/www/beninlink-recette/web
+composer check-platform-reqs --no-dev   # PHP 8.3 + extensions : tout doit dire success
 composer install --no-dev --optimize-autoloader
 php artisan migrate --force
 php artisan db:seed --force            # socle We Courier (société, rôles, permissions)
@@ -71,12 +80,11 @@ php artisan beninlink:pilote --reset         # repartir de zéro
 ```
 
 Crée, dans la société choisie : 5 agences (Cotonou Ganhi, Cotonou Akpakpa,
-Abomey-Calavi, Porto-Novo, Parakou), un barème FCFA par tranche de poids (1, 3, 5,
-10 kg × jour même / lendemain / périphérie / intérieur), 3 emballages, **5 PME
-pilotes** avec IFU, RCCM et boutique, **3 livreurs**, et **35 colis** répartis sur les
-statuts (en attente, ramassage, entrepôt, livreur assigné, livré, retour), avec
-leurs événements de suivi. Les montants sont calculés par `ChargeCalculator`, comme
-en production.
+Abomey-Calavi, Porto-Novo, Parakou), **le modèle par zones au complet** (voir
+ci-dessous), 3 emballages, **5 PME pilotes** avec IFU, RCCM et boutique,
+**3 livreurs**, et **35 colis** répartis sur les statuts (en attente, ramassage,
+entrepôt, livreur assigné, livré, retour), avec leurs événements de suivi. Les
+montants sont calculés par `ChargeCalculator`, comme en production.
 
 **PIL-002 règle par portefeuille prépayé** (`wallet_use_activation`), avec une
 recharge d'ouverture de **150 000 FCFA** écrite par le vrai chemin de crédit ; ses
@@ -93,6 +101,31 @@ Comptes créés (mot de passe commun : `pilote2026`) :
 | Livreur | `LIV-001` … `LIV-003` | Kossi Agbodjan, Ismaël Yacoubou, Bernadette Sossou |
 
 ⚠️ Recette uniquement : la commande refuse `APP_ENV=production`.
+
+### Ce que le jeu pose côté tarification (D4, étape 6)
+
+Depuis l'étape 6, **un colis sans zone n'a pas de tarif du tout** : le jeu
+installe donc le cadre avant les colis, par le même chemin que
+`beninlink:zones-tarifaires` (`ZoneCatalog::installer()`). Une recette montée
+sur l'ancien vocabulaire — « jour même / lendemain / périphérie / intérieur »
+comme axes de prix — ne décrit plus le produit : le délai est devenu un
+supplément, la **route** est le seul axe.
+
+| Élément | Ce que le jeu crée |
+|---|---|
+| Zones | Cotonou, Périphérie, Intérieur, **CEDEAO** |
+| Délais | Jour même (**+300 FCFA**), Lendemain, Standard |
+| Grille nationale | 4 tranches (jusqu'à 1, 3, 5, 10 kg) × 3 zones = **12 lignes** |
+| Forfaits CEDEAO | Togo 12 000 · Nigeria 18 000 · Burkina Faso 15 000 FCFA — **au pays, forfait, sans regarder le poids** |
+
+Grille nationale, en FCFA (Cotonou / Périphérie / Intérieur) : 800 / 1 500 /
+2 500 à 1 kg, 1 200 / 2 000 / 3 500 à 3 kg, 1 700 / 2 800 / 4 500 à 5 kg,
+2 500 / 4 000 / 6 500 à 10 kg.
+
+Les colis **tournent sur les trois zones nationales et sur les trois délais** :
+la recette les exerce tous, pas seulement le premier. La zone CEDEAO, elle, ne
+porte aucun colis du jeu — l'export se teste à la main (§4, scénario douane), et
+c'est là que le forfait au pays se vérifie.
 
 ## 3 bis. Régularisations (D7, D9 et D8)
 
@@ -145,7 +178,7 @@ Cocher chaque scénario sur un appareil réel, en réseau mobile (pas seulement 
 ### Marchand (app `mobile/`)
 - [ ] Connexion avec `PIL-001` / `pilote2026` ; l'écran affiche l'enseigne et l'agence.
 - [ ] Création d'un colis : le devis (frais, TVA 18 %, net) s'affiche avant validation ; le montant enregistré est identique au devis.
-- [ ] Colis vers un pays CEDEAO avec une catégorie sensible : l'alerte douanière s'affiche ; un produit interdit est refusé.
+- [ ] Colis vers un pays CEDEAO avec une catégorie sensible : l'alerte douanière s'affiche ; un produit interdit est refusé ; le prix est le **forfait du pays** (Togo 12 000 F), identique quel que soit le poids saisi.
 - [ ] Suivi : la timeline reflète les statuts posés par le livreur (voir ci-dessous).
 - [ ] Portefeuille : recharge Mobile Money **sandbox** ; le solde ne bouge qu'après le webhook (quelques secondes), jamais au retour de page.
 - [ ] Retrait : demande vers son propre compte Mobile Money ; un compte d'un autre marchand est refusé.
@@ -178,11 +211,11 @@ Cocher chaque scénario sur un appareil réel, en réseau mobile (pas seulement 
 - [ ] Un jeton marchand sur `/api/v10/deliveryman/dashboard` → 403 ; un jeton livreur sur `/api/v10/parcel/index` → 403.
 - [ ] `parcel/details/{id}` d'un colis d'une autre PME → 404.
 - [ ] `php artisan test` vert sur la version déployée (`web/`).
-- [ ] `php artisan beninlink:colis-non-debites`, `beninlink:ecarts-marchands` et `beninlink:retours-annules` : trois constats vides (voir §3 bis).
+- [ ] `php artisan beninlink:colis-non-debites`, `beninlink:ecarts-marchands` et `beninlink:retours-annules` : trois constats vides (voir §3 bis). ⚠️ Ces trois-là se **lisent** : les deux premières sortent en **succès même quand elles trouvent des écarts** (`infra/supervision/`). Cocher sur le texte affiché, jamais sur le code de sortie.
 - [ ] `php artisan beninlink:tarification-prete` : sort en **succès** — chaque société peut facturer (**D4**, étape 6).
 - [ ] Un colis créé **sans zone** est refusé sur le champ, à l'écran comme par l'API : depuis l'étape 6, la route est le seul axe de tarification.
 - [ ] Import Excel : le fichier modèle porte la colonne `zone_code`, et un fichier sans elle n'importe rien.
-- [ ] `php artisan beninlink:file-attente` : file traitée, worker vivant (D13).
+- [ ] `php artisan beninlink:file-attente` : file traitée, worker vivant (D13). Celle-ci, au contraire, **s'écoute** : sa sortie 1 veut dire « le worker est arrêté », et c'est l'une des trois seules commandes branchables sur une alerte.
 
 ## 5. Critères de sortie de recette
 
