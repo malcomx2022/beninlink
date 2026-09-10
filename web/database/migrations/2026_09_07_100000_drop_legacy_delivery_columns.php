@@ -40,9 +40,12 @@ use Illuminate\Support\Facades\Schema;
  *
  * ## Si elle refuse
  *
- * `beninlink:zones-tarifaires` a disparu avec les colonnes qu'il lisait. Une
- * installation qui n'a pas converti doit donc revenir à la version précédente,
- * convertir, vérifier avec `beninlink:bareme-herite`, puis redéployer. Le
+ * Le convertisseur est parti avec les colonnes qu'il lisait. Le nom
+ * `beninlink:zones-tarifaires`, lui, a survécu : dans cette version, il
+ * **installe** les zones, il ne convertit plus. Une installation qui n'a pas
+ * converti doit donc revenir à la version précédente — celle où la même commande
+ * portait `--appliquer` et où le constat s'appelait `beninlink:bareme-herite` —,
+ * convertir, vérifier, puis redéployer. Le
  * message d'erreur le rappelle, parce que personne ne lira ce fichier à 3 h du
  * matin.
  */
@@ -114,8 +117,10 @@ return new class extends Migration
         throw new RuntimeException(
             "Le barème hérité porte encore quelque chose — les quatre colonnes ne peuvent pas être retirées.\n\n"
             . implode("\n", array_map(fn ($l) => '  - ' . $l, $blocages))
-            . "\n\nÀ faire, dans cet ordre, depuis la version PRÉCÉDENTE du code (celle qui a encore\n"
-            . "`beninlink:zones-tarifaires`, disparu avec les colonnes qu'il lisait) :\n"
+            . "\n\nÀ faire, dans cet ordre, depuis la version PRÉCÉDENTE du code — celle qui porte\n"
+            . "encore le convertisseur (`--appliquer`) et le constat `beninlink:bareme-herite`.\n"
+            . "Dans CETTE version, `beninlink:zones-tarifaires` existe toujours mais ne fait\n"
+            . "qu'installer les zones : il ne convertit plus rien.\n"
             . "  1. php artisan beninlink:zones-tarifaires --societe=N            (constat des écarts)\n"
             . "  2. php artisan beninlink:zones-tarifaires --societe=N --appliquer\n"
             . "  3. php artisan beninlink:bareme-herite                           (doit sortir en succès)\n"
