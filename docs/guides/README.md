@@ -8,7 +8,17 @@
   sans zone, un colis n'a plus de tarif, donc plus de recette.
 - `infra/`  Fichiers de déploiement VPS Infomaniak (Nginx multi-tenant, Supervisor,
   deploy.sh, .env.example, .gitignore, cron du scheduler).
-  ⚠️ **Quatre guides se lisent AVANT le premier déploiement, dans cet ordre :**
+  ⚠️ **Commencer par `infra/mise-en-service/`** : c'est le chef d'orchestre, du
+  serveur nu au premier déploiement. Il séquence les quatre guides ci-dessous et
+  couvre ce qu'aucun d'eux ne couvre — l'utilisateur système, les **deux** paires
+  de clés SSH (Actions → VPS, et VPS → GitHub : le dépôt est privé), le clone, et
+  le premier remplissage de la base. Il nomme aussi le piège vérifié qui arrête
+  le premier déploiement automatique : le `db:seed` du socle crée **deux**
+  sociétés et n'en dote qu'une de zones, si bien que
+  `beninlink:tarification-prete` — que `deploy.sh` exécute avant de migrer —
+  sort en erreur sur une installation neuve.
+
+  **Quatre guides se lisent AVANT le premier déploiement, dans cet ordre :**
   1. `infra/php/` — depuis la n° 62 le backend ne s'installe plus en PHP 8.2, et
      `deploy.sh` s'arrête sur un serveur qui n'est pas en 8.3, avant même de
      couper le site.

@@ -28,7 +28,8 @@ dans `docs/guides/infra/env/`.
 ### Installation
 
 Le serveur de recette a **les mêmes prérequis que la production**, et se monte
-dans le même ordre : `infra/php/` (**PHP 8.3** depuis la n° 62 — `deploy.sh`
+dans le même ordre — `infra/mise-en-service/` déroule ce parcours de bout en
+bout : `infra/php/` (**PHP 8.3** depuis la n° 62 — `deploy.sh`
 s'arrête sur un serveur en 8.2), `infra/mysql/` (base `utf8mb4_unicode_ci`,
 séparée de la production), `infra/env/`, puis `infra/nginx/`. Monter la recette
 sur un socle plus permissif ne prouverait rien de la production.
