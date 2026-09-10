@@ -185,7 +185,20 @@ class MerchantController extends Controller
 
 
     public function invoiceGenerate($id){
-        $this->invoiceRepo->store($id);
+        // Le marchand est relu **par le dépôt scopé** avant d'être transmis.
+        //
+        // `store()` résout désormais la société depuis le marchand lui-même, ce
+        // qui est ce qu'il faut pour la tâche planifiée — mais retire du même
+        // coup la protection accidentelle dont bénéficiait cette route : un
+        // identifiant d'une autre société ne rendait aucun colis, donc aucun
+        // relevé. Sans ce contrôle, l'URL suffirait à émettre le relevé d'un
+        // marchand d'un autre transporteur.
+        $merchant = $this->repo->get($id);
+        if (blank($merchant)) {
+            abort(404);
+        }
+
+        $this->invoiceRepo->store($merchant->id);
         Toastr::success('Invoice generated successfully','Success');
         return redirect()->back();
     }

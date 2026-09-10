@@ -103,6 +103,15 @@ avant les apps.
   extrait des écritures d'une période, équilibre vérifié avant écriture. Le plan de
   comptes vit dans `config/syscohada.php` et reste une **proposition** tant que
   `docs/guides/comptabilite/plan-de-comptes.md` n'est pas signé (**D2**).
+- `php artisan invoice:generate [--societe=]` — les relevés de règlement dus,
+  **société par société**. Sans option, toutes les sociétés actives : c'est ce que
+  fait le planificateur (13 h). La cadence reste celle du marchand
+  (`merchants.payment_period`, en jours) : la commande propose, la fiche dispose.
+  ⚠️ Elle bouclait sur `settings()->id` : hors requête, la règle **F4** s'applique
+  ici aussi — `settings()` retombe sur la société 1, et les autres transporteurs
+  n'avaient **jamais** de relevé. La société vient désormais de la liste des
+  sociétés et, pour chaque relevé, du **marchand**.
+  Voir `docs/guides/comptabilite/reprise-des-releves.md`.
 - `php artisan beninlink:file-attente [--seuil=5]` — état de la file des envois
   (SMS, push, e-mails) et détection d'un **worker arrêté** : la panne que la file
   introduit est silencieuse. Décision **D13**.

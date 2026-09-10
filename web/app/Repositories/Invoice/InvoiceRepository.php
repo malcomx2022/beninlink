@@ -61,23 +61,34 @@ class InvoiceRepository implements InvoiceInterface
             return DB::transaction(function () use ($merchant_id) {
                   
                 $merchantFind         = Merchant::find($merchant_id);
+
+                // La société vient du **marchand**, jamais de `settings()`.
+                //
+                // Hors requête HTTP — c'est-à-dire dans la tâche planifiée —
+                // `settings()` n'a ni sous-domaine ni utilisateur connecté à lire :
+                // elle retombe sur la société 1. Tant que cette méthode scopait par
+                // `companywise()`, la génération planifiée ne servait donc QUE la
+                // première société, en silence. `InvoiceNumbering` portait déjà ce
+                // garde-fou pour la numérotation ; il manquait ici, où se décide
+                // **quels colis** entrent dans le relevé.
+                $companyId            = (int) $merchantFind->company_id;
                 $merchant_date        = strtotime(\Carbon\Carbon::today()->subDays($merchantFind->payment_period)->format('d-m-Y'));
-                $invoiceFind          = Invoice::companywise()->where('merchant_id',$merchantFind->id)->get()->last();
+                $invoiceFind          = Invoice::where('company_id',$companyId)->where('merchant_id',$merchantFind->id)->get()->last();
                 if($invoiceFind):
                     $strtotime        = strtotime(\Carbon\Carbon::parse($invoiceFind->created_at)->format('d-m-Y'));
                 else:
                     $strtotime        = $merchant_date;
                 endif;
-                $invoiceAlreadyGenerated = Invoice::companywise()->where('merchant_id', $merchant_id)->whereBetween('created_at', [\Carbon\Carbon::today()->startOfDay(), \Carbon\Carbon::today()->endOfDay()])->get()->last();
+                $invoiceAlreadyGenerated = Invoice::where('company_id', $companyId)->where('merchant_id', $merchant_id)->whereBetween('created_at', [\Carbon\Carbon::today()->startOfDay(), \Carbon\Carbon::today()->endOfDay()])->get()->last();
                  
                 if($strtotime <= $merchant_date && !$invoiceAlreadyGenerated):
 
-                    $parcelDelivered        = Parcel::companywise()->where('merchant_id',$merchant_id)->where(function($query){
+                    $parcelDelivered        = Parcel::where('company_id',$companyId)->where('merchant_id',$merchant_id)->where(function($query){
                         $query->whereIn('status',[ParcelStatus::DELIVERED]);
                         $query->orWhere('partial_delivered',BooleanStatus::YES);
                     })->where('invoice_id',null)->get();
                     
-                    $returnparcels  = Parcel::companywise()->where('merchant_id',$merchant_id)->where(function($query){
+                    $returnparcels  = Parcel::where('company_id',$companyId)->where('merchant_id',$merchant_id)->where(function($query){
                         $query->whereIn('status',[ParcelStatus::RETURN_RECEIVED_BY_MERCHANT,ParcelStatus::RETURN_ASSIGN_TO_MERCHANT,ParcelStatus::RETURN_TO_COURIER]);
                         $query->orWhere('return_to_courier',1);
                     })->where('partial_delivered',BooleanStatus::NO)->where('invoice_id',null)->get();
@@ -103,10 +114,10 @@ class InvoiceRepository implements InvoiceInterface
                         //end total current payable
                            
                         $issuedOn                 = Carbon::today();
-                        $numbering                = app(InvoiceNumbering::class)->next((int) settings()->id, $issuedOn);
+                        $numbering                = app(InvoiceNumbering::class)->next($companyId, $issuedOn);
 
                         $invoice                  =  new Invoice();
-                        $invoice->company_id      = settings()->id;
+                        $invoice->company_id      = $companyId;
                         $invoice->merchant_id     =  $merchant_id;
                         $invoice->invoice_id      =  $numbering['number'];
                         $invoice->invoice_date    =  $issuedOn->format('d-m-Y');
@@ -156,7 +167,7 @@ class InvoiceRepository implements InvoiceInterface
                             }
                             
                             $invoiceParcel                        = new InvoiceParcel(); 
-                            $invoiceParcel->company_id                  = settings()->id;
+                            $invoiceParcel->company_id                  = $companyId;
                             $invoiceParcel->invoice_id            = $invoice->id;
                             $invoiceParcel->parcel_id             = $parcel->id;
                             $invoiceParcel->parcel_status         = $status;

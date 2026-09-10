@@ -1,8 +1,9 @@
 # Reprise des relevés de règlement
 
-> Quoi faire quand des relevés n'ont pas été émis : planificateur arrêté,
-> incident, ou — le cas le plus discret — **installation à plusieurs
-> transporteurs**. Écrit le 2026-09-10, sur `main` (`730a6cc`).
+> Quoi faire quand des relevés n'ont pas été émis : planificateur arrêté, ou
+> incident. Écrit le 2026-09-10, **mis à jour le 2026-09-11** : le défaut
+> multi-transporteurs décrit ici a été **corrigé** — la section le dit et
+> explique quoi vérifier sur une installation qui a tourné avant.
 > Se lit avec `infra/reprise/` (l'incident) et `comptabilite/plan-de-comptes.md`
 > (ce que les relevés alimentent).
 
@@ -48,34 +49,33 @@ php artisan tinker --execute='
 '
 ```
 
-## ⚠️ Le planificateur ne sert **que la société 1**
+## Le planificateur a longtemps ne servi **que la société 1** — corrigé
 
-C'est le point le plus important de cette page, et il ne se voit nulle part :
-sur une installation à plusieurs transporteurs, **les relevés des sociétés 2, 3,
-… ne sont jamais générés par le cron**. Aucune erreur, aucune alerte : la tâche
-passe, réussit, et ne fait rien pour eux.
+Jusqu'au 2026-09-11, sur une installation à plusieurs transporteurs, **les
+relevés des sociétés 2, 3, … n'étaient jamais générés par le cron**. Aucune
+erreur, aucune alerte : la tâche passait, réussissait, et ne faisait rien pour
+eux.
 
 **Le mécanisme.** Le socle résout la société courante par `settings()`, qui lit
 le sous-domaine (`tenant()`) ou l'utilisateur connecté. Dans une tâche planifiée
 il n'y a **ni l'un ni l'autre** : la fonction retombe alors sur `id = 1`. Or
-`invoice:generate` boucle sur `Merchant::where('company_id', settings()->id)`.
+`invoice:generate` bouclait sur `Merchant::where('company_id', settings()->id)`,
+et la génération scopait tout le reste de la même façon.
 
-Vérifié en console sur une base à deux sociétés :
+C'est exactement la règle que le projet s'était déjà donnée pour les envois
+(**F4**, `web/CLAUDE.md`) : *porter la société dans le job, parce que hors
+requête `settings()` retombe sur la société 1*. Elle valait pour les SMS ; elle
+ne valait pas encore pour les relevés.
 
-```
-sociétés en base : 2
-settings()->id en console : 1
-tenant() : NULL
-```
+**Ce qui a changé.** La commande lit désormais la liste des sociétés actives et
+traite chacune à son tour ; la génération d'un relevé résout sa société **depuis
+le marchand**, plus depuis la session. Un test le prouve : le marchand du jeu de
+test appartient à la société 2, et il reçoit son relevé.
 
-Le code le sait, à un endroit : `InvoiceNumbering` prend son `company_id` en
-paramètre, avec le commentaire « jamais via `settings()`, qui retombe sur la
-société 1 hors requête ». Le garde-fou a été posé sur la **numérotation** ; la
-**sélection des marchands**, elle, est restée sur `settings()`.
-
-**Êtes-vous concerné ?** Une seule société → non, le cron suffit. Plusieurs
-sociétés actives → oui, et la requête ci-dessus le montre : les colis non relevés
-s'accumulent pour tout le monde sauf la société 1.
+⚠️ **Sur une installation qui a tourné avant le correctif**, le retard est déjà
+là : les colis non relevés se sont accumulés pour toutes les sociétés sauf la
+première. Le rattrapage se fait en un passage (voir la section suivante) — et il
+produira **un** relevé par marchand, couvrant toute la période.
 
 ```sql
 SELECT company_id, COUNT(*) AS releves, MAX(issued_on) AS dernier
@@ -89,19 +89,26 @@ mise en service, est dans ce cas.
 
 | Voie | Portée | Quand s'en servir |
 |---|---|---|
-| Cron `invoice:generate` (13 h) | **société 1 uniquement** | le cas normal d'une installation à un seul transporteur |
-| Écran *Réglages → génération des relevés* | **la société de l'administrateur connecté** | le rattrapage sur une installation multi-transporteurs |
+| Cron `invoice:generate` (13 h) | **toutes les sociétés actives** | le cas normal, depuis le correctif |
+| `php artisan invoice:generate --societe=N` | une société | un rattrapage ciblé, ou un doute sur une société |
+| Écran *Réglages → génération des relevés* | la société de l'administrateur connecté | le rattrapage depuis l'interface |
 | Bouton par marchand (fiche marchand) | un marchand | un cas isolé, un doute sur une fiche |
 
-La deuxième voie marche pour une raison précise : elle appelle la **même**
-commande, mais **depuis une requête HTTP**. Là, `settings()` a un utilisateur
-connecté et un sous-domaine à lire — elle résout donc la bonne société. C'est le
-contournement, et il est fiable ; ce n'est pas un correctif.
+L'écran passe désormais `--societe` explicitement : un administrateur ne
+déclenche que la génération **de sa** société, jamais celle des autres
+transporteurs. Le bouton par marchand relit le marchand par le dépôt scopé avant
+de générer — sans ce contrôle, l'URL aurait suffi à émettre le relevé du marchand
+d'un autre transporteur.
 
-En pratique, sur une installation à plusieurs transporteurs : se connecter à
-l'administration **de chaque société**, sur son sous-domaine, et déclencher la
-génération. Une fois par société, à la cadence de la plus courte
-`payment_period`.
+Pour rattraper tout un parc d'un coup, après un arrêt :
+
+```bash
+cd /var/www/beninlink/web
+php artisan invoice:generate          # toutes les sociétés actives, une par une
+```
+
+La commande dit, par société, combien de marchands elle a examinés et combien de
+relevés elle a émis.
 
 ## Ce qu'un rattrapage tardif change dans les numéros
 
@@ -137,14 +144,25 @@ vient de révéler.
   l'expert-comptable.
 - **Ne pas toucher `invoice_sequences` à la main.** C'est la table qui garantit
   l'absence de trou dans la numérotation d'un exercice.
-- **Ne pas compter sur le cron pour une société qui n'est pas la première**,
-  tant que le défaut ci-dessus n'est pas corrigé.
+- **Ne pas supposer qu'un rattrapage reconstitue le passé.** Il émet les relevés
+  dus *aujourd'hui* : un seul document par marchand, couvrant toute la période
+  non facturée.
 
-## Le correctif proposé, pour mémoire
+## Le correctif, pour mémoire
 
-Faire boucler la génération **société par société**, en résolvant explicitement
-le `company_id` au lieu de le lire dans `settings()` — exactement ce que
-`InvoiceNumbering` fait déjà pour le préfixe et la séquence. Cela touche le
-chemin de facturation : c'est une décision, pas une retouche, et elle mérite sa
-propre livraison, avec un test qui vérifie qu'une société non-1 reçoit bien ses
-relevés.
+Appliqué le 2026-09-11 (demande n° 75), en trois points :
+
+1. `invoice:generate` lit la liste des **sociétés actives** et traite chacune à
+   son tour ; la liste des marchands est filtrée par la société en cours, pas par
+   la session. Une option `--societe=N` restreint la portée.
+2. `InvoiceRepository::store()` résout la société **depuis le marchand** — colis
+   retenus, numérotation, `company_id` du relevé et de ses lignes. Le scope reste
+   explicite : ce n'est pas un relâchement de **D8**, c'est la même règle écrite
+   sans dépendre d'une session qui n'existe pas.
+3. Les deux chemins HTTP sont resserrés : l'écran global passe sa société, et le
+   bouton par marchand relit le marchand par le dépôt scopé avant de générer.
+
+Quatre tests couvrent l'ensemble, dont celui qui comptait : un marchand d'une
+société **autre que la première** reçoit bien son relevé, avec le préfixe et la
+séquence de sa société. Vérifié dans les deux sens — en remettant la ligne
+fautive, le test repasse au rouge.
