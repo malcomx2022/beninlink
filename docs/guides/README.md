@@ -6,6 +6,11 @@
   builds EAS, jeu de données béninois (`php artisan beninlink:pilote`), scénarios,
   critères de sortie. Le jeu pose le **modèle par zones** au complet (D4, étape 6) :
   sans zone, un colis n'a plus de tarif, donc plus de recette.
+- `comptabilite/`  Plan de comptes SYSCOHADA (en attente de signature) et
+  **reprise des relevés** de règlement — dont un défaut vérifié : la tâche
+  planifiée ne génère les relevés que pour la **société 1**, parce que
+  `settings()` retombe sur elle hors requête. Sur une installation à plusieurs
+  transporteurs, le rattrapage passe par l'écran de chaque société.
 - `infra/`  Fichiers de déploiement VPS Infomaniak (Nginx multi-tenant, Supervisor,
   deploy.sh, .env.example, .gitignore, cron du scheduler).
   ⚠️ **Commencer par `infra/mise-en-service/`** : c'est le chef d'orchestre, du
