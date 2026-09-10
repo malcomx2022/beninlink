@@ -41,6 +41,11 @@
     n'est **jamais** dans git : les signatures de livraison n'existent que sur
     le serveur. Le guide porte surtout sur l'**exercice de restauration** — une
     sauvegarde jamais restaurée n'est pas une sauvegarde, c'est un fichier.
+  - `infra/reprise/` — la **reprise après incident**, rangée par symptôme : site
+    resté en maintenance, déploiement arrêté, file bloquée, recharge Mobile Money
+    non créditée, base restaurée, VPS perdu. Il dit aussi ce qu'on ne fait pas —
+    au premier rang, `migrate:rollback` sur l'étape 6, qui rend le schéma mais
+    pas les montants, donc un barème à zéro franc.
   - `infra/supervision/` — ce qui se surveille, et **ce qui n'a pas de
     détecteur**. Sur les neuf commandes `beninlink:*`, **trois seulement** ont
     une sortie 1 qui signale un incident ; les autres la réservent aux erreurs
