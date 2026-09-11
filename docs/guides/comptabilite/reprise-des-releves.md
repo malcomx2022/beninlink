@@ -49,7 +49,7 @@ php artisan tinker --execute='
 '
 ```
 
-## Le planificateur a longtemps ne servi **que la société 1** — corrigé
+## Le planificateur n'a longtemps servi **que la société 1** — corrigé
 
 Jusqu'au 2026-09-11, sur une installation à plusieurs transporteurs, **les
 relevés des sociétés 2, 3, … n'étaient jamais générés par le cron**. Aucune
@@ -69,7 +69,7 @@ ne valait pas encore pour les relevés.
 
 **Ce qui a changé.** La commande lit désormais la liste des sociétés actives et
 traite chacune à son tour ; la génération d'un relevé résout sa société **depuis
-le marchand**, plus depuis la session. Un test le prouve : le marchand du jeu de
+le marchand**, et non plus depuis la session. Un test le prouve : le marchand du jeu de
 test appartient à la société 2, et il reçoit son relevé.
 
 ⚠️ **Sur une installation qui a tourné avant le correctif**, le retard est déjà
@@ -85,7 +85,7 @@ FROM invoices GROUP BY company_id ORDER BY company_id;
 Une société active qui ne compte aucun relevé, ou dont le dernier remonte à la
 mise en service, est dans ce cas.
 
-## Rattraper : trois voies, et une seule marche pour tout le monde
+## Rattraper : quatre voies, et une seule marche pour tout le monde
 
 | Voie | Portée | Quand s'en servir |
 |---|---|---|
