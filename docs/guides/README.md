@@ -13,6 +13,12 @@
   (`settings()` retombe sur elle hors requête) ; **corrigé le 2026-09-11**, avec
   `invoice:generate --societe=N` pour un rattrapage ciblé. Sur une installation
   antérieure au correctif, le guide dit quoi vérifier.
+- `socle/`  **Mettre à jour We Courier** : on ne met pas ce socle à jour, on le
+  re-fusionne. La base de fusion existe — le premier commit du dépôt porte le
+  socle intact — et la carte des conflits est chiffrée : **238 fichiers du socle
+  modifiés, 196 ajoutés, 0 supprimé**, concentrés dans les vues et la couche
+  HTTP. Le guide liste ce qu'il ne faut jamais laisser l'éditeur réécrire, et
+  pose la question qu'on oublie : faut-il monter ?
 - `infra/`  Fichiers de déploiement VPS Infomaniak (Nginx multi-tenant, Supervisor,
   deploy.sh, .env.example, .gitignore, cron du scheduler).
   ⚠️ **Commencer par `infra/mise-en-service/`** : c'est le chef d'orchestre, du
