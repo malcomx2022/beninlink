@@ -147,7 +147,11 @@ class MerchantInvoiceController extends Controller
 
     public function InvoiceGenerateMenually(){
         try {
-            Artisan::call('invoice:generate');
+            // La société est passée explicitement : sans elle, la commande
+            // traiterait TOUTES les sociétés, et un administrateur déclencherait
+            // la génération des relevés des autres transporteurs. Ici on est
+            // dans une requête, donc `settings()` résout la bonne société.
+            Artisan::call('invoice:generate', ['--societe' => settings()->id]);
             Toastr::success(__('invoice.invoice_generated_successfully'),__('message.success'));
             return redirect()->back();
         } catch (\Throwable $th) {

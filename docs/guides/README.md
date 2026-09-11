@@ -7,10 +7,12 @@
   critères de sortie. Le jeu pose le **modèle par zones** au complet (D4, étape 6) :
   sans zone, un colis n'a plus de tarif, donc plus de recette.
 - `comptabilite/`  Plan de comptes SYSCOHADA (en attente de signature) et
-  **reprise des relevés** de règlement — dont un défaut vérifié : la tâche
-  planifiée ne génère les relevés que pour la **société 1**, parce que
-  `settings()` retombe sur elle hors requête. Sur une installation à plusieurs
-  transporteurs, le rattrapage passe par l'écran de chaque société.
+  **reprise des relevés** de règlement : leur cadence (par marchand, en jours —
+  pas mensuelle), ce qu'un passage manqué change, et comment rattraper.
+  ⚠️ La tâche planifiée ne générait les relevés que pour la **société 1**
+  (`settings()` retombe sur elle hors requête) ; **corrigé le 2026-09-11**, avec
+  `invoice:generate --societe=N` pour un rattrapage ciblé. Sur une installation
+  antérieure au correctif, le guide dit quoi vérifier.
 - `infra/`  Fichiers de déploiement VPS Infomaniak (Nginx multi-tenant, Supervisor,
   deploy.sh, .env.example, .gitignore, cron du scheduler).
   ⚠️ **Commencer par `infra/mise-en-service/`** : c'est le chef d'orchestre, du
