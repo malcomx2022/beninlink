@@ -144,6 +144,13 @@ Deux réparations, et **aucune des deux ne peut créditer deux fois** :
 2. **Approuver la demande de recharge à la main** dans l'administration. Le
    service ne crédite qu'un portefeuille encore `PENDING`, sous verrou lui aussi.
 
+⚠️ **Le rejeu ne vaut que si la transaction est restée `pending`.** Si elle est
+déjà `approved` alors que le portefeuille est encore en attente — le statut et
+le crédit sont deux transactions distinctes, une interruption entre les deux
+laisse cet état —, le rejeu ressort sur `already processed` **avant** d'atteindre
+le crédit : seule l'approbation à la main répare. La requête qui trouve ces
+lignes est dans `infra/supervision/fedapay-webhooks.md`.
+
 Les deux chemins passent par **la même ligne de portefeuille**, et chacun exige
 qu'elle soit encore en attente : celui qui arrive second ne fait rien. Si vous
 approuvez à la main et qu'un rejeu tombe ensuite, le journal portera

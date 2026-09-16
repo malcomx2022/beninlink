@@ -60,7 +60,10 @@
     au premier rang, `migrate:rollback` sur l'étape 6, qui rend le schéma mais
     pas les montants, donc un barème à zéro franc.
   - `infra/supervision/` — ce qui se surveille, et **ce qui n'a pas de
-    détecteur**. Sur les neuf commandes `beninlink:*`, **trois seulement** ont
+    détecteur**. Son annexe `fedapay-webhooks.md` couvre la panne la plus
+    coûteuse — le paiement aboutit, le portefeuille ne bouge pas : trois
+    lectures en base, dont celle qui trouve l'état qu'un rejeu de webhook ne
+    rattrape pas. Sur les neuf commandes `beninlink:*`, **trois seulement** ont
     une sortie 1 qui signale un incident ; les autres la réservent aux erreurs
     d'appel, et deux constats renvoient SUCCESS *même quand ils trouvent des
     écarts*. Les brancher sur un cron produirait un vert permanent.

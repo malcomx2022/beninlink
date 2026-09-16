@@ -110,15 +110,20 @@ Les nommer vaut mieux que de laisser croire à une couverture complète.
 | **Le site ne répond plus** | rien ne le signale depuis le serveur | une sonde HTTP extérieure sur `/` |
 | **Certificat expiré** | coupure totale, un dimanche | `certbot renew --dry-run` en cron mensuel + l'alerte de Let's Encrypt |
 | **Disque plein** | la base refuse d'écrire, les sauvegardes échouent | `df` en cron ; les sauvegardes et `daily` grossissent |
-| **Webhooks FedaPay refusés** | le paiement aboutit, le portefeuille n'est pas crédité | rien aujourd'hui — voir ci-dessous |
+| **Webhooks FedaPay refusés** | le paiement aboutit, le portefeuille n'est pas crédité | trois lectures en base — `supervision/fedapay-webhooks.md` |
 | **Écarts comptables** | découverts au relevé suivant | les trois constats, à lire à la main |
 
 **Le webhook FedaPay est l'angle mort qui coûte le plus cher.** Un secret de
 signature erroné fait refuser *tous* les webhooks : l'argent part du marchand,
 la transaction réussit chez l'opérateur, et le solde ne bouge pas. Rien dans
-l'application ne le signale. En attendant un détecteur, deux gestes après toute
-rotation de clé : une recharge réelle de petit montant, et un coup d'œil au
-tableau de bord FedaPay, qui liste les webhooks en échec.
+l'application ne le signale.
+
+Il n'y a toujours rien à *écouter* — mais il y a désormais quelque chose à
+**lire** : `supervision/fedapay-webhooks.md` donne les trois requêtes qui
+confrontent la transaction à la ligne de portefeuille, dont celle qui trouve
+l'état que le rejeu ne rattrape pas — approuvé chez FedaPay, jamais crédité
+chez nous. Et toujours, après toute rotation de clé : une recharge réelle de
+petit montant, et le tableau de bord FedaPay, qui liste les webhooks en échec.
 
 ## Les journaux : où regarder, dans quel ordre
 
