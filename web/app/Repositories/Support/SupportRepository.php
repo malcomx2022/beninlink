@@ -18,24 +18,42 @@ class SupportRepository implements SupportInterface {
     }
 
     public function all(){
-        return Support::where(function($query){
-            $query->whereHas('user',function($query){
-                if(isSuperadmin()):
-                    $query->where('user_type',UserType::ADMIN);
-                    $query->orWhere('user_type',UserType::SUPER_ADMIN); 
-                else:
-                    $query->companywise();
-                endif;
-            });
-        })->orderByDesc('id')->paginate(10);
+        return $this->ticketsVisibles()->orderByDesc('id')->paginate(10);
+    }
+
+    /**
+     * S23 — le périmètre de la LISTE, réutilisable.
+     *
+     * `all()` filtrait déjà par la société de l'auteur du ticket (et laissait
+     * passer les deux types d'administrateur pour un super-administrateur) ;
+     * `get()` et `chats()`, eux, faisaient `find($id)` nu. Un opérateur de la
+     * société A lisait donc le ticket d'une société B — sujet, description,
+     * pièce jointe — **et tout son fil de discussion**, en changeant
+     * l'identifiant dans l'URL.
+     *
+     * La règle est extraite ici pour que les trois lectures ne puissent plus
+     * diverger à nouveau.
+     */
+    private function ticketsVisibles()
+    {
+        return Support::whereHas('user', function ($query) {
+            if (isSuperadmin()):
+                $query->where('user_type', UserType::ADMIN);
+                $query->orWhere('user_type', UserType::SUPER_ADMIN);
+            else:
+                $query->companywise();
+            endif;
+        });
     }
 
     public function get($id){
-        return Support::find($id);
+        return $this->ticketsVisibles()->find($id);
     }
 
     public function chats($id){
-        return  SupportChat::where('support_id',$id)->orderByDesc('id')->get();
+        return  SupportChat::where('support_id',$id)
+            ->whereIn('support_id', $this->ticketsVisibles()->select('id'))
+            ->orderByDesc('id')->get();
     }
 
     public function store($request){

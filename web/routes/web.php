@@ -340,7 +340,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('merchant/shops/edit/{id}',      [MerchantShopsController::class, 'edit'])->name('merchant.shops.edit')->middleware('hasPermission:merchant_shop_update');
                         Route::put('merchant/shops/update',         [MerchantShopsController::class, 'update'])->name('merchant.shops.update')->middleware('hasPermission:merchant_shop_update');
                         Route::delete('merchant/shops/delete/{id}', [MerchantShopsController::class, 'delete'])->name('merchant.shops.delete')->middleware('hasPermission:merchant_shop_delete');
-                        Route::get('merchant/shops/default/{merchant_id}/{id}', [MerchantShopsController::class, 'defaultShop'])->name('merchant.shops.default');
+                        Route::put('merchant/shops/default/{merchant_id}/{id}', [MerchantShopsController::class, 'defaultShop'])->name('merchant.shops.default');
                         //merchant payment account
                         Route::get('merchant/{id}/payment/index',       [MerchantPaymentAccountController::class, 'index'])->name('merchant.paymentaccount.index')->middleware('hasPermission:merchant_payment_read');
                         Route::get('merchant/{id}/payment/add',         [MerchantPaymentAccountController::class, 'paymentAdd'])->name('merchant.payment.add')->middleware('hasPermission:merchant_payment_create');
@@ -485,7 +485,6 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('delivery-category/create',         [DeliverycategoryController::class, 'create'])->name('delivery-category.create')->middleware('hasPermission:delivery_category_create');
                         Route::post('delivery-category/store',         [DeliverycategoryController::class, 'store'])->name('delivery-category.store')->middleware('hasPermission:delivery_category_create');
                         Route::get('delivery-category/edit/{id}',      [DeliverycategoryController::class, 'edit'])->name('delivery-category.edit')->middleware('hasPermission:delivery_category_update');
-                        Route::get('delivery-category/view/{id}',      [DeliverycategoryController::class, 'view'])->name('delivery-category.view');
                         Route::put('delivery-category/update',         [DeliverycategoryController::class, 'update'])->name('delivery-category.update')->middleware('hasPermission:delivery_category_update');
                         Route::delete('delivery-category/delete/{id}', [DeliverycategoryController::class, 'destroy'])->name('delivery-category.delete')->middleware('hasPermission:delivery_category_delete');
                         // Delivery Charges Routes
@@ -494,7 +493,6 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('delivery-charge/create',        [DeliveryChargeController::class, 'create'])->name('delivery-charge.create')->middleware('hasPermission:delivery_charge_create');
                         Route::post('delivery-charge/store',        [DeliveryChargeController::class, 'store'])->name('delivery-charge.store')->middleware('hasPermission:delivery_charge_create');
                         Route::get('delivery-charge/edit/{id}',     [DeliveryChargeController::class, 'edit'])->name('delivery-charge.edit')->middleware('hasPermission:delivery_charge_update');
-                        Route::get('delivery-charge/view/{id}',     [DeliveryChargeController::class, 'view'])->name('delivery-charge.view');
                         Route::put('delivery-charge/update',        [DeliveryChargeController::class, 'update'])->name('delivery-charge.update')->middleware('hasPermission:delivery_charge_update');
                         Route::delete('delivery-charge/delete/{id}', [DeliveryChargeController::class, 'destroy'])->name('delivery-charge.delete')->middleware('hasPermission:delivery_charge_delete');
                         // Zones tarifaires (D4, étape 4) — référentiel et grille.
@@ -514,7 +512,6 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('packaging/create',      [PackagingController::class, 'create'])->name('packaging.create')->middleware('hasPermission:packaging_create');
                         Route::post('packaging/store',      [PackagingController::class, 'store'])->name('packaging.store')->middleware('hasPermission:packaging_create');
                         Route::get('packaging/edit/{id}',   [PackagingController::class, 'edit'])->name('packaging.edit')->middleware('hasPermission:packaging_update');
-                        Route::get('packaging/view/{id}',   [PackagingController::class, 'view']);
                         Route::put('packaging/update',     [PackagingController::class, 'update'])->name('packaging.update')->middleware('hasPermission:packaging_update');
                         Route::delete('packaging/delete/{id}', [PackagingController::class, 'destroy'])->name('packaging.delete')->middleware('hasPermission:packaging_delete');
                         // Accounts Routes
@@ -523,7 +520,6 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('accounts/create',         [AccountController::class, 'create'])->name('accounts.create')->middleware('hasPermission:account_create');
                         Route::post('accounts/store',         [AccountController::class, 'store'])->name('accounts.store')->middleware('hasPermission:account_create');
                         Route::get('accounts/edit/{id}',      [AccountController::class, 'edit'])->name('accounts.edit')->middleware('hasPermission:account_update');
-                        Route::get('accounts/view/{id}',      [AccountController::class, 'view'])->name('accounts.view');
                         Route::put('accounts/update/{id}',    [AccountController::class, 'update'])->name('accounts.update')->middleware('hasPermission:account_update');
                         Route::delete('accounts/delete/{id}', [AccountController::class, 'destroy'])->name('accounts.delete')->middleware('hasPermission:account_delete');
                         Route::post('accounts/current-balance', [AccountController::class, 'currentBalance'])->name('accounts.current-balance');
@@ -532,7 +528,6 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('fund-transfer/create',         [FundTransferController::class, 'create'])->name('fund-transfer.create')->middleware('hasPermission:fund_transfer_create');
                         Route::post('fund-transfer/store',         [FundTransferController::class, 'store'])->name('fund-transfer.store')->middleware('hasPermission:fund_transfer_create');
                         Route::get('fund-transfer/edit/{id}',      [FundTransferController::class, 'edit'])->name('fund-transfer.edit')->middleware('hasPermission:fund_transfer_update');
-                        Route::get('fund-transfer/view/{id}',      [FundTransferController::class, 'view'])->name('fund-transfer.view');
                         Route::put('fund-transfer/update/{id}',    [FundTransferController::class, 'update'])->name('fund-transfer.update')->middleware('hasPermission:fund_transfer_update');
                         Route::delete('fund-transfer/delete/{id}', [FundTransferController::class, 'destroy'])->name('fund-transfer.delete')->middleware('hasPermission:fund_transfer_delete');
                         Route::get('fund-transfer/specific/search', [FundTransferController::class, 'fundTransferSpecificSearch'])->name('fund.transfer.specific.search')->middleware('hasPermission:fund_transfer_read');

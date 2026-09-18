@@ -1212,10 +1212,10 @@ vestige du squelette Laravel.
 | ~~S19~~ | C | ~~Une demande de retrait acceptait n'importe quel `merchant_account`~~ — ✅ **corrigé le 2026-09-04** : le marchand pouvait désigner le compte d'un autre, puis `PaymentResource` lui en renvoyait le détail (titulaire, numéro, banque) dans sa propre liste. L'API vérifie désormais que le compte lui appartient (422 sinon). Le panneau web, qui propose une liste fermée, n'est pas modifié | `Api\V10\PaymentRequestController` |
 | ~~S21~~ | C | ~~TLS non vérifié dans deux passerelles de paiement héritées~~ — ✅ **désactivées le 2026-09-05** (décision : désactiver plutôt que corriger, aucun usage au Bénin). `config/payments.php` liste Aamarpay et SSLCommerz comme désactivées ; leurs routes ne sont plus enregistrées, les réglages société et marchand refusent de les activer, les écrans ne les proposent plus, une migration passe les statuts existants à inactif (clés conservées). Le code reste (référence, licence) | `config/payments.php` · `gatewayEnabled()` · migration `2026_09_05_100000` |
 | ~~S22~~ | B | ~~Le détail du journal d'activité, sans périmètre, sans permission et sans échappement~~ — ✅ **corrigé le 2026-09-18** : `ActiveLogController::view($id)` faisait `Activity::find($id)` **nu** alors qu'`index()`, juste au-dessus, scope par la société du causeur — un opérateur lisait l'avant/après champ par champ d'un autre transporteur en changeant l'identifiant dans l'URL. Sa route ne portait **aucune** permission quand `logs.index` porte `hasPermission:log_read`. Et la vue rendait ces valeurs — des saisies d'utilisateurs — avec `{!! !!}`, dans un fragment injecté en `.html()` dans une fenêtre modale : **XSS stocké**. Les trois sont fermés, et l'échappement passe par `logValue()` parce qu'un `{{ }}` posé naïvement aurait fait **500** sur les attributs `array` de `User` et `Role` (voir « ✅ S22 » plus bas) | `ActiveLogController` · `routes/web.php:216` · `backend/log/view.blade.php` · `logValue()` |
-| **S23** | B | ⚠️ **OUVERT** — `admin/support/view/{id}` sert le ticket de support **et tout son fil de discussion** de n'importe quelle société : `SupportRepository::get()` fait `Support::find($id)` sans périmètre, et la route ne porte aucune permission | `SupportRepository:33` · `routes/web.php` |
-| **S24** | C | ⚠️ **OUVERT** — `admin/expense/search-account/{id}` (POST) renvoie **n'importe quel compte financier** (titulaire, banque, solde) de n'importe quelle société : `AccountRepository::get()` fait `Account::find($id)` sans périmètre — alors que `getAll()`, juste au-dessus, est `companywise()`. Aucune permission | `AccountRepository:35` · `ExpenseController:58` |
-| **S25** | B | ⚠️ **OUVERT** — `admin/parcel/delivered/logs/info/{id}` : le colis est scopé (`ParcelRepository::get()` est `companywise()`) mais **pas sa chronologie** — `parcelEvents($id)` fait `ParcelEvent::where('parcel_id', $id)` sans périmètre. Un opérateur lit donc les événements d'un colis d'une autre société : livreur, dates, **chemins de la photo et de la signature de livraison**. Aucune permission | `ParcelRepository:303` |
-| **S26** | B | ⚠️ **OUVERT** — `admin/merchant/shops/default/{merchant_id}/{id}` **écrit sur un GET** et n'est scopé que par le `merchant_id` de l'URL : tout compte authentifié change la boutique par défaut de n'importe quel marchand, de n'importe quelle société. Et la paire inexistante fait une erreur fatale (`$merchantShop->default_shop` sur `null`). Aucune permission | `ShopsRepository:22` · `MerchantShopsController:83` |
+| ~~S23~~ | B | ~~`admin/support/view/{id}` servait le ticket **et tout son fil** de n'importe quelle société~~ — ✅ **corrigé le 2026-09-18** : le périmètre de `all()` est extrait en `ticketsVisibles()` (société de l'auteur, les deux types d'administrateur pour un super-administrateur) et les **trois** lectures l'utilisent ; le contrôleur répond 404 hors périmètre. La route ne porte toujours pas de permission — c'est une décision, voir « 📋 Inventaire » | `SupportRepository` · `Backend\SupportController` |
+| ~~S24~~ | C | ~~`admin/expense/search-account/{id}` renvoyait n'importe quel compte financier~~ — ✅ **corrigé le 2026-09-18** : `AccountRepository::get()` est `companywise()` comme les quatre autres lectures du dépôt. Les cinq appelants sont tous en requête back-office et veulent tous un compte de la société courante ; trois passent un identifiant déjà lu sur un enregistrement scopé, où le filtre ne change rien | `AccountRepository` |
+| ~~S25~~ | B | ~~La chronologie d'un colis d'une autre société était lisible~~ — ✅ **corrigé le 2026-09-18** : les **deux** écrans concernés (`logs`, `deliveredInfo`) s'arrêtent en 404 si le colis est hors périmètre, et passent ensuite `$parcel->id` — le colis **déjà vérifié** — au lieu de l'identifiant brut. `parcelEvents()` reste volontairement non scopé : le **suivi public par numéro** l'appelle, c'est sa raison d'être (cf. S17), et un test l'inscrit | `Backend\ParcelController` |
+| ~~S26~~ | B | ~~La boutique par défaut de n'importe quel marchand se changeait sur un GET~~ — ✅ **corrigé le 2026-09-18** : les **quatre** méthodes du dépôt back-office des boutiques passent par `boutiquesDeLaSociete()` (`whereHas('merchant', companywise())` — la table ne porte pas de `company_id`) ; l'ordre est inversé pour ne rien toucher quand la cible est hors périmètre, là où le socle basculait les anciennes **avant** de la chercher puis plantait sur `null` ; la route devient **PUT** et la vue soumet un formulaire `@csrf`. La permission reste une décision | `MerchantShops\ShopsRepository` · `MerchantShopsController` · `routes/web.php` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
 
@@ -1656,8 +1656,10 @@ c'est pour cela que personne ne leur a jamais posé de permission.
 | `GET admin/fund-transfer/view/{id}` | `FundTransferController` |
 | `GET admin/packaging/view/{id}` | `PackagingController` |
 
-Chacune est déclarée **deux fois** (`web.php` et `superadmin.php`) : dix lignes à
-retirer. À ranger avec les autres routes mortes de cette cartographie.
+✅ **Retirées le 2026-09-18** — cinq lignes, pas dix : cette section annonçait
+« déclarée deux fois chacune », par analogie avec `currency/edit/{id}` ; c'était
+une inférence, pas une vérification. Les cinq ne vivent que dans `web.php`.
+Vérifié avant de supprimer : aucune vue, aucun script ne référence leurs noms.
 
 ### Les 6 routes du back-office — et 4 d'entre elles sont des fuites vérifiées
 
@@ -1670,10 +1672,20 @@ retirer. À ranger avec les autres routes mortes de cette cartographie.
 | `GET admin/parcel/clone/{id}` | ✅ `companywise()` | `parcel_create` | permission seule — **elle duplique un colis** |
 | `POST admin/income/search-account/{id}` | — | `income_create` | **cassée** : `searchAccount($id, Request $request)` appelle `$this->account->get($request)` — l'objet `Request` là où un identifiant est attendu |
 
-Les quatre premières sont inscrites en **S23 à S26** dans le tableau ci-dessus,
-**ouvertes**. Elles ne demandent pas une décision de permissions : un périmètre
-société manquant se corrige comme S22, sans retirer l'accès à personne. Ce sont
-elles qu'il faut traiter d'abord.
+✅ Les quatre premières — **S23 à S26** — sont **corrigées le 2026-09-18**, et
+le tableau ci-dessus le détaille. Aucune n'a demandé de décision : un périmètre
+société manquant se corrige comme S22, sans retirer l'accès à personne.
+
+⚠️ **Les permissions, elles, restent entières** : aucune des six routes de ce
+tableau n'en porte aujourd'hui. Corriger la fuite et poser la garde d'accès sont
+deux gestes distincts, et seul le premier est fait.
+
+Deux élargissements assumés en corrigeant, parce que la même méthode portait le
+même défaut : **S23** scope aussi `chats()` (le fil d'un ticket hors périmètre),
+et **S26** scope les **quatre** méthodes du dépôt back-office des boutiques —
+`all()`, `get()` et `merchant_shops_get()` faisaient `where('id', …)` nu comme
+`defaultShop()`. Ne corriger que la méthode nommée aurait laissé l'écran de
+modification lire la boutique d'une autre société.
 
 ### La carte du livreur
 
@@ -1693,9 +1705,9 @@ c'est un fichier clients. Permission suggérée : `delivery_man_read`.
 
 ### Ce qui reste à décider — et ce qui ne se décide pas
 
-**Ne se décide pas** (à faire) : S23, S24, S25, S26. Poser un périmètre société
-là où il en manque ne retire l'accès à personne — c'est le correctif S22 répété
-quatre fois. Et les 10 lignes de routes mortes.
+**Ne se décidait pas** : ✅ **fait le 2026-09-18** — S23, S24, S25, S26 et les
+cinq routes mortes. Poser un périmètre société là où il en manque ne retire
+l'accès à personne : c'est le correctif S22, répété quatre fois.
 
 **Se décide** : les permissions. Ajouter `hasPermission:x` là où il n'y en avait
 aucune **retire l'accès** à tout rôle qui ne porte pas `x`. Sur les six routes
@@ -1710,4 +1722,91 @@ montées que sur un domaine de locataire : les tests de S22 contournent la
 difficulté en exerçant le contrôleur directement, ce qui marche mais ne prouve
 rien sur le **routage**. C'est le vrai sujet, et il est plus grand que les
 soixante lignes qu'il protégerait.
+
+---
+
+## ✅ S23 à S26 — les quatre fuites de l'inventaire (2026-09-18)
+
+Quatre constats, une seule forme — celle de **S22** : la **liste** est scopée par
+société, le **détail** fait `find($id)` nu. Changer l'identifiant dans l'URL
+suffisait.
+
+| | Ce que lisait le socle | Ce qui sortait |
+|---|---|---|
+| **S23** | `Support::find($id)` | le ticket d'une autre société : sujet, description, pièce jointe — **et tout son fil de discussion** |
+| **S24** | `Account::find($id)` | un compte financier d'une autre société : titulaire, banque, numéro, solde |
+| **S25** | `ParcelEvent::where('parcel_id', $id)` | la chronologie d'un colis d'une autre société : livreur, dates, **chemins de la photo et de la signature de livraison** |
+| **S26** | `MerchantShops::where('id', …)` | la boutique de n'importe quel marchand — et le droit de **changer** sa boutique par défaut |
+
+### Ce qui a été fait, et ce qui a été délibérément laissé
+
+**S23** — le périmètre de `all()` (société de l'auteur du ticket, avec la branche
+super-administrateur) est extrait en `ticketsVisibles()`, et les **trois**
+lectures l'utilisent : `all()`, `get()` et `chats()`. Une seule définition, qui
+ne peut plus diverger. Le contrôleur répond **404** au lieu de rendre une vue
+avec un ticket nul.
+
+**S24** — `get()` devient `companywise()` comme les quatre autres lectures du
+dépôt. Les cinq appelants sont tous en requête back-office ; trois passent un
+identifiant déjà lu sur un enregistrement scopé, où le filtre ne change rien.
+
+**S25** — la protection est posée **au point d'appel**, pas dans la méthode :
+`parcelEvents()` est aussi appelée par le **suivi public par numéro**
+(`Frontend\FrontendController`), sans utilisateur authentifié — c'est sa raison
+d'être, comme `parcelTrack()` au constat S17. Les deux écrans concernés
+(`logs()`, `deliveredInfo()` — le second seul était relevé, le premier avait le
+même défaut) s'arrêtent en 404 si le colis est hors périmètre, puis passent
+`$parcel->id`, le colis **déjà vérifié**. Ce second geste ferme la fuite à lui
+seul : sans garde, `$parcel->id` sur `null` échoue au lieu de servir les données.
+Un test inscrit que la méthode reste non scopée **à dessein**.
+
+**S26** — trois gestes. Le périmètre : les **quatre** méthodes du dépôt
+back-office passent par `boutiquesDeLaSociete()`, qui filtre
+`whereHas('merchant', companywise())` — `merchant_shops` ne porte pas de
+`company_id`. L'ordre : le socle basculait les anciennes boutiques par défaut
+**avant** de chercher la nouvelle, puis faisait une erreur fatale sur `null`,
+laissant le marchand sans boutique par défaut du tout ; la cible est maintenant
+résolue d'abord et rien n'est touché si elle est hors périmètre. Le verbe : la
+route devient **PUT** et la vue soumet un formulaire `@csrf` — une écriture
+déclenchable par un `GET` s'exécute depuis une image distante et échappe à la
+protection CSRF. La confirmation SweetAlert est conservée, portée par
+`form.confirm-submit` dans `custom.js` sur le modèle de `form#delete`.
+
+⚠️ **Aucune permission n'a été ajoutée.** Les six routes du tableau de
+l'inventaire n'en portent toujours pas. Corriger la fuite et poser la garde
+d'accès sont deux gestes distincts : le second retire l'accès à tout rôle qui ne
+porte pas la permission, et se décide en regardant les rôles. Pour
+`merchant.shops.default` en particulier, le lien vit **hors** du bloc
+`@if(hasPermission('merchant_shop_update'))` de sa vue : des rôles s'en servent
+peut-être sans porter cette permission.
+
+### Les cinq routes mortes
+
+Retirées de `routes/web.php`. Elles pointaient vers une méthode `view()` qui
+n'existe pas sur leur contrôleur et répondaient **500** à chaque appel. Vérifié
+avant suppression : aucune vue, aucun script ne référence leurs noms. Le test
+vérifie **les deux** moitiés du constat — route absente **et** méthode toujours
+inexistante — pour qu'on ne puisse pas le « refermer » en ajoutant une méthode
+vide.
+
+### Couverture
+
+`tests/Feature/BackOfficeScopingTest.php` — 14 tests. Les routes du back-office
+ne sont montées qu'avec un domaine de locataire : on exerce les dépôts et les
+contrôleurs directement, et on lit la déclaration des routes (méthode
+d'`OnlinePayoutModuleDisabledTest` et d'`ActivityLogAccessTest`).
+
+Vérifié par **six sabotages** : périmètre du ticket retiré, périmètre du compte
+retiré, garde du colis retirée, périmètre de la boutique retiré, route morte
+remise, `@method('PUT')` retiré de la vue. Chacun fait rougir son test — celui du
+colis en **erreur** plutôt qu'en échec, ce qui est le signe attendu : sans garde,
+`$parcel->id` sur `null` échoue avant d'avoir rien livré.
+
+### Un effet de bord de ce lot
+
+Le commentaire Blade qui explique le passage en `PUT` citait le nom d'une balise
+image en prose. L'analyseur de `WebAccessibilityTest` l'a compté comme une image
+sans `alt` — un faux positif. La prose est reformulée **et** l'analyseur ignore
+désormais les commentaires Blade : le piège était facile à reposer. Vérifié qu'il
+signale toujours une vraie image sans alternative.
 

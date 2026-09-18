@@ -80,9 +80,22 @@ class MerchantShopsController extends Controller
         return back();
     }
 
+    /**
+     * S26 — hors périmètre, le dépôt ne fait rien et le dit : on répond 404 au
+     * lieu d'annoncer un succès. Et la route est passée en `PUT` : changer la
+     * boutique par défaut est une écriture, elle ne se déclenche donc plus depuis
+     * une balise `<img>` d'un ticket de support.
+     *
+     * ⚠️ Cette route ne porte toujours AUCUNE permission, à dessein : elle est
+     * visible hors du bloc `@if(hasPermission('merchant_shop_update'))` de sa
+     * vue, donc en exiger une retirerait l'accès à des rôles qui l'utilisent
+     * peut-être. C'est une décision de permissions, pas de sécurité d'accès aux
+     * données — voir « 📋 Inventaire » dans `CARTOGRAPHIE.md`.
+     */
     public function defaultShop($merchant_id,$id)
     {
-        $this->repo->defaultShop($merchant_id,$id);
+        abort_unless($this->repo->defaultShop($merchant_id,$id), 404);
+
         Toastr::success(__('merchantshops.update_msg'),__('message.success'));
         return back();
     }

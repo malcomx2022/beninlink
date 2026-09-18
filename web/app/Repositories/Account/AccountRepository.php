@@ -32,8 +32,19 @@ class AccountRepository implements AccountInterface{
     }
 
 
+    /**
+     * S24 — `Account::find($id)` nu renvoyait **n'importe quel** compte
+     * financier : titulaire, banque, numéro, solde. Toutes les autres lectures
+     * de ce dépôt (`all()`, `getAll()`, `filter()`, `useraccount()`) sont
+     * `companywise()` depuis toujours ; celle-ci avait été oubliée, et
+     * `admin/expense/search-account/{id}` l'exposait sans même une permission.
+     *
+     * Les cinq appelants sont tous en requête back-office et veulent tous un
+     * compte de la société courante : trois passent d'ailleurs un identifiant
+     * déjà lu sur un enregistrement scopé, où le filtre ne change rien.
+     */
     public function get($id){
-        return Account::find($id);
+        return Account::companywise()->find($id);
     }
 
     public function useraccount($id){

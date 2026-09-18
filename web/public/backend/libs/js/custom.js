@@ -18,9 +18,16 @@ $(document).ready(function(){
         })
     });
 
-    $(".default_shop_button").on('click',function(e){
+    // S26 — la boutique par defaut se change par un FORMULAIRE, plus par un
+    // lien : `location.href` ne peut pas emettre un PUT, et un GET qui ecrit
+    // echappe a la protection CSRF. On garde la meme confirmation, declenchee
+    // sur la soumission — comme `form#delete` juste en dessous.
+    $('form.confirm-submit').on('submit', function (e) {
+        var form = this;
+        if ($(form).data('confirmed')) {
+            return;
+        }
         e.preventDefault();
-        var self = $(this);
         Swal.fire({
             text: confirmUpdate,
             position: 'top',
@@ -29,7 +36,8 @@ $(document).ready(function(){
             cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed) {
-                location.href = self.attr('href');
+                $(form).data('confirmed', true);
+                form.submit();
             }
         })
     });
