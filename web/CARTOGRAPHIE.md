@@ -2166,12 +2166,13 @@ dépôt, pas route par route.
 
 ### Effet sur le cliquet
 
-| | Au départ | 1re passe | 2e passe |
-|---|---|---|---|
-| Prouvées | 7 | 33 | **57** |
-| Exemptées | 33 | 35 | 35 |
-| Publiques | 6 | 6 | 6 |
-| **Héritées (plafond)** | **171** | 143 | **119** |
+| | Au départ | 1re passe | 2e passe | 3e passe |
+|---|---|---|---|---|
+| Prouvées | 7 | 33 | 57 | **85** |
+| Exemptées | 33 | 35 | 35 | 35 |
+| Publiques | 6 | 6 | 6 | 6 |
+| Routes mortes retirées | — | — | — | **2** |
+| **Héritées (plafond)** | **171** | 143 | 119 | **89** |
 
 Les deux routes de `front-web/section` passent en *exemptées* : leur paramètre
 nommé `{id}` est en réalité un **type** de section — `SectionController::edit($type)`
@@ -2213,24 +2214,125 @@ passe.
 
 Suite complète après les deux passes : **612 tests, 44 496 assertions, vert.**
 
-### Ce qui reste dans l'arriéré : 119 routes
 
-Le travail restant est identifiable, et le tableau des quatre formes plus haut le
-classe. L'essentiel tient en deux familles :
+### Troisième passe — le vol de ligne (30 routes)
 
-- 🔴 **Le vol de ligne** — `Modele::find($id)` puis `$m->company_id = settings()->id`
-  et `save()`. La ligne d'une autre société n'est pas seulement lue, elle est
-  **transférée** chez nous. Relevé dans `Role`, `Asset`, `Assetcategory`,
-  `Designation`, `Packaging`, `Hub`, `DeliveryCharge`, `Todo`, `NewsOffer`,
-  `Department`, `HubPayment`. C'est la famille à traiter en premier.
-- **La lecture nue** — `get($id)` en `Modele::find($id)`, donc l'écran `edit` d'une
-  autre société : `Role`, `Asset`, `Assetcategory`, `Fraud` (back-office),
-  `HubPayment`, `HubPaymentRequest`, `Profile`, `Income`, `Hub`, `AccountHead`,
-  `Salary`, `Todo`, `MerchantPayment`, `Currency`, `Wallet::getFind`.
+La forme la plus grave de l'arriéré. Onze dépôts du back-office faisaient, dans
+leur `update()` :
 
-Les ~20 `delete()` de la forme « je cherche nu puis je compare `company_id` » sont
-**gardés** : l'écriture ne part pas hors périmètre. Ils restent à inscrire, pas à
-corriger — sauf le déréférencement de `null` sur un identifiant inexistant.
+```php
+$ligne = Modele::find($id);              // aucun périmètre
+$ligne->company_id = settings()->id;     // ← et là, la ligne change de main
+$ligne->save();
+```
+
+La conséquence dépasse la lecture : la ligne d'une autre société n'était pas
+seulement modifiable, elle était **transférée**. Elle disparaissait des écrans de
+son propriétaire — ses listes sont `companywise()` — et apparaissait dans les
+nôtres. Un rôle et ses permissions, un entrepôt, un barème de livraison, un
+versement à un hub, un poste, un service, un emballage : en changeant un
+identifiant dans un formulaire.
+
+Aucune trace ne l'aurait expliqué côté victime : la ligne n'est pas supprimée, elle
+s'évapore.
+
+`Role`, `Asset`, `Assetcategory`, `Designation`, `Packaging`, `Hub`,
+`DeliveryCharge`, `To_do`, `NewsOffer`, `Department`, `HubPayment` — les onze
+modèles portaient **déjà** `scopeCompanywise`, donc le correctif est uniforme et
+refuse au lieu d'écrire : `companywise()->find(...)` puis un `blank()` qui rend
+`false`, ce que les contrôleurs savent déjà afficher.
+
+Six de ces dépôts lisaient aussi nu (`get($id)`) : `Role`, `Asset`,
+`Assetcategory`, `Hub`, `To_do`, `HubPayment`. L'écran de modification d'un rôle
+d'une autre société — **avec ses permissions** — s'ouvrait en changeant
+l'identifiant.
+
+### 🔴 Et trois chemins d'argent, dans la même famille
+
+Les versements aux entrepôts (`HubPayment`) lisent nu **avant de déplacer de
+l'argent** :
+
+| Chemin | Ce qu'il faisait |
+|---|---|
+| `cancelProcess($id)` | **crédite notre compte bancaire** du montant lu, puis remet le versement en attente — sur celui d'une autre société, on encaissait son montant |
+| `processed($request)` | le **décaissement** lui-même : écrit une sortie bancaire chez nous et solde le versement — celui d'une autre société inclus |
+| `HubPaymentController::process($id)` | `HubPayment::findOrFail($id)` **nu dans le contrôleur** : l'écran qui précède le décaissement s'ouvrait sur le versement d'un autre |
+
+### ⚠️ L'angle mort du filet, découvert ici
+
+`processed($request)` prend son identifiant dans le **corps** de la requête
+(`$request->id`), pas dans l'URL. `WebIsolationCoverageTest` énumère les routes
+**à paramètre** : il ne pouvait pas la voir, et ne la verra jamais.
+
+C'est une limite réelle et structurelle du filet, à retenir : **il couvre les
+identifiants qui voyagent dans le chemin, pas ceux qui voyagent dans le corps.**
+Les `update()` de ce socle prennent très souvent `$request->id` — c'est d'ailleurs
+pourquoi tant de routes `update` n'apparaissent pas du tout dans les 249. Le filet
+ne remplace donc pas la relecture d'un dépôt ; il garantit seulement qu'aucune
+route à identifiant n'est ajoutée sans qu'on dise ce qu'on a fait de sa portée.
+
+### Deux routes mortes de plus
+
+`assets/view/{id}` et `asset-category/view/{id}` pointaient vers une méthode
+`view()` qui n'existe sur **aucun** des deux contrôleurs : elles répondaient 500 à
+chaque appel. Aucune vue, aucun script ne référençait leurs noms. Retirées, comme
+les cinq de S26, et le test tient **les deux** moitiés du constat — route absente
+*et* méthode toujours inexistante — pour qu'on ne puisse pas le refermer en
+ajoutant une méthode vide.
+
+### Couverture et vérification
+
+`tests/Feature/BackOfficeRecordTakeoverTest.php` — 9 tests, dont un garde-fou qui
+vérifie que la table des cas couvre bien les **onze** dépôts (une table vide ferait
+passer tout le reste), et deux contrôles négatifs : mes propres lignes restent
+lisibles et modifiables, et l'écran de décaissement s'ouvre bien sur **mon**
+versement.
+
+**Cinq sabotages**, chacun vérifié rouge : `Role::update` nu (2 rouges — le vol et
+la réécriture), `DeliveryCharge::update` nu, `cancelProcess()` nu,
+`processed()` nu, `process()` nu, et une route morte remise.
+
+⚠️ **Deux de mes tests passaient d'abord pour la mauvaise raison**, et les deux
+méritent d'être notés :
+
+1. Le premier test des chemins d'argent était vert **sabotage compris**. Sans
+   `from_account`, `cancelProcess()` échoue sur `Account::find(null)` avant
+   d'écrire quoi que ce soit, et son `catch` rend `false` : j'observais un refus
+   qui ne venait pas du périmètre. Il a fallu une fixture réaliste — un versement
+   déjà décaissé, avec son compte bancaire — pour que le chemin soit *réalisable*
+   et que le refus prouve quelque chose.
+2. J'avais écrit `assertSame((int) $x->fresh()->status, (int) $x->fresh()->status)`
+   — une tautologie qui compare une valeur à elle-même. Corrigée en relevant le
+   statut avant l'appel.
+
+La règle qui s'en dégage, et elle vaut au-delà de ce lot : **un test de refus doit
+d'abord pouvoir réussir.** Si le chemin échoue tout seul, le refus ne prouve rien.
+
+Suite complète après les trois passes : **621 tests, 44 552 assertions, vert.**
+
+### Ce qui reste dans l'arriéré : 89 routes
+
+Les deux familles graves — le vol de ligne et les chemins d'argent — sont fermées.
+Ce qui reste est de la **lecture nue** (`get($id)` en `Modele::find($id)`, donc
+l'écran `edit` d'une autre société) et des suppressions de la forme **gardée**, à
+inscrire plutôt qu'à corriger :
+
+| Dépôt | Ce que la lecture nue ouvre |
+|---|---|
+| `Fraud` (back-office) | une fiche de fraude d'une autre société |
+| `HubPaymentRequest` | une demande de versement d'un entrepôt |
+| `Profile` | 🔴 `User::with('upload')->find($id)` — la fiche d'un agent d'une autre société |
+| `Income` / `Expense::update` | une écriture de recette, son compte, son marchand |
+| `AccountHead` | un poste comptable |
+| `Salary` | 🔴 un bulletin de paie d'une autre société |
+| `MerchantPayment::edit` | un compte de versement de marchand |
+| `Currency::getFind` | une devise (objet de plateforme — à exempter, probablement) |
+| `Wallet::getFind` | une recharge de portefeuille |
+| `User`, `Merchant`, `Parcel::update`, `Expense`, `FundTransfer`, `DeliveryCategory`, `DeliveryMan`, `HubInCharge`, `AccountHeads` | reste à dépouiller méthode par méthode |
+
+Deux d'entre elles méritent d'ouvrir la prochaine passe : **`Salary`** (un bulletin
+de paie est une donnée personnelle) et **`Profile`** (la fiche d'un agent, avec son
+téléphone et son adresse).
 
 ### Couverture
 

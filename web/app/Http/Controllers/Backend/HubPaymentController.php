@@ -129,7 +129,9 @@ class HubPaymentController extends Controller
     public function process($id){
 
         try {
-            $payment  = HubPayment::findOrFail($id);
+            // S29 — `findOrFail($id)` etait NU, dans le controleur meme : l'ecran qui
+            // precede le DECAISSEMENT s'ouvrait sur le versement d'une autre societe.
+            $payment  = HubPayment::companywise()->findOrFail($id);
             $accounts = $this->account->all();
             return view('backend.hub_payment.process',compact('payment','accounts'));
         } catch (\Exception $exception){

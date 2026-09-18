@@ -27,7 +27,9 @@ class RoleRepository implements RoleInterface
     }
     public function get($id)
     {
-        return Role::find($id);
+        // S29 — lecture nue : l'ecran de modification d'un role d'une AUTRE societe,
+        // avec ses permissions, s'ouvrait en changeant l'identifiant dans l'URL.
+        return Role::companywise()->find($id);
     }
 
     public function store($request)
@@ -50,7 +52,15 @@ class RoleRepository implements RoleInterface
     public function update($id, $request)
     {
         try {
-            $role             = Role::find($id);
+            // S29 — VOL DE LIGNE : `Role::find($id)` etait NU, et la ligne
+            // suivante ecrasait `company_id` avec la societe connectee. La ligne
+            // d'une autre societe n'etait donc pas seulement lue : elle etait
+            // TRANSFEREE chez nous, et disparaissait de chez son proprietaire.
+            $role             = Role::companywise()->find($id);
+
+            if (blank($role)) {
+                return false;
+            }
             $role->name       = $request->name;
             $role->company_id = settings()->id;  
             $role->permissions= $request->permissions;

@@ -43,7 +43,14 @@ class NewsOfferRepository implements NewsOfferInterface{
     {
         try {
 
-            $news_offer                   = NewsOffer::find($id); 
+            // S29 — la LECTURE etait `companywise()` (juste au-dessus), l'ECRITURE non :
+            // l'annonce d'une autre societe se reecrivait, et `author` passait a l'agent
+            // connecte. Meme dissymetrie que les trous de S23 et S26.
+            $news_offer                   = NewsOffer::companywise()->find($id);
+
+            if (blank($news_offer)) {
+                return false;
+            }
             $news_offer->author           = Auth::user()->id;
             $news_offer->title            = $request->title;
             $news_offer->description      = $request->description;

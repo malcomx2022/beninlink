@@ -33,7 +33,13 @@ class DepartmentRepository implements DepartmentInterface{
     public function update($id, $request)
     {
         try {
-            $department               = Department::find($id);
+            // S29 — VOL DE LIGNE : recherche nue, puis `company_id` ecrase par la
+            // societe connectee — la ligne d'une autre societe etait TRANSFEREE.
+            $department               = Department::companywise()->find($id);
+
+            if (blank($department)) {
+                return false;
+            }
             $department->company_id   = settings()->id;
             $department->title        = $request->title; 
             $department->company_id   = settings()->id;  

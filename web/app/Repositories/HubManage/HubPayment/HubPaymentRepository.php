@@ -22,7 +22,9 @@ class HubPaymentRepository implements HubPaymentInterface{
     }
 
     public function get($id){
-        return HubPayment::find($id);
+        // S29 — lecture nue : un versement a un entrepot d'une AUTRE societe —
+        // montant, compte d'origine, numero de transaction.
+        return HubPayment::companywise()->find($id);
     }
     public function store($request){
         try {
@@ -80,7 +82,14 @@ class HubPaymentRepository implements HubPaymentInterface{
     public function update($id,$request){
         try {
             DB::beginTransaction();
-            $payment                      = HubPayment::where('id',$id)->first();
+            // S29 — VOL DE LIGNE : recherche nue, puis `company_id` ecrase par la
+            // societe connectee — la ligne d'une autre societe etait TRANSFEREE.
+            $payment                      = HubPayment::companywise()->where('id',$id)->first();
+
+            if (blank($payment)) {
+                DB::rollBack();
+                return false;
+            }
             $payment->company_id          = settings()->id;
             $payment->hub_id              = $request->hub_id;
             $payment->amount              = $request->amount;
@@ -209,7 +218,18 @@ class HubPaymentRepository implements HubPaymentInterface{
     public function processed($request){
         try {
             DB::beginTransaction();
-            $payment                           = HubPayment::where('id',$request->id)->first();
+            // S29 — meme lecture nue, et c'est le DECAISSEMENT lui-meme. ⚠️ Ici
+            // l'identifiant voyage dans le CORPS de la requete (`$request->id`), pas
+            // dans l'URL : `WebIsolationCoverageTest` ne pouvait pas le voir — sa
+            // surface est celle des routes a parametre. Angle mort du filet, note
+            // dans CARTOGRAPHIE.md.
+            $payment                           = HubPayment::companywise()->where('id',$request->id)->first();
+
+            if (blank($payment)) {
+                DB::rollBack();
+                return false;
+            }
+
             //bank transaction statements
             $bank_transaction                   =  new BankTransaction();
             $bank_transaction->company_id       =  settings()->id;
@@ -251,7 +271,15 @@ class HubPaymentRepository implements HubPaymentInterface{
 
         try {
             DB::beginTransaction();
-            $payment                            = HubPayment::where('id',$id)->first();
+            // S29 — lecture NUE avant un mouvement d'argent : l'annulation d'un
+            // decaissement CREDITE notre compte bancaire du montant lu. Sur le
+            // versement d'une autre societe, on encaissait donc son montant.
+            $payment                            = HubPayment::companywise()->where('id',$id)->first();
+
+            if (blank($payment)) {
+                DB::rollBack();
+                return false;
+            }
 
             $bank_transaction                   =  new BankTransaction();
             $bank_transaction->company_id       =  settings()->id;

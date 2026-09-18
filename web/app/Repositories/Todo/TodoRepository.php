@@ -12,7 +12,8 @@ class TodoRepository implements TodoInterface{
     }
 
     public function get($id){
-        return To_do::find($id);
+        // S29 — lecture nue : la tache d'une AUTRE societe, et son assignation.
+        return To_do::companywise()->find($id);
     }
 
     public function store($request){
@@ -34,7 +35,13 @@ class TodoRepository implements TodoInterface{
     public function update($request)
     {
         try {
-            $todo               = To_do::find($request->id);
+            // S29 — VOL DE LIGNE : recherche nue, puis `company_id` ecrase par la
+            // societe connectee — la ligne d'une autre societe etait TRANSFEREE.
+            $todo               = To_do::companywise()->find($request->id);
+
+            if (blank($todo)) {
+                return false;
+            }
             $todo->company_id   = settings()->id;
             $todo->title        = $request->title;
             $todo->description  = $request->description;
