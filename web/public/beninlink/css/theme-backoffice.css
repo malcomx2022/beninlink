@@ -338,6 +338,7 @@ input[type='checkbox']:checked {
 .bl-pill--assign  { background: var(--bl-pill-assign-bg);  color: var(--bl-pill-assign-fg); }
 .bl-pill--done    { background: var(--bl-pill-done-bg);    color: var(--bl-pill-done-fg); }
 .bl-pill--return  { background: var(--bl-pill-return-bg);  color: var(--bl-pill-return-fg); }
+.bl-pill--partial { background: var(--bl-pill-partial-bg); color: var(--bl-pill-partial-fg); }
 
 /* ===========================================================================
    9. SURFACES — cartes et tableaux, au grain de la maquette

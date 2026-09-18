@@ -13,6 +13,7 @@
 | 2026-09-18 | **Arbitrage §9.1 tranché : `mobile/src/theme/colors.ts` l'emporte** sur la maquette pour les cinq jetons divergents. La maquette a été corrigée ; elle n'est plus une source concurrente. |
 | 2026-09-18 | **Six pastilles corrigées validées** (§9.2) et implémentées. |
 | 2026-09-18 | **Lot 1 livré.** Voir §10 — ce que le lot 1 a effectivement fait, et en quoi il s'écarte du plan. |
+| 2026-09-18 | **Lot 2 livré.** Voir §11 — la sémantique des statuts, la table 33 → 7 en PHP, et le piège des vues d'impression. |
 
 ---
 
@@ -566,7 +567,7 @@ libellé 12 px gris) se pose dans un second temps — et **par des classes
 |---|---|---|
 | **0** ✅ | Trancher l'écart maquette / `colors.ts` (§1.3) · valider les six pastilles corrigées (§5.3) | *fait le 2026-09-18* |
 | **1** ✅ | `tokens.css` + `theme-backoffice.css` + polices auto-hébergées + les 2 `<link>` · `--h-font-family` · les 3 viewports · `lang` | **fait** — voir §10 |
-| **2** | `StatusParcel()` : sémantique + `else` de repli · pastilles `bl-pill` · douane aux couleurs de la charte | Les statuts se lisent **comme dans l'app**. Les classes `.bl-pill--*` sont **déjà définies** par le lot 1 : il ne reste que du PHP |
+| **2** ✅ | `StatusParcel()` : sémantique + `else` de repli · pastilles `bl-pill` · douane aux couleurs de la charte | **fait** — voir §11 |
 | **3** | `accent_color` en base + réglage + `:root` | L'ocre devient réglable par transporteur. ⚠️ **Les défauts de couleur et la migration de données sont déjà faits** au lot 1 (voir §10) : ce lot ne porte plus que l'accent |
 | **4** | `auth/login` · les 2 lignes de `custom.js` · les 11 titres · les 85 placeholders · les `data-title` | Plus d'anglais sur les écrans d'entrée |
 | **5** | Sidebar groupé · « Retrait » conditionné + état vide · sélecteur de langue réduit à FR/EN · filtre du tableau de bord | Ergonomie du back-office |
@@ -723,3 +724,83 @@ qu'un commentaire annonçant « 5,24:1 » peut mentir, un calcul non.
 Vérifié : en faisant dériver un jeton, en remettant l'ancien rouge dans la
 maquette, en rétablissant le viewport bloquant, `lang="en"` et en retirant un
 `<link>`, **les tests concernés échouent** — ils ne sont pas décoratifs.
+
+
+---
+
+## 11. Lot 2 — ce qui a été livré le 2026-09-18
+
+### 11.1 Une fonction de soixante lignes devenue trois
+
+`StatusParcel()` (`Helper.php`) est le **point unique** de rendu de la pastille.
+Sa cascade de `elseif` est remplacée par un appel à la table de correspondance.
+Ce qu'elle disait, et que la charte interdit (§2.6) :
+
+| Statut | Avant | Après |
+|---|---|---|
+| `PENDING` | **rouge** — le rouge est l'incident | `wait`, neutre |
+| `RECEIVED_BY_PICKUP_MAN` | **vert** — le vert veut dire livré | `transit` |
+| `PARTIAL_DELIVERED` | **vert** — c'est un incident | `partial`, avertissement |
+| les 9 `RETURN_*` + `ASSIGN_MERCHANT` | `dark` / `info` / `success` mêlés | `return`, une famille |
+| les 14 codes non couverts | cellule vide + `Warning` | repli `wait` |
+
+### 11.2 La table 33 → 7, en PHP — et un test qui interdit la divergence
+
+`app/Services/Parcel/MerchantStage.php` (**fichier ajouté**, hors conflit de
+fusion) porte la table de `mobile/src/domain/parcelStatus.ts`. Elle ne
+redéfinit **ni les valeurs numériques** — elles appartiennent au contrat d'API et
+sont lues dans `ParcelStatus` — **ni les libellés**, qui restent ceux de
+`lang/fr/parcelStatus.php`.
+
+`ParcelStagePillTest` **relit le fichier TypeScript** et compare les 33
+correspondances une à une, plus les valeurs numériques que l'app déclare. Éprouvé
+en faisant diverger la table PHP d'une seule ligne : le test rougit en le
+nommant. Même colis, même lecture, quel que soit le support — et ce n'est plus
+une intention, c'est tenu.
+
+### 11.3 Une septième famille de pastille, et pourquoi
+
+La maquette en donnait **six** — les six **étapes** de la timeline. La livraison
+partielle n'est pas une étape : c'est un **incident**, et le §6.2 demande pour
+elle l'avertissement, donc l'orange. Aucune des six ne convenait : `transit` est
+le seul orange, et il veut dire « en route ». Les deux se côtoient dans la même
+colonne du back-office.
+
+D'où `--bl-pill-partial-*` : fond `#FDEAD6`, texte `#8A3D00`, **6,52:1** — tiré
+vers le rouge pour se distinguer du transit à l'œil. Le test de contraste du lot 1
+l'a prise en charge : il compte désormais sept familles.
+
+### 11.4 Le piège : trois vues d'impression hors layout
+
+`StatusParcel()` sert aussi `reports/parcel_reports_print`,
+`merchant_panel/reports/parcel_reports_print` et `parcel/bulk_print`. Ces trois
+vues **ne passent pas** par `backend/partials/master` : ce sont des documents
+autonomes qui ne chargent que leur propre feuille. Elles n'héritent donc d'aucune
+des deux feuilles du lot 1.
+
+Or `public/backend/css/reports_print.css` **stylait** les `badge-*` du socle.
+Basculer vers `bl-pill` sans rien d'autre aurait rendu les rapports imprimés en
+**texte nu** — une régression invisible en test, visible au premier tirage.
+
+D'où `public/beninlink/css/theme-print.css` (**ajouté**) et deux `<link>` dans
+chacune des trois vues. On n'édite pas `reports_print.css`, qui appartient au
+socle. `bulk_print`, qui n'avait aucun style de pastille, y gagne.
+
+⚠️ La feuille porte `print-color-adjust: exact` : **sans lui les navigateurs
+suppriment les fonds à l'impression**, et les sept familles redeviennent
+indiscernables. C'est la raison d'être du fichier autant que les classes.
+
+### 11.5 La douane : rien à faire, et c'est vérifié
+
+Le lot 2 prévoyait « douane aux couleurs de la charte ». Le **lot 1 l'a déjà
+fait** : `theme-backoffice.css` requalifie `.badge-danger`, `.badge-warning` et
+`.badge-info` vers `--bl-danger`, `--bl-warning` et `--bl-info`. Les trois
+niveaux du Module 4 sortent donc déjà aux couleurs de la charte, sans qu'aucune
+ligne de `customs/alerts.blade.php` ait été ouverte — exactement l'argument du
+§2.5. Aucun code n'a été écrit pour cette ligne du plan.
+
+### 11.6 Empreinte sur le socle
+
+**Trois fichiers**, d'une ligne de `<link>` chacun (les trois vues d'impression),
+plus `Helper.php` dont le corps d'une fonction est réécrit. Tout le reste est en
+fichiers **ajoutés** : le service, la feuille d'impression, les tests.

@@ -1,0 +1,43 @@
+/* ===========================================================================
+   BeninLink — la charte, pour les vues d'IMPRESSION
+   ---------------------------------------------------------------------------
+   Les trois vues d'impression (`reports/parcel_reports_print`,
+   `merchant_panel/reports/parcel_reports_print`, `parcel/bulk_print`) ne
+   passent PAS par `backend/partials/master` : ce sont des documents HTML
+   autonomes, qui ne chargent que leur propre feuille. Elles n'héritent donc
+   d'aucune des deux feuilles posées par le lot 1.
+
+   Or `StatusParcel()` est le point unique de rendu de la pastille : la
+   basculer vers `bl-pill` sans cette feuille aurait rendu les rapports
+   imprimés en texte nu, alors que `public/backend/css/reports_print.css`
+   stylait bien les `badge-*` du socle. Cette feuille rend ce que le lot 2
+   enlève — et la donne au passage à `bulk_print`, qui n'en avait aucune.
+
+   Fichier AJOUTÉ : aucun coût de fusion. On n'édite pas
+   `public/backend/css/reports_print.css`, qui appartient au socle.
+   =========================================================================== */
+
+.bl-pill {
+  display: inline-block;
+  white-space: nowrap;
+  font-family: var(--bl-font-heading), "DM Sans", Arial, sans-serif;
+  font-weight: var(--bl-weight-heading, 600);
+  font-size: 12px;
+  line-height: 1;
+  padding: 3px 8px;
+  border-radius: 999px;
+
+  /* Sans cela, les navigateurs SUPPRIMENT les fonds à l'impression : la
+     pastille sortirait en texte sombre sur blanc, et les six familles
+     deviendraient indiscernables. C'est la raison d'être de cette feuille. */
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.bl-pill--wait    { background: var(--bl-pill-wait-bg);    color: var(--bl-pill-wait-fg); }
+.bl-pill--transit { background: var(--bl-pill-transit-bg); color: var(--bl-pill-transit-fg); }
+.bl-pill--hub     { background: var(--bl-pill-hub-bg);     color: var(--bl-pill-hub-fg); }
+.bl-pill--assign  { background: var(--bl-pill-assign-bg);  color: var(--bl-pill-assign-fg); }
+.bl-pill--done    { background: var(--bl-pill-done-bg);    color: var(--bl-pill-done-fg); }
+.bl-pill--return  { background: var(--bl-pill-return-bg);  color: var(--bl-pill-return-fg); }
+.bl-pill--partial { background: var(--bl-pill-partial-bg); color: var(--bl-pill-partial-fg); }

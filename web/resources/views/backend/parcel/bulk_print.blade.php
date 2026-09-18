@@ -7,6 +7,11 @@
     <title> {{ __('parcelStatus.'.$bulk_type) }} | print</title>
     <link rel="shortcut icon" href="{{ asset(settings()->favicon_image)}}" type="image/x-icon">
     <link rel="stylesheet" href="{{ asset('backend/')}}/css/bulk_print.css">
+    {{-- Charte BeninLink — cette vue d'impression ne passe pas par le layout du
+         back-office : sans ces deux feuilles, les pastilles de StatusParcel()
+         sortiraient en texte nu. Voir public/beninlink/css/theme-print.css. --}}
+    <link rel="stylesheet" href="{{ static_asset('beninlink/css/tokens.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('beninlink/css/theme-print.css') }}">
 </head>
 <body>
     <div class="print" style="text-align: right" >

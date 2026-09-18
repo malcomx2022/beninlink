@@ -313,63 +313,39 @@ if(!function_exists('parcelStatus')){
 
 
 if (!function_exists('StatusParcel')) {
-     function StatusParcel($status_id)
+    /**
+     * Pastille de statut d'un colis — **point unique** de rendu, pour le
+     * back-office comme pour les rapports imprimés.
+     *
+     * Réécrite au lot 2 de la charte web. Ce qu'elle faisait avant, et qui
+     * contredisait la charte partagée avec les apps (audit §2.6) :
+     *   - « en attente » sortait en ROUGE, alors que le rouge est réservé à
+     *     l'incident ;
+     *   - « reçu par le ramasseur » sortait en VERT, qui veut dire « livré » ;
+     *   - la **livraison partielle** sortait en VERT elle aussi, alors que
+     *     c'est un incident : elle porte désormais l'avertissement ;
+     *   - les neuf `RETURN_*` se répartissaient entre `dark`, `info` et
+     *     `success` — ils forment maintenant une seule famille ;
+     *   - **14 des 33 codes n'étaient pas couverts** et la fonction n'avait pas
+     *     de `else` : un code hors liste rendait une cellule vide sur un
+     *     `Warning: Undefined variable`. Le repli ferme ce cas.
+     *
+     * Les regroupements viennent de `MerchantStage`, port de la table de l'app :
+     * même colis, même lecture, quel que soit le support. Les libellés, eux,
+     * restent ceux du backend (`lang/fr/parcelStatus.php`) — on aligne les
+     * couleurs, jamais les textes.
+     *
+     * Les classes `bl-pill` affranchissent du vocabulaire Bootstrap 4
+     * (`badge-pill badge-*`) sans migrer quoi que ce soit : elles sont définies
+     * dans la couche de jetons, en fichiers ajoutés.
+     */
+    function StatusParcel($status_id)
     {
-        if($status_id == ParcelStatus::PENDING){
-            $status = '<span class="badge badge-pill badge-danger">'.trans("parcelStatus." . $status_id).'</span>';
-        }
-        elseif($status_id == ParcelStatus::PICKUP_ASSIGN) {
-            $status = '<span class="badge badge-pill badge-primary">'.trans("parcelStatus." .$status_id).'</span>';
-        }
-        elseif($status_id == ParcelStatus::RECEIVED_WAREHOUSE) {
-            $status = '<span class="badge badge-pill badge-info">'.trans("parcelStatus." . $status_id).'</span>';
-        }
-        elseif($status_id == ParcelStatus::DELIVERY_MAN_ASSIGN) {
-            $status = '<span class="badge badge-pill badge-warning">'.trans("parcelStatus." . $status_id).'</span>';
-        }
-        elseif($status_id == ParcelStatus::DELIVERY_RE_SCHEDULE) {
-            $status = '<span class="badge badge-pill badge-info">'.trans("parcelStatus." . $status_id).'</span>';
-        }
-        elseif($status_id == ParcelStatus::RETURN_TO_COURIER) {
-            $status = '<span class="badge badge-pill badge-info">'.trans("parcelStatus." . $status_id).'</span>';
-        }
-        elseif($status_id == ParcelStatus::RETURN_ASSIGN_TO_MERCHANT) {
-            $status = '<span class="badge badge-pill badge-dark">'.trans("parcelStatus." . $status_id).'</span>';
-        } elseif($status_id == ParcelStatus::RETURN_MERCHANT_RE_SCHEDULE) {
-            $status = '<span class="badge badge-pill badge-dark">'.trans("parcelStatus." . $status_id).'</span>';
-        }
-        elseif($status_id == ParcelStatus::RETURN_RECEIVED_BY_MERCHANT) {
-            $status = '<span class="badge badge-pill badge-success">'.trans("parcelStatus." . $status_id).'</span>';
-        }
-        elseif($status_id == ParcelStatus::DELIVER) {
-            $status = '<span class="badge badge-pill badge-success">'.trans("parcelStatus." . $status_id).'</span>';
-        }
-        elseif($status_id == ParcelStatus::DELIVERED) {
-            $status = '<span class="badge badge-pill badge-success">'.trans("parcelStatus." . $status_id).'</span>';
-        }
-        elseif($status_id == ParcelStatus::PARTIAL_DELIVERED) {
-            $status = '<span class="badge badge-pill badge-success">'.trans("parcelStatus." . $status_id).'</span>';
-        }
-        elseif($status_id == ParcelStatus::RETURN_WAREHOUSE) {
-            $status = '<span class="badge badge-pill badge-info">'.trans("parcelStatus." . $status_id).'</span>';
-        }
-        elseif($status_id == ParcelStatus::ASSIGN_MERCHANT) {
-            $status = '<span class="badge badge-pill badge-secondary">'.trans("parcelStatus." . $status_id).'</span>';
-        }
+        $famille = \App\Services\Parcel\MerchantStage::pill($status_id);
 
-        elseif($status_id == ParcelStatus::RETURNED_MERCHANT) {
-            $status = '<span class="badge badge-pill badge-dark">'.trans("parcelStatus." . $status_id).'</span>';
-        }elseif($status_id == ParcelStatus::PICKUP_RE_SCHEDULE){
-            $status = '<span class="badge badge-pill badge-dark">'.trans("parcelStatus." . $status_id).'</span>';
-        }elseif($status_id == ParcelStatus::RECEIVED_BY_PICKUP_MAN){
-            $status = '<span class="badge badge-pill badge-success">'.trans("parcelStatus." . $status_id).'</span>';
-        }elseif($status_id == ParcelStatus::TRANSFER_TO_HUB){
-            $status = '<span class="badge badge-pill badge-info">'.trans("parcelStatus." . $status_id).'</span>';
-
-        }elseif($status_id == ParcelStatus::RECEIVED_BY_HUB){
-            $status = '<span class="badge badge-pill badge-info">'.trans("parcelStatus." . $status_id).'</span>';
-        }
-        return $status;
+        return '<span class="bl-pill bl-pill--' . $famille . '">'
+            . trans('parcelStatus.' . $status_id)
+            . '</span>';
     }
 }
 

@@ -294,7 +294,7 @@ class WebBrandCharterTest extends TestCase
     {
         $jetons = $this->jetons();
 
-        foreach (['wait', 'transit', 'hub', 'assign', 'done', 'return'] as $famille) {
+        foreach (['wait', 'transit', 'hub', 'assign', 'done', 'return', 'partial'] as $famille) {
             foreach (['bg', 'fg'] as $part) {
                 $this->assertSame(
                     1,

@@ -153,6 +153,15 @@
   --bl-pill-done-bg:    #E1F3EA;  --bl-pill-done-fg:    #0F6B45;  /* 5,67:1 */
   --bl-pill-return-bg:  #FBE6E9;  --bl-pill-return-fg:  #9E2A20;  /* 6,27:1 */
 
+  /* Septième famille, ajoutée au lot 2. La maquette n'en donnait que six — les
+     six ETAPES de la timeline. La livraison partielle n'est pas une étape :
+     c'est un incident, et l'audit (§6.2) demande pour elle l'AVERTISSEMENT,
+     donc l'orange, jamais le vert qu'elle portait. Aucune des six ne convenait :
+     « transit » est le seul orange, et il veut dire « en route ». Le fond est
+     tiré vers le rouge pour se distinguer du transit à l'œil, dans une colonne
+     où les deux se côtoient. */
+  --bl-pill-partial-bg: #FDEAD6;  --bl-pill-partial-fg: #8A3D00;  /* 6,52:1 */
+
   /* =========================================================================
      6. TYPOGRAPHIE — mobile/src/theme/typography.ts
      ========================================================================= */
