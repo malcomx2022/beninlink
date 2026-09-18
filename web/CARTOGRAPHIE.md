@@ -1211,6 +1211,7 @@ vestige du squelette Laravel.
 | ~~S20~~ | G | ~~Le panneau marchand servait le CSV d'un autre marchand~~ — ✅ **corrigé le 2026-09-04** : `merchant.panel.invoice.csv` (et désormais `pdf`, `journal`) portent `merchant_id` dans l'URL sans le recouper avec le compte connecté. `MerchantInvoiceController::ownsOrAbort()` répond 404 hors périmètre | `MerchantInvoiceController` |
 | ~~S19~~ | C | ~~Une demande de retrait acceptait n'importe quel `merchant_account`~~ — ✅ **corrigé le 2026-09-04** : le marchand pouvait désigner le compte d'un autre, puis `PaymentResource` lui en renvoyait le détail (titulaire, numéro, banque) dans sa propre liste. L'API vérifie désormais que le compte lui appartient (422 sinon). Le panneau web, qui propose une liste fermée, n'est pas modifié | `Api\V10\PaymentRequestController` |
 | ~~S21~~ | C | ~~TLS non vérifié dans deux passerelles de paiement héritées~~ — ✅ **désactivées le 2026-09-05** (décision : désactiver plutôt que corriger, aucun usage au Bénin). `config/payments.php` liste Aamarpay et SSLCommerz comme désactivées ; leurs routes ne sont plus enregistrées, les réglages société et marchand refusent de les activer, les écrans ne les proposent plus, une migration passe les statuts existants à inactif (clés conservées). Le code reste (référence, licence) | `config/payments.php` · `gatewayEnabled()` · migration `2026_09_05_100000` |
+| ~~S22~~ | B | ~~Le détail du journal d'activité, sans périmètre, sans permission et sans échappement~~ — ✅ **corrigé le 2026-09-18** : `ActiveLogController::view($id)` faisait `Activity::find($id)` **nu** alors qu'`index()`, juste au-dessus, scope par la société du causeur — un opérateur lisait l'avant/après champ par champ d'un autre transporteur en changeant l'identifiant dans l'URL. Sa route ne portait **aucune** permission quand `logs.index` porte `hasPermission:log_read`. Et la vue rendait ces valeurs — des saisies d'utilisateurs — avec `{!! !!}`, dans un fragment injecté en `.html()` dans une fenêtre modale : **XSS stocké**. Les trois sont fermés, et l'échappement passe par `logValue()` parce qu'un `{{ }}` posé naïvement aurait fait **500** sur les attributs `array` de `User` et `Role` (voir « ✅ S22 » plus bas) | `ActiveLogController` · `routes/web.php:216` · `backend/log/view.blade.php` · `logValue()` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
 
@@ -1487,3 +1488,111 @@ Couverts à ce jour : signature du webhook FedaPay, **S14** (facture d'un autre 
    **fait le 2026-09-05** (décision **D13**, revue §23). SMS, push et courriels
    passent par la file `database` ; `php artisan beninlink:file-attente` signale un
    worker arrêté, la panne silencieuse que la file introduit.
+
+---
+
+## ✅ S22 — le détail du journal d'activité (2026-09-18)
+
+Relevé en enveloppant le tableau de sa vue dans un `table-responsive` — une ligne
+d'ergonomie qui a fait lire les huit lignes du contrôleur juste à côté.
+
+```php
+public function index()
+{
+    $logs = Activity::whereHas('causer', function ($query) {
+        $query->where('company_id', settings()->id);   // ← scopé
+    })->orderBy('id','desc')->paginate(10);
+    …
+}
+
+public function view($id){
+    $logDetails  =  Activity::find($id);               // ← rien
+    return view('backend.log.view',compact('logDetails'));
+}
+```
+
+**Trois défauts, et le troisième en cachait un quatrième.**
+
+### 1. Aucun périmètre société (famille S7)
+
+La liste ne montre que les activités causées par un utilisateur de la société
+courante. Le détail n'en tenait aucun compte : `log-activity-view/42` servait
+l'activité 42, quelle que soit la société. Et une activité n'est pas une ligne
+anodine — elle porte **l'ancienne et la nouvelle valeur de chaque champ modifié** :
+tarifs, coordonnées d'un marchand, permissions d'un rôle.
+
+Le correctif reprend **exactement** la requête de `index()`, puis `abort_if(blank(...), 404)`.
+Ce qu'on ne peut pas voir dans la liste, on ne peut pas l'ouvrir — y compris les
+activités sans causeur rattaché à une société, que `index()` n'a jamais listées.
+Cette règle du socle n'est pas modifiée, elle est alignée.
+
+### 2. Aucune permission sur la route
+
+```php
+Route::get('logs',                   …)->middleware('hasPermission:log_read');
+Route::get('log-activity-view/{id}', …);   // ← rien
+```
+
+Voir la liste et voir un détail sont le même droit. La seconde route porte
+maintenant la même permission.
+
+### 3. Sortie non échappée — XSS stocké
+
+La vue rendait les valeurs avec `{!! $value !!}`. Ce sont des attributs de
+modèles, donc **des saisies d'utilisateurs** : une raison sociale, une adresse.
+Et le fragment est injecté en `.html()` dans une fenêtre modale depuis
+`backend/log/index.blade.php`. Un marchand qui nomme sa boutique
+`<script>…</script>` obtenait une exécution dans le navigateur de l'opérateur qui
+consulte le journal.
+
+Le socle échappait dans **une** branche de la même vue (la suppression, qui n'a
+que des anciennes valeurs) et pas dans l'autre. La branche correcte était la
+première.
+
+### 4. Le défaut que corriger le troisième aurait créé
+
+`properties['attributes']` reprend les attributs du modèle **tels qu'il les
+porte**. `User` et `Role` déclarent `'permissions' => 'array'`, et les deux sont
+journalisés : une modification de rôle journalise donc un **tableau**.
+
+| Rendu | Sur un tableau |
+|---|---|
+| `{!! $value !!}` (avant) | avertissement « Array to string conversion », le mot « Array » à l'écran |
+| `{{ $value }}` (naïf) | `htmlspecialchars()` refuse un tableau en PHP 8 → **erreur 500** |
+| `{{ logValue($value) }}` | `["parcel_read","parcel_create"]` |
+
+La branche « suppression », qui échappait déjà, **plantait donc déjà** sur une
+suppression de rôle. `logValue()` (dans `app/Http/Helper/Helper.php`) rend
+toujours une chaîne — son type de retour `: string` est un second garde-fou — et
+le journal montre ce qui a été enregistré sans l'interpréter : une balise stockée
+s'affiche en clair.
+
+### Ce que ce correctif NE ferme pas — et c'est systémique
+
+Le journal d'activité n'était pas une exception. Mesuré sur `routes/web.php` et
+les contrôleurs du back-office :
+
+| Constat | Compte |
+|---|---|
+| Routes à `{id}` dans `routes/web.php` | **100** |
+| … portant `hasPermission` | 69 |
+| … **sans aucune permission** | **31** |
+| Appels `::find($id)` / `::find($request->id)` dans les contrôleurs | **12** |
+| … dont un seul porte `companywise()` | **0** |
+
+Le filet **S7** ne couvre que les routes `/api/v10` (`IsolationCoverageTest`).
+Le back-office n'a pas d'équivalent, et c'est ce qui a laissé passer celui-ci.
+**Élargir le filet aux routes web à identifiant est un chantier à ouvrir** : il
+demande de décider, route par route, quelle permission s'applique — et ajouter
+une permission là où il n'y en avait aucune **retire l'accès** à un rôle qui ne la
+porte pas. Ce n'est pas un correctif mécanique.
+
+### Couverture
+
+`tests/Feature/ActivityLogAccessTest.php` — 10 tests. Les routes du back-office
+ne sont montées qu'avec un domaine de locataire, hors de portée d'un test : on
+exerce donc le contrôleur et la vue directement, et on lit la déclaration de la
+route (méthode d'`OnlinePayoutModuleDisabledTest`). Vérifié par quatre sabotages :
+périmètre retiré, permission retirée, `{!! !!}` rétabli, `logValue()` rendant la
+valeur brute — chacun fait échouer son test.
+

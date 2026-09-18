@@ -652,6 +652,49 @@ if (!function_exists('singleUser')) {
         }
     }
 
+    if (!function_exists('logValue')) {
+        /**
+         * Rend imprimable une valeur du journal d'activite.
+         *
+         * Deux raisons, et la seconde est la plus importante :
+         *
+         * 1. **Un tableau.** `properties['attributes']` reprend les attributs du
+         *    modele tels qu'il les porte : `User` et `Role` declarent
+         *    `'permissions' => 'array'`, donc une modification de role journalise
+         *    un TABLEAU. La vue l'affichait avec `{!! !!}` : avertissement
+         *    « Array to string conversion » et le mot « Array » a l'ecran. Passer
+         *    a `{{ }}` sans precaution aurait fait bien pire — `htmlspecialchars()`
+         *    refuse un tableau en PHP 8, donc une erreur 500. Et la branche
+         *    « suppression » de la vue, qui echappait deja, plantait deja.
+         *
+         * 2. **Une injection.** Ces valeurs sont des saisies d'utilisateurs : une
+         *    raison sociale, une adresse. Rendues sans echappement dans une vue
+         *    injectee en `.html()` dans une fenetre modale, elles s'executent dans
+         *    le navigateur de l'operateur qui consulte le journal. On rend donc
+         *    toujours une CHAINE, que `{{ }}` echappe.
+         *
+         * Le journal doit montrer ce qui a ete enregistre, pas l'interpreter :
+         * une balise stockee s'affiche donc telle quelle, en clair.
+         */
+        function logValue($value): string
+        {
+            if ($value === null || $value === '') {
+                return '';
+            }
+
+            if (is_bool($value)) {
+                return $value ? '1' : '0';
+            }
+
+            if (is_scalar($value)) {
+                return (string) $value;
+            }
+
+            // Tableau, objet, ressource : une forme lisible et bornee.
+            return (string) json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+    }
+
     //notifications
     if (!function_exists('notifications')) {
 

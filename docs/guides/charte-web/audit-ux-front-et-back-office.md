@@ -21,6 +21,7 @@
 | 2026-09-18 | **Lot 7 livré.** Voir §17 — la forme fine. La chronologie de suivi cachait la **quatrième** copie de la table des statuts, sur la page du client final : une livraison partielle y paraissait réussie, et 23 codes sur 33 tombaient dans un repli vert. Arbitrages §9.4 et §9.5 tranchés. |
 | 2026-09-18 | **Lot 6 livré.** Voir §16 — accessibilité. Le troisième `http://`, absent des vues, faisait rendre à Laravel des URL en clair : le lien de réinitialisation de mot de passe et le `callback_url` de FedaPay. Une ligne manquait à notre configuration nginx. |
 | 2026-09-18 | **Lot 6 complété.** Voir §19 — le §16 pose l'attribut `alt` ; il restait sa **qualité** : 91 des 106 valeurs préexistantes étaient inutilisables (`alt="user"` sur le logo des réglages, `alt="stripe.png"` sur l'image de PayPal). Et son `alt="{{ settings()->name }}"` dans trois courriels **bâtis par le worker** rendait F4 visible. Plus trois défauts de sécurité dans le journal d'activité (§19.6). |
+| 2026-09-18 | **S22 corrigé.** Les trois défauts du journal d'activité relevés au §19.6 : périmètre société, permission de route, échappement. Détail dans `web/CARTOGRAPHIE.md`. Au passage, le constat systémique : **31 des 100 routes à identifiant** du back-office ne portent aucune permission, et les **12** `::find($id)` de ses contrôleurs aucun périmètre. |
 
 ---
 
@@ -1940,7 +1941,7 @@ plus utile des deux changements, puisqu'il ferme la porte.
 de toute façon : d'où `parcel.delivered_photo` et `parcel.signature`, servant à
 la fois le libellé visible et l'alternative.
 
-### 19.6 ⚠️ Trois défauts de sécurité dans huit lignes — signalés, non corrigés
+### 19.6 ✅ Trois défauts de sécurité dans huit lignes — **corrigés le 2026-09-18**
 
 En vérifiant l'enveloppe du tableau de `backend/log/view.blade.php`, le
 contrôleur qui le rend s'est révélé :
@@ -1964,9 +1965,20 @@ public function view($id){
    sa boutique avec une balise `<script>` obtient une exécution dans le navigateur
    de l'opérateur qui consulte le journal : **XSS stocké**.
 
-Non corrigé : ce n'est pas de l'ergonomie, et les trois points se décident
-ensemble (le `{!! !!}` sert peut-être à rendre un diff en HTML). C'est un
-correctif court, et il devrait passer **avant** les lots restants.
+**Corrigés**, et le détail vit là où le projet garde ses constats de sécurité :
+**S22** de `web/CARTOGRAPHIE.md`. Le `{!! !!}` ne servait pas à rendre un diff en
+HTML — le socle échappait déjà dans l'autre branche de la même vue.
+
+Et corriger le troisième sans précaution en aurait créé un quatrième : `User` et
+`Role` déclarent `'permissions' => 'array'` et sont journalisés, donc un `{{ }}`
+posé naïvement aurait fait **500** là où `{!! !!}` n'affichait que « Array ».
+
+⚠️ **Le journal n'était pas une exception.** Sur `routes/web.php` : **31 des 100
+routes à identifiant ne portent aucune permission**, et les **12** appels
+`::find($id)` des contrôleurs du back-office n'ont **aucun** périmètre société.
+Le filet S7 ne couvre que `/api/v10`. Élargir ce filet aux routes web est un
+chantier à ouvrir — pas un correctif mécanique : ajouter une permission là où il
+n'y en avait aucune **retire l'accès** à un rôle qui ne la porte pas.
 
 ### 19.7 Autres constats, signalés et non corrigés
 
