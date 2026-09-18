@@ -68,7 +68,7 @@ return [
   'account_info' => 'Informations de compte',
   'from_account' => 'De compte',
   'to_account' => 'À compte',
-  'amount' => 'Montant (Tk)',
+  'amount' => 'Montant',
   'date' => 'Date',
   'reject' => 'Rejeter',
   'cancel_reject' => 'Annuler le rejet',
@@ -391,5 +391,10 @@ return [
     'max_deliveryman' => 'Nombre maximum de livreurs',
     'deliveryman_count' => 'Nombre maximum de livreurs',
     'domain' => 'Domaine',
+    /* Lot 4 (2026-09-18) : ce message était en dur, en anglais, dans
+       public/backend/libs/js/custom.js. */
+    'confirm_update' => 'Voulez-vous appliquer cette modification ?',
+    /* :name porte le libellé du statut annulé — voir ParcelStage::cancelledLabel(). */
+    'confirm_cancel' => 'Voulez-vous annuler « :name » ?',
  
 ];

@@ -28,6 +28,8 @@
     </script>
     <script>var yes = "{{ __('delete.yes') }}";</script>
     <script>var cancel = "{{ __('delete.cancel') }}";</script>
+    <script>var confirmUpdate = "{{ __('levels.confirm_update') }}";</script>
+    <script>var confirmCancel = @json(__('levels.confirm_cancel'));</script>
 
     <script type="text/javascript">
         "use strict";

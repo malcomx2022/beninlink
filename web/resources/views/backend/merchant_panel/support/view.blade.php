@@ -83,7 +83,7 @@
                             <div class="form-group">
                                 <label for="message">{{ __('support.message')}} <span class="text-danger">*</span></label>
                                 <div class="form-control-wrap user-search">
-                                    <textarea class="form-control @error('message') is-invalid @enderror" name="message" rows="5" id="message" placeholder="Enter message" value="{{ old('message') }}"></textarea>
+                                    <textarea class="form-control @error('message') is-invalid @enderror" name="message" rows="5" id="message" placeholder="{{ __('placeholder.Enter_message') }}" value="{{ old('message') }}"></textarea>
                                 </div>
                                 @error('message')
                                     <small class="text-danger mt-2">{{ $message }}</small>

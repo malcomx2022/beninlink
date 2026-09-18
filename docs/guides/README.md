@@ -101,6 +101,19 @@
   vide. Voir §10.4 et §11.8 pour ce qui n'est pas encore livré, et §11.6 pour deux
   constats de **code mort** trouvés en chemin (une vue portant une erreur fatale,
   un mailable dont le nom de vue ne résout pas sous Linux).
+  **Lot 4 livré le 2026-09-18** : la francisation. L'audit avait manqué le
+  mécanisme principal — `__('Reset Password')` est une **clé JSON**, et sans entrée
+  dans `lang/fr.json` Laravel rend la clé, donc l'anglais, **sans erreur** : 45
+  chaînes s'affichaient en anglais, dont tout le parcours de connexion et **toutes
+  les pages d'erreur**. Corrigées dans un seul fichier de données, à coût de fusion
+  nul. Les placeholders étaient 161 et non 85 ; 143 traduits, les 18 autres
+  justifiés dans le test (installeur non internationalisé, vues mortes, et un code
+  pays ISO qu'un passage naïf aurait cassé). Le défaut des boîtes de dialogue
+  n'était pas celui annoncé : `denyButtonText` n'est pas l'option du bouton Annuler
+  dans SweetAlert2, donc traduire cette ligne n'aurait **rien changé à l'écran** —
+  et le défaut touchait 16 dialogues, pas 2. Au passage : deux fuites de **taka
+  bangladais** dans les libellés français, et deux fautes de français. Voir §12.5
+  pour une affirmation du guide `socle/` que ce dépôt ne permet pas de vérifier.
 - `../../web/CARTOGRAPHIE.md`  Relevé de l'Étape 0 sur le socle We Courier
   (blocs A-I, constats de sécurité, routes mortes). À lire en premier.
 

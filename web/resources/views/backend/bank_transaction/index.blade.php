@@ -32,7 +32,7 @@
                         <div class="row">
                             <div class="form-group col-12 col-xl-3 col-lg-4 col-md-6">
                                 <label for="date">{{ __('parcel.date') }}</label>
-                                <input type="text" autocomplete="off" id="date" name="date" class="form-control date_range_picker p-2" placeholder="Enter date" value="{{ isset($request->date) ? $request->date : old('date') }}"  >
+                                <input type="text" autocomplete="off" id="date" name="date" class="form-control date_range_picker p-2" placeholder="{{ __('placeholder.Enter_date') }}" value="{{ isset($request->date) ? $request->date : old('date') }}"  >
                                 @error('date')
                                     <small class="text-danger mt-2">{{ $message }}</small>
                                 @enderror
@@ -86,7 +86,7 @@
                             <p class="h3 mb-0">{{ __('menus.bank_transaction') }}</p>
                             <form action="{{ route('bank.transaction.specific.search') }}" class="d-flex" style="width:60%" >
                                 @csrf
-                                <input id="Psearch" class="form-control parcelSearch group-input" value="{{ $request->search }}" name="search" type="text" placeholder="Search..">
+                                <input id="Psearch" class="form-control parcelSearch group-input" value="{{ $request->search }}" name="search" type="text" placeholder="{{ __('placeholder.search') }}">
                                 <button type="submit" class="btn btn-sm btn-primary group-btn ml-0">Search</button>
                                 @if (isset($search) && count($search) > 0)
                                 <a  href="{{ route('bank.transaction.filter.print',['ids'=>$search]) }}" target="_blank" class="btn btn-primary ml-2">{{ __('levels.print') }}</a>

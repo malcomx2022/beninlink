@@ -27,7 +27,7 @@
                     </div>
                     <div class="form-group pt-1">
                         <label for="date">{{ __('levels.date') }}</label> <span class="text-danger">*</span>
-                        <input type="date" id="date"  data-toggle="datepicker" name="date" data-parsley-trigger="change" placeholder="yyyy-mm-dd"  class="form-control" value="{{old('date')}}" require>
+                        <input type="date" id="date"  data-toggle="datepicker" name="date" data-parsley-trigger="change" placeholder="{{ __('placeholder.date_format') }}"  class="form-control" value="{{old('date')}}" require>
                         @error('date')
                         <small class="text-danger mt-2">{{ $message }}</small>
                         @enderror

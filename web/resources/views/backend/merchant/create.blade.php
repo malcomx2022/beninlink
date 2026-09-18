@@ -230,7 +230,7 @@
                                         <input type="hidden" value="{{$key}}" name="area[]">
                                         <div class="col-12 col-md-4">
                                             <label class="select-input">{{str_replace('_', ' ',  ucwords($key))}}</label>
-                                            <input type="number" name="charge[{{$key}}]" autocomplete="off" class="form-control" value="{{ old('charge.'.$key,$charge)}}" placeholder="charge">
+                                            <input type="number" name="charge[{{$key}}]" autocomplete="off" class="form-control" value="{{ old('charge.'.$key,$charge)}}" placeholder="{{ __('placeholder.charge') }}">
 
                                         </div>
                                         @endforeach

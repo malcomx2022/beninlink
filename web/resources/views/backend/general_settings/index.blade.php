@@ -104,13 +104,13 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="currency">{{ __('settings.parcel_tracking') }} {{ __('levels.prefix') }}</label>
-                                            <input type="text" name="par_track_prefix" class="form-control" placeholder="Enter Parcel Tracking Prefix" value="{{  @\Illuminate\Support\Str::upper($settings->par_track_prefix) }}"/>
+                                            <input type="text" name="par_track_prefix" class="form-control" placeholder="{{ __('placeholder.Enter_parcel_tracking_prefix') }}" value="{{  @\Illuminate\Support\Str::upper($settings->par_track_prefix) }}"/>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="currency">{{ __('invoice.invoice') }} {{ __('levels.prefix') }}</label>
-                                            <input type="text" name="invoice_prefix" class="form-control" placeholder="Enter Invoice Prefix" value="{{  @\Illuminate\Support\Str::upper($settings->invoice_prefix) }}"/>
+                                            <input type="text" name="invoice_prefix" class="form-control" placeholder="{{ __('placeholder.Enter_invoice_prefix') }}" value="{{  @\Illuminate\Support\Str::upper($settings->invoice_prefix) }}"/>
                                         </div>
                                     </div>
                                 </div>
@@ -127,7 +127,7 @@
                                     <div class="row">
                                         <div class="col-12">
                                             <label for="logo">{{ __('levels.logo') }}</label>
-                                            <input id="logo" type="file" name="logo" data-parsley-trigger="change" placeholder="Enter logo" autocomplete="off" class="form-control @error('logo') is-invalid @enderror" value="{{ old('logo') }}" require>
+                                            <input id="logo" type="file" name="logo" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_logo') }}" autocomplete="off" class="form-control @error('logo') is-invalid @enderror" value="{{ old('logo') }}" require>
                                             @error('logo')
                                                 <small class="text-danger mt-2">{{ $message }}</small>
                                             @enderror
@@ -142,7 +142,7 @@
                                         <div class="row">
                                             <div class="col-12">
                                                 <label for="light_logo">{{ __('levels.light_logo') }}</label>
-                                                <input id="light_logo" type="file" name="light_logo" data-parsley-trigger="change" placeholder="Enter light_logo" autocomplete="off" class="form-control @error('light_logo') is-invalid @enderror" value="{{ old('light_logo') }}" require>
+                                                <input id="light_logo" type="file" name="light_logo" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_light_logo') }}" autocomplete="off" class="form-control @error('light_logo') is-invalid @enderror" value="{{ old('light_logo') }}" require>
                                                 @error('light_logo')
                                                     <small class="text-danger mt-2">{{ $message }}</small>
                                                 @enderror
@@ -160,7 +160,7 @@
                                         <div class="row">
                                             <div class="col-9">
                                                 <label for="favicon">{{ __('levels.favicon') }}</label>
-                                                <input id="favicon" type="file" name="favicon" data-parsley-trigger="change" placeholder="Enter favicon" autocomplete="off" class="form-control @error('favicon') is-invalid @enderror" value="{{ old('favicon') }}" require>
+                                                <input id="favicon" type="file" name="favicon" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_favicon') }}" autocomplete="off" class="form-control @error('favicon') is-invalid @enderror" value="{{ old('favicon') }}" require>
                                                 @error('favicon')
                                                     <small class="text-danger mt-2">{{ $message }}</small>
                                                 @enderror
@@ -180,7 +180,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="primary_color">{{ __('levels.primary_color') }}</label>
-                                                <input id="primary_color" type="color" name="primary_color"  placeholder="Enter favicon" autocomplete="off" class="form-control @error('primary_color') is-invalid @enderror" value="{{ old('primary_color',settings()->primary_color) }}" require>
+                                                <input id="primary_color" type="color" name="primary_color"  placeholder="{{ __('placeholder.Enter_favicon') }}" autocomplete="off" class="form-control @error('primary_color') is-invalid @enderror" value="{{ old('primary_color',settings()->primary_color) }}" require>
                                                 @error('favicon')
                                                     <small class="text-danger mt-2">{{ $message }}</small>
                                                 @enderror
@@ -189,7 +189,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="text_color">{{ __('levels.text_color') }}</label>
-                                                <input id="text_color" type="color" name="text_color"  placeholder="Enter favicon" autocomplete="off" class="form-control @error('text_color') is-invalid @enderror" value="{{ old('text_color',settings()->text_color) }}" require>
+                                                <input id="text_color" type="color" name="text_color"  placeholder="{{ __('placeholder.Enter_favicon') }}" autocomplete="off" class="form-control @error('text_color') is-invalid @enderror" value="{{ old('text_color',settings()->text_color) }}" require>
                                                 @error('text_color')
                                                     <small class="text-danger mt-2">{{ $message }}</small>
                                                 @enderror

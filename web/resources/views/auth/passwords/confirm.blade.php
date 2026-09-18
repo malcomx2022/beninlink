@@ -1,6 +1,6 @@
 
 @extends('auth.Layouts')
-@section('title','Confirm Password')
+@section('title', __('levels.confirm_password'))
 @section('content')
     <!-- confirm password  -->
     <div class="splash-container">
@@ -9,10 +9,10 @@
                 <a href="{{url('/')}}" class="navbar-brand">
                     <img class="logo-img" src="{{ settings()->logo_image }}"  class="logo" alt="logo">
                 </a>
-                <span class="splash-description">Confirm Password</span>
+                <span class="splash-description">{{ __('levels.confirm_password') }}</span>
             </div>
             <div class="card-body">
-                {{ __('Please confirm your password before continuing.') }}
+                {{ __('auth.confirm_password_hint') }}
                 <form method="POST" action="{{ route('password.confirm') }}">
                     @csrf
 
@@ -43,7 +43,7 @@
                 </form>
             </div>
             <div class="card-footer text-center">
-                <span>Don't have an account? <a href="{{ route('register') }}">Sign Up</a> | <a href="{{ route('login') }}">Sign In</a></span>
+                <span>{{ __('auth.no_account') }} <a href="{{ route('register') }}">{{ __('auth.sign_up') }}</a> | <a href="{{ route('login') }}">{{ __('auth.sign_in') }}</a></span>
             </div>
         </div>
     </div>

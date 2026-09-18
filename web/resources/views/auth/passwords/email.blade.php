@@ -1,6 +1,6 @@
 
 @extends('auth.Layouts')
-@section('title','Reset Password')
+@section('title', __('auth.password_reset'))
 @section('content')
 
     <!-- email verification password  -->
@@ -13,7 +13,7 @@
                             <a href="{{url('/')}}" class="navbar-brand">
                                 <img class="logo-img" src="{{ settings()->logo_image }}"  class="logo" alt="logo">
                             </a>
-                            <span class="splash-description">Reset Password</span>
+                            <span class="splash-description">{{ __('auth.password_reset') }}</span>
                         </div>
                         <div class="card-body">
                             @if (session('status'))
@@ -25,14 +25,14 @@
                                 @csrf
                                 <p>Don't worry, we'll send you an email to reset your password.</p>
                                 <div class="form-group">
-                                    <input id="email" type="email" class="form-control form-control-lg @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus placeholder="Email Address">
+                                    <input id="email" type="email" class="form-control form-control-lg @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus placeholder="{{ __('placeholder.enter_email') }}">
                                     @error('email')
                                         <span class="invalid-feedback" role="alert">
                                             <strong>{{ $message }}</strong>
                                         </span>
                                     @enderror
                                 </div>
-                                <button type="submit" class="btn btn-block btn-primary btn-xl">Send Password Reset Link</button>
+                                <button type="submit" class="btn btn-block btn-primary btn-xl">{{ __('auth.send_reset_link') }}</button>
                             </form>
                         </div>
                         <div class="card-footer text-center bg-none">

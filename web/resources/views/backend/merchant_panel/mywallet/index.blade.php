@@ -36,7 +36,7 @@
                                 <div class="form-group col-12 col-sm-6 col-md-4 col-lg-4 col-xl-2">
                                     <label for="date">{{ __('parcel.date') }}</label>
                                     <input type="text" autocomplete="off" id="date" name="date"
-                                        placeholder="Enter Date" class="form-control date_range_picker"
+                                        placeholder="{{ __('placeholder.Enter_date') }}" class="form-control date_range_picker"
                                         value="{{ old('date', $request->date) }}">
                                     @error('date')
                                         <small class="text-danger mt-2">{{ $message }}</small>

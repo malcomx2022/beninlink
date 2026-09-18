@@ -34,35 +34,35 @@
                             <div class="col-12 col-md-6">
                                 <div class="form-group">
                                     <label for="name">{{ __('levels.name') }}</label>
-                                    <input id="name" type="text" name="name" data-parsley-trigger="change" placeholder="Enter name" autocomplete="off" class="form-control" value="{{$merchat->user->name}}" require>
+                                    <input id="name" type="text" name="name" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_name') }}" autocomplete="off" class="form-control" value="{{$merchat->user->name}}" require>
                                     @error('name')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
                                 </div>
                                 <div class="form-group">
                                     <label for="email">{{ __('levels.email') }}</label>
-                                    <input id="email" type="text" name="email" data-parsley-trigger="change" placeholder="Enter email" autocomplete="off" class="form-control" value="{{$merchat->user->email}}" require>
+                                    <input id="email" type="text" name="email" data-parsley-trigger="change" placeholder="{{ __('placeholder.enter_email') }}" autocomplete="off" class="form-control" value="{{$merchat->user->email}}" require>
                                     @error('email')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
                                 </div>
                                 <div class="form-group">
                                     <label for="mobile">{{ __('levels.mobile') }}</label>
-                                    <input id="mobile" type="text" name="mobile" data-parsley-trigger="change" placeholder="Enter mobile" autocomplete="off" class="form-control" value="{{$merchat->user->mobile}}" require>
+                                    <input id="mobile" type="text" name="mobile" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_mobile') }}" autocomplete="off" class="form-control" value="{{$merchat->user->mobile}}" require>
                                     @error('mobile')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
                                 </div>
                                 <div class="form-group">
                                     <label for="business_name">{{ __('levels.business_name') }}</label>
-                                    <input id="business_name" type="text" name="business_name" data-parsley-trigger="change" placeholder="Enter business name" autocomplete="off" class="form-control" value="{{$merchat->business_name}}" require>
+                                    <input id="business_name" type="text" name="business_name" data-parsley-trigger="change" placeholder="{{ __('placeholder.enter_business_name') }}" autocomplete="off" class="form-control" value="{{$merchat->business_name}}" require>
                                     @error('business_name')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
                                 </div>
                                 <div class="form-group">
                                     <label for="address">{{ __('levels.address') }}</label>
-                                    <input id="address" type="text" name="address" data-parsley-trigger="change" placeholder="Enter Address" autocomplete="off" class="form-control" value="{{$merchat->address}}" require>
+                                    <input id="address" type="text" name="address" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_address') }}" autocomplete="off" class="form-control" value="{{$merchat->address}}" require>
                                     @error('address')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror

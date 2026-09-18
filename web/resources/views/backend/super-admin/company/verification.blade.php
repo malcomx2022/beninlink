@@ -27,7 +27,7 @@
                             </p>
                             <div class="form-group">
                                 <input type="hidden" name="email" value="{{session('email')}}">
-                                <input id="otp" type="number" class="form-control form-control-lg @error('otp') is-invalid @enderror" name="otp" value="{{ old('otp') }}" required autocomplete="otp" autofocus placeholder="OTP *">
+                                <input id="otp" type="number" class="form-control form-control-lg @error('otp') is-invalid @enderror" name="otp" value="{{ old('otp') }}" required autocomplete="otp" autofocus placeholder="{{ __('placeholder.otp') }} *">
                                 @error('otp')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>

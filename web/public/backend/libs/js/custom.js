@@ -6,12 +6,11 @@ $(document).ready(function(){
         e.preventDefault();
         var self = $(this);
         Swal.fire({
-        text: 'Do you want to update this?',
+        text: confirmUpdate,
         position: 'top',
-        showOkButton: true,
         showCancelButton: true,
-        confirmButtonText: 'Yes',
-        denyButtonText: `Cancel`,
+        confirmButtonText: yes,
+        cancelButtonText: cancel,
         }).then((result) => {
         if (result.isConfirmed) {
             location.href = self.attr('href');
@@ -23,12 +22,11 @@ $(document).ready(function(){
         e.preventDefault();
         var self = $(this);
         Swal.fire({
-            text: 'Do you want to update this?',
+            text: confirmUpdate,
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: `Cancel`,
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed) {
                 location.href = self.attr('href');
@@ -45,7 +43,6 @@ $(document).ready(function(){
     Swal.fire({
       text: title,
       position: 'top',
-      showOkButton: true,
       showCancelButton: true,
       confirmButtonText: yes,
       cancelButtonText: cancel,

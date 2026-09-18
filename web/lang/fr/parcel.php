@@ -35,7 +35,7 @@ return array (
   'shop'                => 'Points de ramassage',
   'pickup_phone'        => 'Téléphone de ramassage',
   'pickup_address'      => 'Adresse de ramassage',
-  'cash_collection'     => 'Encaissement en espèces (Tk)',
+  'cash_collection'     => 'Encaissement en espèces',
   'selling_price'       => 'Prix de vente',
   'customer_name'       => 'Nom du client',
   'customer_info'       => 'Informations du client',

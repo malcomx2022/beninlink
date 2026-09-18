@@ -14,7 +14,7 @@
                     <div class="form-group">
                         <label for="cash_collection">{{ __('parcel.cash_collection') }} </label> <span class="text-danger">*</span>
                         <div class="form-control-wrap">
-                            <input type="text" class="form-control cash-collection" id="cash_collection" value="{{ old('cash_collection') }}" name="cash_collection" placeholder="Cash amount" required="">
+                            <input type="text" class="form-control cash-collection" id="cash_collection" value="{{ old('cash_collection') }}" name="cash_collection" placeholder="{{ __('placeholder.cash_amount') }}" required="">
                             @error('cash_collection')
                             <small class="text-danger mt-2">{{ $message }}</small>
                             @enderror

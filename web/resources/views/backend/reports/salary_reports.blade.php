@@ -37,7 +37,7 @@
                             </div>
                             <div class="form-group col-12  col-xl-3 col-lg-4 col-md-4 col-sm-6">
                                 <label for="date">{{ __('salary.month')}}</label> <span class="text-danger"></span>
-                                <input type="text" id="month" data-toggle="month" name="month" data-parsley-trigger="change" placeholder="yyyy-mm-dd"  class="form-control" value="{{old('date',isset($request->month) ? $request->month:date('Y-m'))}}">
+                                <input type="text" id="month" data-toggle="month" name="month" data-parsley-trigger="change" placeholder="{{ __('placeholder.date_format') }}"  class="form-control" value="{{old('date',isset($request->month) ? $request->month:date('Y-m'))}}">
                                 @error('date')
                                 <small class="text-danger mt-2">{{ $message }}</small>
                                 @enderror

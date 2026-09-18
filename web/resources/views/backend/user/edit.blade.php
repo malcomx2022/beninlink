@@ -126,7 +126,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="joining_date">{{ __('levels.joining_date') }}</label> <span class="text-danger">*</span>
-                                    <input id="joining_date" type="text" readonly="readonly" data-toggle="datepicker" name="joining_date" data-parsley-trigger="change" placeholder="yyyy-mm-dd" autocomplete="off" class="form-control @error('joining_date') is-invalid @enderror" value="{{$user->joining_date}}" require>
+                                    <input id="joining_date" type="text" readonly="readonly" data-toggle="datepicker" name="joining_date" data-parsley-trigger="change" placeholder="{{ __('placeholder.date_format') }}" autocomplete="off" class="form-control @error('joining_date') is-invalid @enderror" value="{{$user->joining_date}}" require>
                                     @error('joining_date')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
@@ -157,7 +157,7 @@
                                     <div class="row">
                                         <div class="col-9">
                                             <label for="Image">{{ __('levels.image') }}</label>
-                                            <input id="Image" type="file" name="image" data-parsley-trigger="change" placeholder="Enter Image" autocomplete="off" class="form-control">
+                                            <input id="Image" type="file" name="image" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_image') }}" autocomplete="off" class="form-control">
                                         </div>
                                         <div class="col-3">
                                             <img src="{{$user->image}}" alt="user" class="rounded"  width="75" height="75" style="object-fit: contain">

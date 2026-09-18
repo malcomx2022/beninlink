@@ -28,10 +28,34 @@ return [
     'error_msg'         => 'Quelque chose a mal tourné.',
     'password_reset_link'   => 'Lien de réinitialisation du mot de passe',
     'password_reset'   => 'Réinitialisation du mot de passe',
-    'update_password'   => 'UMettre à jour le mot de passe',
+    'update_password'   => 'Mettre à jour le mot de passe',
     'password_update'   => 'Mot de passe mis à jour avec succès',
     'password_old'      => 'L\'ancien mot de passe ne correspond pas !',
     'profile_update'    => 'Profil mis à jour avec succès.',
+
+    /* ── Lot 4 (2026-09-18) — les écrans d'entrée du produit ──────────────────
+       La page de connexion était entièrement en anglais en dur : c'est la
+       PREMIÈRE page que voit une PME. Ces clés la couvrent, ainsi que
+       l'inscription et la réinitialisation de mot de passe. */
+    'sign_in'               => 'Se connecter',
+    'sign_in_hint'          => 'Entrez vos identifiants pour accéder à votre espace.',
+    'or'                    => 'ou',
+    'forgot_password'       => 'Mot de passe oublié ?',
+    'no_account'            => 'Pas encore de compte ?',
+    'sign_up'               => 'Créer un compte',
+    'registration_form'     => 'Formulaire d\'inscription',
+    'register_my_account'   => 'Créer mon compte',
+    'send_reset_link'       => 'Envoyer le lien de réinitialisation',
+    'confirm_password_hint' => 'Confirmez votre mot de passe avant de continuer.',
+
+    /* Bloc de comptes de démonstration : rendu seulement si DEMO est défini
+       dans .env — ce que .env.example ne fait pas. Traduit quand même, une
+       instance de recette pouvant l'activer. */
+    'demo_accounts'         => 'Comptes de démonstration',
+    'demo_admin'            => 'Administrateur',
+    'demo_branch'           => 'Agence',
+    'demo_merchant'         => 'Marchand',
+    'demo_company_panel'    => 'Panneau société',
 
 
 ];

@@ -51,7 +51,7 @@
                             <div class="form-group ">
                                 <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
                                 <label for="track_id">{{ __('levels.track_id')}}</label> <span class="text-danger">*</span>
-                                <input id="transfer_to_hub_track_id" type="text" name="track_id" placeholder="Enter Tracking Id" class="form-control">
+                                <input id="transfer_to_hub_track_id" type="text" name="track_id" placeholder="{{ __('placeholder.Enter_tracking_id') }}" class="form-control">
                                 <div class="search_message"></div>
                             </div>
                         </div>

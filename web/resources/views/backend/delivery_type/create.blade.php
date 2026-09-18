@@ -1,5 +1,5 @@
 @extends('backend.partials.master')
-@section('title','Delivery Type | Add')
+@section('title', __('levels.delivery_type') . ' | ' . __('levels.add'))
 @section('title')
     {{ __('levels.delivery_type') }} {{ __('levels.add') }}
 @endsection
@@ -37,7 +37,7 @@
 
                                 <div class="form-group">
                                     <label for="title">{{ __('levels.title') }}</label> <span class="text-danger">*</span>
-                                    <input id="title" type="text" name="title" data-parsley-trigger="change" placeholder="Enter Title" autocomplete="off" class="form-control" value="{{old('title')}}" require>
+                                    <input id="title" type="text" name="title" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_title') }}" autocomplete="off" class="form-control" value="{{old('title')}}" require>
                                     @error('title')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
@@ -46,7 +46,7 @@
 
                                 <div class="form-group">
                                     <label for="position">{{ __('levels.position') }}</label> <span class="text-danger">*</span>
-                                    <input id="position" type="number" name="position" data-parsley-trigger="change" placeholder="Enter Position" autocomplete="off" class="form-control" value="{{old('position')}}" require>
+                                    <input id="position" type="number" name="position" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_Position') }}" autocomplete="off" class="form-control" value="{{old('position')}}" require>
                                     @error('position')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror

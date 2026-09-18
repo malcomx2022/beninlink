@@ -19,7 +19,7 @@
                         <button type="submit" class="btn btn-sm btn-primary float-right group-btn ml-0"
                             style="margin-left: 0px">{{ __('levels.filter') }}</button>
                         <input type="hidden" name="days" value="custom" />
-                        <input type="text" name="filter_date" placeholder="YYYY-MM-DD" autocomplete="off"
+                        <input type="text" name="filter_date" placeholder="{{ __('placeholder.date_format') }}" autocomplete="off"
                             class="form-control dashboard-filter-input date_range_picker float-right group-input"
                             value="{{ $request->filter_date }}" style="width: 30%;" required />
                     </form>

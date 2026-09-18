@@ -32,7 +32,7 @@
                         <div class="row">
                             <div class="form-group"  >
                                 <div class="d-flex col-12 col-md-12 col-lg-8 col-sm-12">
-                                    <input type="text" autocomplete="off" id="date" name="parcel_date" placeholder="Enter Date" class="form-control date_range_picker group-input w-50" value="{{ old('parcel_date',$request->parcel_date) }}">
+                                    <input type="text" autocomplete="off" id="date" name="parcel_date" placeholder="{{ __('placeholder.Enter_date') }}" class="form-control date_range_picker group-input w-50" value="{{ old('parcel_date',$request->parcel_date) }}">
                                     <button type="submit" class="btn btn-space btn-primary group-btn ml-0"><i class="fa fa-filter"></i> {{ __('levels.filter') }}</button>
                                     <a href="{{ route('parcel.total.summery.index') }}" class="btn btn-space btn-secondary"><i class="fa fa-eraser"></i> {{ __('levels.clear') }}</a>
                                 </div>

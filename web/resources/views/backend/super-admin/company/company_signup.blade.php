@@ -1,5 +1,5 @@
 @extends('auth.Layouts')
-@section('title','Company Signup')
+@section('title', __('auth.sign_up'))
 @section('content') 
 <!-- signup form  -->
 <form class="splash-container" method="POST" action="{{ route('company.sign-up.store') }}">
@@ -98,7 +98,7 @@
 
 
                         <div class="form-group">
-                            <textarea name="address" id="address" class="form-control @error('address') is-invalid @enderror" placeholder="Address *" rows="5">{{ old('address')  }}</textarea>
+                            <textarea name="address" id="address" class="form-control @error('address') is-invalid @enderror" placeholder="{{ __('placeholder.Enter_address') }} *" rows="5">{{ old('address')  }}</textarea>
                             @error('address')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -108,7 +108,7 @@
 
 
                         <div class="form-group">
-                            <input id="password" type="password" class="form-control form-control-lg @error('password') is-invalid @enderror" name="password"  autocomplete="new-password" placeholder="Password *">
+                            <input id="password" type="password" class="form-control form-control-lg @error('password') is-invalid @enderror" name="password"  autocomplete="new-password" placeholder="{{ __('placeholder.Enter_password') }} *">
                             @error('password')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>

@@ -41,7 +41,7 @@
                             <div class="form-group ">
                                 <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
                                 <label for="track_id">{{ __('levels.track_id')}}</label> <span class="text-danger">*</span>
-                                <input id="pickup_parcel_tracking_id" type="text" name="track_id"  data-url="{{ route('assign-pickup.parcel.search') }}" placeholder="Enter Tracking Id" class="form-control">
+                                <input id="pickup_parcel_tracking_id" type="text" name="track_id"  data-url="{{ route('assign-pickup.parcel.search') }}" placeholder="{{ __('placeholder.Enter_tracking_id') }}" class="form-control">
                                 <div class="search_message"></div>
                             </div>
                             <div class="form-group ">

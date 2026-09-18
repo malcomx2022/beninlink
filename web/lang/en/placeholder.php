@@ -80,6 +80,27 @@ return [
     'enter_ifu' => '13 digits',
     'enter_rccm' => 'e.g. RB/COT/24 B 1234',
     'enter_cnss' => 'Employer number',
+    /* Lot 4 (2026-09-18) — keys added when the hardcoded English placeholders
+       were replaced by translations. `placeholder="TG"` in delivery_zone/index
+       is an ISO country code and is deliberately NOT a translatable string. */
+    'date_format'                   => 'yyyy-mm-dd',
+    'Enter_date'                    => 'Enter date',
+    'search'                        => 'Search…',
+    'location_here'                 => 'Search for an address…',
+    'Enter_image'                   => 'Choose an image',
+    'Enter_logo'                    => 'Choose the logo',
+    'Enter_light_logo'              => 'Choose the light logo',
+    'Enter_favicon'                 => 'Choose the favicon',
+    'Enter_file'                    => 'Choose a file',
+    'Enter_receipt'                 => 'Choose the receipt',
+    'Enter_slug'                    => 'Enter slug',
+    'Enter_parcel_tracking_prefix'  => 'e.g. BL',
+    'Enter_invoice_prefix'          => 'e.g. IN',
+    'email_or_mobile'               => 'Email or mobile number',
+    'otp'                           => 'Code received by SMS',
+    'cash_amount'                   => 'Cash amount collected',
+    'charge'                        => 'Charge amount',
+
 
 
 ];

@@ -55,7 +55,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="file">{{ __('levels.file') }}</label>
-                                    <input id="file" type="file" name="file" data-parsley-trigger="change" placeholder="Enter file" autocomplete="off" class="form-control @error('file') is-invalid @enderror" value="{{ old('file') }}" require>
+                                    <input id="file" type="file" name="file" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_file') }}" autocomplete="off" class="form-control @error('file') is-invalid @enderror" value="{{ old('file') }}" require>
                                     @error('file')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror

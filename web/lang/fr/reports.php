@@ -14,7 +14,7 @@ return [
     'details'               =>  'Details',
     'profit'                => 'Profit',
     'total'                 => 'Total',
-    'parcel_total_summery'  => 'Total Summery',
+    'parcel_total_summery'  => 'Sommaire total',
     'salary_reports'        => 'Salary Reports',
     'salary'                => 'Salary',
     'paid_amount'           => 'Paid Amount',
