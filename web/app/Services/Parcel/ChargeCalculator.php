@@ -165,8 +165,35 @@ class ChargeCalculator
         return $packaging ? (float) $packaging->price : 0.0;
     }
 
+    /**
+     * Applique un taux, et **arrondit au franc**.
+     *
+     * Le FCFA n'a pas de subdivision (`CLAUDE.md` : « montants entiers, sans
+     * décimales, partout »), mais un pourcentage d'un entier n'est pas entier :
+     * 18 % de 1 680 F font 302,40 F. Sans cet arrondi, la décimale se propageait
+     * dans `vat_amount`, puis dans `current_payable`, puis dans les colonnes du
+     * relevé — alors que le relevé imprimé, lui, arrondit déjà chaque ligne
+     * (`SettlementStatement::int()`). Le document et la base ne disaient donc pas
+     * le même montant : mesuré sur le jeu pilote avant correction, 12 colis sur
+     * 35 portaient une TVA non entière et 2 relevés sur 5 différaient de leur
+     * propre ligne de 0,40 F.
+     *
+     * L'arrondi vit **ici** et non dans l'appelant parce que c'est le seul
+     * endroit où un taux devient des francs. Les deux montants concernés en
+     * bénéficient : la TVA et la **commission COD** — celle-ci ne tombait juste
+     * dans le jeu pilote que par la rondeur de ses taux (17 350 F à 2,5 % font
+     * 433,75 F).
+     *
+     * Aucun document déjà émis ne change d'apparence : le relevé arrondissait
+     * au même franc. Ce qui change, c'est le **net réellement porté au solde**,
+     * désormais égal à ce que le relevé annonce.
+     *
+     * ⚠️ Les colis créés avant ce correctif gardent leurs décimales en base :
+     * l'arrondi vaut pour les calculs à venir, pas pour le passé. La reprise du
+     * passé est une case distincte de la fiche D2 (question 7).
+     */
     private function percentage(float $amount, float $rate): float
     {
-        return $amount * ($rate / 100);
+        return round($amount * ($rate / 100));
     }
 }

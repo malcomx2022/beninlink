@@ -85,7 +85,12 @@ class BusinessDecisionsTest extends TestCase
         $this->assertSame(18.0, VatRate::for($this->merchant->fresh()));
         $devis = $this->devis();
         $this->assertSame(18.0, $devis['vat']);
-        $this->assertEquals($devis['total_delivery_amount'] * 0.18, $devis['vat_amount']);
+
+        // L'assiette est bien celle de la société, à 18 % — mais le montant est
+        // **arrondi au franc** depuis que `ChargeCalculator::percentage()` le fait :
+        // le FCFA n'a pas de centime. Cette assertion figeait auparavant le produit
+        // brut (28,799999…), c'est-à-dire l'arithmétique plutôt que la règle.
+        $this->assertEquals(round($devis['total_delivery_amount'] * 0.18), $devis['vat_amount']);
     }
 
     public function test_a_merchant_with_a_rate_keeps_it(): void
