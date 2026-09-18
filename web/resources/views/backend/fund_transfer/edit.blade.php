@@ -111,7 +111,7 @@
                                 </div>
                                 <div class="form-group pt-1">
                                     <label for="date">{{ __('levels.date') }}</label> <span class="text-danger">*</span>
-                                    <input type="text" readonly="readonly" data-toggle="datepicker" name="date" data-parsley-trigger="change" placeholder="yyyy-mm-dd" autocomplete="off" class="form-control" value="{{$fund_transfer->date}}" require>
+                                    <input type="text" readonly="readonly" data-toggle="datepicker" name="date" data-parsley-trigger="change" placeholder="{{ __('placeholder.date_format') }}" autocomplete="off" class="form-control" value="{{$fund_transfer->date}}" require>
                                     @error('date')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror

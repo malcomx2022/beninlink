@@ -97,7 +97,7 @@
                         <div class="form-group">
                             <label for="description">{{ __('support.description')}}</label>
                             <div class="form-control-wrap user-search">
-                                <textarea class="form-control" name="description" rows="5" id="description" placeholder="Enter Description">{{ $singleSupport->description }}</textarea>
+                                <textarea class="form-control" name="description" rows="5" id="description" placeholder="{{ __('placeholder.Enter_description') }}">{{ $singleSupport->description }}</textarea>
                             </div>
                         </div>
                         <div class="row">

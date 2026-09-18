@@ -1,5 +1,5 @@
 @extends('backend.partials.master')
-@section('title','Category | Add')
+@section('title', __('levels.category') . ' | ' . __('levels.add'))
 @section('maincontent')
 <div class="container-fluid  dashboard-content">
     <!-- pageheader -->
@@ -31,11 +31,11 @@
                         @csrf
                         <div class="form-group">
                             <label for="inputUserName">Name</label>
-                            <input id="inputUserName" type="text" name="name" data-parsley-trigger="change" placeholder="Enter name" autocomplete="off" class="form-control">
+                            <input id="inputUserName" type="text" name="name" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_name') }}" autocomplete="off" class="form-control">
                         </div>
                         <div class="form-group">
                             <label for="inputSlug">Slug</label>
-                            <input type="text" name="slug" data-parsley-trigger="change" placeholder="Enter slug" autocomplete="off" class="form-control">
+                            <input type="text" name="slug" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_slug') }}" autocomplete="off" class="form-control">
                         </div>
                         <div class="form-group">
                             <label for="inputDescription">Description</label>

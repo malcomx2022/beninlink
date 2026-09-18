@@ -29,7 +29,7 @@
                 @csrf
                 <div class="form-group  col-xl-8  ">
                     <div class="d-flex justify-content-end">
-                        <input type="text" autocomplete="off" id="date" name="parcel_date" placeholder="Enter Date" class="w-md-25 form-control date_range_picker group-input" value="{{ old('parcel_date',$request->parcel_date) }}">
+                        <input type="text" autocomplete="off" id="date" name="parcel_date" placeholder="{{ __('placeholder.Enter_date') }}" class="w-md-25 form-control date_range_picker group-input" value="{{ old('parcel_date',$request->parcel_date) }}">
                         <button class="btn btn-primary group-btn ml-0" type="submit">{{ __('levels.filter') }}</button>
                         <a href="{{ route('hub.view',$id) }}" class="btn btn-secondary text-white" >{{ __('levels.clear') }}</a>
                     </div>

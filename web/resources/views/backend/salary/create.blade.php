@@ -31,7 +31,7 @@
                             <div class="col-12 col-md-6">
                                 <div class="form-group">
                                     <label for="date">{{ __('salary.month')}}</label> <span class="text-danger">*</span>
-                                    <input type="text" id="month" data-toggle="month" name="month" data-parsley-trigger="change" placeholder="yyyy-mm-dd"  class="form-control" value="{{old('date',date('Y-m'))}}" required>
+                                    <input type="text" id="month" data-toggle="month" name="month" data-parsley-trigger="change" placeholder="{{ __('placeholder.date_format') }}"  class="form-control" value="{{old('date',date('Y-m'))}}" required>
                                     @error('date')
                                     <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
@@ -48,7 +48,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="date">{{ __('levels.date')}}</label> <span class="text-danger">*</span>
-                                    <input type="text" id="date" data-toggle="datepicker" name="date" data-parsley-trigger="change" placeholder="yyyy-mm-dd"  class="form-control" value="{{old('date',date('Y-m-d'))}}" required>
+                                    <input type="text" id="date" data-toggle="datepicker" name="date" data-parsley-trigger="change" placeholder="{{ __('placeholder.date_format') }}"  class="form-control" value="{{old('date',date('Y-m-d'))}}" required>
                                     @error('date')
                                     <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror

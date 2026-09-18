@@ -33,5 +33,22 @@ return [
     'password_old'      => 'Old password not match!',
     'profile_update'    => 'Profile updated successfully.',
 
+    /* Lot 4 (2026-09-18) — the product's entry screens. */
+    'sign_in'               => 'Sign in',
+    'sign_in_hint'          => 'Enter your credentials to access your account.',
+    'or'                    => 'or',
+    'forgot_password'       => 'Forgot your password?',
+    'no_account'            => 'No account yet?',
+    'sign_up'               => 'Create an account',
+    'registration_form'     => 'Registration form',
+    'register_my_account'   => 'Create my account',
+    'send_reset_link'       => 'Send the reset link',
+    'confirm_password_hint' => 'Please confirm your password before continuing.',
+    'demo_accounts'         => 'Demo accounts',
+    'demo_admin'            => 'Administrator',
+    'demo_branch'           => 'Branch',
+    'demo_merchant'         => 'Merchant',
+    'demo_company_panel'    => 'Company panel',
+
 
 ];

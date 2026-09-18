@@ -68,7 +68,7 @@
                                 <div class="main-search-input-item location location-search">
                                     <div id="autocomplete-container" class="form-group random-search">
                                         <input id="autocomplete-input" type="text" name="address"
-                                            class="recipe-search2 form-control" placeholder="Location Here!" required="">
+                                            class="recipe-search2 form-control" placeholder="{{ __('placeholder.location_here') }}" required="">
                                         <a href="javascript:void(0)" class="submit-btn btn current-location"
                                             id="locationIcon" onclick="getLocation()">
                                             <i class="fa fa-crosshairs"></i>

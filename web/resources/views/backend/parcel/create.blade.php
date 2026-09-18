@@ -241,11 +241,11 @@
                                         <div id="autocomplete-container" class="form-group random-search">
                                             @if (env('DEMO'))
                                                 <input   type="text" name="customer_address"
-                                                    class="recipe-search2 form-control" placeholder="Location Here!"
+                                                    class="recipe-search2 form-control" placeholder="{{ __('placeholder.location_here') }}"
                                                     required="">
                                             @else
                                                 <input id="autocomplete-input" type="text" name="customer_address"
-                                                        class="recipe-search2 form-control" placeholder="Location Here!"
+                                                        class="recipe-search2 form-control" placeholder="{{ __('placeholder.location_here') }}"
                                                         required="">
                                             @endif
                                             <a href="javascript:void(0)" class="submit-btn btn current-location"

@@ -29,7 +29,7 @@
                         </div>
                         <div class="form-group multiple-recived-by-hub ">
                             <label for="received_track_id">{{ __('levels.track_id')}}</label> <span class="text-danger">*</span>
-                            <input id="received_track_id" name="track_id" placeholder="Enter Tracking Id" data-url="{{ route('parcel.received-by-hub-search') }}" class="form-control"/>
+                            <input id="received_track_id" name="track_id" placeholder="{{ __('placeholder.Enter_tracking_id') }}" data-url="{{ route('parcel.received-by-hub-search') }}" class="form-control"/>
                         </div>
                         <div class="form-group ">
                             <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">

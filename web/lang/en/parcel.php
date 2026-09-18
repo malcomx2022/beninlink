@@ -39,7 +39,7 @@ return array (
   'shop'                => 'Pickup Points',
   'pickup_phone'        => 'Pickup Phone',
   'pickup_address'      => 'Pickup Address',
-  'cash_collection'     => 'Cash Collection(Tk)',
+  'cash_collection'     => 'Cash Collection',
   'selling_price'       => 'Selling Price',
   'customer_name'       => 'Customer Name',
   'customer_info'       => 'Customer Info',

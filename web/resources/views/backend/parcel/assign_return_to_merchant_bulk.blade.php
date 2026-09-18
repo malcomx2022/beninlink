@@ -39,7 +39,7 @@
                         <div class="form-group ">
                             <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
                             <label for="return_parcel_tracking_id">{{ __('levels.track_id')}}</label> <span class="text-danger">*</span>
-                            <input id="return_parcel_tracking_id" type="text" name="track_id"  data-url="{{ route('assign-return-to-merchant.parcel.search') }}" placeholder="Enter Tracking Id" class="form-control">
+                            <input id="return_parcel_tracking_id" type="text" name="track_id"  data-url="{{ route('assign-return-to-merchant.parcel.search') }}" placeholder="{{ __('placeholder.Enter_tracking_id') }}" class="form-control">
                             <div class="search_message"></div>
                         </div>
                         <div class="form-group ">
@@ -58,7 +58,7 @@
                     <div class="col-12 col-md-6">
                         <div class="form-group ">
                             <label for="return_date">{{ __('levels.date')}}</label> <span class="text-danger">*</span>
-                            <input id="return_date" type="date" name="date" data-toggle="datepicker"  data-parsley-trigger="change" placeholder="yyyy-mm-dd"  class="form-control">
+                            <input id="return_date" type="date" name="date" data-toggle="datepicker"  data-parsley-trigger="change" placeholder="{{ __('placeholder.date_format') }}"  class="form-control">
                         </div>
                         <div class="form-group  ">
                             <label for="note">{{ __('parcel.note')}}</label>

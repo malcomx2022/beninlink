@@ -53,7 +53,7 @@
                             <input type="hidden" id="long" name="long" required="" value="{{ $edit_shop->merchant_long }}">
                             <div class="main-search-input-item location location-search">
                                 <div id="autocomplete-container" class="form-group random-search">
-                                    <input id="autocomplete-input" type="text" name="address" value="{{$edit_shop->address}}" class="recipe-search2 form-control" placeholder="Location Here!" required="">
+                                    <input id="autocomplete-input" type="text" name="address" value="{{$edit_shop->address}}" class="recipe-search2 form-control" placeholder="{{ __('placeholder.location_here') }}" required="">
                                     <a href="javascript:void(0)" class="submit-btn btn current-location" id="locationIcon" onclick="getLocation()">
                                         <i class="fa fa-crosshairs"></i>
                                     </a>

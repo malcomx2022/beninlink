@@ -47,7 +47,7 @@
                                     <label for="image">{{ __('levels.image') }} <span
                                             class="text-danger">*</span></label>
                                     <input id="image" type="file" name="image" data-parsley-trigger="change"
-                                        placeholder="Enter image" autocomplete="off"
+                                        placeholder="{{ __('placeholder.Enter_image') }}" autocomplete="off"
                                         class="form-control @error('image') is-invalid @enderror"
                                         value="{{ old('image') }}" require>
                                     @error('image')

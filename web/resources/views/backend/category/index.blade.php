@@ -1,5 +1,5 @@
 @extends('backend.partials.master')
-@section('title','Category | Index')
+@section('title', __('levels.category') . ' | ' . __('levels.list'))
 @section('maincontent')
 <div class="container-fluid  dashboard-content">
     <!-- pageheader -->

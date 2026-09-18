@@ -34,14 +34,14 @@
                             <div class="col-12 col-md-6">
                                 <div class="form-group">
                                     <label for="name">{{ __('levels.name') }}</label>
-                                    <input id="name" type="text" name="name" data-parsley-trigger="change" placeholder="Enter name" autocomplete="off" class="form-control" value="{{auth()->user()->name}}" require>
+                                    <input id="name" type="text" name="name" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_name') }}" autocomplete="off" class="form-control" value="{{auth()->user()->name}}" require>
                                     @error('name')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
                                 </div>
                                 <div class="form-group">
                                     <label for="address">{{ __('levels.address') }}</label>
-                                    <input id="address" type="text" name="address" data-parsley-trigger="change" placeholder="Enter Address" autocomplete="off" class="form-control" value="{{auth()->user()->address}}" require>
+                                    <input id="address" type="text" name="address" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_address') }}" autocomplete="off" class="form-control" value="{{auth()->user()->address}}" require>
                                     @error('address')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
@@ -52,7 +52,7 @@
                                     <div class="row">
                                         <div class="col-8">
                                             <label for="Image">{{ __('levels.image') }}</label>
-                                            <input id="Image" type="file" name="image" data-parsley-trigger="change" placeholder="Enter Image" autocomplete="off" class="form-control">
+                                            <input id="Image" type="file" name="image" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_image') }}" autocomplete="off" class="form-control">
                                             @error('image')
                                                 <small class="text-danger mt-2">{{ $message }}</small>
                                             @enderror

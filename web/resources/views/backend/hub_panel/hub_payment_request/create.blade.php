@@ -33,7 +33,7 @@
                             <div class="col-12 col-md-6">
                                 <div class="form-group">
                                     <label for="amount">{{ __('hub_payment.amount') }}</label> <span class="text-danger">*</span>
-                                    <input id="amount" type="number" name="amount" data-parsley-trigger="change" placeholder="Enter Amount" autocomplete="off" class="form-control @error('amount') is-invalid @enderror" value="{{old('amount')}}" require>
+                                    <input id="amount" type="number" name="amount" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_Amount') }}" autocomplete="off" class="form-control @error('amount') is-invalid @enderror" value="{{old('amount')}}" require>
                                     @error('amount')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror

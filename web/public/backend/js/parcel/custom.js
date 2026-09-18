@@ -6,12 +6,11 @@ $(document).ready(function(){
         var url = $(this).data('url');
 
         Swal.fire({
-            text: 'Do you want to cancel the '+ title +'?',
+            text: confirmCancel.replace(':name', title),
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: 'Cancel',
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed){
                 $.ajax({
@@ -34,12 +33,11 @@ $(document).ready(function(){
         var url = $(this).data('url');
 
         Swal.fire({
-            text: 'Do you want to cancel the '+ title +'?',
+            text: confirmCancel.replace(':name', title),
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: 'Cancel',
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed){
                 $.ajax({
@@ -61,12 +59,11 @@ $(document).ready(function(){
         var url = $(this).data('url');
 
         Swal.fire({
-            text: 'Do you want to cancel the '+ title +'?',
+            text: confirmCancel.replace(':name', title),
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: 'Cancel',
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed){
                 $.ajax({
@@ -88,12 +85,11 @@ $(document).ready(function(){
         var url = $(this).data('url');
 
         Swal.fire({
-            text: 'Do you want to cancel the '+ title +'?',
+            text: confirmCancel.replace(':name', title),
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: 'Cancel',
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed){
                 $.ajax({
@@ -116,12 +112,11 @@ $(document).ready(function(){
         var url = $(this).data('url');
 
         Swal.fire({
-            text: 'Do you want to cancel the '+ title +'?',
+            text: confirmCancel.replace(':name', title),
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: 'Cancel',
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed){
                 $.ajax({
@@ -143,12 +138,11 @@ $(document).ready(function(){
         var url = $(this).data('url');
 
         Swal.fire({
-            text: 'Do you want to cancel the '+ title +'?',
+            text: confirmCancel.replace(':name', title),
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: 'Cancel',
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed){
                 $.ajax({
@@ -169,12 +163,11 @@ $(document).ready(function(){
         var url = $(this).data('url');
 
         Swal.fire({
-            text: 'Do you want to cancel the '+ title +'?',
+            text: confirmCancel.replace(':name', title),
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: 'Cancel',
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed){
                 $.ajax({
@@ -197,12 +190,11 @@ $(document).ready(function(){
         var url = $(this).data('url');
 
         Swal.fire({
-            text: 'Do you want to cancel the '+ title +'?',
+            text: confirmCancel.replace(':name', title),
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: 'Cancel',
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed){
                 $.ajax({
@@ -225,12 +217,11 @@ $(document).ready(function(){
         var url = $(this).data('url');
 
         Swal.fire({
-            text: 'Do you want to cancel the '+ title +'?',
+            text: confirmCancel.replace(':name', title),
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: 'Cancel',
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed){
                 $.ajax({
@@ -253,12 +244,11 @@ $(document).ready(function(){
         var url = $(this).data('url');
 
         Swal.fire({
-            text: 'Do you want to cancel the '+ title +'?',
+            text: confirmCancel.replace(':name', title),
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: 'Cancel',
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed){
                 $.ajax({
@@ -281,12 +271,11 @@ $(document).ready(function(){
         var url = $(this).data('url');
 
         Swal.fire({
-            text: 'Do you want to cancel the '+ title +'?',
+            text: confirmCancel.replace(':name', title),
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: 'Cancel',
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed){
                 $.ajax({
@@ -308,12 +297,11 @@ $(document).ready(function(){
         var url = $(this).data('url');
 
         Swal.fire({
-            text: 'Do you want to cancel the '+ title +'?',
+            text: confirmCancel.replace(':name', title),
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: 'Cancel',
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed){
                 $.ajax({
@@ -335,12 +323,11 @@ $(document).ready(function(){
         var url = $(this).data('url');
 
         Swal.fire({
-            text: 'Do you want to cancel the '+ title +'?',
+            text: confirmCancel.replace(':name', title),
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: 'Cancel',
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed){
                 $.ajax({
@@ -361,12 +348,11 @@ $(document).ready(function(){
         var url = $(this).data('url');
 
         Swal.fire({
-            text: 'Do you want to cancel the '+ title +'?',
+            text: confirmCancel.replace(':name', title),
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: 'Cancel',
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
         }).then((result) => {
             if (result.isConfirmed){
                 $.ajax({

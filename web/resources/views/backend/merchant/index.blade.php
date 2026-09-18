@@ -31,7 +31,7 @@
                     <div class="col-10">
                         <div class="d-flex parcelsearchFlex">
                             <p class="h3">{{ __('merchant.title') }}</p>
-                            <input id="Psearch" class="form-control parcelSearch d-lg-block" type="text" placeholder="Search..">
+                            <input id="Psearch" class="form-control parcelSearch d-lg-block" type="text" placeholder="{{ __('placeholder.search') }}">
                         </div>
                     </div>
                     @if( hasPermission('merchant_create') == true )
@@ -40,7 +40,7 @@
                     </div>
                     @endif
                     <div class="col-12 d-lg-none mt-2">
-                        <input id="Psearch" class="form-control " type="text" placeholder="Search..">
+                        <input id="Psearch" class="form-control " type="text" placeholder="{{ __('placeholder.search') }}">
                     </div>
                 </div>
                 <div class="card-body">

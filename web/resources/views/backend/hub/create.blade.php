@@ -66,10 +66,10 @@
 
                                         @if (env('DEMO'))
                                             <input   type="text" name="address"
-                                                class="recipe-search2 form-control" placeholder="Location Here!" required="">
+                                                class="recipe-search2 form-control" placeholder="{{ __('placeholder.location_here') }}" required="">
                                         @else
                                             <input id="autocomplete-input" type="text" name="address"
-                                                class="recipe-search2 form-control" placeholder="Location Here!" required="">
+                                                class="recipe-search2 form-control" placeholder="{{ __('placeholder.location_here') }}" required="">
                                         @endif
                                         <a href="javascript:void(0)" class="submit-btn btn current-location"
                                             id="locationIcon" onclick="getLocation()">

@@ -1,5 +1,5 @@
 @extends('backend.partials.master')
-@section('title','Parcels Total Summery | List')
+@section('title', __('menus.parcel_total_summery') . ' | ' . __('levels.list'))
 @section('maincontent')
 <!-- wrapper  -->
 <div class="container-fluid  dashboard-content">

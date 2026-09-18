@@ -144,6 +144,47 @@ final class ParcelStage
         return '<span class="bl-pill bl-pill--' . $etape . '">' . $libelle . '</span>';
     }
 
+    /**
+     * Code qu'une annulation défait. `null` si le code n'est pas une annulation.
+     *
+     * Le socle nommait ces actions en anglais, en dur, dans des attributs
+     * `data-title` que `public/backend/js/parcel/custom.js` affiche dans sa boîte
+     * de confirmation (« Do you want to cancel the pickup assign? »). Le libellé
+     * juste est celui du statut **annulé**, déjà traduit par le backend : la
+     * question devient « Voulez-vous annuler « Ramassage assigné » ? ».
+     */
+    public static function cancels(mixed $code): ?int
+    {
+        return self::ANNULE[(int) $code] ?? null;
+    }
+
+    /**
+     * Libellé à montrer dans une confirmation d'annulation : celui du statut que
+     * l'action défait. Pour un code qui n'annule rien, son propre libellé.
+     */
+    public static function cancelledLabel(mixed $code): string
+    {
+        return trans('parcelStatus.' . (self::cancels($code) ?? (int) $code));
+    }
+
+    /** Annulation → statut défait. Chaque paire est celle des routes du socle. */
+    private const ANNULE = [
+        ParcelStatus::PICKUP_ASSIGN_CANCEL => ParcelStatus::PICKUP_ASSIGN,
+        ParcelStatus::PICKUP_RE_SCHEDULE_CANCEL => ParcelStatus::PICKUP_RE_SCHEDULE,
+        ParcelStatus::RECEIVED_BY_PICKUP_MAN_CANCEL => ParcelStatus::RECEIVED_BY_PICKUP_MAN,
+        ParcelStatus::RECEIVED_WAREHOUSE_CANCEL => ParcelStatus::RECEIVED_WAREHOUSE,
+        ParcelStatus::TRANSFER_TO_HUB_CANCEL => ParcelStatus::TRANSFER_TO_HUB,
+        ParcelStatus::RECEIVED_BY_HUB_CANCEL => ParcelStatus::RECEIVED_BY_HUB,
+        ParcelStatus::DELIVERY_MAN_ASSIGN_CANCEL => ParcelStatus::DELIVERY_MAN_ASSIGN,
+        ParcelStatus::DELIVERY_RE_SCHEDULE_CANCEL => ParcelStatus::DELIVERY_RE_SCHEDULE,
+        ParcelStatus::DELIVERED_CANCEL => ParcelStatus::DELIVERED,
+        ParcelStatus::PARTIAL_DELIVERED_CANCEL => ParcelStatus::PARTIAL_DELIVERED,
+        ParcelStatus::RETURN_TO_COURIER_CANCEL => ParcelStatus::RETURN_TO_COURIER,
+        ParcelStatus::RETURN_ASSIGN_TO_MERCHANT_CANCEL => ParcelStatus::RETURN_ASSIGN_TO_MERCHANT,
+        ParcelStatus::RETURN_MERCHANT_RE_SCHEDULE_CANCEL => ParcelStatus::RETURN_MERCHANT_RE_SCHEDULE,
+        ParcelStatus::RETURN_RECEIVED_BY_MERCHANT_CANCEL => ParcelStatus::RETURN_RECEIVED_BY_MERCHANT,
+    ];
+
     /** Les sept étapes, dans l'ordre du parcours. Sert aux tests et aux filtres. */
     public static function families(): array
     {

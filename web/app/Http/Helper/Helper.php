@@ -259,33 +259,33 @@ if(!function_exists('parcelStatus')){
         if(!blank($parcelStatusArray)){
             foreach($parcelStatusArray as $key => $status) {
                 if($key == ParcelStatus::PICKUP_ASSIGN_CANCEL){
-                    $parcelStatus .= '<a  class="dropdown-item pickup-man-assign-cancel" data-title="pickup assign" data-url="'.route("parcel.pickup.man-assigned-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
+                    $parcelStatus .= '<a  class="dropdown-item pickup-man-assign-cancel" data-title="'.e(ParcelStage::cancelledLabel($key)).'" data-url="'.route("parcel.pickup.man-assigned-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
                 }elseif($key == ParcelStatus::PICKUP_RE_SCHEDULE_CANCEL){
-                    $parcelStatus .= '<a  class="dropdown-item pickup-reschedule-cancel" data-title="Pickup re-schedule" data-url="'.route("parcel.pickup.re-schedule-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
+                    $parcelStatus .= '<a  class="dropdown-item pickup-reschedule-cancel" data-title="'.e(ParcelStage::cancelledLabel($key)).'" data-url="'.route("parcel.pickup.re-schedule-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
                 }elseif($key == ParcelStatus::RECEIVED_BY_PICKUP_MAN_CANCEL){
-                    $parcelStatus .= '<a  class="dropdown-item receved-by-pickupman-cancel" data-title="Received by pickup-man" data-url="'.route("parcel.pickup.man-received-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
+                    $parcelStatus .= '<a  class="dropdown-item receved-by-pickupman-cancel" data-title="'.e(ParcelStage::cancelledLabel($key)).'" data-url="'.route("parcel.pickup.man-received-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
                 }elseif($key == ParcelStatus::RECEIVED_WAREHOUSE_CANCEL){
-                    $parcelStatus .= '<a  class="dropdown-item receved-warehouse-cancel" data-title="Received warehouse" data-url="'.route("parcel.received-warehouse-cancel").'" data-parcel="'. $parcel->id.'"   href="#">'.$status.'</a>';
+                    $parcelStatus .= '<a  class="dropdown-item receved-warehouse-cancel" data-title="'.e(ParcelStage::cancelledLabel($key)).'" data-url="'.route("parcel.received-warehouse-cancel").'" data-parcel="'. $parcel->id.'"   href="#">'.$status.'</a>';
                 }elseif($key == ParcelStatus::DELIVERY_MAN_ASSIGN_CANCEL){
-                    $parcelStatus .= '<a  class="dropdown-item delivery-man-assign-cancel" data-title="Delivery man assign " data-url="'.route("parcel.delivery-man-assign-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
+                    $parcelStatus .= '<a  class="dropdown-item delivery-man-assign-cancel" data-title="'.e(ParcelStage::cancelledLabel($key)).'" data-url="'.route("parcel.delivery-man-assign-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
                 }elseif($key == ParcelStatus::DELIVERY_RE_SCHEDULE_CANCEL){
-                    $parcelStatus .= '<a  class="dropdown-item delivery-re-schedule-cancel" data-title="Delivery re-schedule " data-url="'.route("parcel.delivery-re-schedule-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
+                    $parcelStatus .= '<a  class="dropdown-item delivery-re-schedule-cancel" data-title="'.e(ParcelStage::cancelledLabel($key)).'" data-url="'.route("parcel.delivery-re-schedule-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
                 }elseif($key == ParcelStatus::TRANSFER_TO_HUB_CANCEL){
-                    $parcelStatus .= '<a  class="dropdown-item transfer-to-hub-cancel" data-title="Transfer to hub " data-url="'.route("parcel.transfer-to-hub-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
+                    $parcelStatus .= '<a  class="dropdown-item transfer-to-hub-cancel" data-title="'.e(ParcelStage::cancelledLabel($key)).'" data-url="'.route("parcel.transfer-to-hub-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
                 }elseif($key == ParcelStatus::RECEIVED_BY_HUB_CANCEL){
-                    $parcelStatus .= '<a  class="dropdown-item received-by-hub-cancel" data-title="Received by hub " data-url="'.route("parcel.received-by-hub-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
+                    $parcelStatus .= '<a  class="dropdown-item received-by-hub-cancel" data-title="'.e(ParcelStage::cancelledLabel($key)).'" data-url="'.route("parcel.received-by-hub-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
                 }elseif($key == ParcelStatus::RETURN_TO_COURIER_CANCEL){
-                    $parcelStatus .= '<a  class="dropdown-item return-to-courier-cancel" data-title="Return to courier" data-url="'.route("parcel.return-to-courier-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
+                    $parcelStatus .= '<a  class="dropdown-item return-to-courier-cancel" data-title="'.e(ParcelStage::cancelledLabel($key)).'" data-url="'.route("parcel.return-to-courier-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
                 }elseif($key == ParcelStatus::RETURN_ASSIGN_TO_MERCHANT_CANCEL){
-                    $parcelStatus .= '<a  class="dropdown-item return-assign-to-merchant-cancel" data-title="Return assign to merchant" data-url="'.route("parcel.return-assign-to-merchant-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
+                    $parcelStatus .= '<a  class="dropdown-item return-assign-to-merchant-cancel" data-title="'.e(ParcelStage::cancelledLabel($key)).'" data-url="'.route("parcel.return-assign-to-merchant-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
                 }elseif($key == ParcelStatus::RETURN_MERCHANT_RE_SCHEDULE_CANCEL){
-                    $parcelStatus .= '<a  class="dropdown-item return-assign-re-schedule-merchant-cancel" data-title="Return merchant Re-Schedule Cancel" data-url="'.route("parcel.return-assign-re-schedule-to-merchant-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
+                    $parcelStatus .= '<a  class="dropdown-item return-assign-re-schedule-merchant-cancel" data-title="'.e(ParcelStage::cancelledLabel($key)).'" data-url="'.route("parcel.return-assign-re-schedule-to-merchant-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
                 }elseif($key == ParcelStatus::RETURN_RECEIVED_BY_MERCHANT_CANCEL){
-                    $parcelStatus .= '<a  class="dropdown-item return-received-by-merchant-cancel" data-title="Return received by merchant" data-url="'.route("parcel.return-received-by-merchant-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
+                    $parcelStatus .= '<a  class="dropdown-item return-received-by-merchant-cancel" data-title="'.e(ParcelStage::cancelledLabel($key)).'" data-url="'.route("parcel.return-received-by-merchant-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
                 }elseif($key == ParcelStatus::DELIVERED_CANCEL){
-                    $parcelStatus .= '<a  class="dropdown-item delivered-cancel" data-title="Delivered cancel" data-url="'.route("parcel.delivered-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
+                    $parcelStatus .= '<a  class="dropdown-item delivered-cancel" data-title="'.e(ParcelStage::cancelledLabel($key)).'" data-url="'.route("parcel.delivered-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
                 }elseif($key == ParcelStatus::PARTIAL_DELIVERED_CANCEL){
-                    $parcelStatus .= '<a  class="dropdown-item partial-delivered-cancel" data-title="Partial delivered cancel" data-url="'.route("parcel.partial-delivered-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
+                    $parcelStatus .= '<a  class="dropdown-item partial-delivered-cancel" data-title="'.e(ParcelStage::cancelledLabel($key)).'" data-url="'.route("parcel.partial-delivered-cancel").'" data-parcel="'. $parcel->id.'"  href="#">'.$status.'</a>';
                 }else {
                     if($key == ParcelStatus::PICKUP_RE_SCHEDULE){
                         $parcelStatus .= '<a  class="dropdown-item parcel-id-pickup-man" data-parcelstatus="'.ParcelStatus::PICKUP_ASSIGN.'" data-parcel="'.$parcel->id.'" data-toggle="modal" data-target="#parcelstatus'.$key.'" href="#">'.$status.'</a>';
@@ -458,12 +458,12 @@ if (!function_exists('singleUser')) {
             if(!blank($todoStatusArray)){
                 foreach($todoStatusArray as $key => $status) {
                     if($key == todoStatus::PENDING){
-                        $todoStatus .= '<a  class="dropdown-item pending" data-title="pending" data-id="'.$todo->id.'" id="todo_btn" data-url="'.route("todo.processing").'" data-toggle="modal" data-target="#todoStatus'.$key.'"  href="#">'.$status.'</a>';
+                        $todoStatus .= '<a  class="dropdown-item pending" data-title="'.e($status).'" data-id="'.$todo->id.'" id="todo_btn" data-url="'.route("todo.processing").'" data-toggle="modal" data-target="#todoStatus'.$key.'"  href="#">'.$status.'</a>';
                     }elseif($key == todoStatus::PROCESSING){
-                        $todoStatus .= '<a  class="dropdown-item processing" data-id="'.$todo->id.'" id="todo_btn" data-title="processing" data-url="'.route("todo.processing").'" data-toggle="modal" data-target="#todoStatus'.$key.'"  href="#">'.$status.'</a>';
+                        $todoStatus .= '<a  class="dropdown-item processing" data-id="'.$todo->id.'" id="todo_btn" data-title="'.e($status).'" data-url="'.route("todo.processing").'" data-toggle="modal" data-target="#todoStatus'.$key.'"  href="#">'.$status.'</a>';
                     }
                     else{
-                        $todoStatus .= '<a  class="dropdown-item completed" data-title="completed" data-id="'.$todo->id.'" id="todo_btn" data-url="'.route("todo.completed").'" data-toggle="modal" data-target="#todoStatus1'.$key.'"  href="#">'.$status.'</a>';
+                        $todoStatus .= '<a  class="dropdown-item completed" data-title="'.e($status).'" data-id="'.$todo->id.'" id="todo_btn" data-url="'.route("todo.completed").'" data-toggle="modal" data-target="#todoStatus1'.$key.'"  href="#">'.$status.'</a>';
                     }
                 }
                 return $todoStatus;

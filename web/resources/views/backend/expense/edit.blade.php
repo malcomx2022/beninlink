@@ -65,14 +65,14 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="date">{{ __('levels.date')}}</label> <span class="text-danger">*</span>
-                                    <input type="text" id="date" data-toggle="datepicker" name="date" data-parsley-trigger="change" placeholder="yyyy-mm-dd"  class="form-control" value="{{ $expense->date }}" required>
+                                    <input type="text" id="date" data-toggle="datepicker" name="date" data-parsley-trigger="change" placeholder="{{ __('placeholder.date_format') }}"  class="form-control" value="{{ $expense->date }}" required>
                                     @error('date')
                                     <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
                                 </div>
                                 <div class="form-group">
                                     <label for="receipt">{{ __('levels.receipt')}}</label>
-                                    <input id="receipt" type="file" name="receipt" data-parsley-trigger="change" placeholder="Enter receipt" autocomplete="off" class="form-control" value="{{ old('receipt') }}" require>
+                                    <input id="receipt" type="file" name="receipt" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_receipt') }}" autocomplete="off" class="form-control" value="{{ old('receipt') }}" require>
                                     @error('receipt')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror

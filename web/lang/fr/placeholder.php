@@ -79,4 +79,42 @@ return [
     'enter_ifu' => '13 chiffres',
     'enter_rccm' => 'Ex. RB/COT/24 B 1234',
     'enter_cnss' => 'N° employeur',
+    /* ── Lot 4 de la charte web (2026-09-18) — francisation des champs ────────
+       Ces clés remplacent des `placeholder="…"` écrits en anglais en dur dans
+       les vues. Les clés déjà présentes plus haut ont été réutilisées ; celles
+       qui suivent manquaient.
+       ⚠️ Un placeholder n'est pas toujours une phrase : `placeholder="TG"` de
+       `delivery_zone/index` est un CODE PAYS ISO (Togo, maxlength=2). Il reste
+       tel quel — le traduire le casserait. ────────────────────────────────── */
+
+    /* Format de date. Le sélecteur écrit toujours Y-m-d ; ce libellé dit au
+       lecteur la FORME à saisir, en français (année-mois-jour). Même valeur que
+       `merchantPlaceholder.date_format`, qui la portait déjà seul. */
+    'date_format'                   => 'aaaa-mm-jj',
+
+    'Enter_date'                    => 'Entrer la date',
+    'search'                        => 'Rechercher…',
+
+    /* Champ de recherche d'adresse sur la carte (création de colis, boutiques,
+       centres, livreurs). Disait « Location Here! ». */
+    'location_here'                 => 'Rechercher une adresse…',
+
+    /* Téléversements. Le socle disait « Enter image », « Enter favicon »… */
+    'Enter_image'                   => 'Choisir une image',
+    'Enter_logo'                    => 'Choisir le logo',
+    'Enter_light_logo'              => 'Choisir le logo clair',
+    'Enter_favicon'                 => 'Choisir le favicon',
+    'Enter_file'                    => 'Choisir un fichier',
+    'Enter_receipt'                 => 'Choisir le justificatif',
+
+    'Enter_slug'                    => 'Entrer le slug',
+    'Enter_parcel_tracking_prefix'  => 'Ex. BL',
+    'Enter_invoice_prefix'          => 'Ex. FA',
+
+    /* Connexion : le compte s'identifie par l'e-mail OU le mobile. */
+    'email_or_mobile'               => 'E-mail ou numéro de mobile',
+    'otp'                           => 'Code reçu par SMS',
+
+    'cash_amount'                   => 'Montant encaissé',
+    'charge'                        => 'Montant des frais',
 ];

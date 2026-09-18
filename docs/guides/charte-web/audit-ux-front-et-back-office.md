@@ -14,6 +14,7 @@
 | 2026-09-18 | **Six pastilles corrigées validées** (§9.2) et implémentées. |
 | 2026-09-18 | **Lot 1 livré.** Voir §10 — ce que le lot 1 a effectivement fait, et en quoi il s'écarte du plan. |
 | 2026-09-18 | **Lot 2 livré.** Voir §11 — la sémantique des statuts, une **triple** copie réduite à une table, et deux constats de code mort que l'audit n'avait pas vus. |
+| 2026-09-18 | **Lot 4 livré.** Voir §12 — la francisation, et le mécanisme d'anglais **invisible** que l'audit avait entièrement manqué : 45 chaînes rendues en anglais par `lang/fr.json`. |
 
 ---
 
@@ -278,11 +279,19 @@ produit**, qui sont les plus vus :
   `reports/parcel-total/parcel_total_reports`, `delivery_type/create`.
 - **85 `placeholder="…"` en anglais** (`Enter image` ×12, `Enter receipt` ×6,
   `Enter Tracking Id` ×5, `Enter Amount` ×4, `Enter Date` ×5…).
+  ⚠️ **Sous-compté : il y en avait 161.** Le relevé d'origine ne prenait pas les
+  formats de date (`yyyy-mm-dd` ×28) ni `Location Here!` ×18. Corrigé au lot 4.
 - **`public/backend/libs/js/custom.js:13` et `:30`** : `confirmButtonText: 'Yes'`,
   `denyButtonText: 'Cancel'` en dur — alors que l'autre boîte de dialogue du même
   fichier (l. 50-51) utilise bien les variables `yes` / `cancel` injectées par
   `backend/partials/footer.blade.php:29-30`. **Certaines confirmations de
   suppression s'affichent en anglais, d'autres en français.**
+  ⚠️ **Le diagnostic était incomplet** : `denyButtonText` n'est pas l'option du
+  bouton Annuler dans SweetAlert2 (c'est `cancelButtonText`), et `showOkButton`
+  n'existe pas. Ces lignes **ne faisaient rien** — traduire `denyButtonText`
+  n'aurait rien changé à l'écran. Et le même défaut se répétait **14 fois** dans
+  `public/backend/js/parcel/custom.js`, sur les confirmations d'annulation de
+  statut. Voir §12.3.
 - Les libellés `data-title` des actions de statut sont en anglais dans
   `Helper.php:260-290` (`"pickup assign"`, `"Delivery man assign"`, …).
 
@@ -574,7 +583,7 @@ libellé 12 px gris) se pose dans un second temps — et **par des classes
 | **1** ✅ | `tokens.css` + `theme-backoffice.css` + polices auto-hébergées + les 2 `<link>` · `--h-font-family` · les 3 viewports · `lang` | **fait** — voir §10 |
 | **2** ✅ | `StatusParcel()` : sémantique + `else` de repli · pastilles `bl-pill` · douane aux couleurs de la charte | **fait** — voir §11. L'audit avait sous-estimé le chantier : la table existait en **trois** copies, pas une |
 | **3** | `accent_color` en base + réglage + `:root` | L'ocre devient réglable par transporteur. ⚠️ **Les défauts de couleur et la migration de données sont déjà faits** au lot 1 (voir §10) : ce lot ne porte plus que l'accent |
-| **4** | `auth/login` · les 2 lignes de `custom.js` · les 11 titres · les 85 placeholders · les `data-title` | Plus d'anglais sur les écrans d'entrée |
+| **4** ✅ | `auth/login` · les 2 lignes de `custom.js` · les 11 titres · les 85 placeholders · les `data-title` | **fait** — voir §12. L'audit comptait 85 placeholders : il y en avait **161**, et il avait manqué **45 chaînes** rendues en anglais par `lang/fr.json` |
 | **5** | Sidebar groupé · « Retrait » conditionné + état vide · sélecteur de langue réduit à FR/EN · filtre du tableau de bord | Ergonomie du back-office |
 | **6** | `focus-visible` · `alt` par lot · 42 `table-responsive` · les 2 `http://` | Accessibilité et petits écrans |
 | **7** | Forme fine de la maquette (KPI, topbar, timeline de suivi) | Fidélité à la maquette |
@@ -872,3 +881,172 @@ codes ont une étape » qui l'attrape.
   porter maintenant serait du code mort — or ce lot vient d'en constater deux cas.
 - Le sidebar reste à plat (lot 5), la page de connexion en anglais (lot 4), l'ocre
   non réglable par transporteur (lot 3).
+
+---
+
+## 12. Lot 4 — ce qui a été livré le 2026-09-18
+
+### 12.1 Ce que l'audit avait manqué : l'anglais **invisible**
+
+Le §2.9 listait de l'anglais écrit en dur. Il existait un second mécanisme, que la
+lecture des vues ne révèle pas :
+
+`__('Reset Password')` n'est pas une chaîne en dur — c'est une **clé JSON**. Sans
+entrée correspondante dans `lang/fr.json`, Laravel **rend la clé**, donc l'anglais,
+**sans erreur ni avertissement**. Or `lang/fr.json` ne portait que **5 entrées**,
+toutes des messages de validation de mot de passe.
+
+Résultat : **45 chaînes s'affichaient en anglais** dans une application
+prétendument francisée, dont
+
+- `Remember Me`, `Password`, `Confirm Password`, `Reset Password`, `Forgot Your Password?`,
+  `Login`, `Logout`, `Register` — l'ensemble du parcours de connexion ;
+- `Page Not Found`, `Internal Server Error`, `Service Unavailable`, `Unauthorized`,
+  `Access Forbidden`, `Page Expired`, `Too Many Requests` — **toutes les pages d'erreur** ;
+- `Select Merchant`, `Select Shop`, `Select Delivery Man`, `Select Weight` — les
+  sélecteurs des formulaires de colis ;
+- huit confirmations de suppression (`Do you want to delete blog ?`…) ;
+- `View Proof of Delivery`, `Check Merchant ID`, `Return Charge`, `Showing` ;
+- `Amount(Tk)` — **et là c'est une fuite de devise**, voir §12.4 ;
+- `WemaxDevs Product Activation` — la marque de l'éditeur, sur l'écran d'activation.
+
+**C'est l'item le plus rentable de tout le plan** : 45 chaînes corrigées dans
+**un seul fichier de données**, sans toucher une vue, donc **à coût de fusion nul**.
+
+Quatre clés restent **volontairement** sans traduction : `NEXMO SMS`, `TWILIO SMS`,
+`REVE SMS`, `Razorpay`. Sans entrée, Laravel rend la clé — ce qu'on veut d'une
+marque. Une entrée identité ressemblerait à une erreur de traduction, et un test
+vérifie qu'elles restent absentes.
+
+### 12.2 Les placeholders : 161, pas 85
+
+Le relevé d'origine oubliait les deux plus gros groupes :
+
+| Valeur | Occurrences | Remarque |
+|---|---|---|
+| `yyyy-mm-dd` / `YYYY-MM-DD` | **30** | `merchantPlaceholder.date_format` disait déjà `aaaa-mm-jj` : la convention existait et était violée 30 fois |
+| `Location Here!` | **18** | le champ d'adresse sur la carte, à la création de chaque colis |
+| `Enter image` / `Enter Image` | 15 | |
+| le reste | 80 | |
+
+**143 ont été traduites**, en réutilisant les clés de `lang/fr/placeholder.php`
+(82 déjà présentes, en français) et en ajoutant 18 clés manquantes, avec parité
+`fr`/`en`.
+
+**Les 18 restantes sont des exceptions assumées**, et le test les nomme :
+
+- **9 dans l'installeur** — il n'utilise **aucun** `__()` : ce n'est pas de
+  l'anglais résiduel dans une application francisée, c'est un **module non
+  internationalisé**. L'interner demande un fichier de langue et la reprise de sept
+  vues : chantier propre, et il tourne une fois, chez l'intégrateur.
+- **8 dans deux vues SSLCommerz** — voir §12.6.
+- **1 : `placeholder="TG"`** dans `delivery_zone/index` — un **code pays ISO**
+  (Togo, `maxlength=2`). Le traduire le casserait. Un passage naïf l'aurait fait.
+
+### 12.3 Les boîtes de dialogue : le défaut n'était pas celui annoncé
+
+Le §2.9 disait « `confirmButtonText: 'Yes'` en dur ». Vrai, mais insuffisant :
+
+- **`denyButtonText` n'est pas l'option du bouton Annuler** dans SweetAlert2 —
+  c'est `cancelButtonText`. `denyButtonText` règle le bouton « deny », qui n'est
+  pas affiché ici.
+- **`showOkButton` n'existe pas** (c'est `showConfirmButton`, vrai par défaut).
+
+Ces lignes **ne faisaient donc rien**. Le bouton affichait le « Cancel » par défaut
+de la bibliothèque, en anglais, **quoi qu'on y écrive** : traduire `denyButtonText`
+aurait produit un diff satisfaisant et zéro changement à l'écran.
+
+Et le défaut ne touchait pas deux dialogues mais **seize** : les deux de
+`libs/js/custom.js`, plus **quatorze** dans `public/backend/js/parcel/custom.js` —
+les confirmations d'**annulation de statut**, c'est-à-dire une action métier réelle
+(annuler un ramassage, annuler une livraison), entièrement en anglais :
+
+> *Do you want to cancel the pickup assign?* — avec `Yes` / `Cancel`.
+
+Le « pickup assign » venait d'un attribut `data-title` écrit en anglais dans
+`Helper.php` (17 occurrences). La formulation juste nomme le statut **annulé**,
+déjà traduit par le backend : `ParcelStage::cancelledLabel()` porte la
+correspondance annulation → statut défait (14 paires), et la question devient
+
+> *Voulez-vous annuler « Ramassage assigné » ?*
+
+### 12.4 Deux fuites de devise, et deux fautes de français
+
+Trouvées en chemin, toutes dans les fichiers de langue **français** :
+
+| Fichier | Contenu | Correction |
+|---|---|---|
+| `lang/fr/parcel.php` | `'Encaissement en espèces (Tk)'` | **Tk = taka bangladais**, sur le libellé du COD |
+| `lang/fr/levels.php` | `'Montant (Tk)'` | idem, 55 usages |
+| `lang/fr.json` (clé) | `Amount(Tk)` | idem |
+| `lang/fr/auth.php` | `'UMettre à jour le mot de passe'` | coquille visible |
+| `lang/fr/reports.php` | `'parcel_total_summery' => 'Total Summery'` | de l'**anglais** dans le fichier français, et « Summery » est une coquille du socle pour « Summary » |
+
+La devise **n'est pas recodée en dur** : elle est réglable par transporteur
+(`general_settings.currency`), et un fichier de langue ne peut pas appeler
+`currencySymbol()`. Les montants portent déjà leur symbole via `formatAmount()` —
+le libellé n'en a pas besoin. Une vue qui veut afficher l'unité l'ajoute elle-même.
+
+⚠️ Le `(Tk)` existe aussi dans `es`, `zh`, `ar`, `bn`, `in`. **Non corrigé à
+dessein** : le lot 5 retire ces locales (§2.10), les traiter serait du travail jeté.
+
+### 12.5 Une mesure que ce dépôt ne permet pas
+
+`docs/guides/socle/` affirme que « le premier commit du dépôt porte le socle
+intact », et s'en sert pour chiffrer le coût de fusion. **Ce n'est pas vérifiable
+ici** : le dépôt a **deux racines** (historique greffé), et les deux portent déjà
+des ajouts BeninLink (`lang/fr/customs.php`, `ChargeCalculator.php`). Impossible
+donc de dire combien des 109 fichiers touchés par ce lot étaient encore intacts.
+
+Le périmètre a été arbitré au jugement, pas sur un chiffre — et la francisation est
+le **chantier 1** de `web/CLAUDE.md`, donc son coût de fusion a déjà été accepté par
+le projet. À corriger dans le guide `socle/`, ou à expliquer.
+
+### 12.6 Un troisième cas de vue morte
+
+`backend/merchant_panel/sslecommerz/exampleEasycheckout.blade.php` et
+`exampleHosted.blade.php` portent un formulaire d'adresse **américain**
+(« 1234 Main St », « Apartment or suite », « you@example.com »). Deux raisons de ne
+pas les traduire, et la seconde est décisive :
+
+1. SSLCommerz est **coupée** (S21, `config/payments.php`) ;
+2. **aucune route ne mène à ces vues** — `SslCommerzPaymentController::exampleEasyCheckout()`
+   existe, mais `routes/web.php` ne route que `pay-via-ajax`, `success`, `fail`,
+   `cancel` et `ipn`.
+
+À joindre aux deux constats du §11.6 pour le lot de nettoyage.
+
+### 12.7 Le filet
+
+`FrenchInterfaceTest` — 9 tests. Les deux qui comptent :
+
+- **Toute clé JSON anglaise utilisée dans une vue doit avoir une traduction
+  française.** C'est le test qui rend le mécanisme du §12.1 visible : un nouveau
+  `__('Some English')` sans entrée dans `fr.json` fait échouer la suite, au lieu de
+  s'afficher en anglais sans bruit.
+- **Aucune vue ne porte de `placeholder` en dur**, avec la liste des exceptions
+  **dans le test** — ce qui force à justifier une exception plutôt qu'à la laisser
+  passer.
+
+Les autres fixent les titres traduits, l'absence de devise bangladaise en `fr` et
+`en`, les noms d'option SweetAlert2 (`showOkButton` et `denyButtonText` interdits —
+c'est ce qui rendait la correction précédente illusoire), la correspondance
+annulation → statut défait, la page de connexion, et la **parité fr/en** des trois
+fichiers touchés (une clé oubliée en anglais s'afficherait en français à un
+anglophone, sans erreur).
+
+Vérifié que ces tests mordent : en retirant une traduction de `fr.json`, en
+remettant un placeholder anglais, en rétablissant `denyButtonText` et en remettant
+`(Tk)`, **quatre tests échouent**.
+
+### 12.8 Ce que le lot 4 ne livre PAS
+
+- **L'installeur reste en anglais** (§12.2) — chantier propre : un fichier de langue
+  à créer, sept vues à reprendre, zéro `__()` aujourd'hui.
+- **Les locales `es`, `zh`, `ar`, `bn`, `in` ne sont pas touchées** : le lot 5 les
+  retire, et `bn`/`in`/`zh` sont déjà incomplètes (72 à 77 fichiers contre 87).
+- **Les noms de feuille des exports Excel** (`data-title="Parcel Status Reports"`,
+  lus par `reports/reports.js`) restent en anglais : ils nomment un fichier
+  téléchargé, pas un écran. À prendre avec le lot 5.
+- Le sidebar reste à plat (lot 5), l'ocre non réglable par transporteur (lot 3), la
+  forme des chronologies de suivi (lot 7).

@@ -130,7 +130,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="phone">{{ __('levels.phone') }}</label> <span class="text-danger">*</span>
-                                    <input id="mobile" type="number" name="mobile" data-parsley-trigger="change" placeholder="Enter Mobile" autocomplete="off" class="form-control @error('mobile') is-invalid @enderror" value="{{ old('mobile',$merchant->user->mobile) }}">
+                                    <input id="mobile" type="number" name="mobile" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_mobile') }}" autocomplete="off" class="form-control @error('mobile') is-invalid @enderror" value="{{ old('mobile',$merchant->user->mobile) }}">
                                     @error('mobile')
                                     <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
@@ -247,7 +247,7 @@
                                         <input type="hidden" value="{{$key}}" name="area[]">
                                         <div class="col-12 col-md-4">
                                             <label class="select-input">{{str_replace('_', ' ',  ucwords($key))}}</label>
-                                            <input type="number" name="charge[{{$key}}]" autocomplete="off" class="form-control" value="{{old('charge.'.$key,$charge)}}" placeholder="charge">
+                                            <input type="number" name="charge[{{$key}}]" autocomplete="off" class="form-control" value="{{old('charge.'.$key,$charge)}}" placeholder="{{ __('placeholder.charge') }}">
                                         </div>
                                         @endforeach
                                     </div>

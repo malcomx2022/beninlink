@@ -1,6 +1,6 @@
 
 @extends('auth.Layouts')
-@section('title','Reset')
+@section('title', __('auth.password_reset'))
 @section('content')
 
     <!-- forgot password  -->
@@ -14,13 +14,13 @@
                             <a href="{{url('/')}}" class="navbar-brand">
                                 <img class="logo-img" src="{{ settings()->logo_image }}"  class="logo" alt="logo">
                             </a>
-                            <span class="splash-description">Reset Password</span>
+                            <span class="splash-description">{{ __('auth.password_reset') }}</span>
                         </div>
                         <form method="POST" action="{{ route('password.update') }}">
                             @csrf 
                             <input type="hidden" name="token" value="{{ $token }}"> 
                             <div class="form-group">
-                                <label for="email">Email Address</label>
+                                <label for="email">{{ __('levels.email') }}</label>
                                 <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ $email ?? old('email') }}" required autocomplete="email" autofocus>
         
                                 @error('email')
@@ -31,7 +31,7 @@
                             </div>
         
                             <div class="form-group">
-                                <label for="password">Password</label>
+                                <label for="password">{{ __('levels.password') }}</label>
                                 <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password">
         
                                 @error('password')
@@ -42,7 +42,7 @@
                             </div>
         
                             <div class="form-group">
-                                <label for="password-confirm">Confirm Password</label>
+                                <label for="password-confirm">{{ __('levels.confirm_password') }}</label>
                                 <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
                             </div>
         

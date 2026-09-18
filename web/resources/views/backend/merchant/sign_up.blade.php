@@ -20,7 +20,7 @@
                     </div>
                     <div class="card-body">
                         <div class="form-group">
-                            <input id="business_name" type="text" class="form-control form-control-lg @error('business_name') is-invalid @enderror" name="business_name" value="{{ old('business_name') }}"  autocomplete="business_name" autofocus placeholder="Business Name *">
+                            <input id="business_name" type="text" class="form-control form-control-lg @error('business_name') is-invalid @enderror" name="business_name" value="{{ old('business_name') }}"  autocomplete="business_name" autofocus placeholder="{{ __('placeholder.enter_business_name') }} *">
                             @error('business_name')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -59,7 +59,7 @@
                         </div>
 
                         <div class="form-group">
-                            <input id="full_name" type="text" class="form-control form-control-lg @error('full_name') is-invalid @enderror" name="full_name" value="{{ old('first_name') }}"  autocomplete="first_name" autofocus placeholder="Full Name*">
+                            <input id="full_name" type="text" class="form-control form-control-lg @error('full_name') is-invalid @enderror" name="full_name" value="{{ old('first_name') }}"  autocomplete="first_name" autofocus placeholder="{{ __('placeholder.Enter_name') }} *">
                             @error('full_name')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -80,7 +80,7 @@
 
                         <div class="form-group">
                             <input id="mobile" type="number" class="form-control form-control-lg @error('mobile') is-invalid @enderror" name="mobile" value="{{ old('mobile',$request
-                            ->phone ? $request->phone : "") }}"  autocomplete="mobile" placeholder="Mobile *"  >
+                            ->phone ? $request->phone : "") }}"  autocomplete="mobile" placeholder="{{ __('placeholder.Enter_mobile') }} *"  >
                             @error('mobile')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -88,7 +88,7 @@
                             @enderror
                         </div>
                         <div class="form-group">
-                            <input id="password" type="password" class="form-control form-control-lg @error('password') is-invalid @enderror" name="password"  autocomplete="new-password" placeholder="Password *">
+                            <input id="password" type="password" class="form-control form-control-lg @error('password') is-invalid @enderror" name="password"  autocomplete="new-password" placeholder="{{ __('placeholder.Enter_password') }} *">
                             @error('password')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -97,7 +97,7 @@
                         </div>
 
                         <div class="form-group">
-                            <textarea name="address" id="address" class="form-control @error('address') is-invalid @enderror" placeholder="Address *" rows="5">{{ old('address')  }}</textarea>
+                            <textarea name="address" id="address" class="form-control @error('address') is-invalid @enderror" placeholder="{{ __('placeholder.Enter_address') }} *" rows="5">{{ old('address')  }}</textarea>
                             @error('address')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>

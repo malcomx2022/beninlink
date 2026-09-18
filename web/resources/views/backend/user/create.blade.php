@@ -124,7 +124,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="joining_date">{{ __('levels.joining_date') }}</label> <span class="text-danger">*</span>
-                                    <input id="joining_date" type="text" readonly="readonly" data-toggle="datepicker" name="joining_date" data-parsley-trigger="change" placeholder="yyyy-mm-dd" autocomplete="off" class="form-control @error('joining_date') is-invalid @enderror" value="{{ old('joining_date',date('Y-m-d')) }}" require>
+                                    <input id="joining_date" type="text" readonly="readonly" data-toggle="datepicker" name="joining_date" data-parsley-trigger="change" placeholder="{{ __('placeholder.date_format') }}" autocomplete="off" class="form-control @error('joining_date') is-invalid @enderror" value="{{ old('joining_date',date('Y-m-d')) }}" require>
                                     @error('joining_date')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
@@ -153,7 +153,7 @@
                                 </div >
                                 <div class="form-group">
                                     <label for="image">{{ __('levels.image') }}</label>
-                                    <input id="image" type="file" name="image" data-parsley-trigger="change" placeholder="Enter image" autocomplete="off" class="form-control @error('image') is-invalid @enderror" value="{{ old('image') }}" require>
+                                    <input id="image" type="file" name="image" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_image') }}" autocomplete="off" class="form-control @error('image') is-invalid @enderror" value="{{ old('image') }}" require>
                                     @error('image')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror

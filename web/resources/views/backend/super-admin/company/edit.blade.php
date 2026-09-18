@@ -89,7 +89,7 @@
                                                 <label for="currency">{{ __('settings.parcel_tracking') }}
                                                     {{ __('levels.prefix') }}</label>
                                                 <input type="text" name="par_track_prefix" class="form-control"
-                                                    placeholder="Enter Parcel Tracking Prefix" value="{{ @$company->company->par_track_prefix }}"/>
+                                                    placeholder="{{ __('placeholder.Enter_parcel_tracking_prefix') }}" value="{{ @$company->company->par_track_prefix }}"/>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
@@ -97,7 +97,7 @@
                                                 <label for="currency">{{ __('invoice.invoice') }}
                                                     {{ __('levels.prefix') }}</label>
                                                 <input type="text" name="invoice_prefix" class="form-control"
-                                                    placeholder="Enter Invoice Prefix" value="{{ @$company->company->invoice_prefix }}" />
+                                                    placeholder="{{ __('placeholder.Enter_invoice_prefix') }}" value="{{ @$company->company->invoice_prefix }}" />
                                             </div>
                                         </div>
                                     </div>
@@ -108,7 +108,7 @@
                                             <div class="col-12">
                                                 <label for="logo">{{ __('levels.logo') }} </label>
                                                 <input id="logo" type="file" name="logo"
-                                                    data-parsley-trigger="change" placeholder="Enter logo" autocomplete="off"
+                                                    data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_logo') }}" autocomplete="off"
                                                     class="form-control @error('logo') is-invalid @enderror"
                                                     value="{{ old('logo') }}" require>
                                                 @error('logo')
@@ -261,7 +261,7 @@
                                             class="text-danger">*</span>
                                         <input id="joining_date" type="text" readonly="readonly"
                                             data-toggle="datepicker" name="joining_date" data-parsley-trigger="change"
-                                            placeholder="yyyy-mm-dd" autocomplete="off"
+                                            placeholder="{{ __('placeholder.date_format') }}" autocomplete="off"
                                             class="form-control @error('joining_date') is-invalid @enderror"
                                             value="{{ old('joining_date',  $company->joining_date) }}" require>
                                         @error('joining_date')
@@ -273,7 +273,7 @@
                                     <div class="form-group">
                                         <label for="image">{{ __('levels.image') }}</label>
                                         <input id="image" type="file" name="image"
-                                            data-parsley-trigger="change" placeholder="Enter image" autocomplete="off"
+                                            data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_image') }}" autocomplete="off"
                                             class="form-control @error('image') is-invalid @enderror"
                                             value="{{ old('image') }}" require>
                                         @error('image')

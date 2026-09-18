@@ -33,7 +33,7 @@
                         <div class="row">
                             <div class="form-group col-12 col-sm-6 col-md-4 col-lg-4 col-xl-3">
                                 <label for="parcel_date">{{ __('parcel.date') }}</label>
-                                <input type="text" autocomplete="off" id="date" name="date" placeholder="Enter date" class="form-control date_range_picker" value="{{ old('parcel_date',$request->date) }}">
+                                <input type="text" autocomplete="off" id="date" name="date" placeholder="{{ __('placeholder.Enter_date') }}" class="form-control date_range_picker" value="{{ old('parcel_date',$request->date) }}">
                             </div>
                             <div class="form-group col-12 col-sm-6 col-md-4 col-lg-4 col-xl-3">
                                 <label for="hub_id">{{ __('levels.from_account') }}</label>
@@ -83,7 +83,7 @@
                             <p class="h3 mb-0">{{ __('fund_transfer.title') }}</p>
                             <form action="{{ route('fund.transfer.specific.search') }}" class="d-flex  " style="width:60%">
                                 @csrf
-                                <input id="Psearch" class="form-control parcelSearch group-input" value="{{ $request->search }}" name="search" type="text" placeholder="Search..">
+                                <input id="Psearch" class="form-control parcelSearch group-input" value="{{ $request->search }}" name="search" type="text" placeholder="{{ __('placeholder.search') }}">
                                 <button type="submit" class="btn btn-primary group-btn ml-0">Search</button>
                                 @if (isset($search) && count($search) > 0)
                                 <a  href="{{ route('fund.transfer.search.filter.print',['ids'=>$search]) }}" target="_blank" class="btn btn-primary ml-2">{{ __('levels.print') }}</a>
@@ -100,7 +100,7 @@
                         <div class="d-flex align-item-center">
                             <form action="{{ route('fund.transfer.specific.search') }}" class="d-flex" style="width:100%">
                                 @csrf
-                                <input id="Psearch" class="form-control parcelSearch fundTransferSearch group-input  " value="{{ $request->search }}" name="search" type="text" placeholder="Search..">
+                                <input id="Psearch" class="form-control parcelSearch fundTransferSearch group-input  " value="{{ $request->search }}" name="search" type="text" placeholder="{{ __('placeholder.search') }}">
                                 <button type="submit" class="btn btn-primary group-btn ml-0">Search</button>
                                 @if (isset($search) && count($search) > 0)
                                 <a  href="{{ route('fund.transfer.search.filter.print',['ids'=>$search]) }}" target="_blank" class="btn btn-primary ml-2">{{ __('levels.print') }}</a>

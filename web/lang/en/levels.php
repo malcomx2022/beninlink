@@ -68,7 +68,7 @@ return [
   'account_info'           => 'Account Info',
   'from_account'           => 'From Account',
   'to_account'             => 'To Account',
-  'amount'                 => 'Amount (Tk)',
+  'amount'                 => 'Amount',
   'date'                   => 'Date',
   'reject'                 => 'Reject',
   'cancel_reject'          => 'Cancel Reject',
@@ -394,6 +394,8 @@ return [
     'domain' =>'Domain',
     'more_modules'  => 'More modules',
     'wallet_activation' => 'Wallet Activation',
-    'twilio_from'=>'TWILIO FROM'
+    'twilio_from'=>'TWILIO FROM',
+    'confirm_update' => 'Do you want to apply this change?',
+    'confirm_cancel' => 'Do you want to cancel “:name”?'
 
 ];
