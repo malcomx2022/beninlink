@@ -89,4 +89,13 @@ return [
 
 
   'customs'              => 'Customs alerts',
+
+    /* Lot 5 (2026-09-18) — sidebar group headings. */
+    'group_pilotage'       => 'Operations',
+    'group_reseau'         => 'Network',
+    'group_finances'       => 'Finance',
+    'group_rapports'       => 'Reports and controls',
+    'group_relation'       => 'Relations and content',
+    'group_administration' => 'Administration',
+    'group_compte'         => 'My account',
 ];

@@ -15,6 +15,7 @@
 | 2026-09-18 | **Lot 1 livré.** Voir §10 — ce que le lot 1 a effectivement fait, et en quoi il s'écarte du plan. |
 | 2026-09-18 | **Lot 2 livré.** Voir §11 — la sémantique des statuts, une **triple** copie réduite à une table, et deux constats de code mort que l'audit n'avait pas vus. |
 | 2026-09-18 | **Lot 4 livré.** Voir §12 — la francisation, et le mécanisme d'anglais **invisible** que l'audit avait entièrement manqué : 45 chaînes rendues en anglais par `lang/fr.json`. |
+| 2026-09-18 | **Lot 5 livré.** Voir §13 — la navigation et les langues. Le vrai défaut n'était pas le menu déroulant mais le **contrôleur**, qui acceptait n'importe quelle locale. Et un chantier neuf est ouvert : **les SMS envoyés aux clients sont en anglais**. |
 
 ---
 
@@ -296,6 +297,11 @@ produit**, qui sont les plus vus :
   `Helper.php:260-290` (`"pickup assign"`, `"Delivery man assign"`, …).
 
 ### 2.10 Sélecteur de langue : sept locales pour un produit béninois
+
+> ⚠️ **Constat incomplet, corrigé au lot 5.** Le sélecteur n'était que la façade :
+> `LocalizationController::setLocalization()` acceptait **n'importe quelle** chaîne
+> et la mettait en session. `/localization/xx` suffisait à afficher les **clés
+> brutes** partout, durablement. Voir §13.2.
 `backend/partials/navber.blade.php:17-43` (et le bloc est **recopié deux fois** dans
 le même fichier, mobile + bureau) propose **anglais, bengali, hindi, arabe,
 français, espagnol, chinois** — avec drapeaux. `lang/` confirme les sept dossiers.
@@ -584,7 +590,7 @@ libellé 12 px gris) se pose dans un second temps — et **par des classes
 | **2** ✅ | `StatusParcel()` : sémantique + `else` de repli · pastilles `bl-pill` · douane aux couleurs de la charte | **fait** — voir §11. L'audit avait sous-estimé le chantier : la table existait en **trois** copies, pas une |
 | **3** | `accent_color` en base + réglage + `:root` | L'ocre devient réglable par transporteur. ⚠️ **Les défauts de couleur et la migration de données sont déjà faits** au lot 1 (voir §10) : ce lot ne porte plus que l'accent |
 | **4** ✅ | `auth/login` · les 2 lignes de `custom.js` · les 11 titres · les 85 placeholders · les `data-title` | **fait** — voir §12. L'audit comptait 85 placeholders : il y en avait **161**, et il avait manqué **45 chaînes** rendues en anglais par `lang/fr.json` |
-| **5** | Sidebar groupé · « Retrait » conditionné + état vide · sélecteur de langue réduit à FR/EN · filtre du tableau de bord | Ergonomie du back-office |
+| **5** ✅ | Sidebar groupé · « Retrait » conditionné + état vide · sélecteur de langue réduit à FR/EN · filtre du tableau de bord | **fait** — voir §13. Le sélecteur n'était que la partie visible : `LocalizationController` acceptait **n'importe quelle** chaîne |
 | **6** | `focus-visible` · `alt` par lot · 42 `table-responsive` · les 2 `http://` | Accessibilité et petits écrans |
 | **7** | Forme fine de la maquette (KPI, topbar, timeline de suivi) | Fidélité à la maquette |
 | **hors lot** | Migration Bootstrap 4 → 5 (217 `data-toggle`) | *chantier propre, jamais emboîté ici* |
@@ -1050,3 +1056,156 @@ remettant un placeholder anglais, en rétablissant `denyButtonText` et en remett
   téléchargé, pas un écran. À prendre avec le lot 5.
 - Le sidebar reste à plat (lot 5), l'ocre non réglable par transporteur (lot 3), la
   forme des chronologies de suivi (lot 7).
+
+---
+
+## 13. Lot 5 — ce qui a été livré le 2026-09-18
+
+### 13.1 Le menu : un regroupement, pas une réécriture
+
+26 entrées de premier niveau alignées sous un seul « MENU ». La maquette en groupe
+trois (Pilotage / Réseau / Gestion) — **pour un menu de huit entrées** ; à 26,
+« Gestion » en aurait avalé une vingtaine. Les trois de la maquette sont donc la
+colonne vertébrale, et **trois s'y ajoutent** :
+
+| Groupe | Entrées |
+|---|---|
+| **Pilotage** | Tableau de bord, Colis, Alertes douanières, Demandes de ramassage |
+| **Réseau** | Marchands, Livreurs, Centres |
+| **Finances** | Demandes de recharge, Paiements reçus, Retrait, Comptabilité, Paie |
+| **Rapports et contrôle** | Rapports, Journaux, Vérification fraude |
+| **Relation et contenu** | Tâches, Support, Notifications, Actualités, Site vitrine |
+| **Administration** | Utilisateurs et rôles, Actifs, Abonnement, Abonnements, Reporting SaaS, Réglages |
+
+⚠️ **Extension à faire valider**, comme la septième pastille du lot 2.
+
+Le panneau **marchand** garde les trois groupes de la maquette : huit entrées
+seulement, et l'ordre suit celui de l'app marchand — un marchand doit retrouver
+ses écrans au même endroit sur les deux surfaces.
+
+**Un intitulé ne s'affiche que si au moins une de ses entrées l'est** : sa
+condition est le OU des permissions de ses membres. Sans cela, un agent aux droits
+restreints verrait des titres sans rien dessous.
+
+**Ce qui prouve que rien n'a été perdu.** Le regroupement déplace des blocs dans un
+fichier de 663 lignes : une relecture ne peut pas le garantir à l'œil. Les jeux de
+**routes** et de **permissions** ont donc été comparés avant / après —
+**68 routes et 15 routes, identiques ; les 97 permissions, toutes présentes** — et
+les deux listes sont désormais **inscrites dans le test**. Une entrée supprimée
+fait échouer la suite.
+
+### 13.2 Les langues : le défaut n'était pas le menu déroulant
+
+Le §2.10 relevait sept langues dont trois incomplètes, et un sélecteur recopié
+sept fois dans quatre vues. Vrai, mais accessoire. Le vrai défaut :
+
+**`LocalizationController::setLocalization()` acceptait n'importe quelle chaîne** et
+la mettait en session. `/localization/xx` suffisait à basculer l'interface sur une
+locale inexistante — donc à afficher les **clés brutes** (`levels.name`) partout —
+et l'utilisateur y restait, la session étant persistante, sans savoir qu'il devait
+appeler `/localization/fr` pour s'en sortir.
+
+Trois corrections, dans cet ordre d'importance :
+
+1. **Le contrôleur** ne retient que ce que `config/locales.php` déclare. Une valeur
+   inconnue est **ignorée**, pas rabattue sur le français : un lien mal formé ne
+   doit pas changer la langue de quelqu'un qui avait choisi l'anglais.
+2. **Le middleware** `LanguageManager` posait la valeur de session telle quelle. Il
+   valide, et **nettoie la session** — sans quoi une session ouverte avant ce lot
+   resterait coincée en `zh` à chaque requête.
+3. **Le sélecteur** est écrit **une fois** (`resources/views/partials/locale-*.blade.php`),
+   alimenté par la config. Les 49 liens recopiés disparaissent.
+
+Les dossiers `lang/es`, `zh`, `ar`, `bn`, `in` **ne sont pas supprimés** — la règle
+du projet est « 0 fichier supprimé du socle ». Ils ne sont plus servis. Y rebrancher
+une langue demande de compléter ses fichiers, puis de l'ajouter à la config.
+
+Détail de charte : le drapeau du français est celui du **Bénin**, pas de la France —
+c'est ce que montre la maquette (« 🇧🇯 FR »), et c'est juste : la langue servie est
+celle du pays du produit.
+
+### 13.3 ⚠️ Un chantier neuf, et il est plus important que celui-ci
+
+En traquant les usages de la locale, **21 branches `session('locale') == 'bn'`** sont
+apparues dans `app/Repositories/Parcel/ParcelRepository.php`. Elles choisissent la
+langue des **SMS envoyés au client final**. Il y a une variante bengalie, une
+variante anglaise… et **aucune variante française** :
+
+> *Dear Aïcha, Your parcel is successfully created. Your parcel with ID BL-0001
+> parcel from Kola Distribution (15000)*
+
+**20 messages** sont ainsi construits en anglais dans ce seul fichier, et il y a des
+SMS dans trois autres dépôts (`Merchant`, `Company`, `Wallet`). C'est le texte le
+**plus vu de tout le produit** — il arrive sur le téléphone d'un client qui n'a
+jamais ouvert l'application — et l'audit ne l'avait pas vu, parce qu'il n'a regardé
+que les vues et le JavaScript.
+
+**Non traité ici**, et à dessein : ce n'est pas de la navigation, ce sont 20 gabarits
+de message à porter en clés de langue avec substitution, dans un fichier que
+`docs/guides/socle/` classe parmi ceux qu'il ne faut pas laisser l'éditeur
+réécrire. Cela mérite son lot, avec la question métier qui va avec : faut-il aussi
+la langue du **destinataire** plutôt que celle de la session de l'agent qui a créé
+le colis ? Un client béninois ne reçoit pas un SMS dans la langue choisie par
+l'opérateur qui a cliqué.
+
+### 13.4 Plus d'impasse sur « Retrait »
+
+Le module de retrait en ligne est coupé (**D10**). La **page** conditionnait déjà
+chaque passerelle ; le **menu** ne conditionnait rien : le marchand cliquait et
+arrivait sur un écran qui n'affichait qu'un titre et une rangée vide.
+
+L'entrée de menu est conditionnée, **et** les deux pages (marchand et transporteur)
+portent un état vide explicite — le menu n'y mène plus, mais une URL en favori, si.
+
+*Détail d'implémentation qui a son intérêt :* l'état vide était d'abord écrit en
+`@unless`. Blade le compile en `<?php if (! …)` — avec une espace après `if` — ce
+qui échappait au comptage `'<?php if('` de `OnlinePayoutModuleDisabledTest`. Écrit
+`@if (!…)`, la convention du dépôt tient. C'est au code neuf de s'aligner sur le
+test en place, pas au test de plier.
+
+### 13.5 Le filtre des tableaux de bord
+
+Champ de date sans `<label>` — donc non annoncé par un lecteur d'écran, et le
+placeholder disparaît dès qu'on tape. Libellé ajouté, masqué visuellement. La
+largeur passe du `style="width: 15%"` en dur (et `30%` sur l'autre tableau de bord)
+à une classe : un pourcentage sur un champ de saisie donne une largeur qui n'a rien
+à voir avec son contenu.
+
+Les deux utilitaires (`.bl-sr-only`, `.bl-filter-date`) vivent dans
+`components.css` plutôt que d'emprunter `sr-only` (Bootstrap 4) ou
+`visually-hidden` (Bootstrap 5) : le back-office charge les deux aujourd'hui, et le
+jour où l'un partira, ceci tiendra encore.
+
+### 13.6 Une erreur commise en écrivant ce lot, et le test qu'elle a produit
+
+Le générateur des conditions de groupe a d'abord produit `A || || B`. **Blade
+compile cela sans broncher** : l'erreur de syntaxe n'apparaît qu'au **rendu**.
+`php artisan view:cache` est passé au vert, et un test qui ne rend pas la page ne
+l'aurait pas vue non plus.
+
+D'où `test_the_touched_views_compile_to_valid_php`, qui **lint le PHP compilé** des
+treize vues de ce lot. Vérifié : en réintroduisant le double `||`, il échoue.
+C'est le test le plus utile du lot, et il n'existerait pas sans l'erreur.
+
+### 13.7 Un défaut préexistant, signalé et non corrigé
+
+La garde du menu **Réglages** ne liste que cinq permissions
+(`delivery_category_read`, `delivery_charge_read`, `delivery_type_read`,
+`liquid_fragile_read`, `packaging_read`) alors que son sous-menu en compte une
+quinzaine. Un agent à qui l'on n'accorde que `general_settings_read` **ne voit pas
+le menu Réglages** et ne peut donc pas atteindre les réglages généraux.
+
+Non corrigé : élargir cette garde change **qui voit quoi**, et c'est une décision de
+permissions, pas d'ergonomie. (L'intitulé de groupe « Administration », lui, liste
+bien les quinze : le groupe s'affiche, même si l'entrée reste masquée.)
+
+### 13.8 Ce que le lot 5 ne livre PAS
+
+- **Les SMS en anglais** (§13.3) — son propre lot, et le plus visible de tous.
+- **Les 42 tableaux sans `table-responsive`**, les `alt` manquants, `focus-visible`
+  et les deux `http://` : c'est le **lot 6**. *(Une note de séance les avait rangés
+  par erreur dans le lot 5 ; le plan de §8 fait foi.)*
+- **Les dossiers de langue `es`/`zh`/`ar`/`bn`/`in`** restent sur le disque (règle
+  du projet) ; ils ne sont plus servis.
+- **Les noms de feuille des exports Excel** restent en anglais (relevé au §12.8).
+- L'ocre non réglable par transporteur (lot 3), la forme des chronologies (lot 7).

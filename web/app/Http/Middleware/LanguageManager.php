@@ -20,7 +20,19 @@ class LanguageManager
     {
        
         if (session()->has('locale') && Schema::hasTable('settings')) {
-            App::setLocale(session()->get('locale'));
+            $demandee = session()->get('locale');
+
+            // ⚠️ Le socle posait la valeur de session telle quelle. Avant le lot 5,
+            // `LocalizationController` acceptait n'importe quelle chaîne : des
+            // sessions portent donc peut-être encore `zh`, `bn` ou une locale
+            // inventée, et l'interface s'y afficherait en clés brutes. On ne sert
+            // que ce que `config/locales.php` déclare, et on NETTOIE la session au
+            // passage — sinon l'utilisateur resterait coincé à chaque requête.
+            if (array_key_exists($demandee, config('locales.supported', []))) {
+                App::setLocale($demandee);
+            } else {
+                session()->forget('locale');
+            }
         }
 
         return $next($request);

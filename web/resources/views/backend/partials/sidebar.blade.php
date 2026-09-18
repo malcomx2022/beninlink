@@ -1,9 +1,16 @@
 <!-- left sidebar -->
 <div class="col-12 nav-left-sidebar sidebar-dark">
     <ul class="navbar-nav">
-        <li class="nav-divider">
-            {{ __('menus.menu') }}
-        </li>
+
+        {{-- Lot 5 de la charte web : le menu alignait 26 entrées sous un seul
+             « MENU ». Les six intitulés ci-dessous les groupent, sans rien retirer :
+             chaque hasPermission() et chaque request()->is() d'origine est conservé
+             (un test compare les deux jeux). Un intitulé ne s'affiche que si au moins
+             une de ses entrées l'est — sinon on aurait un titre sans rien dessous. --}}
+        @if (hasPermission('dashboard_read') || hasPermission('parcel_read')
+            || hasPermission('pickup_request_regular') || hasPermission('pickup_request_express'))
+            <li class="nav-divider">{{ __('menus.group_pilotage') }}</li>
+        @endif
         <li class="nav-item ">
             @if (hasPermission('dashboard_read') == true)
                 <a class="nav-link {{ request()->is('/dashboard*') ? 'active' : '' }}" href="{{ url('/dashboard') }}"
@@ -11,80 +18,6 @@
                         class="fa fa-home"></i>{{ __('menus.dashboard') }}</a>
             @endif
         </li>
-        @if (hasPermission('delivery_man_read') == true)
-            <li class="nav-item ">
-                <a class="nav-link {{ request()->is('admin/deliveryman*') ? 'active' : '' }}"
-                    href="{{ route('deliveryman.index') }}" aria-expanded="false" data-target="#submenu-1"
-                    aria-controls="submenu-1"><i class="fa fa-people-carry"></i>{{ __('menus.deliveryman') }}</a>
-            </li>
-        @endif
-        @if (hasPermission('hub_read') == true || hasPermission('hub_payment_read') == true)
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/hubs*', 'admin/request/hub/payment*', 'admin/hub/incharge*', 'admin/hub/view*') ? 'active' : '' }}"
-                    href="#" data-toggle="collapse" aria-expanded="false" data-target="#hub-manage"
-                    aria-controls="hub-manage"><i class="fas fa-warehouse"></i>{{ __('menus.hub_mange') }}</a>
-                <div id="hub-manage"
-                    class="{{ request()->is('admin/hubs*', 'admin/request/hub/payment*', 'admin/hub/incharge*', 'admin/hub/view*') ? '' : 'collapse' }} submenu">
-                    <ul class="nav flex-column">
-                        @if (hasPermission('hub_read') == true)
-                            <li class="nav-item ">
-                                <a class="nav-link {{ request()->is('admin/hubs*', 'admin/hub*') ? 'active' : '' }}"
-                                    href="{{ route('hubs.index') }}">{{ __('menus.hubs') }}</a>
-                            </li>
-                        @endif
-                        @if (hasPermission('hub_payment_read') == true)
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/request/hub/payment*') ? 'active' : '' }}"
-                                    href="{{ route('hub.hub-payment.index') }}">{{ __('menus.payments') }}</a>
-                            </li>
-                        @endif
-                    </ul>
-                </div>
-            </li>
-        @endif
-
-        @if (hasPermission('merchant_read') == true || hasPermission('payment_read') == true)
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/merchant/*', 'admin/payment*') ? 'active' : '' }}"
-                    href="#" data-toggle="collapse" aria-expanded="false" data-target="#merchant-manage"
-                    aria-controls="merchant-manage"><i class="fas fa-users"></i>{{ __('menus.merchant_manage') }}</a>
-                <div id="merchant-manage"
-                    class="{{ request()->is('admin/merchant*', 'admin/payment*') ? '' : 'collapse' }} submenu">
-                    <ul class="nav flex-column">
-                        @if (hasPermission('merchant_read') == true)
-                            <li class="nav-item ">
-                                <a class="nav-link {{ request()->is('admin/merchant*') ? 'active' : '' }}"
-                                    href="{{ route('merchant.index') }}" aria-expanded="false" data-target="#submenu-1"
-                                    aria-controls="submenu-1">{{ __('menus.merchants') }}</a>
-                            </li>
-                        @endif
-                        @if (hasPermission('payment_read') == true)
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/payment*') ? 'active' : '' }}"
-                                    href="{{ route('merchant.manage.payment.index') }}">{{ __('menus.payments') }}</a>
-                            </li>
-                        @endif
-                    </ul>
-                </div>
-            </li>
-        @endif
-
-        @if (hasPermission('todo_read') == true)
-            <li class="nav-item ">
-                <a class="nav-link {{ request()->is('admin/todo/todo_list*') ? 'active' : '' }}"
-                    href="{{ route('todo.index') }}" aria-expanded="false" data-target="#hubs" aria-controls="hubs"><i
-                        class="fas fa-tasks"></i>{{ __('menus.todo_list') }}</a>
-            </li>
-        @endif
-
-
-        @if (hasPermission('support_read') == true)
-            <li class="nav-item ">
-                <a class="nav-link {{ request()->is('admin/support*') ? 'active' : '' }}"
-                    href="{{ route('support.index') }}" aria-expanded="false" data-target="#hubs"
-                    aria-controls="hubs"><i class="fa fa-comments"></i>{{ __('menus.support') }}</a>
-            </li>
-        @endif
 
 
 
@@ -103,71 +36,6 @@
                 <a class="nav-link {{ request()->is('admin/customs*') ? 'active' : '' }}"
                     href="{{ route('customs.alerts') }}"><i
                         class="fa fa-passport"></i>{{ __('menus.customs') }}</a>
-            </li>
-        @endif
-
-        @if (hasPermission('news_offer_read') == true)
-            <li class="nav-item ">
-                <a class="nav-link {{ request()->is('admin/news-offer*') ? 'active' : '' }}"
-                    href="{{ route('news-offer.index') }}"><i
-                        class="fa fa-newspaper"></i>{{ __('menus.news_offer') }}</a>
-            </li>
-        @endif
-
-        @if (hasPermission('log_read') == true)
-            <li class="nav-item ">
-                <a class="nav-link {{ request()->is('admin/logs*') ? 'active' : '' }}"
-                    href="{{ route('logs.index') }}" aria-expanded="false" data-target="#active_log"
-                    aria-controls="active_log"><i class="fa fa-history"></i>{{ __('menus.active_logs') }}</a>
-            </li>
-        @endif
-        {{-- Fraud --}}
-        @if (hasPermission('fraud_read') == true)
-            <li class="nav-item ">
-                <a class="nav-link {{ request()->is('admin/fraud*') ? 'active' : '' }}"
-                    href="{{ route('fraud.index') }}" aria-expanded="false" data-target="#active_log"
-                    aria-controls="active_log"><i class="fa fa-user-times"></i>{{ __('menus.fraud_check') }}</a>
-            </li>
-        @endif
-
-        @if (hasPermission('subscribe_read') == true)
-            <li class="nav-item ">
-                <a class="nav-link {{ request()->is('admin/subscribe*') ? 'active' : '' }}"
-                    href="{{ route('subscribe.index') }}" aria-expanded="false" data-target="#active_log"
-                    aria-controls="active_log"><i class="fas fa-users"></i>{{ __('account.subscribe') }}</a>
-            </li>
-        @endif
-        
-        @if (hasPermission('subscription_read') == true)
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/subscription*','subscription') ? 'active' : '' }}" href="#"
-                    data-toggle="collapse" aria-expanded="false" data-target="#subscription-subscription"
-                    aria-controls="hub-manage"><i class="fa-solid fa-grip-vertical"></i>{{ __('levels.subscription') }}</a>
-                <div id="subscription-subscription"
-                    class="{{ request()->is('admin/subscription*','subscription') ? '' : 'collapse' }} submenu">
-                    <ul class="nav flex-column">
-                    
-                        <li class="nav-item ">
-                            <a class="nav-link {{ request()->is('subscription') ? 'active' : '' }}"
-                                href="{{ route('subscription.index') }}" aria-expanded="false" data-target="#active_log"
-                                aria-controls="active_log">{{ __('levels.subscription') }}</a>
-                        </li>
-                     
-                        <li class="nav-item ">
-                            <a class="nav-link {{ request()->is('admin/subscription/history*') ? 'active' : '' }}"
-                                href="{{ route('admin.subscription.history') }}" aria-expanded="false" data-target="#active_log"
-                                aria-controls="active_log">{{ __('levels.subscription_history') }}</a>
-                        </li> 
-                    </ul>
-                </div>
-            </li>
-        @endif
-
-        {{-- Chantier 6 : reporting SaaS, super-admin seul. --}}
-        @if (isSuperadmin() && Route::has('saas.reporting'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('super-admin/reporting*') ? 'active' : '' }}"
-                    href="{{ route('saas.reporting') }}"><i class="fa-solid fa-chart-line"></i>{{ __('saas.title') }}</a>
             </li>
         @endif
 
@@ -201,14 +69,74 @@
             </li>
         @endif
 
+        @if (hasPermission('merchant_read') || hasPermission('payment_read')
+            || hasPermission('delivery_man_read') || hasPermission('hub_read')
+            || hasPermission('hub_payment_read'))
+            <li class="nav-divider">{{ __('menus.group_reseau') }}</li>
+        @endif
 
-
-        @if (hasPermission('assets_read') == true)
-            <li class="nav-item ">
-                <a class="nav-link {{ request()->is('admin/assets*') ? 'active' : '' }}"
-                    href="{{ route('asset.index') }}" aria-expanded="false" data-target="#hubs"
-                    aria-controls="hubs"><i class="fa fa-fw fa-users"></i>{{ __('menus.assets') }}</a>
+        @if (hasPermission('merchant_read') == true || hasPermission('payment_read') == true)
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/merchant/*', 'admin/payment*') ? 'active' : '' }}"
+                    href="#" data-toggle="collapse" aria-expanded="false" data-target="#merchant-manage"
+                    aria-controls="merchant-manage"><i class="fas fa-users"></i>{{ __('menus.merchant_manage') }}</a>
+                <div id="merchant-manage"
+                    class="{{ request()->is('admin/merchant*', 'admin/payment*') ? '' : 'collapse' }} submenu">
+                    <ul class="nav flex-column">
+                        @if (hasPermission('merchant_read') == true)
+                            <li class="nav-item ">
+                                <a class="nav-link {{ request()->is('admin/merchant*') ? 'active' : '' }}"
+                                    href="{{ route('merchant.index') }}" aria-expanded="false" data-target="#submenu-1"
+                                    aria-controls="submenu-1">{{ __('menus.merchants') }}</a>
+                            </li>
+                        @endif
+                        @if (hasPermission('payment_read') == true)
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/payment*') ? 'active' : '' }}"
+                                    href="{{ route('merchant.manage.payment.index') }}">{{ __('menus.payments') }}</a>
+                            </li>
+                        @endif
+                    </ul>
+                </div>
             </li>
+        @endif
+        @if (hasPermission('delivery_man_read') == true)
+            <li class="nav-item ">
+                <a class="nav-link {{ request()->is('admin/deliveryman*') ? 'active' : '' }}"
+                    href="{{ route('deliveryman.index') }}" aria-expanded="false" data-target="#submenu-1"
+                    aria-controls="submenu-1"><i class="fa fa-people-carry"></i>{{ __('menus.deliveryman') }}</a>
+            </li>
+        @endif
+        @if (hasPermission('hub_read') == true || hasPermission('hub_payment_read') == true)
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/hubs*', 'admin/request/hub/payment*', 'admin/hub/incharge*', 'admin/hub/view*') ? 'active' : '' }}"
+                    href="#" data-toggle="collapse" aria-expanded="false" data-target="#hub-manage"
+                    aria-controls="hub-manage"><i class="fas fa-warehouse"></i>{{ __('menus.hub_mange') }}</a>
+                <div id="hub-manage"
+                    class="{{ request()->is('admin/hubs*', 'admin/request/hub/payment*', 'admin/hub/incharge*', 'admin/hub/view*') ? '' : 'collapse' }} submenu">
+                    <ul class="nav flex-column">
+                        @if (hasPermission('hub_read') == true)
+                            <li class="nav-item ">
+                                <a class="nav-link {{ request()->is('admin/hubs*', 'admin/hub*') ? 'active' : '' }}"
+                                    href="{{ route('hubs.index') }}">{{ __('menus.hubs') }}</a>
+                            </li>
+                        @endif
+                        @if (hasPermission('hub_payment_read') == true)
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/request/hub/payment*') ? 'active' : '' }}"
+                                    href="{{ route('hub.hub-payment.index') }}">{{ __('menus.payments') }}</a>
+                            </li>
+                        @endif
+                    </ul>
+                </div>
+            </li>
+        @endif
+
+        @if (hasPermission('wallet_request_read') || hasPermission('online_payment_read')
+            || hasPermission('payout_read') || hasPermission('account_read')
+            || hasPermission('fund_transfer_read') || hasPermission('cash_received_from_delivery_man_read')
+            || hasPermission('salary_generate_read') || hasPermission('salary_read') || auth()->user()->hub_id)
+            <li class="nav-divider">{{ __('menus.group_finances') }}</li>
         @endif
 
         @if (hasPermission('wallet_request_read'))
@@ -318,49 +246,6 @@
             </li>
         @endif
 
-        @if (hasPermission('role_read') == true ||
-                hasPermission('designation_read') == true ||
-                hasPermission('department_read') == true ||
-                hasPermission('user_read') == true)
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/roles*', 'admin/users*', 'admin/designations*', 'admin/departments*') ? 'active' : '' }} "
-                    href="#" data-toggle="collapse" aria-expanded="false" data-target="#submenu-2"
-                    aria-controls="submenu-2"><i class="fas fa-th"></i>{{ __('menus.user_role') }}</a>
-                <div id="submenu-2"
-                    class="{{ request()->is('admin/roles*', 'admin/users*', 'admin/designations*', 'admin/departments*') ? '' : 'collapse' }} submenu">
-                    <ul class="nav flex-column">
-
-                        @if (hasPermission('role_read') == true)
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/roles*') ? 'active' : '' }}"
-                                    href="{{ route('roles.index') }}">{{ __('menus.roles') }}</a>
-                            </li>
-                        @endif
-                        @if (hasPermission('designation_read') == true)
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/designations*') ? 'active' : '' }}"
-                                    href="{{ route('designations.index') }}">{{ __('menus.designations') }}</a>
-                            </li>
-                        @endif
-                        @if (hasPermission('department_read') == true)
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/departments*') ? 'active' : '' }}"
-                                    href="{{ route('departments.index') }}">{{ __('menus.departments') }}</a>
-                            </li>
-                        @endif
-
-                        @if (hasPermission('user_read') == true)
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/users*') ? 'active' : '' }}"
-                                    href="{{ route('users.index') }}">{{ __('menus.users') }}</a>
-                            </li>
-                        @endif
-
-                    </ul>
-                </div>
-            </li>
-        @endif
-
 
 
         @if (hasPermission('salary_generate_read') == true || hasPermission('salary_read') == true)
@@ -392,6 +277,13 @@
                     </ul>
                 </div>
             </li>
+        @endif
+
+        @if (hasPermission('parcel_status_reports') || hasPermission('parcel_wise_profit')
+            || hasPermission('salary_reports') || hasPermission('merchant_hub_deliveryman')
+            || hasPermission('parcel_total_summery') || hasPermission('log_read')
+            || hasPermission('fraud_read'))
+            <li class="nav-divider">{{ __('menus.group_rapports') }}</li>
         @endif
 
         {{-- reports --}}
@@ -440,6 +332,47 @@
                 </div>
             </li>
         @endif
+
+        @if (hasPermission('log_read') == true)
+            <li class="nav-item ">
+                <a class="nav-link {{ request()->is('admin/logs*') ? 'active' : '' }}"
+                    href="{{ route('logs.index') }}" aria-expanded="false" data-target="#active_log"
+                    aria-controls="active_log"><i class="fa fa-history"></i>{{ __('menus.active_logs') }}</a>
+            </li>
+        @endif
+        {{-- Fraud --}}
+        @if (hasPermission('fraud_read') == true)
+            <li class="nav-item ">
+                <a class="nav-link {{ request()->is('admin/fraud*') ? 'active' : '' }}"
+                    href="{{ route('fraud.index') }}" aria-expanded="false" data-target="#active_log"
+                    aria-controls="active_log"><i class="fa fa-user-times"></i>{{ __('menus.fraud_check') }}</a>
+            </li>
+        @endif
+
+        @if (hasPermission('todo_read') || hasPermission('support_read')
+            || hasPermission('push_notification_read') || hasPermission('news_offer_read')
+            || hasPermission('social_link_read') || hasPermission('service_read')
+            || hasPermission('why_courier_read') || hasPermission('faq_read') || hasPermission('partner_read')
+            || hasPermission('blogs_read') || hasPermission('pages_read') || hasPermission('section_read'))
+            <li class="nav-divider">{{ __('menus.group_relation') }}</li>
+        @endif
+
+        @if (hasPermission('todo_read') == true)
+            <li class="nav-item ">
+                <a class="nav-link {{ request()->is('admin/todo/todo_list*') ? 'active' : '' }}"
+                    href="{{ route('todo.index') }}" aria-expanded="false" data-target="#hubs" aria-controls="hubs"><i
+                        class="fas fa-tasks"></i>{{ __('menus.todo_list') }}</a>
+            </li>
+        @endif
+
+
+        @if (hasPermission('support_read') == true)
+            <li class="nav-item ">
+                <a class="nav-link {{ request()->is('admin/support*') ? 'active' : '' }}"
+                    href="{{ route('support.index') }}" aria-expanded="false" data-target="#hubs"
+                    aria-controls="hubs"><i class="fa fa-comments"></i>{{ __('menus.support') }}</a>
+            </li>
+        @endif
         {{-- end reports --}}
 
 
@@ -448,6 +381,14 @@
                 <a class="nav-link {{ request()->is('admin/push-notification*') ? 'active' : '' }}"
                     href="{{ route('push-notification.index') }}" aria-expanded="false" data-target="#submenu-1"
                     aria-controls="submenu-1"><i class="fa fa-bell"></i>{{ __('menus.push_notification') }}</a>
+            </li>
+        @endif
+
+        @if (hasPermission('news_offer_read') == true)
+            <li class="nav-item ">
+                <a class="nav-link {{ request()->is('admin/news-offer*') ? 'active' : '' }}"
+                    href="{{ route('news-offer.index') }}"><i
+                        class="fa fa-newspaper"></i>{{ __('menus.news_offer') }}</a>
             </li>
         @endif
  
@@ -519,6 +460,115 @@
                         @endif
                     </ul>
                 </div>
+            </li>
+        @endif
+
+        @if (hasPermission('role_read') || hasPermission('designation_read')
+            || hasPermission('department_read') || hasPermission('user_read') || hasPermission('assets_read')
+            || hasPermission('subscribe_read') || hasPermission('subscription_read')
+            || hasPermission('delivery_category_read') || hasPermission('delivery_charge_read')
+            || hasPermission('delivery_type_read') || hasPermission('liquid_fragile_read')
+            || hasPermission('packaging_read') || hasPermission('general_settings_read')
+            || hasPermission('sms_settings_read') || hasPermission('sms_send_settings_read')
+            || hasPermission('notification_settings_read') || hasPermission('google_map_settings_read')
+            || hasPermission('social_login_settings_update') || hasPermission('payout_setup_settings_read')
+            || hasPermission('currency_read') || hasPermission('asset_category_read')
+            || hasPermission('database_backup_read') || hasPermission('invoice_generate_menually')
+            || (isSuperadmin() && Route::has('saas.reporting')))
+            <li class="nav-divider">{{ __('menus.group_administration') }}</li>
+        @endif
+
+        @if (hasPermission('role_read') == true ||
+                hasPermission('designation_read') == true ||
+                hasPermission('department_read') == true ||
+                hasPermission('user_read') == true)
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/roles*', 'admin/users*', 'admin/designations*', 'admin/departments*') ? 'active' : '' }} "
+                    href="#" data-toggle="collapse" aria-expanded="false" data-target="#submenu-2"
+                    aria-controls="submenu-2"><i class="fas fa-th"></i>{{ __('menus.user_role') }}</a>
+                <div id="submenu-2"
+                    class="{{ request()->is('admin/roles*', 'admin/users*', 'admin/designations*', 'admin/departments*') ? '' : 'collapse' }} submenu">
+                    <ul class="nav flex-column">
+
+                        @if (hasPermission('role_read') == true)
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/roles*') ? 'active' : '' }}"
+                                    href="{{ route('roles.index') }}">{{ __('menus.roles') }}</a>
+                            </li>
+                        @endif
+                        @if (hasPermission('designation_read') == true)
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/designations*') ? 'active' : '' }}"
+                                    href="{{ route('designations.index') }}">{{ __('menus.designations') }}</a>
+                            </li>
+                        @endif
+                        @if (hasPermission('department_read') == true)
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/departments*') ? 'active' : '' }}"
+                                    href="{{ route('departments.index') }}">{{ __('menus.departments') }}</a>
+                            </li>
+                        @endif
+
+                        @if (hasPermission('user_read') == true)
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('admin/users*') ? 'active' : '' }}"
+                                    href="{{ route('users.index') }}">{{ __('menus.users') }}</a>
+                            </li>
+                        @endif
+
+                    </ul>
+                </div>
+            </li>
+        @endif
+
+
+
+        @if (hasPermission('assets_read') == true)
+            <li class="nav-item ">
+                <a class="nav-link {{ request()->is('admin/assets*') ? 'active' : '' }}"
+                    href="{{ route('asset.index') }}" aria-expanded="false" data-target="#hubs"
+                    aria-controls="hubs"><i class="fa fa-fw fa-users"></i>{{ __('menus.assets') }}</a>
+            </li>
+        @endif
+
+        @if (hasPermission('subscribe_read') == true)
+            <li class="nav-item ">
+                <a class="nav-link {{ request()->is('admin/subscribe*') ? 'active' : '' }}"
+                    href="{{ route('subscribe.index') }}" aria-expanded="false" data-target="#active_log"
+                    aria-controls="active_log"><i class="fas fa-users"></i>{{ __('account.subscribe') }}</a>
+            </li>
+        @endif
+        
+        @if (hasPermission('subscription_read') == true)
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/subscription*','subscription') ? 'active' : '' }}" href="#"
+                    data-toggle="collapse" aria-expanded="false" data-target="#subscription-subscription"
+                    aria-controls="hub-manage"><i class="fa-solid fa-grip-vertical"></i>{{ __('levels.subscription') }}</a>
+                <div id="subscription-subscription"
+                    class="{{ request()->is('admin/subscription*','subscription') ? '' : 'collapse' }} submenu">
+                    <ul class="nav flex-column">
+                    
+                        <li class="nav-item ">
+                            <a class="nav-link {{ request()->is('subscription') ? 'active' : '' }}"
+                                href="{{ route('subscription.index') }}" aria-expanded="false" data-target="#active_log"
+                                aria-controls="active_log">{{ __('levels.subscription') }}</a>
+                        </li>
+                     
+                        <li class="nav-item ">
+                            <a class="nav-link {{ request()->is('admin/subscription/history*') ? 'active' : '' }}"
+                                href="{{ route('admin.subscription.history') }}" aria-expanded="false" data-target="#active_log"
+                                aria-controls="active_log">{{ __('levels.subscription_history') }}</a>
+                        </li> 
+                    </ul>
+                </div>
+            </li>
+        @endif
+
+        {{-- Chantier 6 : reporting SaaS, super-admin seul. --}}
+        @if (isSuperadmin() && Route::has('saas.reporting'))
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('super-admin/reporting*') ? 'active' : '' }}"
+                    href="{{ route('saas.reporting') }}"><i class="fa-solid fa-chart-line"></i>{{ __('saas.title') }}</a>
             </li>
         @endif
 
@@ -654,8 +704,6 @@
                 </div>
             </li>
         @endif
-
-
 
     </ul>
 </div>

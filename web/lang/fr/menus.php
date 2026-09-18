@@ -89,5 +89,19 @@ return [
     'plans' => 'Forfaits',
     'company' => 'Société',
   'customs'              => 'Alertes douanières',
+
+    /* ── Lot 5 (2026-09-18) — intitulés de groupe du sidebar ──────────────────
+       Le menu alignait 26 entrées sous un seul « MENU ». La maquette validée les
+       groupe — elle en montre trois (Pilotage / Réseau / Gestion) pour un menu de
+       huit entrées ; à 26, « Gestion » en aurait avalé une vingtaine. Les trois de
+       la maquette sont donc la colonne vertébrale, et trois s'y ajoutent.
+       ⚠️ Extension à faire valider, comme la septième pastille du lot 2. */
+    'group_pilotage'       => 'Pilotage',
+    'group_reseau'         => 'Réseau',
+    'group_finances'       => 'Finances',
+    'group_rapports'       => 'Rapports et contrôle',
+    'group_relation'       => 'Relation et contenu',
+    'group_administration' => 'Administration',
+    'group_compte'         => 'Mon compte',
 ];
 

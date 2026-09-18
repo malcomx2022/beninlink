@@ -33,6 +33,20 @@
                     </div>
                 </div>
             </div>
+            {{-- Lot 5 : un écran vide n'explique rien. Le module de retrait est coupé
+                 (D10) ; sans ce message, la page n'affichait qu'un titre et une rangée
+                 vide. Le menu ne mène plus ici, mais une URL en favori, si. --}}
+            @if (!onlinePayoutEnabled())
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center text-muted">
+                                {{ __('levels.payout_unavailable') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
             <div class="row mt-2">
                 @if(onlinePayoutEnabled() && globalSettings('paypal_status') == \App\Enums\Status::ACTIVE) {{-- D10 --}}
                 <div class="col-lg-6 col-md-6 ">

@@ -396,5 +396,9 @@ return [
     'confirm_update' => 'Voulez-vous appliquer cette modification ?',
     /* :name porte le libellé du statut annulé — voir ParcelStage::cancelledLabel(). */
     'confirm_cancel' => 'Voulez-vous annuler « :name » ?',
+    /* Lot 5 : D10 coupe le module de retrait en ligne. La page existe encore
+       (une URL en favori y mène) ; elle doit dire pourquoi elle est vide. */
+    'payout_unavailable' => 'Le retrait en ligne n\'est pas disponible. Les règlements se font par relevé de règlement.',
+    'filter_period' => 'Période à afficher',
  
 ];

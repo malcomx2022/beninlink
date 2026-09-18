@@ -396,6 +396,8 @@ return [
     'wallet_activation' => 'Wallet Activation',
     'twilio_from'=>'TWILIO FROM',
     'confirm_update' => 'Do you want to apply this change?',
-    'confirm_cancel' => 'Do you want to cancel “:name”?'
+    'confirm_cancel' => 'Do you want to cancel “:name”?',
+    'payout_unavailable' => 'Online payout is not available. Settlements are made through settlement statements.',
+    'filter_period' => 'Period to display',
 
 ];
