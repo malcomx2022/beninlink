@@ -11,7 +11,7 @@
                 <div class="col-lg-4 col-sm-6  text-center why-courier-col"> 
                     <div class="whycourier-item row">
                         <div class="text-center whycourier-box mb-0" > 
-                            <img src="{{ $whycourier->image }}" width="100%"/>  
+                            <img alt="" src="{{ $whycourier->image }}" width="100%"/>  
                         </div>
                         <h5 class="my-3 font-weight-bold">{{ $whycourier->title }}</h5> 
                     </div> 

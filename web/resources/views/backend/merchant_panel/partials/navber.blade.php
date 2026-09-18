@@ -10,7 +10,7 @@
                     <div class="dashboard-header">
                         <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
                             <a class="navbar-brand" href="{{url('/')}}">
-                                <img src="{{ settings()->logo_image }}" class="logo"/>
+                                <img alt="{{ settings()->name }}" src="{{ settings()->logo_image }}" class="logo"/>
                             </a>
                             <div class="dropdown lang-dropdown navbar_menus changeLocale mobileLocale ">
                                 <button class="btn  dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

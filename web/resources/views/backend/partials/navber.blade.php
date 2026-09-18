@@ -11,7 +11,7 @@
                         <div class="dashboard-header">
                             <nav class="navbar navbar-expand-lg navbar-light  fixed-top   " >
                                 <a class="navbar-brand" href="{{url('/')}}">
-                                    <img src="{{ settings()->logo_image }}" class="logo" />
+                                    <img alt="{{ settings()->name }}" src="{{ settings()->logo_image }}" class="logo" />
                                 </a>
                                 <div class="dropdown lang-dropdown navbar_menus changeLocale mobileLocale ">
                                     <button class="btn  dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -364,7 +364,7 @@
                                                                 class="list-group-item list-group-item-action active">
                                                                     <div class="notification-info">
                                                                         <div class="notification-list-user-img">
-                                                                            <img src="{{ singleUser($notify['user_id'])->image }}" class="user-avatar-md rounded-circle">
+                                                                            <img alt="" src="{{ singleUser($notify['user_id'])->image }}" class="user-avatar-md rounded-circle">
                                                                         </div>
                                                                         <div class="notification-list-user-block">
                                                                             <span class="notification-list-user-name">
@@ -441,7 +441,7 @@
                                                 class="list-group-item list-group-item-action active">
                                                     <div class="notification-info">
                                                         <div class="notification-list-user-img">
-                                                            <img src="{{ singleUser($notify['user_id'])->image }}" class="user-avatar-md rounded-circle">
+                                                            <img alt="" src="{{ singleUser($notify['user_id'])->image }}" class="user-avatar-md rounded-circle">
                                                         </div>
                                                         <div class="notification-list-user-block">
                                                             <span class="notification-list-user-name">

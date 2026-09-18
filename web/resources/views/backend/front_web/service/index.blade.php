@@ -55,7 +55,7 @@
                                 <tr>
                                     <td>{{$i++}}</td>
                                     <td>{{@$service->title}}</td>
-                                    <td><img src="{{ @$service->image }}"/> </td>
+                                    <td><img alt="" src="{{ @$service->image }}"/> </td>
                                     <td width="25%">{!! @$service->description !!}</td> 
                                     <td>{{@$service->position}}</td>
                                     <td>{!!@$service->my_status!!}</td>

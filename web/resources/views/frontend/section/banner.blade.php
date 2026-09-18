@@ -23,7 +23,7 @@
             <div class="col-lg-6">
                 <div class="position-relative offset-lg-1 " data-cue="slideInDown" data-show="true" >
                     @if(section(\App\Enums\SectionType::BANNER,'banner'))
-                        <img src="{{ section(\App\Enums\SectionType::BANNER,'banner') }}" class="banner-image" />
+                        <img alt="" src="{{ section(\App\Enums\SectionType::BANNER,'banner') }}" class="banner-image" />
                     @endif
                 </div>
             </div> 

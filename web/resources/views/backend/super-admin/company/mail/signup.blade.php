@@ -35,7 +35,7 @@
         <table style="width:100%;height:50px;max-width:650px;margin: auto;">
                 <tr>
                     <td style="text-align: center;padding:30px 10px">
-                        <a href="{{ url('/') }}"><img src="{{ static_asset(@settings()->rxlogo->original) }}" style="height: 50px;"/></a>
+                        <a href="{{ url('/') }}"><img alt="{{ settings()->name }}" src="{{ static_asset(@settings()->rxlogo->original) }}" style="height: 50px;"/></a>
                     </td>
                 </tr>
         </table>
@@ -78,10 +78,10 @@
                 </tr>
                 <tr>
                     <td style="width: 50%; text-align: right;padding: 10px 10px 30px 10px;">
-                       <a href="#"> <img src="{{ static_asset('backend/images/social-media') }}/play butttom.png" style="width:200px;"/></a>
+                       <a href="#"> <img alt="{{ __('Download on Google Play') }}" src="{{ static_asset('backend/images/social-media') }}/play butttom.png" style="width:200px;"/></a>
                     </td>
                     <td style="width: 50%;text-align: left;padding: 10px 10px 30px 10px;">
-                        <a href="#"><img src="{{ static_asset('backend/images/social-media') }}/istore.png" style="width:200px" /></a>
+                        <a href="#"><img alt="{{ __('Download on the App Store') }}" src="{{ static_asset('backend/images/social-media') }}/istore.png" style="width:200px" /></a>
                     </td>
                 </tr>
         </table>
@@ -89,10 +89,10 @@
                 <tr>
                     <td style="text-align: center;">
                         <ul>
-                            <li> <a> <img src="{{ static_asset('backend/images/social-media') }}/brand-b.png" style="width: 30px;" />  </a> </li>
-                            <li> <a> <img src="{{ static_asset('backend/images/social-media') }}/brand-c.png" style="width: 30px;" />  </a> </li>
-                            <li> <a> <img src="{{ static_asset('backend/images/social-media') }}/brand-d.png" style="width: 30px;" />  </a> </li>
-                            <li> <a> <img src="{{ static_asset('backend/images/social-media') }}/brand-e.png" style="width: 30px;" />  </a> </li>
+                            <li> <a> <img alt="" src="{{ static_asset('backend/images/social-media') }}/brand-b.png" style="width: 30px;" />  </a> </li>
+                            <li> <a> <img alt="" src="{{ static_asset('backend/images/social-media') }}/brand-c.png" style="width: 30px;" />  </a> </li>
+                            <li> <a> <img alt="" src="{{ static_asset('backend/images/social-media') }}/brand-d.png" style="width: 30px;" />  </a> </li>
+                            <li> <a> <img alt="" src="{{ static_asset('backend/images/social-media') }}/brand-e.png" style="width: 30px;" />  </a> </li>
                         </ul>
                     </td>
                 </tr>

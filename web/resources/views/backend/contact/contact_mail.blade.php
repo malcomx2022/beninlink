@@ -38,7 +38,7 @@
         <table style="width:100%;height:50px;max-width:650px;margin: auto;">
             <tr> 
                 <td style="text-align: center;padding:30px 10px">
-                    <a href="{{ url('/') }}"><img src="{{ $logoImage }}" style="height: 50px;width:250px;object-fit:contain"/></a>
+                    <a href="{{ url('/') }}"><img alt="{{ settings()->name }}" src="{{ $logoImage }}" style="height: 50px;width:250px;object-fit:contain"/></a>
                 </td>
             </tr>
         </table>

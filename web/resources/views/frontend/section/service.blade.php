@@ -14,7 +14,7 @@
                             <div class="my-4" >
                                 <div class="service-box">
                                     <div class="icon-box d-flex"> 
-                                        <img src="{{ $service->image }}" width="100%"/>
+                                        <img alt="" src="{{ $service->image }}" width="100%"/>
                                     </div>
                                 </div>
                             </div>

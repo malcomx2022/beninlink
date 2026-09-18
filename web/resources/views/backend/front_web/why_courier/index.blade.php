@@ -53,7 +53,7 @@
                                 <tr>
                                     <td>{{$i++}}</td>
                                     <td width="25%">{{@$whycourier->title}}</td>
-                                    <td><img src="{{ @$whycourier->image }}"/> </td> 
+                                    <td><img alt="" src="{{ @$whycourier->image }}"/> </td> 
                                     <td>{{@$whycourier->position}}</td>
                                     <td>{!!@$whycourier->my_status!!}</td>
                                     @if(hasPermission('why_courier_update') == true || hasPermission('why_courier_delete') == true )

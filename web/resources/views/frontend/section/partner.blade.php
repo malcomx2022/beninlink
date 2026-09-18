@@ -13,7 +13,7 @@
                     @foreach ($partners as $partner)    
                         <div class="swiper-slide">
                             <a href="{{ @$partner->link }}" class="d-inline-block" target="_blank">
-                                <img src="{{ @$partner->image }}" class="partner-logo"  />
+                                <img alt="{{ @$partner->name }}" src="{{ @$partner->image }}" class="partner-logo"  />
                             </a>
                         </div>    
                     @endforeach
