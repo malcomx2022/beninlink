@@ -52,7 +52,7 @@ compte de marchands), 521 Banques ; journaux VE, OD, BQ. L'export journal
 valide pas un plan de comptes sur du papier :
 
 - **Fiche de validation** : `docs/guides/comptabilite/plan-de-comptes.md` — les
-  trois écritures avec un exemple chiffré réel, les cinq questions ci-dessous
+  trois écritures avec un exemple chiffré réel, les questions ci-dessous
   avec une proposition **et sa raison**, une case par réponse, et une signature.
 - **Extrait de période** : `php artisan beninlink:journal-syscohada [--du=]
   [--au=] [--societe=] [--payes] [--fichier=]`. L'export n'existait que relevé
@@ -83,8 +83,20 @@ valide pas un plan de comptes sur du papier :
    `InvoiceRepository` force `vat_amount = 0`. Le socle traite donc le retour
    **hors champ**, sans que ce choix ait jamais été posé. Si l'expert-comptable
    le juge taxable, l'assiette déclarée est aujourd'hui sous-évaluée du montant
-   des retours — et c'est la **seule** des six réponses qui demande du code,
-   pas du paramétrage.
+   des retours.
+7. **Arrondi de la TVA au franc** — question ajoutée le 2026-09-18, en faisant le
+   point fonctionnel avant mise en production. Le FCFA n'a pas de subdivision,
+   mais la TVA est un pourcentage : 18 % de 1 680 F donne **302,40 F**, et le
+   logiciel garde la décimale. Le relevé, lui, arrondit chaque ligne à
+   l'impression (`SettlementStatement::int()`). Les deux ne disent donc pas la
+   même chose : mesuré sur le jeu pilote, **12 colis sur 35** portent une TVA non
+   entière, et **2 relevés sur 5** diffèrent de leur propre ligne en base de
+   0,40 F. C'est la forme exacte de l'anomalie à 14,40 F trouvée sur D9.
+   La règle d'arrondi appartient au comptable ; le **désaccord entre le document
+   et la base** est un défaut quelle que soit la règle retenue.
+
+Les questions **6 et 7** sont les seules qui demandent du code, pas du
+paramétrage.
 
 **Défaut corrigé le 2026-09-07 dans la fiche.** L'exemple chiffré annonçait « un
 relevé d'un colis » alors que ses montants étaient les **totaux de trois colis**,
