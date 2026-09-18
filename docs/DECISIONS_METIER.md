@@ -87,16 +87,23 @@ valide pas un plan de comptes sur du papier :
 7. **Arrondi de la TVA au franc** — question ajoutée le 2026-09-18, en faisant le
    point fonctionnel avant mise en production. Le FCFA n'a pas de subdivision,
    mais la TVA est un pourcentage : 18 % de 1 680 F donne **302,40 F**, et le
-   logiciel garde la décimale. Le relevé, lui, arrondit chaque ligne à
+   logiciel gardait la décimale. Le relevé, lui, arrondit chaque ligne à
    l'impression (`SettlementStatement::int()`). Les deux ne disent donc pas la
-   même chose : mesuré sur le jeu pilote, **12 colis sur 35** portent une TVA non
-   entière, et **2 relevés sur 5** diffèrent de leur propre ligne en base de
-   0,40 F. C'est la forme exacte de l'anomalie à 14,40 F trouvée sur D9.
-   La règle d'arrondi appartient au comptable ; le **désaccord entre le document
-   et la base** est un défaut quelle que soit la règle retenue.
+   même chose : mesuré sur le jeu pilote, **12 colis sur 35** portaient une TVA
+   non entière, et **2 relevés sur 5** différaient de leur propre ligne en base
+   de 0,40 F. C'était la forme exacte de l'anomalie à 14,40 F trouvée sur D9.
 
-Les questions **6 et 7** sont les seules qui demandent du code, pas du
-paramétrage.
+   **Appliqué le 2026-09-18** : l'arrondi vit dans
+   `ChargeCalculator::percentage()`, le seul endroit où un taux devient des
+   francs — il couvre donc la TVA **et la commission COD**, qui ne tombait juste
+   que par la rondeur de ses taux (17 350 F à 2,5 % font 433,75 F). Le même jeu
+   pilote reconstruit ne porte plus **aucun** centime et **aucun** écart
+   document / base. Deux tests le tiennent, éprouvés en retirant le correctif.
+   Ce qui reste au comptable : confirmer la règle (au plus proche) et dire si le
+   passé doit être repris — les colis antérieurs gardent leurs décimales.
+
+La question **6** demande encore du code ; la **7** l'a reçu, et n'attend plus
+qu'une confirmation.
 
 **Défaut corrigé le 2026-09-07 dans la fiche.** L'exemple chiffré annonçait « un
 relevé d'un colis » alors que ses montants étaient les **totaux de trois colis**,

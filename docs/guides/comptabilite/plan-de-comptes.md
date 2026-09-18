@@ -25,9 +25,10 @@ de 18 % — et c'est la première chose qu'un comptable vérifie :
 
 **Net à reverser : 80 000 − 1 987 = 78 013.**
 
-⚠️ Les TVA de ce tableau sont **arrondies au franc**, comme sur le relevé
-imprimé : 18 % de 560 F font 100,80 F, affichés 101. En base, le logiciel
-conserve aujourd'hui les 100,80 — c'est l'objet de la **question 7**.
+Les TVA de ce tableau sont **arrondies au franc** : 18 % de 560 F font
+100,80 F, arrondis à 101. Depuis le **2026-09-18**, la base porte le même 101 —
+l'arrondi est appliqué au calcul (**question 7**). Les colis créés *avant* cette
+date gardent leurs centimes : voir la case « reprise du passé ».
 
 Le taux apparent du relevé (12,9 %) n'est pas une erreur de calcul : il vient de
 la troisième ligne. **Les frais de retour sortent de l'assiette de TVA** —
@@ -76,7 +77,7 @@ ligne de `web/config/syscohada.php`.
 | 4 | **Codes de journaux** : `VE` / `OD` / `BQ` correspondent-ils au paramétrage du logiciel comptable cible (Sage, Saari, autre) ? | VE / OD / BQ. | VE : ____ OD : ____ BQ : ____ |
 | 5 | **Date de l'écriture de banque** : elle est émise au passage du relevé au statut **payé**. Est-ce la date de valeur attendue, ou faut-il la date de l'ordre de virement ? | Date du relevé payé. | ☐ conforme ☐ autre : ______ |
 | 6 | **Frais de retour dans l'assiette de TVA ?** Un colis retourné est facturé au marchand (`return_charges`) mais **sans TVA** : le logiciel force le montant à zéro et ne retient que le frais. | Comportement hérité du socle, **non arbitré**. Un retour est pourtant une prestation rendue contre rémunération ; s'il est taxable, l'assiette déclarée est aujourd'hui sous-évaluée du montant des retours. | ☐ hors champ ☐ taxable au taux normal · si taxable : reprise du passé ☐ oui ☐ non |
-| 7 | **Arrondi de la TVA au franc ?** Le FCFA n'a pas de subdivision, mais la TVA est calculée en pourcentage : 18 % de 1 680 F donne **302,40 F**, et le logiciel conserve cette décimale en base. | Arrondir **au franc le plus proche, ligne par ligne** — c'est déjà ce que fait le relevé imprimé ; l'appliquer au calcul alignerait la base sur le document sans changer un seul chiffre déjà affiché. | ☐ arrondi au franc ☐ autre règle : ______ · si arrondi : reprise du passé ☐ oui ☐ non |
+| 7 | **Arrondi de la TVA au franc ?** Le FCFA n'a pas de subdivision, mais la TVA est calculée en pourcentage : 18 % de 1 680 F donne **302,40 F**, et le logiciel conserve cette décimale en base. Arrondi **au franc le plus proche**, appliqué **depuis le 2026-09-18** au seul endroit où un taux devient des francs (`ChargeCalculator::percentage()`) — la TVA comme la commission COD. Aucun chiffre imprimé n'a changé : le relevé arrondissait déjà au même franc. Une autre règle (toujours au-dessus, toujours en dessous) reste possible ; elle se change là, en un point. | ☐ conforme ☐ autre règle : ______ · reprise du passé ☐ oui ☐ non |
 
 ## 3. Ce que l'export ne couvre pas (encore)
 
@@ -113,10 +114,11 @@ Le CSV est en point-virgule avec BOM UTF-8 (ce qu'Excel français attend).
 
 Quelle que soit la décision, le logiciel garantit :
 
-- des **documents en francs entiers** — le relevé et le journal arrondissent
-  chaque ligne au franc avant de l'imprimer. ⚠️ La **base**, elle, conserve la
-  TVA non arrondie : c'est l'objet de la **question 7**, et c'est aujourd'hui la
-  seule entorse à la règle « FCFA entiers » du projet ;
+- des montants **entiers en FCFA**, jamais de centimes — **des documents
+  comme de la base** depuis le 2026-09-18 : l'arrondi s'applique au calcul, et
+  non plus seulement à l'impression. ⚠️ Seule réserve : les colis créés **avant**
+  cette date gardent leurs centimes en base. Les reprendre ou non est la case
+  « reprise du passé » de la **question 7** ;
 - une **numérotation continue** des relevés par société et par exercice
   (`PREFIXE-2026-000001`), sans trou ni doublon ;
 - l'**équilibre** de chaque pièce, vérifié avant export ;
@@ -137,12 +139,12 @@ Répondre « taxable » à la **6** change l'assiette — une TVA sur le frais d
 retour dans `InvoiceRepository`, et, si la reprise du passé est demandée, une
 régularisation des relevés déjà émis.
 
-Répondre « arrondi » à la **7** change l'endroit où le franc entier est produit :
-aujourd'hui à l'impression, demain au calcul. Aucun document déjà émis n'en
-change d'apparence — le relevé arrondissait déjà —, mais le **net réellement
-porté au solde** du marchand bougerait de moins d'un franc par colis, dans le
-sens de ce que le relevé annonce. Là aussi, la reprise du passé est une question
-distincte.
+La **7** a déjà été appliquée, le 2026-09-18 : le franc entier est désormais
+produit au calcul et non plus seulement à l'impression. Aucun document émis n'en
+a changé d'apparence — le relevé arrondissait déjà —, mais le **net réellement
+porté au solde** du marchand vaut maintenant ce que le relevé annonce, à moins
+d'un franc près par colis. Ce qui reste à trancher : confirmer la règle (au plus
+proche), et dire si le passé doit être repris.
 
 Ni l'une ni l'autre n'est un paramétrage ; ce sont deux chantiers courts mais
 réels, à chiffrer une fois les réponses connues.
