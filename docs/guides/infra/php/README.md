@@ -169,20 +169,29 @@ grossier au plus précis.
 
 ```bash
 # 1. La version que le shell exécute
-php -v | head -1                      # doit dire 8.3.x
+php -v | head -1                      # doit dire 8.3.x — ni moins, ni plus
 
 # 2. Le garde de deploy.sh, joué à la main
-php -r 'exit(PHP_VERSION_ID >= 80300 ? 0 : 1);' && echo "garde : PASSE" || echo "garde : REFUSE"
+php -r 'exit(PHP_VERSION_ID >= 80300 && PHP_VERSION_ID < 80400 ? 0 : 1);' && echo "garde : PASSE" || echo "garde : REFUSE"
 
 # 3. Le contrôle qui fait autorité
 cd /var/www/beninlink/web && composer check-platform-reqs --no-dev
 ```
 
-Le troisième lit `composer.lock` et confronte **chaque** exigence à ce que le
-serveur charge vraiment — version de PHP et extensions comprises. Toutes les
-lignes doivent dire `success`. Une seule `failed` nomme précisément le paquet
-manquant : c'est plus sûr que de comparer une liste à la main, et ça reste vrai
-quand le verrou évoluera.
+⚠️ **8.3, et 8.3 seulement.** Le verrou ne couvre pas 8.4 :
+`ezyang/htmlpurifier` s'arrête à `~8.3.0` et `nette/utils` déclare
+`>=8.0 <8.4`. Installer « le dernier PHP » au lieu de `php8.3-fpm` produit
+donc une pile que `composer.lock` ne décrit pas — et comme `config.platform`
+fait résoudre composer *comme si* la machine était en 8.3, `composer install`
+réussit quand même. C'est pourquoi le garde de `deploy.sh` porte **deux
+bornes** depuis le 2026-09-18, et non un simple plancher.
+
+Le troisième contrôle lit `composer.lock` et confronte **chaque** exigence à ce
+que le serveur charge vraiment — version de PHP et extensions comprises. Toutes
+les lignes doivent dire `success`. Une seule `failed` nomme précisément le
+paquet en cause : c'est plus sûr que de comparer une liste à la main, ça reste
+vrai quand le verrou évoluera, et c'est le seul des trois qui voie un PHP
+*trop récent*.
 
 > `--no-dev` importe : le déploiement installe sans les dépendances de
 > développement, et le contrôle doit porter sur le même périmètre.

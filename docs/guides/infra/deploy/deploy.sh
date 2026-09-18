@@ -16,10 +16,22 @@ cd /var/www/beninlink/web
 # exécuté : `composer.json` et le workflow ne décrivent qu'une intention.
 # Il passe AVANT la coupure — mieux vaut ne pas déployer que couper le service
 # pour rien — et donc avant le filet, qui n'aurait rien à remonter.
+#
+# ⚠️ Il a DEUX bornes, et la seconde compte autant que la première. Le verrou
+# ne couvre pas 8.4 : `ezyang/htmlpurifier` s'arrête à 8.3 (`~8.3.0`), et
+# `nette/utils` déclare `>=8.0 <8.4`. Or `config.platform` fait résoudre
+# composer *comme si* la machine était en 8.3 : sur un serveur en 8.4,
+# `composer install` réussit sans broncher. Un plancher seul laisserait donc
+# passer exactement ce que ce garde existe pour arrêter — dans l'autre sens.
+# Le contrôle qui tranche, lui, lit la vraie version :
+# `composer check-platform-reqs --no-dev`.
 # ---------------------------------------------------------------------------
-php -r 'exit(PHP_VERSION_ID >= 80300 ? 0 : 1);' || {
-    echo "❌ Ce serveur exécute PHP $(php -r 'echo PHP_VERSION;') ; 8.3 est le minimum." >&2
-    echo "   Installer php8.3-fpm et ses extensions, basculer le pool nginx, puis relancer." >&2
+php -r 'exit(PHP_VERSION_ID >= 80300 && PHP_VERSION_ID < 80400 ? 0 : 1);' || {
+    echo "❌ Ce serveur exécute PHP $(php -r 'echo PHP_VERSION;') ; ce dépôt s'installe en 8.3, et en 8.3 seulement." >&2
+    echo "   Trop ancien : installer php8.3-fpm et ses extensions, puis basculer le pool nginx." >&2
+    echo "   Trop récent : le verrou ne couvre pas 8.4 (htmlpurifier, nette/utils) — et composer," >&2
+    echo "   qui résout via config.platform, ne s'en apercevra pas ; rester en 8.3." >&2
+    echo "   Pour le vérifier : composer check-platform-reqs --no-dev (toutes les lignes en success)." >&2
     echo "   Rien n'a été touché : le site n'a pas été coupé." >&2
     exit 1
 }
