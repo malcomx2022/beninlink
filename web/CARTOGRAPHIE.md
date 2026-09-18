@@ -1212,6 +1212,10 @@ vestige du squelette Laravel.
 | ~~S19~~ | C | ~~Une demande de retrait acceptait n'importe quel `merchant_account`~~ — ✅ **corrigé le 2026-09-04** : le marchand pouvait désigner le compte d'un autre, puis `PaymentResource` lui en renvoyait le détail (titulaire, numéro, banque) dans sa propre liste. L'API vérifie désormais que le compte lui appartient (422 sinon). Le panneau web, qui propose une liste fermée, n'est pas modifié | `Api\V10\PaymentRequestController` |
 | ~~S21~~ | C | ~~TLS non vérifié dans deux passerelles de paiement héritées~~ — ✅ **désactivées le 2026-09-05** (décision : désactiver plutôt que corriger, aucun usage au Bénin). `config/payments.php` liste Aamarpay et SSLCommerz comme désactivées ; leurs routes ne sont plus enregistrées, les réglages société et marchand refusent de les activer, les écrans ne les proposent plus, une migration passe les statuts existants à inactif (clés conservées). Le code reste (référence, licence) | `config/payments.php` · `gatewayEnabled()` · migration `2026_09_05_100000` |
 | ~~S22~~ | B | ~~Le détail du journal d'activité, sans périmètre, sans permission et sans échappement~~ — ✅ **corrigé le 2026-09-18** : `ActiveLogController::view($id)` faisait `Activity::find($id)` **nu** alors qu'`index()`, juste au-dessus, scope par la société du causeur — un opérateur lisait l'avant/après champ par champ d'un autre transporteur en changeant l'identifiant dans l'URL. Sa route ne portait **aucune** permission quand `logs.index` porte `hasPermission:log_read`. Et la vue rendait ces valeurs — des saisies d'utilisateurs — avec `{!! !!}`, dans un fragment injecté en `.html()` dans une fenêtre modale : **XSS stocké**. Les trois sont fermés, et l'échappement passe par `logValue()` parce qu'un `{{ }}` posé naïvement aurait fait **500** sur les attributs `array` de `User` et `Role` (voir « ✅ S22 » plus bas) | `ActiveLogController` · `routes/web.php:216` · `backend/log/view.blade.php` · `logValue()` |
+| **S23** | B | ⚠️ **OUVERT** — `admin/support/view/{id}` sert le ticket de support **et tout son fil de discussion** de n'importe quelle société : `SupportRepository::get()` fait `Support::find($id)` sans périmètre, et la route ne porte aucune permission | `SupportRepository:33` · `routes/web.php` |
+| **S24** | C | ⚠️ **OUVERT** — `admin/expense/search-account/{id}` (POST) renvoie **n'importe quel compte financier** (titulaire, banque, solde) de n'importe quelle société : `AccountRepository::get()` fait `Account::find($id)` sans périmètre — alors que `getAll()`, juste au-dessus, est `companywise()`. Aucune permission | `AccountRepository:35` · `ExpenseController:58` |
+| **S25** | B | ⚠️ **OUVERT** — `admin/parcel/delivered/logs/info/{id}` : le colis est scopé (`ParcelRepository::get()` est `companywise()`) mais **pas sa chronologie** — `parcelEvents($id)` fait `ParcelEvent::where('parcel_id', $id)` sans périmètre. Un opérateur lit donc les événements d'un colis d'une autre société : livreur, dates, **chemins de la photo et de la signature de livraison**. Aucune permission | `ParcelRepository:303` |
+| **S26** | B | ⚠️ **OUVERT** — `admin/merchant/shops/default/{merchant_id}/{id}` **écrit sur un GET** et n'est scopé que par le `merchant_id` de l'URL : tout compte authentifié change la boutique par défaut de n'importe quel marchand, de n'importe quelle société. Et la paire inexistante fait une erreur fatale (`$merchantShop->default_shop` sur `null`). Aucune permission | `ShopsRepository:22` · `MerchantShopsController:83` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
 
@@ -1574,11 +1578,17 @@ les contrôleurs du back-office :
 
 | Constat | Compte |
 |---|---|
-| Routes à `{id}` dans `routes/web.php` | **100** |
-| … portant `hasPermission` | 69 |
-| … **sans aucune permission** | **31** |
+| Routes à paramètre (`web.php` **+** `superadmin.php`) | **258** |
+| … portant `hasPermission` | 197 |
+| … **sans aucune permission** | **61 déclarations, 53 distinctes** |
 | Appels `::find($id)` / `::find($request->id)` dans les contrôleurs | **12** |
 | … dont un seul porte `companywise()` | **0** |
+
+⚠️ Ce tableau annonçait d'abord « 31 des 100 routes à `{id}` de `web.php` » : un
+comptage qui ne voyait qu'un seul nom de paramètre et un seul fichier. Le relevé
+complet, et le classement des 53 — dont **seulement 6** relèvent d'une décision
+de permission, et **4 sont des fuites vérifiées (S23–S26)** — vit dans
+« 📋 Inventaire » en fin de document.
 
 Le filet **S7** ne couvre que les routes `/api/v10` (`IsolationCoverageTest`).
 Le back-office n'a pas d'équivalent, et c'est ce qui a laissé passer celui-ci.
@@ -1595,4 +1605,109 @@ exerce donc le contrôleur et la vue directement, et on lit la déclaration de l
 route (méthode d'`OnlinePayoutModuleDisabledTest`). Vérifié par quatre sabotages :
 périmètre retiré, permission retirée, `{!! !!}` rétabli, `logValue()` rendant la
 valeur brute — chacun fait échouer son test.
+
+---
+
+## 📋 Inventaire — les routes web à paramètre sans garde de permission (2026-09-18)
+
+Demandé après **S22** : le journal d'activité n'était pas une exception, mais
+« 31 routes » était un chiffre approximatif. Le voici corrigé et classé.
+
+### La méthode, et pourquoi le chiffre annoncé était faux
+
+`php artisan route:list` **ne voit pas** ces routes : dans `routes/web.php`, tout
+ce qui suit `if ($domain)` (ligne 147) n'est enregistré que lorsque l'hôte de la
+requête est un domaine de locataire connu — jamais en ligne de commande. Les
+routes ont donc été relevées en **analysant** `routes/web.php` **et**
+`routes/superadmin.php` (qui redéclare une partie des écrans `admin/` pour le
+domaine central), en suivant la pile des préfixes de groupe.
+
+| | Annoncé après S22 | Réel |
+|---|---|---|
+| Périmètre mesuré | `{id}` dans `web.php` seul | **tout paramètre**, `web.php` **+** `superadmin.php` |
+| Routes à paramètre | 100 | **258** |
+| … sans `hasPermission` | 31 | **61 déclarations, 53 distinctes** |
+
+Le premier chiffre ne comptait qu'un seul nom de paramètre et un seul fichier.
+
+### Les 53, classées — et seulement 6 relèvent d'une décision de permission
+
+| Famille | Nombre | Ce qu'il faut en faire |
+|---|---|---|
+| **Publiques par nature** | 4 | Rien. `blog-details/{id}`, `service-details/{id}`, `/login/{social}`, `localization/{language}` |
+| **Gardées autrement** | 1 | Rien. `invoice/statement/{invoice}/pdf` porte `->middleware('signed')` — une URL signée, que le comptage ne voyait pas |
+| **Routes mortes** | 5 | **Les supprimer**, pas les garder (voir ci-dessous) |
+| **Panneau marchand** | 26 | La permission **n'est pas le mécanisme** : ce panneau n'est pas gouverné par les permissions, il est scopé au marchand connecté. La question y est l'appartenance, et **S17, S18, S19 et S20 en ont déjà fermé la plus grande partie** |
+| **Profil** | 10 | Rien à garder : le `{id}` est **décoratif**, `ProfileController` et son homologue marchand travaillent tous deux sur `auth()->user()->id`. ⚠️ Un détail : `view()` répond **500** quand l'identifiant ne correspond pas, là où 403 ou 404 conviendrait |
+| **Carte du livreur** | 1 | À décider (voir ci-dessous) |
+| **Back-office** | **6** | **C'est la vraie liste.** Détail ci-dessous |
+
+### Les 5 routes mortes — à supprimer
+
+Ces cinq routes pointent vers une méthode `view()` **qui n'existe pas** sur leur
+contrôleur (vérifié par `method_exists`). Elles répondent **500** à chaque appel :
+c'est pour cela que personne ne leur a jamais posé de permission.
+
+| Route | Contrôleur |
+|---|---|
+| `GET admin/accounts/view/{id}` | `AccountController` |
+| `GET admin/delivery-category/view/{id}` | `DeliverycategoryController` |
+| `GET admin/delivery-charge/view/{id}` | `DeliveryChargeController` |
+| `GET admin/fund-transfer/view/{id}` | `FundTransferController` |
+| `GET admin/packaging/view/{id}` | `PackagingController` |
+
+Chacune est déclarée **deux fois** (`web.php` et `superadmin.php`) : dix lignes à
+retirer. À ranger avec les autres routes mortes de cette cartographie.
+
+### Les 6 routes du back-office — et 4 d'entre elles sont des fuites vérifiées
+
+| Route | Périmètre société | Permission suggérée | État |
+|---|---|---|---|
+| `GET admin/support/view/{id}` | ❌ `Support::find($id)` | `support_read` | **S23 — fuite** |
+| `POST admin/expense/search-account/{id}` | ❌ `Account::find($id)` | `expense_create` | **S24 — fuite** |
+| `GET admin/parcel/delivered/logs/info/{id}` | ⚠️ colis scopé, **chronologie non** | `parcel_read` | **S25 — fuite** |
+| `GET admin/merchant/shops/default/{merchant_id}/{id}` | ❌ scopé par l'URL seulement | `merchant_update` | **S26 — écriture sur GET** |
+| `GET admin/parcel/clone/{id}` | ✅ `companywise()` | `parcel_create` | permission seule — **elle duplique un colis** |
+| `POST admin/income/search-account/{id}` | — | `income_create` | **cassée** : `searchAccount($id, Request $request)` appelle `$this->account->get($request)` — l'objet `Request` là où un identifiant est attendu |
+
+Les quatre premières sont inscrites en **S23 à S26** dans le tableau ci-dessus,
+**ouvertes**. Elles ne demandent pas une décision de permissions : un périmètre
+société manquant se corrige comme S22, sans retirer l'accès à personne. Ce sont
+elles qu'il faut traiter d'abord.
+
+### La carte du livreur
+
+`GET /deliveryMan/parcel/map/{id}/{lat}/{long}/{status}` →
+`MapParcelController@parcelMap`. Deux choses :
+
+- la requête de colis **est** `companywise()` : pas de fuite inter-société ;
+- mais le `{id}` est un identifiant d'utilisateur **quelconque**, et la réponse
+  liste, pour la tournée de ce livreur, le **nom, l'adresse et le téléphone de
+  chaque client** plus le nom et le téléphone de chaque marchand. Sans permission,
+  tout compte authentifié lit la tournée de n'importe quel livreur de sa société ;
+- et `User::find($id)->deliveryman->id` fait une **erreur fatale** si
+  l'identifiant n'est pas celui d'un livreur.
+
+Périmètre intra-société, donc moins grave que S23–S26, mais ce n'est pas rien :
+c'est un fichier clients. Permission suggérée : `delivery_man_read`.
+
+### Ce qui reste à décider — et ce qui ne se décide pas
+
+**Ne se décide pas** (à faire) : S23, S24, S25, S26. Poser un périmètre société
+là où il en manque ne retire l'accès à personne — c'est le correctif S22 répété
+quatre fois. Et les 10 lignes de routes mortes.
+
+**Se décide** : les permissions. Ajouter `hasPermission:x` là où il n'y en avait
+aucune **retire l'accès** à tout rôle qui ne porte pas `x`. Sur les six routes
+du back-office et la carte du livreur, il faut vérifier, rôle par rôle, qui perd
+quoi — en particulier `parcel_create` sur `admin/parcel/clone/{id}`, que des
+agents utilisent peut-être sans porter la permission de création.
+
+**Le filet.** `IsolationCoverageTest` n'oblige à prouver l'isolation que des
+routes `/api/v10`. C'est cette absence d'équivalent côté web qui a laissé passer
+S22 puis ces quatre-là. Un filet web demanderait d'exercer des routes qui ne sont
+montées que sur un domaine de locataire : les tests de S22 contournent la
+difficulté en exerçant le contrôleur directement, ce qui marche mais ne prouve
+rien sur le **routage**. C'est le vrai sujet, et il est plus grand que les
+soixante lignes qu'il protégerait.
 
