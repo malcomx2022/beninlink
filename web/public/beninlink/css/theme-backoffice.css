@@ -352,3 +352,95 @@ textarea:focus-visible,
   outline-offset: 2px;
   box-shadow: var(--bl-focus-ring);
 }
+
+/* ===========================================================================
+   11. CARTES DE SYNTHÈSE — la forme de la maquette (lot 7)
+   `maquettes/3_back_office_web.html` §.kpi : carte blanche, filet 1 px,
+   rayon 15, pastille d'icône 34 px sur fond teinté, chiffre en Sora 800/24,
+   libellé 12 px gris.
+
+   ⚠️ AUCUNE VUE N'EST TOUCHÉE. Le socle nomme déjà ces éléments
+   (`total-card-color`, `total-card-body`, `.icon`, `.metric-value`) et ces
+   noms ne servent qu'aux cartes de synthèse — `dashboard.blade.php` et
+   `hub/view.blade.php`. Le §6.6 prescrivait des classes `bl-kpi` à poser dans
+   les vues ; les requalifier coûte zéro fichier à la carte de fusion, pour le
+   même rendu. C'est le même arbitrage qu'au lot 1 (§10.3 a).
+   =========================================================================== */
+.card.total-card-color {
+  background: var(--bl-surface);
+  border: 1px solid var(--bl-border) !important;
+  border-radius: var(--bl-radius-lg);
+  box-shadow: var(--bl-shadow-card);
+}
+/* Le socle posait un filet supérieur de 3 px en guise de couleur ; la maquette
+   n'en a pas — la teinte vit dans la pastille d'icône. */
+.card.total-card-color.border-top-primary { border-top-color: var(--bl-border) !important; }
+
+.card.total-card-color .total-card-body { padding: var(--bl-space-md); }
+
+/* La pastille d'icône : 34 px, rayon 10, fond primaire à 10 %. */
+.card.total-card-color .total-card-body .icon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: #12503A1A;            /* primaire à 10 % — teinte, pas aplat */
+  color: var(--bl-primary);
+  margin: 0 var(--bl-space-sm) 0 0;
+  padding: 0 !important;
+}
+.card.total-card-color .total-card-body .icon i { font-size: 16px; line-height: 1; }
+
+/* Le chiffre : Sora 800, 24 px, serré. */
+.card.total-card-color .metric-value h1,
+.card.total-card-color .metric-value h2 {
+  font-family: var(--bl-font-numeric);
+  font-weight: 800;
+  font-size: var(--bl-size-xl);
+  letter-spacing: -.02em;
+  line-height: 1;
+  color: var(--bl-text);
+  margin: 0;
+}
+
+/* Le libellé : 12 px, gris, au-dessus du chiffre comme dans la maquette. */
+.card.total-card-color .box-content h5 {
+  font-family: var(--bl-font-body);
+  font-size: var(--bl-size-sm);
+  font-weight: var(--bl-weight-body);
+  color: var(--bl-text-muted) !important;
+  margin-bottom: var(--bl-space-xs);
+}
+
+/* ===========================================================================
+   12. TITRE DE PAGE — la typographie de la topbar, pas sa structure (lot 7)
+   La maquette pose une barre de 60 px avec un titre en Sora 700/16. Le socle
+   n'a pas de titre de page : il a un FIL D'ARIANE. En faire une topbar
+   demanderait de réécrire l'en-tête partagé par tous les écrans — c'est
+   précisément le coût de fusion que le §9.4 met en balance. On prend donc la
+   typographie, qui ne coûte rien, et on laisse la structure.
+   =========================================================================== */
+.page-header .breadcrumb .breadcrumb-item.active {
+  font-family: var(--bl-font-heading);
+  font-weight: var(--bl-weight-heading-bold);
+  font-size: var(--bl-size-lg);
+  color: var(--bl-text);
+}
+
+/* ===========================================================================
+   13. LA POLICE PROPRIÉTAIRE DU SOCLE (lot 7)
+   `Circular Std` est sous licence propriétaire et embarquée dans le socle
+   (8 fichiers `.woff`, 348 Ko). La charte l'a remplacée dès le lot 1 — mais
+   les trois mises en page la TÉLÉCHARGEAIENT encore.
+
+   Le socle l'appelle dans six règles. Quatre visent du CSS mort hérité d'un
+   thème e-commerce (`.ribbons`, `.product-price`, `.quantity-button`,
+   `tr.group:hover`) : aucune vue ne porte ces classes. `h6` est déjà couvert
+   par la §1. Reste `.table th`, vivant — et plus large que le
+   `.table thead th` de la §1 : 39 `<th>` vivent hors `<thead>`, dans les
+   rapports. Sans cette règle, ils retomberaient sur la police par défaut du
+   navigateur le jour où le fichier n'est plus chargé.
+   =========================================================================== */
+.table th, table th { font-family: var(--bl-font-body); }
