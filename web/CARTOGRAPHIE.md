@@ -2166,16 +2166,71 @@ dépôt, pas route par route.
 
 ### Effet sur le cliquet
 
-| | Avant | Après |
-|---|---|---|
-| Prouvées | 7 | **33** |
-| Exemptées | 33 | **35** |
-| Publiques | 6 | 6 |
-| **Héritées (plafond)** | **171** | **143** |
+| | Au départ | 1re passe | 2e passe |
+|---|---|---|---|
+| Prouvées | 7 | 33 | **57** |
+| Exemptées | 33 | 35 | 35 |
+| Publiques | 6 | 6 | 6 |
+| **Héritées (plafond)** | **171** | 143 | **119** |
 
 Les deux routes de `front-web/section` passent en *exemptées* : leur paramètre
 nommé `{id}` est en réalité un **type** de section — `SectionController::edit($type)`
 le dit — et la lecture est `companyWise()`.
+
+
+### Seconde passe — le panneau marchand web (24 routes)
+
+Ces dépôts sont scopés depuis **S7**, **S17** et **S18** : tout passe par un
+`owned…()` sur le marchand ou l'utilisateur connecté. Ils étaient dans l'arriéré
+pour une raison précise : ce qui le prouvait, `TenantIsolationTest`, appelle les
+routes de l'**API**. Les écrans web sont d'autres contrôleurs, et le filet exige la
+preuve au point d'entrée qu'il inscrit — c'est exactement la leçon **F6** : une
+déclaration qui pointe un test incapable de toucher la route ne prouve rien.
+
+`MerchantPanelWebScopeTest` pose donc **deux marchands de la même société**. Ce
+n'est pas un détail de mise en scène : c'est le cas que la décision S7 nomme comme
+le plus fréquent, et celui qu'un *global scope* Eloquent sur `company_id`
+n'aurait **jamais** attrapé. La frontière ici n'est pas la société, c'est le
+marchand.
+
+Les douze écrans refusent tous (404), les six suppressions n'aboutissent pas, les
+trois écritures à requête échouent, et un **contrôle négatif** vérifie que les
+mêmes dépôts trouvent bien mes propres ressources — sans lui, un `owned…()` qui ne
+renverrait jamais rien ferait passer le test sans rien prouver.
+
+Le portefeuille est l'exception du lot : `admin/wallet-request/{approve,reject,delete}`
+sont des écrans d'**administration** qui déplacent de l'argent, donc scopés par
+société, via le garde `proprieteVerifiee()` posé dans le contrôleur par un lot
+antérieur. Ils sont désormais couverts.
+
+Un seul défaut trouvé dans cette passe, et il est de la famille déjà connue :
+`MerchantPanel\InvoiceController::InvoiceDetails()` déréférençait un `null` hors
+périmètre — **500** au lieu de 404, comme les cinq écrans de colis de la première
+passe.
+
+**Deux sabotages** : `ownedShops()` privé de son périmètre (3 rouges),
+`proprieteVerifiee()` ramené à un `find()` nu (1 rouge).
+
+Suite complète après les deux passes : **612 tests, 44 496 assertions, vert.**
+
+### Ce qui reste dans l'arriéré : 119 routes
+
+Le travail restant est identifiable, et le tableau des quatre formes plus haut le
+classe. L'essentiel tient en deux familles :
+
+- 🔴 **Le vol de ligne** — `Modele::find($id)` puis `$m->company_id = settings()->id`
+  et `save()`. La ligne d'une autre société n'est pas seulement lue, elle est
+  **transférée** chez nous. Relevé dans `Role`, `Asset`, `Assetcategory`,
+  `Designation`, `Packaging`, `Hub`, `DeliveryCharge`, `Todo`, `NewsOffer`,
+  `Department`, `HubPayment`. C'est la famille à traiter en premier.
+- **La lecture nue** — `get($id)` en `Modele::find($id)`, donc l'écran `edit` d'une
+  autre société : `Role`, `Asset`, `Assetcategory`, `Fraud` (back-office),
+  `HubPayment`, `HubPaymentRequest`, `Profile`, `Income`, `Hub`, `AccountHead`,
+  `Salary`, `Todo`, `MerchantPayment`, `Currency`, `Wallet::getFind`.
+
+Les ~20 `delete()` de la forme « je cherche nu puis je compare `company_id` » sont
+**gardés** : l'écriture ne part pas hors périmètre. Ils restent à inscrire, pas à
+corriger — sauf le déréférencement de `null` sur un identifiant inexistant.
 
 ### Couverture
 

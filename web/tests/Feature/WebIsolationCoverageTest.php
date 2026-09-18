@@ -107,6 +107,37 @@ class WebIsolationCoverageTest extends TestCase
         'DELETE admin/merchant/shops/delete/{id}' => BackOfficeWriteScopeTest::class,
         'GET admin/merchant/shops/edit/{id}' => BackOfficeWriteScopeTest::class,
         'GET admin/merchant/{id}/shops/index' => BackOfficeWriteScopeTest::class,
+        // S29, 2e passe — le panneau marchand web. Les depots etaient deja scopes
+        // (S7, S17, S18) mais ce qui le prouvait appelait les routes de l'API : la
+        // preuve manquait au point d'entree WEB, et le filet exige celui qu'il inscrit.
+        // La frontiere ici est le MARCHAND, pas la societe — deux marchands de la meme
+        // societe, le cas que la decision S7 nomme comme le plus frequent.
+        'GET merchant/support/edit/{id}' => MerchantPanelWebScopeTest::class,
+        'GET merchant/support/view/{id}' => MerchantPanelWebScopeTest::class,
+        'PUT merchant/support/update/{id}' => MerchantPanelWebScopeTest::class,
+        'DELETE merchant/support/delete/{id}' => MerchantPanelWebScopeTest::class,
+        'GET merchant/fraud/edit/{id}' => MerchantPanelWebScopeTest::class,
+        'DELETE merchant/fraud/delete/{id}' => MerchantPanelWebScopeTest::class,
+        'GET merchant/accounts/payment-account/edit/{id}' => MerchantPanelWebScopeTest::class,
+        'DELETE merchant/accounts/payment-account/delete/{id}' => MerchantPanelWebScopeTest::class,
+        'GET merchant/payment-request/edit/{id}' => MerchantPanelWebScopeTest::class,
+        'DELETE merchant/payment-request/delete/{id}' => MerchantPanelWebScopeTest::class,
+        'GET merchant/shops/edit/{id}' => MerchantPanelWebScopeTest::class,
+        'PUT merchant/shops/update/{id}' => MerchantPanelWebScopeTest::class,
+        'DELETE merchant/shops/delete/{id}' => MerchantPanelWebScopeTest::class,
+        'GET merchant/parcel/details/{id}' => MerchantPanelWebScopeTest::class,
+        'GET merchant/parcel/edit/{id}' => MerchantPanelWebScopeTest::class,
+        'GET merchant/parcel/logs/{id}' => MerchantPanelWebScopeTest::class,
+        'GET merchant/parcel/clone/{id}' => MerchantPanelWebScopeTest::class,
+        'GET merchant/parcel/status-update/{id}/{status_id}' => MerchantPanelWebScopeTest::class,
+        'PUT merchant/parcel/update/{id}' => MerchantPanelWebScopeTest::class,
+        'DELETE merchant/parcel/delete/{id}' => MerchantPanelWebScopeTest::class,
+        'GET merchant/invoice/{invoice_id}' => MerchantPanelWebScopeTest::class,
+        // Le portefeuille : trois ecrans d'ADMINISTRATION qui deplacent de l'argent,
+        // donc scopes par societe, via `proprieteVerifiee()` dans le controleur.
+        'PUT admin/wallet-request/approve/{id}' => MerchantPanelWebScopeTest::class,
+        'PUT admin/wallet-request/reject/{id}' => MerchantPanelWebScopeTest::class,
+        'DELETE admin/wallet-request/delete/{id}' => MerchantPanelWebScopeTest::class,
     ];
 
     /**
@@ -219,14 +250,7 @@ class WebIsolationCoverageTest extends TestCase
         'DELETE admin/sms-settings/delete/{id}',
         'DELETE admin/todo/delete/{id}',
         'DELETE admin/user/delete/{id}',
-        'DELETE admin/wallet-request/delete/{id}',
         'DELETE category/delete/{id}',
-        'DELETE merchant/accounts/payment-account/delete/{id}',
-        'DELETE merchant/fraud/delete/{id}',
-        'DELETE merchant/parcel/delete/{id}',
-        'DELETE merchant/payment-request/delete/{id}',
-        'DELETE merchant/shops/delete/{id}',
-        'DELETE merchant/support/delete/{id}',
         'GET admin/accounts/edit/{id}',
         'GET admin/asset-category/edit/{id}',
         'GET admin/asset-category/view/{id}',
@@ -292,21 +316,9 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/users/edit/{id}',
         'GET admin/users/permissions/{id}',
         'GET category/edit/{id}',
-        'GET merchant/accounts/payment-account/edit/{id}',
-        'GET merchant/fraud/edit/{id}',
         'GET merchant/invoice/csv/{merchant_id}/{invoice_id}',
         'GET merchant/invoice/journal/{merchant_id}/{invoice_id}',
         'GET merchant/invoice/pdf/{merchant_id}/{invoice_id}',
-        'GET merchant/invoice/{invoice_id}',
-        'GET merchant/parcel/clone/{id}',
-        'GET merchant/parcel/details/{id}',
-        'GET merchant/parcel/edit/{id}',
-        'GET merchant/parcel/logs/{id}',
-        'GET merchant/parcel/status-update/{id}/{status_id}',
-        'GET merchant/payment-request/edit/{id}',
-        'GET merchant/shops/edit/{id}',
-        'GET merchant/support/edit/{id}',
-        'GET merchant/support/view/{id}',
         'POST admin/hub/incharge/{hubID}/store',
         'POST admin/income/search-account/{id}',
         'POST admin/merchant/{merchant}/delivery-charge/store',
@@ -325,15 +337,10 @@ class WebIsolationCoverageTest extends TestCase
         'PUT admin/parcel/update/{id}',
         'PUT admin/request/hub/payment/update/{id}',
         'PUT admin/sms-settings/update/{id}',
-        'PUT admin/wallet-request/approve/{id}',
-        'PUT admin/wallet-request/reject/{id}',
-        'PUT merchant/parcel/update/{id}',
-        'PUT merchant/shops/update/{id}',
-        'PUT merchant/support/update/{id}',
     ];
 
     /** Le compte figé de l'arriéré. Il descend, il ne monte pas. */
-    private const PLAFOND_HERITAGE = 143;
+    private const PLAFOND_HERITAGE = 119;
 
     protected function setUp(): void
     {
