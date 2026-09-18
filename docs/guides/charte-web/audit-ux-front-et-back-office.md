@@ -3,7 +3,16 @@
 > État des lieux et corrections à faire pour aligner l'interface web de `web/`
 > sur la charte partagée par `mobile/` et `mobile-livreur/`.
 > Relevé du **2026-09-18**, sur la branche `claude/ecstatic-lamport-xk8miy`.
-> Document de constat et de plan : **il ne modifie aucun écran**.
+> Document de constat et de plan.
+
+## Journal
+
+| Date | Décision / livraison |
+|---|---|
+| 2026-09-18 | **Audit publié** (constat, aucun écran modifié). |
+| 2026-09-18 | **Arbitrage §9.1 tranché : `mobile/src/theme/colors.ts` l'emporte** sur la maquette pour les cinq jetons divergents. La maquette a été corrigée ; elle n'est plus une source concurrente. |
+| 2026-09-18 | **Six pastilles corrigées validées** (§9.2) et implémentées. |
+| 2026-09-18 | **Lot 1 livré.** Voir §10 — ce que le lot 1 a effectivement fait, et en quoi il s'écarte du plan. |
 
 ---
 
@@ -54,7 +63,7 @@ Typo : **Sora** 600/700 (titres **et chiffres**), **DM Sans** 400/500 (corps).
 déjà dessinée et validée** : sidebar groupée, topbar, cartes KPI, pastilles de
 statut, timeline de suivi, tableaux. Elle est la cible de l'implémentation.
 
-### 1.3 ⚠️ L'écart à trancher avant de coder
+### 1.3 ✅ L'écart, tranché le 2026-09-18
 La maquette et `colors.ts` **ne sont pas d'accord sur cinq jetons** :
 
 | Jeton | `mobile/src/theme/colors.ts` | `maquettes/3_back_office_web.html` |
@@ -66,8 +75,11 @@ La maquette et `colors.ts` **ne sont pas d'accord sur cinq jetons** :
 | succès | `#1E8E5A` | `--vert-vif:#1F9D6B` |
 
 Un marchand qui passe de l'app au web verrait **deux rouges et deux gris
-différents**. Proposition : **`colors.ts` gagne** (c'est du code livré, exercé
-par les deux apps) et la maquette est corrigée sur ces cinq lignes. La maquette
+différents**. **Décision : `colors.ts` gagne** (c'est du code livré, exercé par
+les deux apps, et son rouge `#C0392B` tient AA sur blanc — 5,44:1 — là où
+`#D1495B` échoue à 4,36:1). La maquette **a été corrigée** sur ces cinq lignes au
+lot 1, avec l'ancienne valeur notée en regard. Un test le tient désormais :
+`WebBrandCharterTest::test_the_back_office_mockup_agrees_with_the_mobile_theme`. La maquette
 apporte en revanche deux jetons **web seulement**, légitimes car le web a des
 surfaces que l'app n'a pas : `--ardoise:#64748B` (en-têtes de colonnes,
 métadonnées) et une nuance de fond de contenu. À déclarer comme extensions, pas
@@ -393,6 +405,13 @@ CSS — mais **les commenter comme copie de `tokens.css`**).
 ## 5. Corrections — front public
 
 ### 5.1 La typographie (le gain le plus immédiat)
+
+> ⚠️ **Le lot 1 a fait mieux que ce que ce paragraphe prescrivait.** Les points 1
+> et 2 demandaient d'éditer `public/frontend/css/style.css` — un fichier du socle.
+> L'implémentation **redéfinit les variables depuis `theme-frontend.css`**, chargée
+> après : même résultat à l'écran, et **un fichier du socle en moins** dans la carte
+> de fusion. Les deux points restent ci-dessous pour mémoire du défaut constaté.
+
 1. `public/frontend/css/style.css:15` — `--h-font-family:'fangsong'` →
    `var(--bl-font-heading)` (Sora). **Corrige à lui seul tous les titres du site.**
 2. l. 34 — `font-family: 'Roboto'` du `body` → DM Sans.
@@ -545,10 +564,10 @@ libellé 12 px gris) se pose dans un second temps — et **par des classes
 
 | Lot | Contenu | Effet visible |
 |---|---|---|
-| **0** | Trancher l'écart maquette / `colors.ts` (§1.3) · valider les six pastilles corrigées (§5.3) | *décision, pas de code* |
-| **1** | `tokens.css` + `theme-backoffice.css` + polices auto-hébergées + les 2 `<link>` · `--h-font-family` · les 3 viewports · `lang` | **Tout le web passe au vert et à Sora / DM Sans** ; le zoom revient ; les titres du site public cessent d'être en serif par défaut |
-| **2** | `StatusParcel()` : sémantique + `else` de repli · pastilles `bl-pill` · douane aux couleurs de la charte | Les statuts se lisent **comme dans l'app** |
-| **3** | `accent_color` en base + réglage + `:root` · défauts des seeders · migration de données prudente | L'ocre existe côté serveur ; white-label intact |
+| **0** ✅ | Trancher l'écart maquette / `colors.ts` (§1.3) · valider les six pastilles corrigées (§5.3) | *fait le 2026-09-18* |
+| **1** ✅ | `tokens.css` + `theme-backoffice.css` + polices auto-hébergées + les 2 `<link>` · `--h-font-family` · les 3 viewports · `lang` | **fait** — voir §10 |
+| **2** | `StatusParcel()` : sémantique + `else` de repli · pastilles `bl-pill` · douane aux couleurs de la charte | Les statuts se lisent **comme dans l'app**. Les classes `.bl-pill--*` sont **déjà définies** par le lot 1 : il ne reste que du PHP |
+| **3** | `accent_color` en base + réglage + `:root` | L'ocre devient réglable par transporteur. ⚠️ **Les défauts de couleur et la migration de données sont déjà faits** au lot 1 (voir §10) : ce lot ne porte plus que l'accent |
 | **4** | `auth/login` · les 2 lignes de `custom.js` · les 11 titres · les 85 placeholders · les `data-title` | Plus d'anglais sur les écrans d'entrée |
 | **5** | Sidebar groupé · « Retrait » conditionné + état vide · sélecteur de langue réduit à FR/EN · filtre du tableau de bord | Ergonomie du back-office |
 | **6** | `focus-visible` · `alt` par lot · 42 `table-responsive` · les 2 `http://` | Accessibilité et petits écrans |
@@ -563,10 +582,12 @@ les trois paniers d'écrans — front public, back-office opérateur, panneau ma
 
 ## 9. Ce qui reste à trancher
 
-1. **L'écart de cinq jetons** maquette / `colors.ts` (§1.3). Proposition :
-   `colors.ts` gagne, la maquette est corrigée.
-2. **Les six pastilles assombries** du §5.3 corrigent la maquette validée : à
-   revalider, ou assumer un échec AA sur du texte de 10,5 px.
+1. ~~**L'écart de cinq jetons** maquette / `colors.ts` (§1.3).~~
+   **Tranché le 2026-09-18 : `colors.ts` gagne.** La maquette est corrigée, et un
+   test empêche la divergence de revenir.
+2. ~~**Les six pastilles assombries** du §5.3.~~ **Validées et implémentées**
+   dans `tokens.css`. Un test recalcule les six contrastes à chaque exécution :
+   un commentaire pourrait mentir, pas lui.
 3. **Jusqu'où pousser le multi-tenant.** Trois options : (a) la charte est figée
    dans `tokens.css` ; (b) `primary_color` + `accent_color` restent réglables par
    transporteur, la charte n'étant que le **défaut** ; (c) les deux, avec un
@@ -579,3 +600,126 @@ les trois paniers d'écrans — front public, back-office opérateur, panneau ma
 5. **`Circular Std`** : la police du back-office est sous licence propriétaire et
    embarquée dans le socle. La remplacer par DM Sans règle aussi cette question —
    à confirmer comme intention.
+
+---
+
+## 10. Lot 1 — ce qui a été livré le 2026-09-18
+
+### 10.1 Les fichiers ajoutés (hors conflit de fusion)
+
+| Fichier | Rôle |
+|---|---|
+| `web/public/beninlink/css/tokens.css` | **La charte, une seule fois.** Jetons `--bl-*` recopiés de `mobile/src/theme/`, extensions web marquées comme telles, `@font-face`, et les couleurs de texte sur fond coloré **avec leur ratio en commentaire**. |
+| `web/public/beninlink/css/theme-frontend.css` | La charte appliquée au site public. |
+| `web/public/beninlink/css/theme-backoffice.css` | La charte appliquée au back-office : requalifie **tous** les sélecteurs du socle relevés au §2.1, sans éditer une ligne de ses 7 263. |
+| `web/public/beninlink/fonts/` | Sora + DM Sans auto-hébergées (4 `woff2`), les deux licences **OFL** et un `LISEZMOI.md`. |
+| `web/database/migrations/2026_09_18_100000_set_beninlink_brand_color.php` | Le vert en base, **sans écraser** la couleur d'un transporteur. |
+| `web/tests/Feature/WebBrandCharterTest.php` | 13 tests, dont celui qui **compare `tokens.css` à `colors.ts` jeton par jeton**, et deux qui **recalculent les contrastes**. |
+
+### 10.2 Les fichiers du socle touchés — et combien
+
+**Six**, tous d'une poignée de lignes :
+
+| Fichier | Ce qui change |
+|---|---|
+| `backend/partials/header.blade.php` | `lang` ; viewport ; **+2 `<link>`** après `@stack('styles')` |
+| `frontend/layouts/master.blade.php` | viewport ; **−1 `<link>`** (Google Fonts) ; **+2 `<link>`** avant le bloc du tenant |
+| `installer/index.blade.php` · `deliveryman/parcel/parcel-map.blade.php` | viewport |
+| `…_create_general_settings_table.php` · `GeneralSettingsSeeder.php` | défaut de couleur |
+
+Et **trois vues BeninLink** (pas du socle) débranchées de leurs hexadécimaux
+recopiés : `api/docs`, `payment/fedapay_callback`, et `invoice/statement_pdf` —
+ce dernier garde ses littéraux, **dompdf ne résout pas `var()`**, mais il dit
+désormais de qui il les copie et pourquoi.
+
+### 10.3 Deux écarts assumés par rapport au plan
+
+**a) `theme-frontend.css` plutôt que l'édition de `style.css` (§5.1).**
+Le plan disait « éditer `public/frontend/css/style.css:15` ». L'implémentation
+redéfinit `--h-font-family` et `--font-family` depuis une feuille chargée après.
+Même rendu, **un fichier du socle en moins** dans la carte de fusion. Le plan
+était correct sur le défaut, perfectible sur le moyen.
+
+**b) La couleur en base est passée du lot 3 au lot 1.**
+Le plan gardait `primary_color` pour le lot 3. Mais le site public tire sa couleur
+de `settings()->primary_color`, réinjectée dans `:root` : **aucune feuille CSS ne
+pouvait verdir la vitrine.** Un lot 1 purement CSS aurait laissé le site public
+violet, c'est-à-dire aurait livré la moitié de ce qu'il annonçait. Trois choses
+ont donc été faites ici :
+
+1. le **défaut de colonne** — porteur, pas cosmétique : `CompanyRepository::company_create()`
+   **ne renseigne jamais** `primary_color`, donc chaque nouveau transporteur en
+   héritait, violet compris ;
+2. le **seeder** (les deux sociétés) ;
+3. une **migration de données** qui ne convertit que la valeur d'usine `#7e0095`,
+   et corrige aussi le défaut de colonne sur une base déjà migrée — réservé à
+   MySQL/MariaDB, SQLite le tient de la migration de création.
+
+Reste au lot 3 ce qui s'y trouvait vraiment : la colonne **`accent_color`**, son
+réglage dans l'écran des paramètres, et son injection dans `:root`.
+
+**c) Un défaut que l'audit avait sous-estimé : le vert de succès.**
+Le §2.7 notait `success #1E8E5A` comme « grands titres / UI seulement » (4,14:1)
+sans en tirer de conséquence. À l'implémentation, la conséquence est apparue :
+Bootstrap pose du **texte blanc** sur `.badge-success`, et une pastille « Livré »
+est du **petit** texte — donc elle échouait AA, dans les deux sens (blanc sur le
+vert, et le vert en texte sur blanc). Deux jetons d'extension mesurés ont été
+ajoutés, sur le même modèle que l'ocre :
+
+| Jeton | Valeur | Emploi | Ratio |
+|---|---|---|---|
+| `--bl-success-text` | `#0F6B45` | `.text-success` sur blanc | 6,54:1 |
+| `--bl-success-strong` | `#15704A` | fond de `.badge-success` | 6,09:1 (blanc dessus) |
+
+`--bl-success` garde la valeur de la charte (`#1E8E5A`) pour tout le reste : ce
+sont deux variantes d'usage, pas une réécriture de la charte. Même traitement pour
+l'orange, qui échouait plus franchement (blanc dessus : **2,91:1**) : il porte
+désormais l'encre de l'ocre (4,77:1). Un test vérifie ces paires **en recalculant
+les contrastes**, et il échouera aussi le jour où `--bl-success` tiendrait AA tout
+seul — pour dire alors que ces deux variantes sont devenues inutiles.
+
+### 10.4 Ce que le lot 1 ne livre PAS
+
+- **L'ocre n'est pas encore réglable par transporteur** : il est figé dans
+  `tokens.css`. C'est le lot 3.
+- **`StatusParcel()` est inchangé** : « en attente » reste rouge, la livraison
+  partielle reste verte. Les classes `.bl-pill--*` **existent déjà** ; le lot 2
+  n'a que du PHP à écrire.
+- **Le sidebar reste à plat** (lot 5) et **la page de connexion reste en anglais**
+  (lot 4).
+- L'ocre n'est posé que sur **deux** actions du site public (« Suivre »,
+  « S'inscrire ») et sur une classe `.btn-accent` **offerte mais pas encore
+  posée** au back-office : quelle action est « l'action clé » de chaque écran est
+  une décision d'ergonomie, pas de CSS.
+
+### 10.5 Vérifier sur un serveur
+
+```bash
+php artisan migrate          # indispensable : sans elle, la vitrine reste violette
+php artisan view:clear       # les vues compilées gardent les anciens <link>
+php artisan test             # 461 tests
+```
+
+Puis, **vidage du cache navigateur fait**, contrôler les trois paniers :
+
+1. **site public** — titres en Sora (et non plus en serif par défaut), bouton
+   « Suivre » ocre à texte sombre, pincer-pour-zoomer rétabli ;
+2. **back-office opérateur** — sidebar vert, cartes KPI vertes, **alertes
+   douanières aux trois couleurs de la charte** sans qu'on ait ouvert la vue,
+   interface à 100 % et non plus à 80 % ;
+3. **panneau marchand** — mêmes couleurs, mêmes polices que l'app marchand, écran
+   contre écran.
+
+### 10.6 Le filet
+
+`WebBrandCharterTest` fixe ce qui se déferait en silence à la prochaine montée de
+We Courier : les deux `<link>` **et leur position** (après `@stack('styles')` au
+back-office, avant le bloc du tenant au site public), le zoom, la langue déclarée,
+la signature `wOF2` des quatre polices, l'absence d'hexadécimal recopié, et la
+non-régression de la couleur en base. Deux tests vont plus loin que du texte : ils
+**recalculent les contrastes** — les six pastilles et le texte sur l'ocre — parce
+qu'un commentaire annonçant « 5,24:1 » peut mentir, un calcul non.
+
+Vérifié : en faisant dériver un jeton, en remettant l'ancien rouge dans la
+maquette, en rétablissant le viewport bloquant, `lang="en"` et en retirant un
+`<link>`, **les tests concernés échouent** — ils ne sont pas décoratifs.

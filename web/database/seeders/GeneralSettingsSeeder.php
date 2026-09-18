@@ -36,7 +36,7 @@ class GeneralSettingsSeeder extends Seeder
         $row->par_track_prefix     = 'we';
         $row->invoice_prefix       = 'we';
         $row->current_version      = '1';
-        $row->primary_color        = '#7e0095';
+        $row->primary_color        = '#12503A'; // vert profond — charte BeninLink
         $row->text_color           = '#ffffff';
         $row->save();
 
@@ -55,7 +55,7 @@ class GeneralSettingsSeeder extends Seeder
         $row->par_track_prefix     = 'co';
         $row->invoice_prefix       = 'co';
         $row->current_version      = '1';
-        $row->primary_color        = '#7e0095';
+        $row->primary_color        = '#12503A'; // vert profond — charte BeninLink
         $row->text_color           = '#ffffff'; 
         $row->subscription_id      = 1;
         $row->plan_id              = 1;

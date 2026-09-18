@@ -28,7 +28,7 @@ return new class extends Migration
             $table->string('current_version')->nullable();
             $table->string('par_track_prefix')->nullable();
             $table->string('invoice_prefix')->nullable();
-            $table->string('primary_color')->default('#7e0095')->nullable();
+            $table->string('primary_color')->default('#12503A')->nullable(); // charte BeninLink — mobile/src/theme/colors.ts
             $table->string('text_color')->default('#ffffff')->nullable();
             $table->unsignedTinyInteger('status')->default(Status::ACTIVE)->comment(Status::ACTIVE.'='.trans('status.'.Status::ACTIVE).', ' .Status::INACTIVE.'='.trans('status.'.Status::INACTIVE));
             $table->bigInteger('subscription_id')->nullable();

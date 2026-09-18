@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en" @if(app()->getLocale() == 'ar') dir="rtl"@endif>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @if(app()->getLocale() == 'ar') dir="rtl"@endif>
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,  minimum-scale=0.8, maximum-scale = 0.8, user-scalable = no , shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <link rel="shortcut icon" href="{{ settings()->favicon_image }}" type="image/x-icon">
     <!-- Bootstrap CSS -->
@@ -26,6 +26,11 @@
     <link rel="stylesheet" href="{{ static_asset('backend/vendor') }}/toastr/toastr.min.css">
     <!-- push target to head -->
     @stack('styles')
+    {{-- Charte BeninLink — chargée en DERNIER, après @stack('styles') : les pages
+         y poussent des bibliothèques (logs.css, progressbar.css) qui portent
+         encore le violet du socle. Voir public/beninlink/css/theme-backoffice.css. --}}
+    <link rel="stylesheet" href="{{ static_asset('beninlink/css/tokens.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('beninlink/css/theme-backoffice.css') }}">
     <title>@yield('title')</title>
 </head>
 <body >

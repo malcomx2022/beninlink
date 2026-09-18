@@ -1,0 +1,201 @@
+/*!
+ * tokens.css — la charte BeninLink, écrite une seule fois.
+ *
+ * SOURCE DE VÉRITÉ : mobile/src/theme/colors.ts et mobile/src/theme/typography.ts,
+ * identiques dans mobile/ et mobile-livreur/. Toute valeur ci-dessous en vient,
+ * ou est une extension web explicitement marquée comme telle.
+ *
+ * ┌─ RÈGLE ────────────────────────────────────────────────────────────────────┐
+ * │ C'est le SEUL fichier de web/ où un hexadécimal de charte s'écrit.         │
+ * │ Une vue, une feuille de thème ou un PDF ne recopie jamais une couleur :    │
+ * │ il référence un jeton --bl-*. C'est cette recopie qui avait produit trois  │
+ * │ îlots divergents (fedapay_callback, api/docs, statement_pdf).              │
+ * └────────────────────────────────────────────────────────────────────────────┘
+ *
+ * Ce fichier ne style RIEN. Il déclare des jetons et charge les polices.
+ * L'application des jetons vit dans theme-frontend.css et theme-backoffice.css.
+ */
+
+/* ===========================================================================
+   1. POLICES — auto-hébergées (voir ../fonts/LISEZMOI.md)
+   Polices variables : un fichier par famille couvre toutes les graisses utiles.
+   Les URL sont RELATIVES à ce fichier : elles restent justes sous les deux
+   formes d'URL que static_asset() produit (avec ou sans /public).
+   =========================================================================== */
+
+/* Sora — titres ET chiffres (montants FCFA, KPIs, compteurs). Charte. */
+@font-face {
+  font-family: 'Sora';
+  font-style: normal;
+  font-weight: 400 800;           /* variable : la charte emploie 600 et 700 */
+  font-display: swap;
+  src: url('../fonts/sora-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Sora';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('../fonts/sora-latin-ext.woff2') format('woff2');
+  /* Fon et yoruba (ɖ ɛ ɔ ẹ ọ ṣ) : téléchargé seulement si un tel caractère
+     apparaît. Sans cette plage, un nom de marchand béninois sort en carré. */
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* DM Sans — corps de texte, libellés, champs de saisie. Charte. */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400 700;           /* variable : la charte emploie 400 et 500 */
+  font-display: swap;
+  src: url('../fonts/dm-sans-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../fonts/dm-sans-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  /* =========================================================================
+     2. COULEURS — mobile/src/theme/colors.ts, à l'identique
+     ========================================================================= */
+
+  /* Vert profond : couleur primaire, en-têtes, éléments actifs. */
+  --bl-primary: #12503A;
+  --bl-primary-dark: #0D3A2A;
+  --bl-primary-light: #1C6B4E;
+
+  /* Ocre : ACTIONS CLÉS UNIQUEMENT (bouton principal, montant à retenir).
+     ⚠️ Ne porte JAMAIS de texte blanc — 2,17:1, illisible.
+     Son texte est --bl-on-accent (6,40:1). Voir §4. */
+  --bl-accent: #E0A63C;
+  --bl-accent-dark: #C08D2A;
+
+  /* Rouge = INCIDENT. Réservé aux erreurs et au niveau douanier BLOQUANT. */
+  --bl-danger: #C0392B;
+  /* Orange = AVERTISSEMENT douanier, retard, livraison partielle. */
+  --bl-warning: #D98324;
+  /* Vert clair = succès, colis livré. */
+  --bl-success: #1E8E5A;
+  /* Bleu sobre = INFO douanier, mentions neutres. */
+  --bl-info: #2C6E8F;
+
+  --bl-text: #1A1A1A;
+  --bl-text-muted: #5F6B66;
+  --bl-text-on-primary: #FFFFFF;
+
+  --bl-background: #F7F9F8;
+  --bl-surface: #FFFFFF;
+  --bl-border: #E1E6E3;
+  --bl-disabled: #B8C2BD;
+
+  /* =========================================================================
+     3. EXTENSIONS WEB — maquettes/3_back_office_web.html
+     Le web a des surfaces que l'app n'a pas (en-têtes de colonnes, métadonnées
+     de tableau). Ces jetons COMPLÈTENT la charte, ils ne la contredisent pas.
+     Les cinq jetons sur lesquels la maquette divergeait de colors.ts ont été
+     tranchés en faveur de colors.ts (décision du 2026-09-18) : la maquette a
+     été corrigée, elle n'est plus une source concurrente.
+     ========================================================================= */
+
+  /* Ardoise : en-têtes de colonnes, métadonnées, libellés de section. 4,76:1. */
+  --bl-slate: #64748B;
+  /* Ardoise assombrie, pour du petit texte sur fond pâle. */
+  --bl-slate-strong: #4A5A67;
+
+  /* =========================================================================
+     4. COULEURS DE TEXTE SUR FOND COLORÉ — contrastes vérifiés (WCAG 2.1 AA)
+     Chaque valeur est mesurée, pas choisie à l'œil. Ne pas les modifier sans
+     recalculer : c'est ce qui sépare une charte d'une décoration.
+     ========================================================================= */
+
+  --bl-on-primary: #FFFFFF;      /* sur --bl-primary  ........... 9,40:1 */
+  --bl-on-accent:  #3A2A06;      /* sur --bl-accent   ........... 6,40:1 */
+
+  /* Ocre en TEXTE : jamais l'ocre nominal (2,17:1 sur blanc). Cette variante
+     assombrie tient AA sur blanc (5,93:1) et sert les montants à retenir. */
+  --bl-accent-text: #8A5A00;
+
+  /* Même problème pour le vert de succès, et même remède. Le `success` de la
+     charte (#1E8E5A) ne tient PAS AA en petit corps : 4,14:1, que ce soit en
+     texte sur blanc ou en blanc sur lui. Or une pastille « Livré » est du petit
+     texte. Ces deux variantes, mesurées, servent ces deux cas précis — le jeton
+     --bl-success reste la couleur de la charte pour tout le reste. */
+  --bl-success-text: #0F6B45;     /* sur blanc ................... 6,54:1 */
+  --bl-success-strong: #15704A;   /* blanc dessus ................ 6,09:1 */
+
+  /* =========================================================================
+     5. PASTILLES DE STATUT — les six familles de la maquette
+     Fond pâle + texte assombri. Les textes de la maquette échouaient AA en
+     petit corps (p-transit 2,93:1, p-livre 4,34:1) : les six ont été
+     recalculés. Ratio de chaque paire indiqué en regard.
+     La correspondance code backend → famille vit côté PHP, pas ici.
+     ========================================================================= */
+
+  --bl-pill-wait-bg:    #EEF1F4;  --bl-pill-wait-fg:    #4A5A67;  /* 6,28:1 */
+  --bl-pill-transit-bg: #FBF0DA;  --bl-pill-transit-fg: #8A5A00;  /* 5,24:1 */
+  --bl-pill-hub-bg:     #E3F1FB;  --bl-pill-hub-fg:     #1B5C7A;  /* 6,38:1 */
+  --bl-pill-assign-bg:  #DEF2EE;  --bl-pill-assign-fg:  #0E6A5E;  /* 5,57:1 */
+  --bl-pill-done-bg:    #E1F3EA;  --bl-pill-done-fg:    #0F6B45;  /* 5,67:1 */
+  --bl-pill-return-bg:  #FBE6E9;  --bl-pill-return-fg:  #9E2A20;  /* 6,27:1 */
+
+  /* =========================================================================
+     6. TYPOGRAPHIE — mobile/src/theme/typography.ts
+     ========================================================================= */
+
+  /* Sora : titres de page et de section, ET tous les chiffres. Choix de charte :
+     un montant FCFA se lit en Sora, pas dans la police de corps. */
+  --bl-font-heading: 'Sora', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --bl-font-numeric: var(--bl-font-heading);
+  --bl-font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --bl-weight-body: 400;
+  --bl-weight-body-medium: 500;
+  --bl-weight-heading: 600;
+  --bl-weight-heading-bold: 700;
+
+  /* Échelle de l'app, en px pour rester comparable écran à écran. */
+  --bl-size-xs: 11px;
+  --bl-size-sm: 13px;
+  --bl-size-md: 15px;
+  --bl-size-lg: 18px;
+  --bl-size-xl: 22px;
+  --bl-size-xxl: 28px;
+  --bl-size-display: 34px;        /* solde de portefeuille, net à reverser */
+
+  /* =========================================================================
+     7. ESPACEMENTS ET RAYONS — mobile/src/theme/typography.ts
+     ========================================================================= */
+
+  --bl-space-xs: 4px;
+  --bl-space-sm: 8px;
+  --bl-space-md: 16px;
+  --bl-space-lg: 24px;
+  --bl-space-xl: 32px;
+
+  --bl-radius-sm: 6px;
+  --bl-radius-md: 10px;
+  --bl-radius-lg: 16px;
+  --bl-radius-pill: 999px;
+
+  /* Ombres : le web en a besoin, l'app non. Extension web, volontairement sobre. */
+  --bl-shadow-card: 0 1px 2px rgba(20, 32, 27, .04);
+  --bl-shadow-raised: 0 4px 16px -4px rgba(20, 32, 27, .12);
+
+  /* Anneau de focus : visible au clavier, dans la couleur primaire. */
+  --bl-focus-ring: 0 0 0 3px rgba(18, 80, 58, .35);
+}

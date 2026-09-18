@@ -8,10 +8,29 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
 <style>
+  /* Charte BeninLink. SOURCE DE VÉRITÉ : mobile/src/theme/colors.ts, identique
+     dans mobile/ et mobile-livreur/. Cinq jetons de cette maquette divergeaient
+     de colors.ts — rouge, fond, bordure, encre, succès. Arbitrage du 2026-09-18 :
+     colors.ts l'emporte (c'est du code livré, exercé par les deux apps, et son
+     rouge tient AA sur blanc là où #D1495B échouait). Corrigés ci-dessous ;
+     l'ancienne valeur est notée en regard. L'implémentation web de ces jetons vit
+     dans web/public/beninlink/css/tokens.css. */
   :root{
-    --vert:#12503A; --vert-vif:#1F9D6B; --ocre:#E0A63C; --ocre-fonce:#B9832A;
-    --encre:#14201B; --gris:#5B6B63; --brume:#F4F6F3; --ligne:#E7ECE9;
-    --rouge:#D1495B; --ardoise:#64748B; --carte:#FFFFFF; --bleu:#2678B0;
+    --vert:#12503A; --vert-vif:#1E8E5A; --ocre:#E0A63C; --ocre-fonce:#B9832A;
+    --encre:#1A1A1A; --gris:#5B6B63; --brume:#F7F9F8; --ligne:#E1E6E3;
+    --rouge:#C0392B; --ardoise:#64748B; --carte:#FFFFFF; --bleu:#2678B0;
+    /* ex- --vert-vif:#1F9D6B · --encre:#14201B · --brume:#F4F6F3
+       ex- --ligne:#E7ECE9   · --rouge:#D1495B */
+
+    /* Texte des pastilles. Les couleurs d'origine échouaient AA en corps 10,5 px
+       (p-transit 2,93:1, p-livre 4,34:1, p-attente 4,20:1, p-hub 4,15:1,
+       p-assign 4,43:1, p-retour 3,65:1). Recalculées : ratio en regard. */
+    --pill-attente:#4A5A67;  /* 6,28:1 sur #EEF1F4 */
+    --pill-transit:#8A5A00;  /* 5,24:1 sur #FBF0DA */
+    --pill-hub:#1B5C7A;      /* 6,38:1 sur #E3F1FB */
+    --pill-assign:#0E6A5E;   /* 5,57:1 sur #DEF2EE */
+    --pill-livre:#0F6B45;    /* 5,67:1 sur #E1F3EA */
+    --pill-retour:#9E2A20;   /* 6,27:1 sur #FBE6E9 */
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'DM Sans',system-ui,sans-serif;color:var(--encre);
@@ -104,12 +123,12 @@
   .who{display:flex;flex-direction:column}.who small{color:var(--gris);font-size:11px}
 
   .pill{font-size:10.5px;font-weight:600;font-family:'Sora';padding:4px 9px;border-radius:999px;white-space:nowrap;display:inline-block}
-  .p-attente{background:#EEF1F4;color:var(--ardoise)}
-  .p-transit{background:#FBF0DA;color:var(--ocre-fonce)}
-  .p-hub{background:#E3F1FB;color:var(--bleu)}
-  .p-assign{background:#DEF2EE;color:#0F7B6C}
-  .p-livre{background:#E1F3EA;color:#157F55}
-  .p-retour{background:#FBE6E9;color:var(--rouge)}
+  .p-attente{background:#EEF1F4;color:var(--pill-attente)}
+  .p-transit{background:#FBF0DA;color:var(--pill-transit)}
+  .p-hub{background:#E3F1FB;color:var(--pill-hub)}
+  .p-assign{background:#DEF2EE;color:var(--pill-assign)}
+  .p-livre{background:#E1F3EA;color:var(--pill-livre)}
+  .p-retour{background:#FBE6E9;color:var(--pill-retour)}
   .pay-paid{color:#157F55;font-weight:600;font-size:11.5px}
   .pay-unpaid{color:var(--ardoise);font-weight:600;font-size:11.5px}
 
