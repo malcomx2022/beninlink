@@ -1973,12 +1973,14 @@ Et corriger le troisième sans précaution en aurait créé un quatrième : `Use
 `Role` déclarent `'permissions' => 'array'` et sont journalisés, donc un `{{ }}`
 posé naïvement aurait fait **500** là où `{!! !!}` n'affichait que « Array ».
 
-⚠️ **Le journal n'était pas une exception.** Sur `routes/web.php` : **31 des 100
-routes à identifiant ne portent aucune permission**, et les **12** appels
-`::find($id)` des contrôleurs du back-office n'ont **aucun** périmètre société.
-Le filet S7 ne couvre que `/api/v10`. Élargir ce filet aux routes web est un
-chantier à ouvrir — pas un correctif mécanique : ajouter une permission là où il
-n'y en avait aucune **retire l'accès** à un rôle qui ne la porte pas.
+⚠️ **Le journal n'était pas une exception**, et l'inventaire qui a suivi a corrigé
+le chiffre que cette section annonçait d'abord (« 31 des 100 routes à `{id}` de
+`web.php` » — un comptage borné à un nom de paramètre et à un fichier). Le relevé
+complet : **258 routes à paramètre**, **53 sans permission**. Mais seulement
+**6** relèvent d'une décision de permission ; 5 sont des **routes mortes**, 26
+appartiennent au panneau marchand où l'appartenance, pas la permission, est le
+mécanisme, et 10 portent un `{id}` purement décoratif. Et **4 sont des fuites
+vérifiées** — S23 à S26 de `web/CARTOGRAPHIE.md`, où vit l'inventaire complet.
 
 ### 19.7 Autres constats, signalés et non corrigés
 
