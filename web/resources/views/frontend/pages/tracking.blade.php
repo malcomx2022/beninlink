@@ -25,293 +25,63 @@
                 <div class="cd-timeline__container">  
                     @foreach ($parcelevents as $key=>$log)
                         @php
-                            if(!empty($log->cancel_parcel_id)): 
-                                $cancel   = ' cancel';
-                                $danger   = 'danger'; 
-                            else:
-                                $cancel   = null;
-                                $danger   = null; 
-                            endif; 
-                           
+                            // Le socle collait ici le mot anglais « cancel », en dur, au
+                            // libellé du statut — sur la page que lit le client final.
+                            $annule = ! empty($log->cancel_parcel_id);
+                            $etape  = \App\Services\Parcel\ParcelStage::of($log->parcel_status);
                         @endphp
         
-                        @switch($log->parcel_status)
-                            @case(\App\Enums\ParcelStatus::PICKUP_ASSIGN)
-        
-                                <div class="cd-timeline__block js-cd-block"> 
-                                        <div class="cd-timeline__img cd-timeline__img--picture js-cd-img {{ isset($danger)? 'bg-danger':'' }}">
-                                            <i class="timeline_icon fas {{ isset($danger)? 'fa-close':'fa-check' }}" aria-hidden="true"></i>
-                                        </div>
-                                    
-                                    <!-- cd-timeline__img -->
-                                    <div class="cd-timeline__content js-cd-content">
-                                        <strong>{{__('parcelLogs.'.$log->parcel_status)}} {{ isset($danger)? $cancel:'' }}</strong><br>
-                                        <span>{{__('parcel.pickup_man')}}: {{isset($log->pickupman)? $log->pickupman->user->name:''}}</span><br>
-                                        <span>{{__('levels.mobile')}}: {{isset($log->pickupman)? $log->pickupman->user->mobile:''}}</span><br>
-                                        <span>{{__('levels.note')}}: {{$log->note}}</span><br/>
-        
-                                        <strong>{{ __('levels.created_by') }}</strong><br/>
-                                        <span>{{ __('levels.name') }}: {{ $log->user->name }} </span><br/>
-                                        <span>{{ __('levels.mobile') }}: {{ $log->user->mobile }} </span><br/>
-        
-                                        <div class="cd-timeline__date">
-                                            <strong>{!! dateFormat($log->created_at) !!}</strong><br>
-                                            <small>{!! date('h:i a', strtotime($log->created_at)) !!}</small>
-                                        </div>
-                                    </div>
-                                    <!-- cd-timeline__content -->
+                        {{-- Le socle écrivait ONZE branches — dix statuts et un repli — dont
+                             le corps ne différait que par une ligne d'acteur. Et sa table de
+                             couleurs était une QUATRIÈME copie de celle que le lot 2 avait
+                             réduite à une seule : `ParcelStage` la donne désormais ici aussi.
+                             C'est la page que voit le CLIENT FINAL ; elle peignait jusqu'ici
+                             chaque étape en vert vif, y compris une livraison PARTIELLE, que
+                             la charte réserve à l'avertissement. --}}
+                        <div class="cd-timeline__block js-cd-block">
+                            <div class="cd-timeline__img js-cd-img bl-node bl-node--{{ $annule ? 'cancel' : $etape }}">
+                                <i class="timeline_icon fas {{ $annule ? 'fa-times' : 'fa-check' }}" aria-hidden="true"></i>
+                            </div>
+                            <!-- cd-timeline__img -->
+                            <div class="cd-timeline__content js-cd-content">
+                                <strong>{{ __('parcelLogs.' . $log->parcel_status) }}@if($annule) — {{ __('Cancelled') }}@endif</strong><br>
+
+                                {{-- Les acteurs se rendent à la PRÉSENCE, non plus par statut :
+                                     le socle n'affichait le ramasseur que sur deux statuts et le
+                                     masquait partout ailleurs, même quand le journal le portait. --}}
+                                @isset($log->pickupman)
+                                    <span>{{ __('parcel.pickup_man') }}: {{ $log->pickupman->user->name }}</span><br>
+                                    <span>{{ __('levels.mobile') }}: {{ $log->pickupman->user->mobile }}</span><br>
+                                @endisset
+                                @isset($log->hub)
+                                    <span>{{ __('parcelLogs.hub_name') }}: {{ $log->hub->name }}</span><br>
+                                    <span>{{ __('parcelLogs.hub_phone') }}: {{ $log->hub->phone }}</span><br>
+                                @endisset
+                                @isset($log->transferDeliveryman)
+                                    <span>{{ __('parcelLogs.delivery_man') }}: {{ $log->transferDeliveryman->user->name }}</span><br>
+                                    <span>{{ __('parcelLogs.delivery_man_phone') }}: {{ $log->transferDeliveryman->user->mobile }}</span><br>
+                                @endisset
+                                @isset($log->deliveryMan)
+                                    <span>{{ __('parcelLogs.delivery_man') }}: {{ $log->deliveryMan->user->name }}</span><br>
+                                    <span>{{ __('parcelLogs.delivery_man_phone') }}: {{ $log->deliveryMan->user->mobile }}</span><br>
+                                @endisset
+
+                                <span>{{ __('levels.note') }}: {{ $log->note }}</span><br/>
+
+                                <strong>{{ __('levels.created_by') }}</strong><br/>
+                                <span>{{ __('levels.name') }}: {{ $log->user->name }}</span><br/>
+                                <span>{{ __('levels.mobile') }}: {{ $log->user->mobile }}</span><br/>
+
+                                <div class="cd-timeline__date">
+                                    <strong>{!! dateFormat($log->created_at) !!}</strong><br>
+                                    <small>{!! date('h:i a', strtotime($log->created_at)) !!}</small>
                                 </div>
-                            @break
-                            @case(\App\Enums\ParcelStatus::PICKUP_RE_SCHEDULE)
-                                <div class="cd-timeline__block js-cd-block">
-                                    <div class="cd-timeline__img cd-timeline__yellow js-cd-img {{ isset($danger)? 'bg-danger':'' }}">
-                                        <i class="timeline_icon fas fa-hourglass-end {{ isset($danger)? 'fa-close':'fa-hourglass-end' }}" aria-hidden="true"></i>
-                                    </div>
-         
-                                    <!-- cd-timeline__img -->
-                                    <div class="cd-timeline__content js-cd-content">
-                                        <strong>{{__('parcelLogs.'.$log->parcel_status)}} {{ isset($danger)? $cancel:'' }}</strong><br>
-                                        <span>{{__('parcel.pickup_man')}}: {{isset($log->pickupman)? $log->pickupman->user->name:''}}</span><br>
-                                        <span>{{__('levels.mobile')}}: {{isset($log->pickupman)? $log->pickupman->user->mobile:''}}</span><br>
-                                        <span>{{__('levels.note')}}: {{$log->note}}</span><br/>
-        
-                                        <strong>{{ __('levels.created_by') }}</strong><br/>
-                                        <span>{{ __('levels.name') }}: {{ $log->user->name }} </span><br/>
-                                        <span>{{ __('levels.mobile') }}: {{ $log->user->mobile }} </span><br/>
-        
-        
-                                        <div class="cd-timeline__date">
-                                            <strong>{!! dateFormat($log->created_at) !!}</strong><br>
-                                            <small>{!! date('h:i a', strtotime($log->created_at)) !!}</small>
-                                        </div>
-                                    </div>
-                                    <!-- cd-timeline__content -->
-                                </div>
-                            @break
-                            @case(\App\Enums\ParcelStatus::RECEIVED_BY_PICKUP_MAN)
-                                <div class="cd-timeline__block js-cd-block">
-                                    <div class="cd-timeline__img cd-timeline__img--picture js-cd-img {{ isset($danger)? 'bg-danger':'' }}">
-                                        <i class="timeline_icon fas {{ isset($danger)? 'fa-close':'fa-check' }}" aria-hidden="true"></i>
-                                    </div>
-                                    <!-- cd-timeline__img -->
-                                    <div class="cd-timeline__content js-cd-content">
-                                        <strong>{{__('parcelLogs.'.$log->parcel_status)}} {{ isset($danger)? $cancel:'' }}</strong><br>
-                                        <span>{{__('levels.note')}}: {{$log->note}}</span><br/>
-        
-                                        <strong>{{ __('levels.created_by') }}</strong><br/>
-                                        <span>{{ __('levels.name') }}: {{ $log->user->name }} </span><br/>
-                                        <span>{{ __('levels.mobile') }}: {{ $log->user->mobile }} </span><br/>
-        
-        
-                                        <div class="cd-timeline__date">
-                                            <strong>{!! dateFormat($log->created_at) !!}</strong><br>
-                                            <small>{!! date('h:i a', strtotime($log->created_at)) !!}</small>
-                                        </div>
-                                    </div>
-                                    <!-- cd-timeline__content -->
-                                </div>
-                            @break
-                            @case(\App\Enums\ParcelStatus::RECEIVED_WAREHOUSE)
-                                <div class="cd-timeline__block js-cd-block">
-                                    <div class="cd-timeline__img cd-timeline__img--picture js-cd-img {{ isset($danger)? 'bg-danger':'' }}">
-                                        <i class="timeline_icon fas {{ isset($danger)? 'fa-close':'fa-check' }}" aria-hidden="true"></i>
-                                    </div>
-                                    <!-- cd-timeline__img -->
-                                    <div class="cd-timeline__content js-cd-content">
-                                        <strong>{{__('parcelLogs.'.$log->parcel_status)}} {{ isset($danger)? $cancel:'' }}</strong><br>
-                                        <span>{{__('parcelLogs.hub_name')}}: {{$log->hub->name}}</span><br>
-                                        <span>{{__('levels.mobile')}}: {{$log->hub->phone}}</span><br/>
-                                        <span>{{__('levels.note')}}: {{$log->note}}</span><br/>
-        
-                                        <strong>{{ __('levels.created_by') }}</strong><br/>
-                                        <span>{{ __('levels.name') }}: {{ $log->user->name }} </span><br/>
-                                        <span>{{ __('levels.mobile') }}: {{ $log->user->mobile }} </span><br/>
-        
-        
-                                        <div class="cd-timeline__date">
-                                            <strong>{!! dateFormat($log->created_at) !!}</strong><br>
-                                            <small>{!! date('h:i a', strtotime($log->created_at)) !!}</small>
-                                        </div>
-                                    </div>
-                                    <!-- cd-timeline__content -->
-                                </div>
-                            @break
-                            @case(\App\Enums\ParcelStatus::TRANSFER_TO_HUB)
-        
-                                <div class="cd-timeline__block js-cd-block">
-                                    <div class="cd-timeline__img cd-timeline__img--picture js-cd-img {{ isset($danger)? 'bg-danger':'' }}">
-                                        <i class="timeline_icon fas {{ isset($danger)? 'fa-close':'fa-check' }}" aria-hidden="true"></i>
-                                    </div>
-                                    <!-- cd-timeline__img -->
-                                    <div class="cd-timeline__content js-cd-content">
-                                        <strong>{{__('parcelLogs.'.$log->parcel_status)}} {{ isset($danger)? $cancel:'' }}</strong><br>
-                                        <span>{{__('parcelLogs.hub_name')}}: {{$log->hub->name}}</span><br>
-                                        <span>{{__('parcelLogs.hub_phone')}}: {{$log->hub->phone}}</span><br/>
-                                        <span>{{__('parcelLogs.delivery_man')}}: {{ isset($log->transferDeliveryman) ? $log->transferDeliveryman->user->name:''}}</span><br/>
-                                        <span>{{__('parcelLogs.delivery_man_phone')}}: {{ isset($log->transferDeliveryman) ? $log->transferDeliveryman->user->mobile:''}}</span><br/>
-                                        <span>{{__('levels.note')}}: {{$log->note}}</span><br/>
-        
-                                        <strong>{{ __('levels.created_by') }}</strong><br/>
-                                        <span>{{ __('levels.name') }}: {{ $log->user->name }} </span><br/>
-                                        <span>{{ __('levels.mobile') }}: {{ $log->user->mobile }} </span><br/>
-        
-        
-                                        <div class="cd-timeline__date">
-                                            <strong>{!! dateFormat($log->created_at) !!}</strong><br>
-                                            <small>{!! date('h:i a', strtotime($log->created_at)) !!}</small>
-                                        </div>
-                                    </div>
-                                    <!-- cd-timeline__content -->
-                                </div>
-                            @break
-                       
-                            @case(\App\Enums\ParcelStatus::DELIVERY_MAN_ASSIGN)
-                                <div class="cd-timeline__block js-cd-block">
-                                    <div class="cd-timeline__img cd-timeline__img--picture js-cd-img {{ isset($danger)? 'bg-danger':'' }}">
-                                        <i class="timeline_icon fas {{ isset($danger)? 'fa-close':'fa-check' }}" aria-hidden="true"></i>
-                                    </div>
-                                    <!-- cd-timeline__img -->
-                                    <div class="cd-timeline__content js-cd-content">
-                                        <strong>{{__('parcelLogs.'.$log->parcel_status)}} {{ isset($danger)? $cancel:'' }}</strong><br>
-                                        <span>{{__('parcelLogs.delivery_man')}}: {{isset($log->deliveryMan)? $log->deliveryMan->user->name:''}}</span><br>
-                                        <span>{{__('levels.phone')}}: {{isset($log->deliveryMan)? $log->deliveryMan->user->mobile:''}}</span><br/>
-                                        <span>{{__('levels.note')}}: {{$log->note}}</span><br/>
-        
-                                        <strong>{{ __('levels.created_by') }}</strong><br/>
-                                        <span>{{ __('levels.name') }}: {{ $log->user->name }} </span><br/>
-                                        <span>{{ __('levels.mobile') }}: {{ $log->user->mobile }} </span><br/>
-        
-        
-                                        <div class="cd-timeline__date">
-                                            <strong>{!! dateFormat($log->created_at) !!}</strong><br>
-                                            <small>{!! date('h:i a', strtotime($log->created_at)) !!}</small>
-                                        </div>
-                                    </div>
-                                    <!-- cd-timeline__content -->
-                                </div>
-                            @break
-        
-                            @case(\App\Enums\ParcelStatus::DELIVERY_RE_SCHEDULE)
-                                <div class="cd-timeline__block js-cd-block">
-                                    <div class="cd-timeline__img cd-timeline__yellow js-cd-img {{ isset($danger)? 'bg-danger':'' }}">
-                                        <i class="timeline_icon fas {{ isset($danger)? 'fa-close':'fa-hourglass-end' }}" aria-hidden="true"></i>
-                                    </div>
-                                    <!-- cd-timeline__img -->
-                                    <div class="cd-timeline__content js-cd-content">
-                                        <strong>{{__('parcelLogs.'.$log->parcel_status)}} {{ isset($danger)? $cancel:'' }}</strong><br>
-                                        <span>{{__('parcelLogs.delivery_man')}}: {{isset($log->deliveryMan)? $log->deliveryMan->user->name:''}}</span><br>
-                                        <span>{{__('levels.phone')}}: {{isset($log->deliveryMan)? $log->deliveryMan->user->mobile:''}}</span><br/>
-                                        <span>{{__('levels.note')}}: {{$log->note}}</span><br/>
-        
-                                        <strong>{{ __('levels.created_by') }}</strong><br/>
-                                        <span>{{ __('levels.name') }}: {{ $log->user->name }} </span><br/>
-                                        <span>{{ __('levels.mobile') }}: {{ $log->user->mobile }} </span><br/>
-        
-        
-                                        <div class="cd-timeline__date">
-                                            <strong>{!! dateFormat($log->created_at) !!}</strong><br>
-                                            <small>{!! date('h:i a', strtotime($log->created_at)) !!}</small>
-                                        </div>
-                                    </div>
-                                    <!-- cd-timeline__content -->
-                                </div>
-                            @break
-                            @case(\App\Enums\ParcelStatus::DELIVERED)
-                                <div class="cd-timeline__block js-cd-block">
-                                    <div class="cd-timeline__img cd-timeline__img--picture js-cd-img {{ isset($danger)? 'bg-danger':'' }}">
-                                        <i class="timeline_icon fas {{ isset($danger)? 'fa-close':'fa-check' }}" aria-hidden="true"></i>
-                                    </div>
-                                    <!-- cd-timeline__img -->
-                                    <div class="cd-timeline__content js-cd-content">
-                                        <strong>{{__('parcelLogs.'.$log->parcel_status)}} {{ isset($danger)? $cancel:'' }}</strong><br>
-                                        <span>{{__('levels.note')}}: {{$log->note}}</span><br/>
-        
-                                        <strong>{{ __('levels.created_by') }}</strong><br/>
-                                        <span>{{ __('levels.name') }}: {{ $log->user->name }} </span><br/>
-                                        <span>{{ __('levels.mobile') }}: {{ $log->user->mobile }} </span><br/>
-        
-        
-                                        <div class="cd-timeline__date">
-                                            <strong>{!! dateFormat($log->created_at) !!}</strong><br>
-                                            <small>{!! date('h:i a', strtotime($log->created_at)) !!}</small>
-                                        </div>
-                                    </div>
-                                    <!-- cd-timeline__content -->
-                                </div>
-                            @break
-                            @case(\App\Enums\ParcelStatus::PARTIAL_DELIVERED)
-                                <div class="cd-timeline__block js-cd-block">
-                                    <div class="cd-timeline__img cd-timeline__img--picture js-cd-img {{ isset($danger)? 'bg-danger':'' }}">
-                                        <i class="timeline_icon fas {{ isset($danger)? 'fa-close':'fa-check' }}" aria-hidden="true"></i>
-                                    </div>
-                                    <!-- cd-timeline__img -->
-                                    <div class="cd-timeline__content js-cd-content">
-                                        <strong>{{__('parcelLogs.'.$log->parcel_status)}} {{ isset($danger)? $cancel:'' }}</strong><br>
-                                        <span>{{__('levels.note')}}: {{$log->note}}</span><br/>
-        
-                                        <strong>{{ __('levels.created_by') }}</strong><br/>
-                                        <span>{{ __('levels.name') }}: {{ $log->user->name }} </span><br/>
-                                        <span>{{ __('levels.mobile') }}: {{ $log->user->mobile }} </span><br/>
-        
-        
-                                        <div class="cd-timeline__date">
-                                            <strong>{!! dateFormat($log->created_at) !!}</strong><br>
-                                            <small>{!! date('h:i a', strtotime($log->created_at)) !!}</small>
-                                        </div>
-                                    </div>
-                                    <!-- cd-timeline__content -->
-                                </div>
-                            @break
-                            @case(\App\Enums\ParcelStatus::RETURN_MERCHANT_RE_SCHEDULE)
-                                <div class="cd-timeline__block js-cd-block">
-                                    <div class="cd-timeline__img cd-timeline__yellow js-cd-img {{ isset($danger)? 'bg-danger':'' }}">
-                                        <i class="timeline_icon fas {{ isset($danger)? 'fa-close':'fa-hourglass-end' }}" aria-hidden="true"></i>
-                                    </div>
-                                   <!-- cd-timeline__img -->
-                                   <div class="cd-timeline__content js-cd-content">
-                                    <strong>{{__('parcelLogs.'.$log->parcel_status)}} {{ isset($danger)? $cancel:'' }}</strong><br>
-                                    <span>{{__('levels.note')}}: {{$log->note}}</span><br/>
-        
-                                    <strong>{{ __('levels.created_by') }}</strong><br/>
-                                    <span>{{ __('levels.name') }}: {{ $log->user->name }} </span><br/>
-                                    <span>{{ __('levels.mobile') }}: {{ $log->user->mobile }} </span><br/>
-        
-        
-                                    <div class="cd-timeline__date">
-                                        <strong>{!! dateFormat($log->created_at) !!}</strong><br>
-                                        <small>{!! date('h:i a', strtotime($log->created_at)) !!}</small>
-                                    </div>
-                                </div>
-                                <!-- cd-timeline__content -->
-                                </div>
-                            @break
-                            
-                            @default
-                                <div class="cd-timeline__block js-cd-block">
-                                    <div class="cd-timeline__img cd-timeline__img--picture js-cd-img {{ isset($danger)? 'bg-danger':'' }}">
-                                        <i class="timeline_icon fas {{ isset($danger)? 'fa-close':'fa-check' }}" aria-hidden="true"></i>
-                                    </div>
-                                    <!-- cd-timeline__img -->
-                                    <div class="cd-timeline__content js-cd-content">
-                                        <strong>{{__('parcelLogs.'.$log->parcel_status)}} {{ isset($danger)? $cancel:'' }}</strong><br>
-                                        <span>{{__('levels.note')}}: {{$log->note}}</span><br/>
-        
-                                        <strong>{{ __('levels.created_by') }}</strong><br/>
-                                        <span>{{ __('levels.name') }}: {{ $log->user->name }} </span><br/>
-                                        <span>{{ __('levels.mobile') }}: {{ $log->user->mobile }} </span><br/>
-        
-        
-                                        <div class="cd-timeline__date">
-                                            <strong>{!! dateFormat($log->created_at) !!}</strong><br>
-                                            <small>{!! date('h:i a', strtotime($log->created_at)) !!}</small>
-                                        </div>
-                                    </div>
-                                    <!-- cd-timeline__content -->
-                                </div>
-                        @endswitch
+                            </div>
+                            <!-- cd-timeline__content -->
+                        </div>
                     @endforeach 
                     <div class="cd-timeline__block js-cd-block">
-                        <div class="cd-timeline__img cd-timeline__img--picture js-cd-img">
+                        <div class="cd-timeline__img js-cd-img bl-node bl-node--wait">
                             <i class="timeline_icon fas fa-check" aria-hidden="true"></i>
                         </div>
                         <!-- cd-timeline__img -->

@@ -117,3 +117,46 @@ textarea:focus-visible,
   outline-offset: 2px;
   box-shadow: var(--bl-focus-ring);
 }
+
+/* ===========================================================================
+   5. CHRONOLOGIE DE SUIVI — la page que lit le CLIENT FINAL (lot 7)
+   `frontend/css/timeline.css` peignait TOUTES les étapes en `#2ec551`, un vert
+   vif qui n'est pas celui de la charte — y compris la livraison PARTIELLE, que
+   `colors.ts` réserve à l'avertissement, et le repli des statuts non listés.
+   Le socle n'en distinguait que les trois « reprogrammations », en jaune.
+
+   Les familles viennent de `App\Services\Parcel\ParcelStage` : la même table
+   que le back-office et que l'app marchand. La vue ne nomme plus une couleur.
+
+   ⚠️ La feuille du socle est poussée par `@push('styles')`, donc AVANT celle-ci :
+   c'est ce qui permet de requalifier sans y toucher. Les modificateurs
+   `--picture` et `--yellow` ne sont plus posés par la vue, leurs règles ne
+   s'appliquent donc plus.
+
+   Fond plein + icône claire. Chaque paire est mesurée — `WebTimelineTest`
+   recalcule les contrastes plutôt que de croire ce commentaire.
+   =========================================================================== */
+.cd-timeline__img.bl-node {
+  background: var(--bl-pill-wait-bg);
+  color: var(--bl-slate-strong);
+}
+
+/* En attente, et le repli d'un statut inconnu : neutre, jamais vert. */
+.cd-timeline__img.bl-node--wait    { background: var(--bl-pill-wait-bg);  color: var(--bl-slate-strong); }
+/* Ramassage : en route, pas encore arrivé. */
+.cd-timeline__img.bl-node--transit { background: var(--bl-pill-transit-fg); color: var(--bl-surface); }
+/* Entrepôt / hub. */
+.cd-timeline__img.bl-node--hub     { background: var(--bl-pill-hub-fg);    color: var(--bl-surface); }
+/* Livreur assigné. */
+.cd-timeline__img.bl-node--assign  { background: var(--bl-pill-assign-fg); color: var(--bl-surface); }
+/* Livré — le SEUL stade qui mérite le vert. */
+.cd-timeline__img.bl-node--done    { background: var(--bl-pill-done-fg);   color: var(--bl-surface); }
+/* Livraison partielle : un AVERTISSEMENT. Le socle la montrait comme une réussite. */
+.cd-timeline__img.bl-node--partial { background: var(--bl-warning);        color: var(--bl-on-accent); }
+/* Retour. */
+.cd-timeline__img.bl-node--return  { background: var(--bl-pill-return-fg); color: var(--bl-surface); }
+/* Annulation : le rouge de l'incident, et lui seul. */
+.cd-timeline__img.bl-node--cancel  { background: var(--bl-danger);         color: var(--bl-surface); }
+
+/* L'icône hérite de la couleur du nœud : une seule déclaration à maintenir. */
+.cd-timeline__img.bl-node .timeline_icon { color: inherit; }

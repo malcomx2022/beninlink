@@ -18,6 +18,7 @@
 | 2026-09-18 | **Lot 5 livré.** Voir §13 — la navigation et les langues. Le vrai défaut n'était pas le menu déroulant mais le **contrôleur**, qui acceptait n'importe quelle locale. Et un chantier neuf est ouvert : **les SMS envoyés aux clients sont en anglais**. |
 | 2026-09-18 | **Lot 3 livré.** Voir §14 — l'ocre réglable par transporteur. L'audit chiffrait le lot à « 1 migration » : l'ocre porte **quatre** jetons, dont deux sont des contrastes mesurés contre lui, qu'il fallait recalculer. Arbitrage §9.3 tranché. |
 | 2026-09-18 | **Lot SMS livré.** Voir §15 — les 24 phrases anglaises envoyées aux clients, et deux choses que l'audit ignorait : `App::setLocale()` **réécrit** `config('app.locale')` (mon premier jet est tombé dedans), et un caractère hors alphabet GSM-7 **double la facture** de chaque SMS. |
+| 2026-09-18 | **Lot 7 livré.** Voir §17 — la forme fine. La chronologie de suivi cachait la **quatrième** copie de la table des statuts, sur la page du client final : une livraison partielle y paraissait réussie, et 23 codes sur 33 tombaient dans un repli vert. Arbitrages §9.4 et §9.5 tranchés. |
 | 2026-09-18 | **Lot 6 livré.** Voir §16 — accessibilité. Le troisième `http://`, absent des vues, faisait rendre à Laravel des URL en clair : le lien de réinitialisation de mot de passe et le `callback_url` de FedaPay. Une ligne manquait à notre configuration nginx. |
 
 ---
@@ -595,7 +596,7 @@ libellé 12 px gris) se pose dans un second temps — et **par des classes
 | **4** ✅ | `auth/login` · les 2 lignes de `custom.js` · les 11 titres · les 85 placeholders · les `data-title` | **fait** — voir §12. L'audit comptait 85 placeholders : il y en avait **161**, et il avait manqué **45 chaînes** rendues en anglais par `lang/fr.json` |
 | **5** ✅ | Sidebar groupé · « Retrait » conditionné + état vide · sélecteur de langue réduit à FR/EN · filtre du tableau de bord | **fait** — voir §13. Le sélecteur n'était que la partie visible : `LocalizationController` acceptait **n'importe quelle** chaîne |
 | **6** ✅ | `focus-visible` · `alt` par lot · 42 `table-responsive` · les 2 `http://` | **fait** — voir §16. Trois des quatre items étaient déjà livrés par le lot 1. Les deux comptes étaient faux : **47** images sans `alt` et non 127 (le compte naïf coupe les balises Blade), **5** tableaux d'écran et non 42. Et le `http://` le plus coûteux n'était pas dans une vue |
-| **7** | Forme fine de la maquette (KPI, topbar, timeline de suivi) | Fidélité à la maquette |
+| **7** ✅ | Forme fine de la maquette (KPI, topbar, timeline de suivi) | **fait** — voir §17. La chronologie n'était pas une question de forme : c'était la **quatrième** copie de la table des statuts, sur la page du client final, et elle montrait une livraison partielle comme une réussite. La topbar est **délibérément écartée** (§9.4) |
 | **hors lot** | Migration Bootstrap 4 → 5 (217 `data-toggle`) | *chantier propre, jamais emboîté ici* |
 
 Après chaque lot : **`php artisan test`** (`.github/workflows/deploy.yml` déploie
@@ -618,12 +619,18 @@ les trois paniers d'écrans — front public, back-office opérateur, panneau ma
    nuance que l'implémentation a imposée : tant que le transporteur est resté sur
    la charte, **rien n'est injecté** — `tokens.css` garde le dernier mot sur
    ses propres valeurs, mesurées à la main (§14.2).
-4. **La refonte visuelle du back-office va-t-elle jusqu'à la maquette** (lot 7),
-   ou s'arrête-t-elle à la cohérence de charte (lots 1-6) ? Les lots 1-6 donnent
-   l'essentiel du bénéfice pour une fraction du risque de fusion.
-5. **`Circular Std`** : la police du back-office est sous licence propriétaire et
-   embarquée dans le socle. La remplacer par DM Sans règle aussi cette question —
-   à confirmer comme intention.
+4. ~~**La refonte visuelle du back-office va-t-elle jusqu'à la maquette**~~
+   **Tranché le 2026-09-18 : jusqu'à la maquette, mais seulement par
+   requalification.** Le lot 7 a livré la forme des cartes de synthèse en ne
+   touchant **aucune vue** — les noms du socle suffisaient (§17.4). Il s'est
+   arrêté là où la fidélité aurait exigé de réécrire une structure partagée : la
+   **topbar** reste un fil d'Ariane (§17.5). La règle qui en sort : *on va aussi
+   loin que la feuille de style le permet, et pas plus loin.*
+5. ~~**`Circular Std`**~~ **Tranché le 2026-09-18 : elle n'est plus servie.**
+   Le lot 1 l'avait déjà remplacée au rendu ; trois mises en page la
+   **téléchargeaient** encore — 348 Ko de fontes sous licence propriétaire que
+   rien ne peignait. Les `<link>` sont retirés, les **fichiers restent** (règle
+   du projet : 0 fichier supprimé du socle). Voir §17.6.
 
 ---
 
@@ -1681,3 +1688,158 @@ Cinq régressions introduites exprès, une à la fois, depuis l'arbre livré :
 - **L'installeur reste en anglais** (§12.8), et son `lang="en"` est donc **juste**
   — il n'est pas internationalisé du tout. Le corriger sans le traduire ferait
   annoncer du français à un lecteur d'écran sur une page anglaise.
+
+---
+
+## 17. Lot 7 — ce qui a été livré le 2026-09-18
+
+### 17.1 La quatrième copie, et c'était la pire
+
+Le **lot 2** avait réduit à une seule table les **trois** copies qui coloraient
+les statuts. Il en restait une **quatrième**, que l'audit n'avait pas vue parce
+qu'elle ne ressemblait pas à une table : un `@switch` de **onze branches** dans
+`frontend/pages/tracking.blade.php`.
+
+C'est la page du **client final** — celle qu'ouvre quelqu'un qui n'a jamais
+installé l'application, qui a reçu un numéro de suivi par SMS, et qui veut
+savoir où est son colis.
+
+| Ce que le socle faisait | Conséquence |
+|---|---|
+| 10 codes listés sur 33 | 23 codes tombaient dans un `@default` |
+| `#2ec551` pour **tout** sauf trois « reprogrammations » | un vert vif étranger à la charte |
+| `PARTIAL_DELIVERED` peint comme `DELIVERED` | **une livraison partielle paraissait réussie** |
+| le `@default` peint comme `DELIVERED` | un statut inconnu s'annonçait comme une livraison |
+
+Le troisième point est le vrai défaut. Une livraison partielle est un
+**incident** — le client n'a pas tout reçu, et l'encaissement ne suit pas la
+commande. La page le lui montrait en vert.
+
+### 17.2 Onze branches qui n'en faisaient qu'une
+
+Les onze branches ne différaient que par **une ligne d'acteur** ; tout le reste
+— le nœud, le libellé, la note, l'auteur, la date — était recopié à l'identique.
+
+**346 lignes de vue deviennent 116.** La famille vient de `ParcelStage`, la même
+table que le back-office et que `mobile/`. La vue ne nomme plus aucune couleur.
+
+Et les acteurs se rendent désormais **à la présence**, non plus par statut. Le
+socle n'affichait le ramasseur que sur deux statuts et le masquait partout
+ailleurs, **même quand le journal le portait** — un colis transféré entre hubs
+ne montrait jamais qui l'avait pris en charge au départ.
+
+### 17.3 Les huit couleurs, résolues et mesurées
+
+Les nœuds sont des aplats portant une icône. Les huit paires vivent dans
+`theme-frontend.css`, **en jetons** — et le test ne les croit pas sur parole : il
+**résout** chaque `var(--bl-*)` jusqu'à l'hexadécimal dans `tokens.css`, puis
+recalcule le contraste. WCAG demande 3:1 pour un élément graphique ; on vise
+**4,5:1**, comme partout ailleurs dans ce dépôt, pour n'avoir qu'un seuil à
+retenir.
+
+⚠️ Un point de mécanique qui vaut d'être noté : `frontend/css/timeline.css` est
+poussée par `@push('styles')`, donc **avant** les feuilles de la charte.
+Requalifier suffit — et comme la vue ne pose plus `--picture` ni `--yellow`,
+les règles du socle ne s'appliquent même plus. **Aucun fichier du socle n'a été
+touché pour la couleur.**
+
+### 17.4 Les cartes de synthèse, sans toucher une vue
+
+Le **§6.6** prescrivait des classes `bl-kpi` **à poser dans les vues**. À
+l'implémentation, c'était inutile : les noms du socle — `total-card-color`,
+`total-card-body`, `.icon`, `.metric-value` — ne servent qu'à ces cartes, dans
+**deux** vues seulement (`dashboard` et `hub/view`). Les requalifier donne la
+forme de la maquette — pastille d'icône 34 px, chiffre en Sora 800/24, libellé
+gris — pour **zéro fichier ajouté à la carte de fusion**.
+
+C'est le même arbitrage qu'au **§10.3 a** : *le plan était correct sur le défaut,
+perfectible sur le moyen.* Un test fige ce choix — si quelqu'un repose des
+classes dans la vue, il passera d'abord par là.
+
+### 17.5 La topbar, délibérément non faite
+
+La maquette pose une barre de 60 px avec un titre en Sora 700/16. Le socle n'a
+pas de titre de page : il a un **fil d'Ariane**. En faire une topbar demande de
+réécrire l'en-tête partagé par **tous** les écrans — précisément le coût de
+fusion que le §9.4 mettait en balance.
+
+On prend donc la **typographie** du titre, qui ne coûte rien, et on laisse la
+**structure**. C'est ce qui a permis de trancher le §9.4 : *on va aussi loin que
+la feuille de style le permet, et pas plus loin.*
+
+### 17.6 La police propriétaire ne part plus au navigateur
+
+`Circular Std` est sous **licence propriétaire** et embarquée dans le socle
+(8 fichiers `.woff`, **348 Ko**). Le lot 1 l'avait remplacée **au rendu** — mais
+trois mises en page la **téléchargeaient** encore : des fontes que plus rien ne
+peint, et une redistribution sans objet.
+
+Le socle l'appelle dans **six** règles. Le relevé :
+
+| Sélecteur | Vivant ? | Traitement |
+|---|---|---|
+| `h6` | oui | déjà couvert par la §1 du thème |
+| `.ribbons`, `.product-price`, `.quantity-button` | **non** | CSS mort d'un thème e-commerce — aucune vue ne porte ces classes |
+| `tr.group:hover` | **non** | le seul `class="group"` du dépôt est du Tailwind, dans la page d'accueil de Laravel |
+| `.table th` | **oui** | plus large que le `.table thead th` du lot 1 |
+
+Ce dernier méritait une règle à lui : **39 `<th>` vivent hors `<thead>`**, dans
+les rapports. Sans elle, ils seraient retombés sur la police par défaut du
+navigateur le jour où le fichier cesse d'être chargé — une régression
+typographique silencieuse, dans des écrans qu'on ne regarde pas tous les jours.
+
+Les **fichiers restent** dans `public/backend/vendor/fonts/` : la règle du projet
+est « 0 fichier supprimé du socle ». Ils ne sont simplement plus servis.
+
+### 17.7 Un anglais en dur que le lot 4 ne pouvait pas voir
+
+Le socle collait le mot **`cancel`**, en anglais, en dur, au libellé du statut
+annulé — dans un bloc `@php`, donc invisible pour l'audit du lot 4 qui lisait les
+`placeholder` et les clés JSON. Sur la page du client final, un colis annulé
+s'annonçait « Ramassage assigné cancel ». Il passe par `lang/fr.json`.
+
+### 17.8 Les tests mordent, vérifié
+
+| Ce qu'on défait | Ce qui échoue |
+|---|---|
+| la partielle repeinte comme une livraison réussie | 1 test |
+| une encre illisible sur un nœud | 1 test |
+| le mot anglais « cancel » rétabli | 1 test |
+| la police propriétaire rechargée | 1 test |
+| des classes `bl-kpi` reposées dans la vue | 1 test |
+
+### 17.9 Ce que le lot 7 ne livre PAS
+
+- **La topbar** (§17.5), par décision.
+- **Le reste de la fidélité au pixel** : espacements, graphiques du tableau de
+  bord, densité des tableaux. Ils demandent un œil sur un écran réel, pas un
+  fichier — et le plan n'en a jamais fait une condition.
+- **Aucune vérification visuelle** n'accompagne ce lot : tout ce qui est affirmé
+  ici est prouvé par un fichier ou un calcul. Les trois paniers d'écrans que le
+  §8 demande de parcourir après chaque lot restent à faire par un humain.
+- **La migration Bootstrap 4 → 5** reste hors lot, comme depuis le début.
+
+---
+
+## 18. Le plan est terminé
+
+Les **sept lots** sont livrés, plus un lot SMS que le lot 5 a fait apparaître.
+Ce que l'audit annonçait tenait en une phrase — « le web n'a pas la charte des
+apps » — et ce que les lots ont trouvé tient en une autre : **à chaque fois, le
+défaut visuel cachait un défaut de fond.**
+
+| Lot | Ce que le plan annonçait | Ce qu'il y avait |
+|---|---|---|
+| 1 | poser la charte | `primary_color` jamais renseignée : chaque nouveau transporteur héritait du violet d'usine |
+| 2 | une fonction à corriger | la table existait en **trois** copies, couvrant 19 codes sur 33 |
+| 3 | « 1 migration » | l'ocre porte **quatre** jetons, dont deux mesurés contre lui |
+| 4 | 85 placeholders | **161**, et 45 chaînes rendues en anglais par un mécanisme silencieux |
+| 5 | un sélecteur de langue à réduire | un contrôleur qui acceptait **n'importe quelle** locale |
+| 6 | 42 tableaux, des `alt` | 5 tableaux d'écran, 47 `alt` — et un `http://` hors des vues qui faisait rendre à Laravel des URL en clair |
+| 7 | la forme fine | la **quatrième** copie de la table des statuts, sur la page du client |
+| SMS | *(absent du plan)* | 24 phrases anglaises envoyées aux clients |
+
+Reste, hors de ce plan : la **migration Bootstrap 4 → 5** (217 `data-toggle`),
+et une **vérification visuelle humaine** sur les trois paniers d'écrans — front
+public, back-office opérateur, panneau marchand. Aucun de ces lots ne l'a faite :
+ils prouvent ce qu'un fichier peut prouver.
