@@ -31,9 +31,15 @@
                         <button type="submit" class="btn btn-sm btn-primary float-right group-btn ml-0"
                             style="margin-left: 0px">{{ __('levels.filter') }}</button>
                         <input type="hidden" name="days" value="custom" />
-                        <input type="text" name="filter_date" placeholder="{{ __('placeholder.date_format') }}" autocomplete="off"
-                            class="form-control dashboard-filter-input date_range_picker float-right group-input"
-                            value="{{ $request->filter_date }}" style="width: 15%;" required />
+                        {{-- Lot 5 : un champ sans <label> n'est pas annoncé par un lecteur
+                             d'écran, et le placeholder disparaît dès qu'on tape. Le libellé
+                             est masqué visuellement, pas retiré. La largeur passe en classe :
+                             elle était en style="width: …" en dur, et différente d'un tableau
+                             de bord à l'autre. --}}
+                        <label for="filter_date" class="bl-sr-only">{{ __('levels.filter_period') }}</label>
+                        <input type="text" id="filter_date" name="filter_date" placeholder="{{ __('placeholder.date_format') }}" autocomplete="off"
+                            class="form-control dashboard-filter-input date_range_picker float-right group-input bl-filter-date"
+                            value="{{ $request->filter_date }}" required />
                     </form>
 
                 </div>

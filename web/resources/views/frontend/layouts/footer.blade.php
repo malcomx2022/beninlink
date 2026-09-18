@@ -92,41 +92,7 @@
         </div> 
 
         <ul class="d-flex flex-wrap list-unstyled m-0 language-list justify-content-center pb-2 pe-0">
-            <li >
-                <a class="dropdown-item" href="{{ route('setlocalization','en') }}">
-                    <i class="flag-icon flag-icon-us"></i> {{ __('levels.english') }}
-                </a>
-            </li>
-            <li >
-                <a class="dropdown-item" href="{{ route('setlocalization','bn') }}">
-                    <i class="flag-icon flag-icon-bd"></i> {{ __('levels.bangla') }}
-                </a>
-            </li>
-            <li >
-                <a class="dropdown-item" href="{{ route('setlocalization','in') }}">
-                    <i class="flag-icon flag-icon-in"></i> {{ __('levels.hindi') }}
-                </a>
-            </li> 
-            <li >
-                <a class="dropdown-item" href="{{ route('setlocalization','ar') }}">
-                    <i class="flag-icon flag-icon-sa"></i> {{ __('levels.arabic') }}
-                </a>
-            </li>
-            <li >
-                <a class="dropdown-item" href="{{ route('setlocalization','fr') }}">
-                    <i class="flag-icon flag-icon-fr"></i> {{ __('levels.franch') }}
-                </a>
-            </li>
-            <li >
-                <a class="dropdown-item" href="{{ route('setlocalization','es') }}">
-                    <i class="flag-icon flag-icon-es"></i> {{ __('levels.spanish') }}
-                </a>
-            </li>
-            <li >
-                <a class="dropdown-item" href="{{ route('setlocalization','zh') }}">
-                    <i class="flag-icon flag-icon-cn"></i> {{ __('levels.chinese') }}
-                </a>
-            </li> 
+            @include('partials.locale-list')
         </ul>
     
     </div>
