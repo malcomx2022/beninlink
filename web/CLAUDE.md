@@ -31,6 +31,13 @@ avant les apps.
   retiré — il inscrivait les agents au projet Firebase de l'éditeur. Ne pas remettre
   de SDK Firebase dans les vues ; `public/firebase-messaging-sw.js` ne sert plus qu'à
   désinscrire les navigateurs déjà abonnés.
+- L'**interface web de l'éditeur de `.env`** (**S27**, 2026-09-18) : les onze routes
+  `/env-editor` du paquet auto-découvert `geo-sot/laravel-env-editor` répondaient **200
+  sans authentification** (identifiants de base, `APP_KEY`, clés FedaPay). Elles sont
+  fermées en **404** par `BlockEnvEditorRoutes`, déclaré dans `config/env-editor.php`.
+  Ne pas retirer ce garde, et ne pas désinstaller le paquet : `InstallerController`
+  écrit `.env` par sa **façade** pendant l'installation. C'est l'interface qui est
+  coupée, pas la bibliothèque.
 
 ## Décisions actées
 - **FedaPay** = passerelle Mobile Money BJ. **Webhook signé = seule source de vérité**
