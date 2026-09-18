@@ -1219,6 +1219,7 @@ vestige du squelette Laravel.
 | ~~S27~~ | A | ~~L'éditeur du fichier `.env` répondait **200 sans authentification**~~ — 🔴 ✅ **corrigé le 2026-09-18** : `geo-sot/laravel-env-editor` monte onze routes sous `/env-editor` avec le seul middleware `['web']`, depuis un fournisseur **auto-découvert** qui ne teste aucun environnement. `GET /env-editor` et `GET /env-editor/files` répondaient **200 à un visiteur anonyme** : lecture et écriture des identifiants de base, d'`APP_KEY`, des clés FedaPay et de la messagerie, régénération de la clé d'application, téléchargement et restauration de sauvegardes. Le garde `BlockEnvEditorRoutes` répond **404** pour les onze routes ; la **bibliothèque** reste en place, l'installeur en a besoin (voir « ✅ S27 » plus bas). Second versant relevé au moment de commiter : les sauvegardes du paquet sont des **copies intégrales de `.env`** (`APP_KEY` en clair) et `storage/env-editor` n'était **pas ignoré par git** — corrigé aussi. Relevé en inventoriant les routes web à paramètre pour le filet d'isolation | `config/env-editor.php` · `App\Http\Middleware\BlockEnvEditorRoutes` · `web/.gitignore` |
 | ~~S28~~ | I | ~~La carte des courses du livreur répondait **200 sans authentification**~~ — 🔴 ✅ **corrigé le 2026-09-18** : `GET /deliveryMan/parcel/map/{id}/{lat}/{long}/{status}` était déclarée dans `routes/web.php` **hors du groupe `auth`** — juste après la fermeture d'un groupe, à la même indentation. Sa pile s'arrêtait à la tenancy : ni `auth`, ni `hasPermission`. Et `User::find($id)` était **nu**. La vue écrit `@json($mapParcels)` dans le source de la page : **nom, téléphone et adresse du client final**, nom, téléphone et adresse du marchand, montant à encaisser, numéro de suivi. Prouvé par appel HTTP anonyme : **200**, téléphone et adresse dans le corps. La route est retirée (aucune vue, aucun script, aucun nom de route — la retirer ne retire l'accès à personne) et le contrôleur est scopé pour que la remonter ne rouvre pas la fuite. Relevé en inventoriant les routes web à paramètre pour le filet | `routes/web.php` · `MapParcelController` |
 | ~~S29~~ | B | ~~Dans le back-office, **les écritures étaient moins scopées que les lectures**~~ — ✅ **première passe le 2026-09-18** : motif dominant de l'arriéré du filet, et il s'était glissé dans mes propres correctifs. Trois formes fermées. **La vitrine** : les six dépôts `FrontWeb` lisent en `companyWise()->findOrFail()` mais supprimaient en `Modele::destroy($id)` **nu** — la question, l'article, le service, le partenaire, le lien social ou le bloc « pourquoi nous » d'un autre transporteur se supprimait en changeant l'identifiant, et le site public de la victime perdait son contenu. **⚠️ Le trou de S23** : ce lot avait scopé les trois *lectures* du support et laissé `update()` et `delete()` nues — on réécrivait le ticket d'un autre transporteur et on s'en attribuait la paternité par le `user_id`. **⚠️ Le trou de S26** : idem pour les boutiques, et `update()` lisant `merchant_id` dans la requête permettait en plus de **rattacher** la boutique à un autre marchand. Plus cinq écrans du panneau marchand qui répondaient **500** au lieu de 404 hors périmètre | `FrontWeb/*Repository` × 6 · `SupportRepository` · `MerchantShops\ShopsRepository` · `MerchantShopsController` · `MerchantPanel\MerchantParcelController` |
+| ~~S30~~ | C | ~~L'argent du back-office : sept dépôts touchant à des comptes bancaires lisaient **nu**~~ — ✅ **corrigé le 2026-09-18** (5ᵉ passe sur l'arriéré). Pour six d'entre eux la lecture nue précédait un **mouvement d'argent** : `Income::update` touche le compte bancaire **et** le relevé du marchand rattachés à la recette lue ; `Expense::update` **rend le solde** au compte de la dépense lue ; `FundTransfer::update` rejoue un **virement** entre ses deux comptes ; `MerchantManage\Payment::update` réécrit la demande de versement et la **réaffecte** à un autre marchand ; `cancelReject` remet le versement rejeté **en attente de paiement** ; `Account::update` réécrit le compte bancaire ; `HubPaymentRequest::update` **rattache** la demande à l'entrepôt de l'agent connecté. Plus le **décaissement** d'un versement marchand, lu nu dans le contrôleur avec l'identifiant dans le corps — 3ᵉ occurrence de l'angle mort du filet | `Income` · `Expense` · `FundTransfer` · `MerchantManage\Payment` · `Account` · `HubPaymentRequest` · `ReceivedRepository` · `MerchantmanagePaymentController` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
 
@@ -2418,3 +2419,115 @@ Et un outil : `php artisan test` fait avaler le message d'erreur par Collision
 (« Cannot find TestCase object on call stack ») quand l'échec vient d'une
 exception dans une fixture. `./vendor/bin/phpunit --filter …` donne le vrai
 message.
+
+
+## ✅ S30 — l'argent du back-office (2026-09-18, 5ᵉ passe)
+
+Sept dépôts touchant à des comptes bancaires lisaient **nu**. Pour six d'entre eux,
+la lecture nue précédait un mouvement d'argent :
+
+| Dépôt | Ce que l'écriture faisait sur la ligne d'une AUTRE société |
+|---|---|
+| `Income::update` | touche son compte bancaire **et** le relevé de son marchand |
+| `Expense::update` | **rend le solde** au compte rattaché à la dépense lue |
+| `FundTransfer::update` | rejoue un **virement** entre ses deux comptes |
+| `MerchantManage\Payment::update` | réécrit sa demande de versement, et la **réaffecte** à un autre marchand |
+| `MerchantManage\Payment::cancelReject` | remet son versement rejeté **en attente de paiement** |
+| `Account::update` | réécrit son compte bancaire (titulaire, banque, numéro, passerelle) |
+| `HubPaymentRequest::update` | réécrit sa demande et la **rattache** à l'entrepôt de l'agent connecté |
+
+Deux dissymétries connues, dans les deux sens : `Expense` et `Account` lisaient déjà
+`companywise()` et écrivaient nu ; `CashReceivedFromDeliveryman` écrivait scopé et
+lisait nu.
+
+### ⚠️ Angle mort du filet, troisième occurrence
+
+`MerchantmanagePaymentController::processed()` — le **décaissement** d'un versement
+marchand — lit son identifiant dans le **corps** de la requête. Comme
+`HubPayment::processed()` (3ᵉ passe) et `SalaryController::update()` (4ᵉ passe),
+`WebIsolationCoverageTest` ne pouvait pas la voir. Trois fois sur cinq passes, et
+toujours sur un chemin d'argent : **les décaissements de ce socle prennent leur
+identifiant dans le corps.** À traiter comme une classe, pas comme des cas isolés.
+
+### Une route morte de plus
+
+`POST admin/income/search-account/{id}`, signalée à la 3ᵉ passe et retirée ici :
+personne ne l'appelait — même l'écran des revenus appelle celle des **dépenses** — et
+son contrôleur passait l'objet `Request` à `find()`, qui le traite comme un tableau
+de clés (`Request` est `Arrayable`) et renvoyait donc une **collection** au lieu d'un
+compte.
+
+### Couverture et vérification
+
+`tests/Feature/BackOfficeMoneyScopeTest.php` — 7 tests. L'assertion qui porte le
+lot : un **instantané de tous les soldes de comptes** avant les écritures, comparé
+après. Une écriture qui « échoue » après avoir crédité un compte aurait laissé le
+désordre derrière elle ; le solde le dit, la valeur de retour non.
+
+**Onze sabotages, onze morsures** — vérifiées une par une, avec contrôle que le
+fichier a bien changé (empreinte MD5 avant/après) avant de lire le résultat des
+tests.
+
+### ⚠️ Quatre défauts dans mes propres fixtures, dont deux sabotages muets
+
+Cette passe a été la plus instructive sur la manière de tester, et les quatre
+méritent d'être écrits :
+
+1. **Deux sabotages verts alors que le fichier avait bien changé.**
+   `Expense::update` et `Account::update` refusaient *déjà* sans le périmètre — pour
+   leurs propres raisons. `Account::update` remet toutes ses colonnes à `null` puis
+   les repeuple selon `$request->gateway` : sans `gateway` ni `status` dans ma
+   requête, il posait `status = null` sur une colonne NOT NULL et échouait tout seul.
+   `Expense::update` lit `$request->account_head` (et non `account_head_id`, que je
+   passais) puis termine sur `BankTransaction::where('expense_id',$id)->first()` :
+   sans cette écriture bancaire dans la fixture, il levait sur `null`. Dans les deux
+   cas j'observais un refus qui ne venait pas de ce que je testais.
+2. **Un faux positif de mon instantané des soldes.** Je créais mon propre compte
+   **après** l'instantané : il apparaissait donc comme un solde « qui a bougé » alors
+   qu'il venait de naître.
+3. **Une fixture que j'ai failli prendre pour un bug du socle.** Créer une remise
+   d'espèces sans `user_id`, `hub_id` ni `delivery_man_id` fait lever une `TypeError`
+   dans le trait `LogsActivity` de Spatie, qui remonte `user.hub.name` et
+   `deliveryman.user.name`. Ce n'est **pas** un défaut de l'application :
+   `ReceivedRepository::store()` renseigne toujours les trois. La fixture était
+   irréaliste, pas le code.
+4. **Un poste comptable manquant.** `SeedsTenant` n'inclut pas `AccountHeadSeeder`,
+   donc la clé étrangère `expenses.account_head_id` échouait.
+
+La règle de la 4ᵉ passe se confirme, et se précise : **un test de refus doit d'abord
+pouvoir réussir — et ce qui l'en empêche est souvent dans la fixture, pas dans le
+code testé.** Le symptôme est toujours le même : un sabotage qui reste vert.
+
+Et une conséquence de l'environnement de test à retenir : sous `RefreshDatabase`,
+une méthode qui ouvre une transaction, écrit, puis échoue **sans** `DB::rollBack()`
+laisse la transaction ouverte ; tout est annulé au démontage du test. Un crédit
+illégitime devient donc invisible. C'est une raison de plus de rendre le chemin
+réalisable jusqu'au `commit`.
+
+Suite complète : **634 tests, 44 628 assertions, vert.**
+
+### Le cliquet après cinq passes
+
+| | Départ | 1re | 2e | 3e | 4e | 5e |
+|---|---|---|---|---|---|---|
+| Prouvées | 7 | 33 | 57 | 85 | 90 | **113** |
+| Exemptées | 33 | 35 | 35 | 35 | 35 | 35 |
+| Publiques | 6 | 6 | 6 | 6 | 6 | 6 |
+| Routes mortes retirées | — | — | — | 2 | 2 | **3** |
+| **Héritées (plafond)** | **171** | 143 | 119 | 89 | 84 | **60** |
+
+### Ce qui reste : 60 routes
+
+Plus aucun chemin d'argent connu. Restent quatre familles, toutes de lecture ou de
+suppression gardée :
+
+| Famille | Routes | État |
+|---|---|---|
+| `MerchantInvoiceController` | 9 | les relevés marchands — `ownsOrAbort()` existe depuis S20, à vérifier et inscrire |
+| `ParcelController` (back-office) | 8 | `get()` scopé société **et hub**, `update()` nu |
+| `HubInChargeController` | 7 | scopé par `hub_id` seulement, pas par société |
+| `MerchantController` (5), `MerchantPaymentAccount` (4), `MerchantDeliveryCharge` (6) | 15 | `get()` scopé, `update()` nu |
+| `User` (3), `SmsSettings` (3), `Customs` (3), `Category` (2), `DeliveryCategory` (2), `DeliveryMan` (2), `Fraud` (2), `Currency` (2), `PushNotification` (1), `DeliveryZone` (1) | 21 | divers |
+
+`Currency` reste à **exempter** : une devise est un objet de plateforme, comme les
+plans et les sociétés du panneau central.

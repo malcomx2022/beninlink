@@ -16,7 +16,8 @@ class FundTransferRepository implements FundTransferInterface{
     }
 
     public function get($id){
-        return FundTransfer::find($id);
+        // S30 — lecture nue du virement interne d'une autre societe.
+        return FundTransfer::companywise()->find($id);
     }
 
     public function accounts(){
@@ -83,7 +84,16 @@ class FundTransferRepository implements FundTransferInterface{
         try {
             DB::beginTransaction();
             // select fund transfer row
-            $fund_transfer = FundTransfer::find($id);
+            // S30 — lecture NUE avant un VIREMENT : cette methode deplace un montant
+            // d'un compte a un autre. Sur le virement d'une autre societe, elle
+            // rejouait le mouvement sur SES comptes.
+            $fund_transfer = FundTransfer::companywise()->find($id);
+
+            if (blank($fund_transfer)) {
+                DB::rollBack();
+                return false;
+            }
+
             // return balance from account
             $from_account = Account::find($fund_transfer->from_account);
             $from_account->balance = $from_account->balance + $fund_transfer->amount;

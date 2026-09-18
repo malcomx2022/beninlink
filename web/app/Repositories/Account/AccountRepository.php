@@ -112,7 +112,15 @@ class AccountRepository implements AccountInterface{
     public function update($id, $request)
     {
         try {
-            $account                           = Account::find($id); 
+            // S30 — la LECTURE est `companywise()` depuis S24, l'ECRITURE non : le
+            // compte bancaire d'une autre societe se reecrivait (titulaire, banque,
+            // numero, passerelle).
+            $account                           = Account::companywise()->find($id);
+
+            if (blank($account)) {
+                return false;
+            }
+
             // because gateway change
             $account->type                     = null;
             $account->user_id                  = null;

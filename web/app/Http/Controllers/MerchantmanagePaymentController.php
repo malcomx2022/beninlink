@@ -107,7 +107,11 @@ class MerchantmanagePaymentController extends Controller
 
     //edit
     public function edit($id){
+        // S30 — hors perimetre le depot rend `null` et `$singlePayment->merchant_id`
+        // plus bas dereferencait : 500 au lieu de 404 (famille S15).
         $singlePayment    = $this->payment->get($id);
+        abort_if(blank($singlePayment), 404);
+
         $merchants        = $this->merchant->all();
         $accounts         = $this->account->all();
         $merchantaccounts = MerchantPayment::where('merchant_id',$singlePayment->merchant_id)->get();
@@ -164,7 +168,11 @@ class MerchantmanagePaymentController extends Controller
         }
     }
     public function process($id){
-        $payment  = Payment::where('id',$id)->first();
+        // S30 — lecture NUE dans le controleur : l'ecran qui precede le DECAISSEMENT
+        // d'un versement marchand s'ouvrait sur celui d'une autre societe.
+        $payment  = Payment::companywise()->where('id',$id)->first();
+        abort_if(blank($payment), 404);
+
         $accounts = $this->account->all();
         return view('backend.merchantmanage.payment.process',compact('payment','accounts'));
     }
@@ -181,8 +189,14 @@ class MerchantmanagePaymentController extends Controller
 
     public function processed(ProcessRequest $request){
 
-        $payment                    = Payment::where('id',$request->id)->first();
-        $courier_account            = Account::find($request->from_account);
+        // S30 — le DECAISSEMENT lui-meme, lu nu, et l'identifiant vient du CORPS de la
+        // requete : angle mort de `WebIsolationCoverageTest`, troisieme occurrence apres
+        // `HubPayment::processed()` et `SalaryController::update()`.
+        $payment                    = Payment::companywise()->where('id',$request->id)->first();
+        abort_if(blank($payment), 404);
+
+        $courier_account            = Account::companywise()->find($request->from_account);
+        abort_if(blank($courier_account), 404);
         if((double) $payment->amount > $courier_account->balance){
             Toastr::warning(__('merchantmanage.not_enough_courier_balance'),__('message.warning'));
             return back()->withInput();

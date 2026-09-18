@@ -22,7 +22,9 @@ class PaymentRepository implements PaymentInterface{
     }
 
     public function get($id){
-        return Payment::find($id);
+        // S30 — lecture nue : la demande de versement d'un marchand d'une AUTRE
+        // societe — montant, compte de destination, statut.
+        return Payment::companywise()->find($id);
     }
     public function store($request){
         try {
@@ -99,7 +101,16 @@ class PaymentRepository implements PaymentInterface{
     public function update($request){
         try {
             DB::beginTransaction();
-            $payment                      = Payment::where('id',$request->id)->first();
+            // S30 — lecture NUE, et l'identifiant vient du CORPS de la requete
+            // (`$request->id`) : angle mort du filet. La ligne suivante REAFFECTE en
+            // plus le versement a un autre marchand.
+            $payment                      = Payment::companywise()->where('id',$request->id)->first();
+
+            if (blank($payment)) {
+                DB::rollBack();
+                return false;
+            }
+
             $payment->merchant_id         = $request->merchant;
             $payment->amount              = $request->amount;
             $payment->merchant_account    = $request->merchant_account;
@@ -230,7 +241,15 @@ class PaymentRepository implements PaymentInterface{
 
         try {
             DB::beginTransaction();
-            $payment                   = Payment::where('id',$id)->first();
+            // S30 — lecture nue : on annulait le rejet du versement d'une autre societe,
+            // donc on le remettait en attente de paiement chez elle.
+            $payment                   = Payment::companywise()->where('id',$id)->first();
+
+            if (blank($payment)) {
+                DB::rollBack();
+                return false;
+            }
+
             $payment->status           = ApprovalStatus::PENDING;
             $payment->save(); 
             DB::commit();
