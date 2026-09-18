@@ -10,7 +10,12 @@
     <!-- Bootstrap CSS -->
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css">
-    <link href="{{static_asset('backend')}}/vendor/fonts/circular-std/style.css" rel="stylesheet">
+    {{-- `Circular Std` est sous licence PROPRIÉTAIRE et embarquée dans le socle.
+         La charte l'a remplacée par DM Sans / Sora dès le lot 1 : la charger
+         revenait à télécharger 348 Ko de fontes que rien ne peint, et à
+         redistribuer une police sous licence. Les fichiers restent dans
+         `public/backend/vendor/fonts/` — la règle du projet est « 0 fichier
+         supprimé du socle » — ils ne sont simplement plus servis. --}}
     <link rel="stylesheet" href="{{static_asset('backend')}}/libs/css/style.css"> 
     <link rel="stylesheet" href="{{static_asset('backend')}}/vendor/fonts/fontawesome/css/fontawesome-all.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"   />
