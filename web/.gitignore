@@ -5,6 +5,8 @@
 /public/storage
 # /public/uploads
 /storage/*.key
+# S27 — les sauvegardes du paquet env-editor sont des copies integrales de .env
+/storage/env-editor
 /vendor
 .env
 

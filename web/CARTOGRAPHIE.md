@@ -1216,6 +1216,7 @@ vestige du squelette Laravel.
 | ~~S24~~ | C | ~~`admin/expense/search-account/{id}` renvoyait n'importe quel compte financier~~ — ✅ **corrigé le 2026-09-18** : `AccountRepository::get()` est `companywise()` comme les quatre autres lectures du dépôt. Les cinq appelants sont tous en requête back-office et veulent tous un compte de la société courante ; trois passent un identifiant déjà lu sur un enregistrement scopé, où le filtre ne change rien | `AccountRepository` |
 | ~~S25~~ | B | ~~La chronologie d'un colis d'une autre société était lisible~~ — ✅ **corrigé le 2026-09-18** : les **deux** écrans concernés (`logs`, `deliveredInfo`) s'arrêtent en 404 si le colis est hors périmètre, et passent ensuite `$parcel->id` — le colis **déjà vérifié** — au lieu de l'identifiant brut. `parcelEvents()` reste volontairement non scopé : le **suivi public par numéro** l'appelle, c'est sa raison d'être (cf. S17), et un test l'inscrit | `Backend\ParcelController` |
 | ~~S26~~ | B | ~~La boutique par défaut de n'importe quel marchand se changeait sur un GET~~ — ✅ **corrigé le 2026-09-18** : les **quatre** méthodes du dépôt back-office des boutiques passent par `boutiquesDeLaSociete()` (`whereHas('merchant', companywise())` — la table ne porte pas de `company_id`) ; l'ordre est inversé pour ne rien toucher quand la cible est hors périmètre, là où le socle basculait les anciennes **avant** de la chercher puis plantait sur `null` ; la route devient **PUT** et la vue soumet un formulaire `@csrf`. La permission reste une décision | `MerchantShops\ShopsRepository` · `MerchantShopsController` · `routes/web.php` |
+| ~~S27~~ | A | ~~L'éditeur du fichier `.env` répondait **200 sans authentification**~~ — 🔴 ✅ **corrigé le 2026-09-18** : `geo-sot/laravel-env-editor` monte onze routes sous `/env-editor` avec le seul middleware `['web']`, depuis un fournisseur **auto-découvert** qui ne teste aucun environnement. `GET /env-editor` et `GET /env-editor/files` répondaient **200 à un visiteur anonyme** : lecture et écriture des identifiants de base, d'`APP_KEY`, des clés FedaPay et de la messagerie, régénération de la clé d'application, téléchargement et restauration de sauvegardes. Le garde `BlockEnvEditorRoutes` répond **404** pour les onze routes ; la **bibliothèque** reste en place, l'installeur en a besoin (voir « ✅ S27 » plus bas). Second versant relevé au moment de commiter : les sauvegardes du paquet sont des **copies intégrales de `.env`** (`APP_KEY` en clair) et `storage/env-editor` n'était **pas ignoré par git** — corrigé aussi. Relevé en inventoriant les routes web à paramètre pour le filet d'isolation | `config/env-editor.php` · `App\Http\Middleware\BlockEnvEditorRoutes` · `web/.gitignore` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
 
@@ -1810,3 +1811,97 @@ sans `alt` — un faux positif. La prose est reformulée **et** l'analyseur igno
 désormais les commentaires Blade : le piège était facile à reposer. Vérifié qu'il
 signale toujours une vraie image sans alternative.
 
+## ✅ S27 — l'éditeur de `.env` n'était pas authentifié (2026-09-18)
+
+🔴 **Le plus grave du document.** Avant correction, sur le VPS comme en local :
+
+```
+GET /env-editor        → 200   (visiteur anonyme)
+GET /env-editor/files  → 200   (visiteur anonyme)
+```
+
+`geo-sot/laravel-env-editor` monte **onze** routes sous `/env-editor`. Sa
+configuration publiée, `config/env-editor.php`, ne leur donnait que
+`'middleware' => ['web']` — la session et le cookie CSRF, **aucune
+authentification**. Ce qui était ouvert : lire le fichier d'environnement
+(identifiants de base de données, `APP_KEY`, clés FedaPay, mot de passe de
+messagerie), l'**écrire** clé par clé, **régénérer `APP_KEY`** — ce qui invalide
+toutes les sessions et rend illisible tout ce qui est chiffré — et télécharger ou
+**restaurer** une sauvegarde.
+
+### Pourquoi personne ne l'avait vu
+
+Trois raisons qui se cumulent, et qui valent pour tout paquet de ce genre :
+
+- le fournisseur est **auto-découvert** (`bootstrap/cache/packages.php`) et son
+  `loadResources()` appelle `loadRoutesFrom()` **sans garde d'environnement** :
+  rien à écrire pour l'activer, rien à lire dans `routes/` pour le constater ;
+- `php artisan route:list` dans ce dépôt ne montre pas les routes de locataire
+  (`routes/web.php` n'est inclus que si l'hôte correspond à une ligne de
+  `domains`), donc la liste des routes n'est jamais lue en entier ;
+- nginx envoie tout sur Laravel (`location /`) et sa seule règle `deny` couvre
+  les fichiers commençant par un point — `/.env` était bien protégé, `/env-editor`
+  pas du tout.
+
+Relevé en classant les routes web à paramètre pour le filet d'isolation :
+`env-editor/files/download/{filename?}` figurait dans la liste des 218.
+
+### Le correctif
+
+`App\Http\Middleware\BlockEnvEditorRoutes` — un `abort(404)` inconditionnel —
+est ajouté au groupe dans `config/env-editor.php` :
+
+```php
+'middleware' => ['web', \App\Http\Middleware\BlockEnvEditorRoutes::class],
+```
+
+**404 et non 403** : l'interface ne confirme pas son existence. Un 403 dirait à un
+visiteur qu'il y a là un éditeur d'environnement à atteindre.
+
+⚠️ **La bibliothèque reste en place, et c'est voulu** : `InstallerController`
+écrit `.env` par la **façade** `EnvEditor` pendant l'installation. On coupe
+l'**interface web**, pas le paquet — même doctrine que S21, D10, D11 et D12 :
+couper l'usage, garder le code. Vérifié avant correction qu'aucune vue, aucun
+script ne référence un nom de route `env-editor.*` : la coupure n'a pas d'effet de
+bord.
+
+C'est aussi la raison de ne pas désinstaller le paquet : `composer remove`
+casserait l'installeur, et une mise à jour du socle le ramènerait.
+
+### Le second versant, relevé en préparant le commit
+
+`git status` juste avant de commiter montrait un fichier **non suivi** que je
+n'avais pas écrit :
+
+```
+web/storage/env-editor/env_2026-09-18_141951
+```
+
+Le paquet écrit ses sauvegardes dans `storage_path('env-editor')`, et ce sont des
+**copies intégrales de `.env`** — `APP_KEY` en clair à la troisième ligne. Une de
+mes requêtes de constat en avait déclenché une. Le répertoire **n'était pas
+ignoré** par git : `.env` l'est depuis toujours, mais pas sa copie sous un autre
+nom. Un `git add -A` versionnait le fichier d'environnement dans un dépôt distant.
+
+La copie est retirée et `/storage/env-editor` est ajouté à `web/.gitignore`. Le
+test vérifie **les deux** : la ligne d'exclusion, et qu'aucun fichier ne traîne
+dans le répertoire.
+
+### Couverture
+
+`tests/Feature/EnvEditorClosedTest.php` — 6 tests : les onze routes sont bien
+montées (sinon le test n'a plus d'objet), aucune ne répond à un visiteur anonyme,
+aucune ne répond à un **super-administrateur connecté** — éditer les secrets de la
+plateforme depuis le web n'est pas un droit à distribuer, et aucune trace ne dirait
+qui a changé quoi —, le garde est déclaré dans la configuration publiée, et la
+bibliothèque fonctionne toujours (`EnvEditor::keyExists('APP_KEY')` + l'installeur
+passe toujours par la façade), et le répertoire de sauvegarde reste ignoré et vide.
+
+Vérifié par **deux sabotages** : le garde retiré de la configuration fait rougir
+3 des 6 tests, dont celui qui appelle les onze routes ; une copie déposée dans
+`storage/env-editor` fait rougir le sixième.
+
+⚠️ Le premier sabotage a répondu `OK` à tort : un `bootstrap/cache/config.php`
+traînait, et la suite lisait la configuration **mise en cache** au lieu du fichier.
+Le sabotage n'a rien prouvé jusqu'à `php artisan config:clear`. À retenir pour tout
+test qui lit `config()` : un cache de configuration rend un sabotage muet.

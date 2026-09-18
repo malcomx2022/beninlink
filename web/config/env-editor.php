@@ -27,7 +27,17 @@ return [
         // Routes base name
         'name' => 'env-editor',
         // Middleware(s) applied on route Group
-        'middleware' => ['web'],
+        //
+        // S27 — `['web']` seul laissait `GET /env-editor` répondre 200 SANS
+        // AUTHENTIFICATION : lecture et écriture du fichier d'environnement
+        // (identifiants de base, APP_KEY, clés FedaPay) par n'importe quel
+        // visiteur. Le fournisseur du paquet est auto-découvert et charge ses
+        // routes sans garde d'environnement, et nginx ne les bloque pas.
+        //
+        // Le garde répond 404 : l'interface ne confirme pas son existence. La
+        // BIBLIOTHÈQUE reste utilisée — `InstallerController` écrit `.env` par sa
+        // façade pendant l'installation ; c'est l'interface web qui est coupée.
+        'middleware' => ['web', \App\Http\Middleware\BlockEnvEditorRoutes::class],
     ],
 
     /* ------------------------------------------------------------------------------------------------
