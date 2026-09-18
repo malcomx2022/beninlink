@@ -213,7 +213,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::post('/addons/activation', [AddonController::class, 'activation'])->name('addons.activation');
 
                         Route::get('logs',                   [ActiveLogController::class, 'index'])->name('logs.index')->middleware('hasPermission:log_read');
-                        Route::get('log-activity-view/{id}', [ActiveLogController::class, 'view'])->name('log-activity-view');
+                        Route::get('log-activity-view/{id}', [ActiveLogController::class, 'view'])->name('log-activity-view')->middleware('hasPermission:log_read');
                         Route::get('roles',                                             [RoleController::class, 'index'])->name('roles.index')->middleware('hasPermission:role_read');
                         Route::get('roles/create',                                      [RoleController::class, 'create'])->name('roles.create')->middleware('hasPermission:role_create');
                         Route::post('roles/store',                                      [RoleController::class, 'store'])->name('roles.store')->middleware('hasPermission:role_create');

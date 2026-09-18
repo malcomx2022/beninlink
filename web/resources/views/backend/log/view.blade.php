@@ -18,15 +18,15 @@
                 <tr>
                     <td>{{  __('ActivityLogs.'.$key) }}</td>
                     <td></td>
-                    <td>{{ $value }}</td>
+                    <td>{{ logValue($value) }}</td>
                 </tr>
             @endforeach
         @else
             @foreach ( $logDetails->properties['attributes']  as $key=>$value )
                 <tr>
                     <td>{{  __('ActivityLogs.'.$key) }}</td>
-                    <td>{!! $value !!}</td>
-                    <td>{!! @oldLogDetails($logDetails->properties['old'],$key) !!}</td>
+                    <td>{{ logValue($value) }}</td>
+                    <td>{{ logValue(@oldLogDetails($logDetails->properties['old'], $key)) }}</td>
                 </tr>
             @endforeach
         @endif
