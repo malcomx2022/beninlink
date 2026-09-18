@@ -16,6 +16,7 @@
 | 2026-09-18 | **Lot 2 livré.** Voir §11 — la sémantique des statuts, une **triple** copie réduite à une table, et deux constats de code mort que l'audit n'avait pas vus. |
 | 2026-09-18 | **Lot 4 livré.** Voir §12 — la francisation, et le mécanisme d'anglais **invisible** que l'audit avait entièrement manqué : 45 chaînes rendues en anglais par `lang/fr.json`. |
 | 2026-09-18 | **Lot 5 livré.** Voir §13 — la navigation et les langues. Le vrai défaut n'était pas le menu déroulant mais le **contrôleur**, qui acceptait n'importe quelle locale. Et un chantier neuf est ouvert : **les SMS envoyés aux clients sont en anglais**. |
+| 2026-09-18 | **Lot SMS livré.** Voir §14 — les 24 phrases anglaises envoyées aux clients, et deux choses que l'audit ignorait : `App::setLocale()` **réécrit** `config('app.locale')` (mon premier jet est tombé dedans), et un caractère hors alphabet GSM-7 **double la facture** de chaque SMS. |
 
 ---
 
@@ -1209,3 +1210,172 @@ bien les quinze : le groupe s'affiche, même si l'entrée reste masquée.)
   du projet) ; ils ne sont plus servis.
 - **Les noms de feuille des exports Excel** restent en anglais (relevé au §12.8).
 - L'ocre non réglable par transporteur (lot 3), la forme des chronologies (lot 7).
+
+---
+
+## 14. Lot SMS — ce qui a été livré le 2026-09-18
+
+Le chantier ouvert au §13.3. C'est le seul texte du produit qui atteint quelqu'un
+qui n'a jamais ouvert le back-office : il arrive sur le téléphone d'un client, d'un
+livreur, d'un marchand.
+
+### 14.1 Le décompte exact — le §13.3 était approximatif
+
+§13.3 annonçait « **20 messages** dans ce seul fichier » et « des SMS dans trois
+autres dépôts (`Merchant`, `Company`, `Wallet`) ». Relevé complet :
+
+| Fichier | Messages composés | Détail |
+|---|---|---|
+| `app/Repositories/Parcel/ParcelRepository.php` | **21** | 21 blocs `if (session('locale') == 'bn') … else …`, donc 21 phrases anglaises **et** 21 phrases bengalies |
+| `app/Repositories/Wallet/WalletRepository.php` | **2** | recharge approuvée (dont webhook FedaPay) et recharge au guichet |
+| `app/Http/Services/SmsService.php` | **1** | le suffixe du code de vérification, collé en dur dans `reveSms()` |
+| `app/Repositories/Merchant/MerchantRepository.php` | 0 | appelle `sendOtp()`, ne compose aucun texte |
+| `app/Repositories/Superadmin/Company/CompanyRepository.php` | 0 | ne fait que semer les réglages `sms_send_settings` |
+
+**24 phrases anglaises**, pas 20 — et `Merchant` comme `Company` n'en portaient
+aucune. Les deux dépôts étaient cités à tort.
+
+Résultat : **17 gabarits** dans `lang/fr/sms.php` et `lang/en/sms.php` couvrent les
+24 phrases, parce que le socle **répétait** le même texte jusqu'à trois fois
+(« ramassage affecté » existe en version simple, reprogrammée et en masse — trois
+copies, dont deux avec une espace manquante après `Dear`).
+
+### 14.2 Les trois défauts fermés
+
+**1. La langue était celle de l'agent qui clique.** Le destinataire d'un SMS n'est
+presque jamais la personne connectée : c'est un client final, un livreur, un
+marchand. Lire `session('locale')` pour décider de la langue d'un tiers n'a pas de
+sens. Et depuis le lot 5, `bn` **ne peut plus entrer en session** — la branche
+bengalie était morte et l'anglais partait à tous les coups.
+
+**2. La marque et la devise venaient de `settings()`** (constat F4). Hors requête
+locataire — le webhook FedaPay en est le cas type — `settings()` retombe sur la
+société 1 : le marchand recevait un SMS signé d'un **autre transporteur**.
+`SmsTemplate::forCompany()` les lit maintenant sur la société de l'objet métier
+(`$parcel->company_id`, `$wallet->company_id`), comme `SmsService::forCompany()` le
+faisait déjà pour les identifiants d'opérateur.
+
+**3. Les montants étaient en taka**, ou sans devise du tout : `TK(15000)` figurait
+en dur dans deux gabarits anglais, `parcel_created` envoyait `(15000)` nu, et
+`WalletRepository` collait `settings()->currency` contre le nombre sans séparateur
+(`FCFA15000`).
+
+### 14.3 Le piège dans lequel mon premier jet est tombé
+
+`SmsTemplate::locale()` lisait d'abord `config('app.locale')` — la langue de
+l'installation, pensais-je, par opposition à la session.
+
+**C'est faux.** `Illuminate\Foundation\Application::setLocale()` **écrit** dans
+`config('app.locale')` en même temps qu'il change la locale du traducteur, et
+`App\Http\Middleware\LanguageManager` l'appelle à chaque requête dont la session
+porte une langue. `config('app.locale')` vaut donc, en cours de requête, exactement
+la valeur dont il fallait se défaire : **la langue de l'agent**.
+
+Le test l'a constaté avant la livraison :
+
+> `test_the_agent_browsing_in_english_does_not_change_the_recipients_language`
+> → `Failed asserting that 'Dear Aicha, your parcel BL-1 is delivered…' contains "votre colis"`
+
+D'où `config('locales.default')`, une clé que **rien ne réécrit**, ajoutée à
+`config/locales.php` à côté de `supported`. Le test arme désormais le piège
+explicitement (`assertSame('en', config('app.locale'))`) avant de vérifier que le
+SMS reste français. Vérifié : en remettant `config('app.locale')`, il échoue.
+
+### 14.4 Une contrainte que rien dans le dépôt ne mentionnait : le coût
+
+Un SMS tient **160 caractères** dans l'alphabet GSM 03.38 (7 bits). Dès qu'**un
+seul** caractère en sort, le message bascule en UCS-2 et ne tient plus que **70
+caractères** — donc coûte deux à trois fois plus cher, sur un canal facturé au
+segment.
+
+L'alphabet accepte `è é ù ì ò à ä ö ü ñ`, `É` et `Ç` **majuscules**. Il refuse
+`ê â î ô û ë ï`, le **`ç` minuscule**, `œ`, `È`, `À`, l'apostrophe courbe `’`, le
+tiret demi-cadratin `–` et **l'espace insécable**.
+
+Trois conséquences concrètes sur la rédaction française :
+
+- « entrep**ô**t » → **« centre de tri »** ;
+- « re**ç**u » → **« est arrivé »** ;
+- `formatAmount()` sépare les milliers par une espace **insécable** (U+00A0),
+  juste à l'écran mais hors alphabet : d'où `SmsTemplate::amount()`, qui réutilise
+  `amountValue()` et la devise de la société et ne change que l'espace.
+
+`test_no_template_leaves_the_gsm7_alphabet` mesure les 34 gabarits (17 × 2 langues)
+et refuse le moindre caractère hors alphabet ; un second test vérifie que le
+détecteur voit bien `ê`, `ô`, `ç`, `’` et l'espace insécable.
+
+Longueur des messages français rendus avec des données béninoises réalistes
+(nom de client, raison sociale, numéro, URL) :
+
+| | GSM-7 (livré) | UCS-2 (si un seul `ô` traînait) |
+|---|---|---|
+| Messages en **1 SMS** | **11** sur 17 | 0 |
+| Messages en **2 SMS** | 6 | 6 |
+| Messages en **3 SMS** | 0 | 11 |
+
+Le plus long (`delivery_rescheduled_customer`, 199 caractères) tient en 2 segments ;
+il en aurait demandé 3 en UCS-2. `test_a_rendered_message_never_exceeds_two_sms_parts`
+plafonne à deux segments, pour qu'un ajout de texte ne passe pas inaperçu.
+
+### 14.5 La question métier, tranchée avec une couture
+
+**Faut-il la langue du destinataire ?** Oui, en principe. Mais **aucune colonne ne
+la porte** : ni `users`, ni `merchants`, ni `parcels` (vérifié sur les 200+
+migrations). L'ajouter, c'est une migration, un champ dans trois formulaires et une
+reprise de données — un chantier, pas un détail de ce lot.
+
+**Décision prise, à valider :** le SMS part dans la langue de **l'installation**
+(`config('locales.default')`, `fr` par défaut), ce qui est la langue actée du
+produit et celle de 100 % des destinataires attendus au Bénin.
+
+La couture est unique et documentée : `SmsTemplate::locale()`, cinq lignes. Le jour
+où une colonne portera la préférence du destinataire, `render()` recevra le
+destinataire, cette méthode lira sa préférence et retombera sur la langue de
+l'installation. **Aucun des 24 points d'appel ne bougera.**
+
+### 14.6 Ce que le lot SMS ne livre PAS
+
+- **Les 12 `$msgNotification` anglais** de `ParcelRepository` sont **du code mort** :
+  `PushNotificationService::sendStatusPushNotification()` **ignore son paramètre
+  `$msg`** depuis la décision D11 et construit son texte depuis `lang/*/push.php`,
+  déjà français. Les variables sont calculées puis jetées. Non supprimées (12 sites
+  du socle touchés pour zéro changement de comportement), mais c'est un piège de
+  lecture : elles donnent l'impression que le push part en anglais. **À ranger dans
+  le ménage du code mort.**
+- **Twilio et Nexmo envoient le code de vérification NU**, sans phrase autour :
+  seul le pilote Reve en ajoutait une. C'est un écart du socle, pas une décision ;
+  l'uniformiser change ce que reçoivent les installations qui utilisent ces deux
+  pilotes. Non corrigé.
+- **La garde `SmsSendStatus`** ne compte que **3 constantes** (`PARCEL_CREATE`,
+  `DELIVERED_CANCEL_CUSTOMER`, `DELIVERED_CANCEL_MERCHANT`) : les 20 autres SMS ne
+  sont donc gouvernés que par une case à cocher du formulaire, jamais par
+  *Réglages → Envoi de SMS*. Un transporteur ne peut pas couper, par exemple, le SMS
+  d'entrée en centre de tri. C'est une lacune fonctionnelle du socle, pas une
+  question de langue.
+- **Les dossiers `lang/{es,zh,ar,bn,in}`** ne reçoivent pas de `sms.php` : ils ne
+  sont plus servis (lot 5), et la règle du projet interdit de les supprimer.
+- Les **noms de feuille des exports Excel** (§12.8) et les **42 tableaux non
+  responsives** (lot 6) restent où ils sont.
+
+### 14.7 Fichiers du lot
+
+**Ajoutés (4)** — ils traversent une fusion sans conflit :
+
+| Fichier | Rôle |
+|---|---|
+| `web/lang/fr/sms.php` | 17 gabarits français, GSM-7 propre |
+| `web/lang/en/sms.php` | leur contrepartie anglaise |
+| `web/app/Services/Sms/SmsTemplate.php` | rendu, langue, marque, devise, montant |
+| `web/tests/Feature/SmsMessagesTest.php` | 16 tests, 246 assertions |
+
+**Modifiés (5 fichiers du socle)** :
+
+| Fichier | Nature |
+|---|---|
+| `app/Repositories/Parcel/ParcelRepository.php` | 21 blocs bn/en → 21 appels ; 42 phrases en dur retirées |
+| `app/Repositories/Wallet/WalletRepository.php` | 2 messages ; `GeneralSettings` devenu inutile, retiré |
+| `app/Http/Services/SmsService.php` | le suffixe du code de vérification |
+| `app/Http/Controllers/Backend/MerchantController.php` | 2 messages flash anglais (`Invalid OTP`, `Resend OTP`) → clés `auth.*` déjà présentes |
+| `config/locales.php` | la clé `default` (§14.3) |
+
+Suite complète : **516 tests, 3 021 assertions, vert**.

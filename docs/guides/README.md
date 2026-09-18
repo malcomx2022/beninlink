@@ -120,10 +120,23 @@
   avant/après et inscrits dans le test**, un regroupement ne devant rien perdre. Le
   défaut des langues n'était pas le menu déroulant mais le **contrôleur**, qui
   acceptait n'importe quelle chaîne : `/localization/xx` affichait les clés brutes,
-  durablement. « Retrait » ne mène plus à une page vide. ⚠️ **§13.3 ouvre un chantier
-  plus important que celui-ci : les SMS envoyés aux clients finaux sont en anglais**
-  — 20 gabarits, aucune variante française. §13.6 raconte une erreur commise ici et
-  le test qu'elle a produit.
+  durablement. « Retrait » ne mène plus à une page vide. §13.6 raconte une erreur
+  commise ici et le test qu'elle a produit.
+  **Lot SMS livré le 2026-09-18** : le chantier ouvert au §13.3 — le seul texte du
+  produit qui atteint quelqu'un qui n'a jamais ouvert le back-office. **24 phrases
+  anglaises** (et non 20), plus 21 phrases bengalies devenues mortes depuis le lot 5,
+  réduites à **17 gabarits** parce que le socle répétait le même texte jusqu'à trois
+  fois. Le message ne suit plus la langue de **l'agent qui clique**, sa marque et sa
+  devise viennent de la société de l'objet métier et non de `settings()` (F4), et
+  `TK(15000)` disparaît. Deux choses que l'audit ignorait : `App::setLocale()`
+  **écrit** dans `config('app.locale')` — que `LanguageManager` appelle à chaque
+  requête, donc mon premier jet lisait encore la langue de l'agent, et c'est le test
+  qui l'a dit ; et **un seul caractère hors alphabet GSM 03.38 fait passer le SMS en
+  UCS-2**, 70 caractères utiles au lieu de 160, soit deux à trois fois le prix. D'où
+  « centre de tri » plutôt que « entrepôt » et un formateur de montant qui renonce à
+  l'espace insécable de `formatAmount()`. 11 des 17 messages tiennent en un seul SMS.
+  La langue du **destinataire** reste à trancher : aucune colonne ne la porte, la
+  couture est isolée dans `SmsTemplate::locale()` (§14.5).
 - `../../web/CARTOGRAPHIE.md`  Relevé de l'Étape 0 sur le socle We Courier
   (blocs A-I, constats de sécurité, routes mortes). À lire en premier.
 

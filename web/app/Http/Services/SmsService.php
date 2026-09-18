@@ -7,6 +7,7 @@ use App\Enums\Status;
 use App\Jobs\SendSms;
 use App\Models\Backend\GeneralSettings;
 use App\Models\Backend\SmsSetting;
+use App\Services\Sms\SmsTemplate;
 use http\Client;
 use Twilio\Rest\Client as TwilioClient;
 class SmsService
@@ -130,7 +131,14 @@ class SmsService
                     $api_url    = $this->setting('reve_api_url');
                     $callerID   = $this->brand();
                     if($type == 'otp') {
-                        $message = $userMsg . ' is your ' . $this->brand() . ' verification code.';
+                        // Le socle collait ici une phrase anglaise en dur — la
+                        // seule que le socle ajoutait lui-meme au message, et
+                        // la premiere que lit une PME qui s'inscrit.
+                        // ⚠️ Twilio et Nexmo, eux, envoient le code NU : c'est
+                        // un ecart du socle, pas une decision. Il est releve
+                        // dans l'audit, pas corrige ici.
+                        $message = SmsTemplate::forCompany($this->companyId)
+                            ->render('otp', ['code' => $userMsg]);
                     }else {
                         $message = $userMsg;
                     }
