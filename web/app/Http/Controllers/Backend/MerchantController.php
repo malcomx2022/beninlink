@@ -96,7 +96,7 @@ class MerchantController extends Controller
             }
         }
         elseif($result == 0){
-            return redirect()->route('merchant.otp-verification-form')->with('warning', 'Invalid OTP');
+            return redirect()->route('merchant.otp-verification-form')->with('warning', __('auth.invalid_otp'));
         }
         else{
             Toastr::error(__('merchant.error_msg'),__('message.error'));
@@ -112,7 +112,7 @@ class MerchantController extends Controller
     public function resendOTP(Request $request)
     {
         $this->repo->resendOTP($request);
-        return redirect()->route('merchant.otp-verification-form')->with('success', 'Resend OTP');
+        return redirect()->route('merchant.otp-verification-form')->with('success', __('auth.resend_otp_msg'));
     }
 
     /**
