@@ -83,8 +83,14 @@
   chaque montée de We Courier rejoue le conflit (cf. `socle/`). Il chiffre aussi les
   contrastes : **blanc sur ocre = 2,17:1**, l'ocre ne porte jamais de texte blanc, et
   **six pastilles de la maquette validée échouent en AA** — valeurs corrigées
-  fournies. Cinq points restent à trancher, dont un écart de cinq jetons entre la
-  maquette et `colors.ts`.
+  fournies.
+  **Lot 0 tranché et lot 1 livré le 2026-09-18** : `colors.ts` l'emporte sur la
+  maquette (corrigée), et la couche de jetons est en place — `public/beninlink/`,
+  Sora et DM Sans auto-hébergées, le zoom rétabli, la couleur verte en base sans
+  écraser celle d'un transporteur. Six fichiers du socle touchés, d'une poignée de
+  lignes chacun. `WebBrandCharterTest` compare `tokens.css` à `colors.ts` jeton par
+  jeton et **recalcule les contrastes**, pour qu'une re-fusion du socle ne défasse
+  pas tout en silence. Voir §10 pour ce que le lot 1 ne livre pas encore.
 - `../../web/CARTOGRAPHIE.md`  Relevé de l'Étape 0 sur le socle We Courier
   (blocs A-I, constats de sécurité, routes mortes). À lire en premier.
 

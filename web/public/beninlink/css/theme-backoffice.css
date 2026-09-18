@@ -1,0 +1,369 @@
+/*!
+ * theme-backoffice.css — la charte appliquée au BACK-OFFICE.
+ *
+ * ┌─ POURQUOI CETTE FEUILLE EXISTE ────────────────────────────────────────────┐
+ * │ public/backend/libs/css/style.css fait 7 263 lignes, n'a AUCUNE variable,   │
+ * │ et porte 68 fois #7e0095. C'est un fichier du socle We Courier.             │
+ * │ docs/guides/socle/ chiffre la dette : 238 fichiers du socle modifiés, dont  │
+ * │ 4 seulement dans public/backend. Peindre la charte dans ce fichier, c'est   │
+ * │ un conflit de 7 263 lignes à rejouer à CHAQUE montée de We Courier.         │
+ * │ On requalifie donc ses sélecteurs depuis une feuille AJOUTÉE, chargée en    │
+ * │ dernier. Les fichiers ajoutés traversent une fusion sans un conflit.        │
+ * └────────────────────────────────────────────────────────────────────────────┘
+ *
+ * POSITION DE CHARGEMENT — chargée après @stack('styles'), volontairement.
+ * Les pages poussent là des bibliothèques (datatables, switch, logs.css,
+ * progressbar.css), pas des choix de marque ; or logs.css — la TIMELINE DE SUIVI
+ * — porte aussi le violet. Chargée avant, la charte y serait perdue.
+ * Cette feuille ne touche QUE couleurs, polices et focus : jamais la mise en
+ * page. C'est ce qui rend cette position sans danger pour ces bibliothèques.
+ *
+ * ⚠️ Aucun hexadécimal de charte ici : tout vient de tokens.css.
+ * ⚠️ On ne retire PAS Bootstrap 4 : 217 attributs data-toggle en dépendent, et
+ *    quatre sélecteurs du sidebar aussi. Le vocabulaire BS4 (badge-*, btn-*)
+ *    est donc traité comme faisant partie du socle, et requalifié tel quel.
+ */
+
+/* ===========================================================================
+   1. TYPOGRAPHIE — Circular Std → DM Sans / Sora
+   =========================================================================== */
+body {
+  font-family: var(--bl-font-body);
+  color: var(--bl-text);
+}
+
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6,
+.card-title, .page-header .breadcrumb,
+.nav-divider {
+  font-family: var(--bl-font-heading);
+  font-weight: var(--bl-weight-heading);
+  letter-spacing: -.01em;
+}
+
+/* Les chiffres en Sora : KPIs du tableau de bord, montants FCFA, compteurs.
+   .metric-value h1 est la valeur des cartes de synthèse (dashboard.blade.php). */
+.metric-value h1, .metric-value h2,
+.total-card-body .metric-value,
+.count, .counter, .amount, .fcfa {
+  font-family: var(--bl-font-numeric);
+  font-weight: var(--bl-weight-heading-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* En-têtes de colonnes : ardoise, capitales, petit corps — comme la maquette. */
+.table thead th, table thead th {
+  font-family: var(--bl-font-body);
+  font-weight: var(--bl-weight-heading);
+  font-size: var(--bl-size-xs);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: var(--bl-slate);
+}
+
+/* ===========================================================================
+   2. LE PRIMAIRE — vert profond partout où le socle mettait du violet
+   Références de ligne : public/backend/libs/css/style.css
+   =========================================================================== */
+
+/* :862 .bg-primary · :965 .text-primary · :1018 .border-top-primary */
+.bg-primary {
+  background-color: var(--bl-primary) !important;
+  color: var(--bl-on-primary) !important;
+}
+.text-primary, .text-primary:hover {
+  color: var(--bl-primary) !important;
+}
+.border-top-primary {
+  border-top-color: var(--bl-primary) !important;
+}
+
+/* :2689 .btn-primary · custom.css:448 son survol */
+.btn-primary {
+  background-color: var(--bl-primary);
+  border-color: var(--bl-primary);
+  color: var(--bl-on-primary);
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background-color: var(--bl-primary-dark) !important;
+  border-color: var(--bl-primary-dark) !important;
+  color: var(--bl-on-primary) !important;
+}
+
+/* :2951 .btn-outline-primary */
+.btn-outline-primary {
+  color: var(--bl-primary);
+  border-color: var(--bl-primary);
+}
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background-color: var(--bl-primary);
+  border-color: var(--bl-primary);
+  color: var(--bl-on-primary);
+}
+
+/* :3213 .btn-link · :3221 .btn-primary-link · :224 a:hover */
+.btn-link, .btn-primary-link {
+  color: var(--bl-primary) !important;
+}
+a:hover {
+  color: var(--bl-primary);
+}
+
+/* :4035 .badge-primary (vocabulaire BS4, conservé) */
+.badge-primary {
+  background-color: var(--bl-primary);
+  color: var(--bl-on-primary);
+}
+
+/* :1144 .progress-bar · :1148 .primary-progress-bar */
+.progress-bar, .primary-progress-bar {
+  background-color: var(--bl-primary);
+}
+
+/* :1363 · :1376 · :1476 — bandeau et panneau de notifications */
+.notification-list-user-name { color: var(--bl-primary); }
+.conntection-footer,
+.nav-user-info { background-color: var(--bl-primary); }
+
+/* :2039 fil d'Ariane */
+.page-breadcrumb .breadcrumb-link {
+  color: var(--bl-primary) !important;
+}
+
+/* :1945 · :1955 · custom.css:169 — menus déroulants */
+.dropdown-item:hover {
+  color: var(--bl-primary);
+}
+.dropdown-item:active,
+.dropdown-menu .dropdown-item:hover {
+  background-color: var(--bl-primary) !important;
+  color: var(--bl-on-primary) !important;
+}
+
+/* :3292 onglets en pilules */
+.nav-pills .show > .nav-link,
+.nav-pills .nav-link.active {
+  background-color: var(--bl-primary);
+  color: var(--bl-on-primary);
+}
+
+/* :2446 indicateurs de carrousel */
+.product-carousel .carousel-indicators li.active {
+  background-color: var(--bl-primary);
+}
+
+/* custom.css:454-468 — calendrier (FullCalendar) */
+.fc-button-primary.fc-prev-button,
+.fc-button-primary.fc-next-button {
+  color: var(--bl-primary) !important;
+  border-color: var(--bl-primary) !important;
+}
+.fc-button-primary.fc-prev-button:hover,
+.fc-button-primary.fc-next-button:hover,
+.fc-today-button {
+  background-color: var(--bl-primary) !important;
+  border-color: var(--bl-primary) !important;
+  color: var(--bl-on-primary) !important;
+}
+
+/* custom.css:490 · :497 — listes et sélecteur de période */
+.merchant-view .list-group-item.active,
+.merchant-view .list-group-item:hover,
+.daterangepicker .ranges li.active,
+.daterangepicker .ranges li:hover {
+  background-color: var(--bl-primary) !important;
+  color: var(--bl-on-primary) !important;
+}
+
+/* custom.css:99 — variable du socle mal nommée : elle porte le PRIMAIRE,
+   pas un avertissement. On la rebranche sans toucher ses six appelants. */
+:root {
+  --warningcolor: var(--bl-primary);
+}
+
+/* backend/css/custom.css:338 — boutons SweetAlert */
+.swal2-confirm.swal2-styled {
+  background: var(--bl-primary) !important;
+}
+
+/* ===========================================================================
+   3. FORMULAIRES — état de saisie et cases à cocher
+   :273 focus · :326/:334 placeholders · :379-422 cases et radios
+   =========================================================================== */
+.form-control:focus,
+.date_range_picker:focus {
+  border-color: var(--bl-primary) !important;
+  box-shadow: var(--bl-focus-ring);
+}
+input:focus::-webkit-input-placeholder,
+textarea:focus::-webkit-input-placeholder {
+  color: var(--bl-text-muted) !important;
+}
+.custom-checkbox .custom-control-input:checked ~ .custom-control-label::before,
+.custom-control-input:checked ~ .custom-control-label::before,
+.custom-radio .custom-control-input:checked ~ .custom-control-label::before,
+input[type='checkbox']:checked {
+  background-color: var(--bl-primary) !important;
+  border-color: var(--bl-primary) !important;
+}
+
+/* ===========================================================================
+   4. SIDEBAR — :1714 icône · :1743 bordure de sous-menu · :1747-1758 états
+   custom.css:456 fond d'état actif
+   =========================================================================== */
+.nav-left-sidebar .nav-link:hover i,
+.nav-left-sidebar .nav-link.active i,
+.sidebar-dark.nav-left-sidebar .navbar-nav .nav-link:hover,
+.sidebar-dark.nav-left-sidebar .navbar-nav .nav-link.active,
+.sidebar-dark.nav-left-sidebar .submenu .nav .nav-item .nav-link:hover {
+  color: var(--bl-primary) !important;
+}
+.nav-left-sidebar .submenu .nav .nav-item .nav-link.active {
+  border-right: 3px solid var(--bl-primary) !important;
+}
+.nav-left-sidebar .navbar-nav .nav-link:focus,
+.nav-left-sidebar .navbar-nav .nav-link:hover,
+.nav-left-sidebar .navbar-nav .nav-link.active {
+  background-color: #12503A12 !important;   /* primaire à 7 % */
+  color: var(--bl-primary) !important;
+  border-radius: var(--bl-radius-sm);
+}
+/* Inactif : le socle mettait #71789e — 4,30:1, sous AA pour du 14 px. */
+.nav-left-sidebar .navbar-nav .nav-link {
+  color: var(--bl-text-muted);
+}
+/* Intitulé de groupe (« Pilotage », « Réseau », « Gestion » de la maquette). */
+.nav-divider {
+  color: var(--bl-slate);
+  font-size: var(--bl-size-xs);
+  letter-spacing: .08em;
+}
+.sidebar-nav-fixed ul li a:hover,
+.sidebar-nav-fixed ul li a.active {
+  color: var(--bl-primary);
+}
+
+/* ===========================================================================
+   5. TIMELINE DE SUIVI — backend/css/logs.css et progressbar.css
+   Chargées par @push('styles'), donc APRÈS le socle : d'où la position de
+   cette feuille (voir l'en-tête).
+   =========================================================================== */
+.progressbar li.active,
+#progressbar li:before,
+.active i.fa.fa-truck,
+.active i.fas.fa-truck-loading,
+.active i.fas.fa-warehouse,
+.active i.fas.fa-hourglass-start,
+.active i.fas.fa-handshake,
+.active i.fas.fa-undo-alt {
+  color: var(--bl-primary) !important;
+}
+.progressbar li.active:before,
+#progressbar li.active:before,
+#progressbar li.active:after {
+  border-color: var(--bl-primary) !important;
+  background-color: var(--bl-primary) !important;
+}
+.progressbar li.active + li:after,
+.progressbar .active i.fa.fa-check {
+  background: var(--bl-primary) !important;
+}
+
+/* ===========================================================================
+   6. L'OCRE — actions clés seulement, et JAMAIS de texte blanc dessus
+   Blanc sur ocre = 2,17:1 (illisible). Encre --bl-on-accent = 6,40:1.
+   Le socle n'a pas de classe d'accent : on en ajoute une, à poser à la main sur
+   l'action principale d'un écran (« Créer un colis », « Recharger »).
+   =========================================================================== */
+.btn-accent,
+.bg-accent {
+  background-color: var(--bl-accent) !important;
+  border-color: var(--bl-accent) !important;
+  color: var(--bl-on-accent) !important;
+}
+.btn-accent:hover,
+.btn-accent:focus {
+  background-color: var(--bl-accent-dark) !important;
+  color: var(--bl-on-accent) !important;
+}
+/* Garde-fou : si une classe du socle pose du blanc sur un fond ocre, on le
+   rattrape plutôt que de laisser passer un texte à 2,17:1. */
+.btn-warning, .badge-warning, .bg-warning {
+  color: var(--bl-on-accent) !important;
+}
+
+/* ===========================================================================
+   7. SÉMANTIQUE — les couleurs d'état de la charte
+   Répare notamment les trois niveaux douaniers du Module 4 : la vue
+   customs/alerts.blade.php est correctement écrite (badge-danger/warning/info)
+   mais héritait des rouges et jaunes de Bootstrap.
+   =========================================================================== */
+/* Ces fonds portent du texte blanc (Bootstrap le pose sur .badge-*). Chaque
+   paire a été mesurée : blanc sur danger 5,44:1, sur info 5,62:1 — bonnes.
+   Deux ne l'étaient pas, et sont traitées à part :
+     · blanc sur warning = 2,91:1 → texte encre, posé au §6 (4,77:1) ;
+     · blanc sur success = 4,14:1 → fond assombri --bl-success-strong (6,09:1). */
+.badge-danger, .bg-danger   { background-color: var(--bl-danger) !important; }
+.badge-warning, .bg-warning { background-color: var(--bl-warning) !important; }
+.badge-success, .bg-success { background-color: var(--bl-success-strong) !important; }
+.badge-info, .bg-info       { background-color: var(--bl-info) !important; }
+
+/* En TEXTE sur blanc, même prudence : le succès nominal n'y tient pas (4,14:1). */
+.text-danger  { color: var(--bl-danger) !important; }
+.text-success { color: var(--bl-success-text) !important; }
+.text-info    { color: var(--bl-info) !important; }
+.text-muted   { color: var(--bl-text-muted) !important; }
+
+/* ===========================================================================
+   8. PASTILLES DE STATUT — les six familles (tokens.css §5)
+   Les classes sont posées par StatusParcel() côté PHP. Tant que ce lot ne l'a
+   pas réécrit (lot 2), elles ne sont pas encore émises : la définition est ici
+   d'avance, pour que le lot 2 n'ait plus que du PHP à écrire.
+   =========================================================================== */
+.bl-pill {
+  display: inline-block;
+  white-space: nowrap;
+  font-family: var(--bl-font-heading);
+  font-weight: var(--bl-weight-heading);
+  font-size: var(--bl-size-xs);
+  padding: 4px 9px;
+  border-radius: var(--bl-radius-pill);
+}
+.bl-pill--wait    { background: var(--bl-pill-wait-bg);    color: var(--bl-pill-wait-fg); }
+.bl-pill--transit { background: var(--bl-pill-transit-bg); color: var(--bl-pill-transit-fg); }
+.bl-pill--hub     { background: var(--bl-pill-hub-bg);     color: var(--bl-pill-hub-fg); }
+.bl-pill--assign  { background: var(--bl-pill-assign-bg);  color: var(--bl-pill-assign-fg); }
+.bl-pill--done    { background: var(--bl-pill-done-bg);    color: var(--bl-pill-done-fg); }
+.bl-pill--return  { background: var(--bl-pill-return-bg);  color: var(--bl-pill-return-fg); }
+
+/* ===========================================================================
+   9. SURFACES — cartes et tableaux, au grain de la maquette
+   =========================================================================== */
+.card {
+  border: 1px solid var(--bl-border);
+  border-radius: var(--bl-radius-lg);
+  box-shadow: var(--bl-shadow-card);
+}
+.table td, table td {
+  border-color: var(--bl-border);
+}
+
+/* ===========================================================================
+   10. ACCESSIBILITÉ — le focus clavier doit se voir
+   Le socle ne déclare focus-visible qu'UNE fois en 7 263 lignes.
+   =========================================================================== */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.btn:focus-visible,
+.nav-link:focus-visible,
+.dropdown-item:focus-visible {
+  outline: 2px solid var(--bl-primary);
+  outline-offset: 2px;
+  box-shadow: var(--bl-focus-ring);
+}

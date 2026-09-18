@@ -7,10 +7,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('openapi.title') }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+    {{-- Charte BeninLink : la couleur vient du jeton, plus d'un hexadécimal recopié. --}}
+    <link rel="stylesheet" href="{{ static_asset('beninlink/css/tokens.css') }}">
     <style>
         body { margin: 0; }
         .topbar { display: none; }
-        .swagger-ui .info .title { color: #12503A; }
+        .swagger-ui .info .title { color: var(--bl-primary); font-family: var(--bl-font-heading); }
     </style>
 </head>
 <body>

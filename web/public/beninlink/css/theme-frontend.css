@@ -1,0 +1,119 @@
+/*!
+ * theme-frontend.css — la charte appliquée au SITE PUBLIC.
+ *
+ * Chargé APRÈS public/frontend/css/style.css (feuille du socle), et AVANT le
+ * bloc <style> en ligne de frontend/layouts/master.blade.php qui injecte la
+ * couleur du transporteur depuis la base. Cet ordre est voulu :
+ *
+ *   socle (violet)  →  cette feuille (charte)  →  réglage du tenant (base)
+ *
+ * Un transporteur qui a choisi sa couleur la garde donc : la charte n'est que
+ * le DÉFAUT, pas une prison. C'est ce que le multi-tenant du socle promet.
+ *
+ * ⚠️ Ce fichier ne recopie AUCUN hexadécimal : tout vient de tokens.css.
+ * ⚠️ Il ne modifie aucun fichier du socle. Les !important répondent à ceux du
+ *    socle, qui en met sur body et sur h1-h6 ; à cascade égale, le dernier
+ *    chargé gagne.
+ */
+
+/* ===========================================================================
+   1. LES JETONS DU SOCLE, REBRANCHÉS SUR LA CHARTE
+   public/frontend/css/style.css déclare ces variables dans son :root. On les
+   redéfinit ici plutôt que de l'éditer — un fichier du socle non touché est un
+   conflit de fusion en moins à la prochaine montée de We Courier.
+   =========================================================================== */
+:root {
+  --bs-primary: var(--bl-primary);
+  --text-color: var(--bl-text);
+  --h-color: var(--bl-text);
+
+  --bs-info: var(--bl-info);
+  --bs-danger: var(--bl-danger);
+  --bs-success: var(--bl-success);
+
+  /* Le socle déclarait --h-font-family:'fangsong' — une famille générique de
+     serif CHINOIS, absente de toute machine latine : TOUS les titres du site
+     public tombaient sur le serif par défaut du navigateur. */
+  --h-font-family: var(--bl-font-heading);
+  --font-family: var(--bl-font-body);
+
+  --section-bg: #12503A0D;              /* primaire à 5 % — teinte de section */
+  --bs-outline-primary: #12503A23;
+  --bs-outline-info: #2C6E8F25;
+  --bs-outline-danger: #C0392B1C;
+  --bs-outline-success: #1E8E5A2F;
+}
+
+/* ===========================================================================
+   2. TYPOGRAPHIE
+   =========================================================================== */
+
+/* Le socle impose font-family:'Roboto' sur body, en littéral et en !important :
+   il faut une règle, pas seulement une variable. */
+body {
+  font-family: var(--bl-font-body) !important;
+  font-weight: var(--bl-weight-body) !important;
+}
+
+/* Les titres héritent déjà de var(--h-font-family), redéfinie plus haut.
+   Il ne reste que la graisse à poser — la charte veut du 600/700, pas du 500. */
+.h1, .h2, .h3, .h4, .h5, .h6,
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--bl-weight-heading-bold);
+  letter-spacing: -.01em;
+}
+
+/* Les chiffres se lisent en Sora (choix de charte) : compteurs animés de la
+   page d'accueil, montants des grilles tarifaires. */
+.odometer,
+.price,
+.pricing-card .amount {
+  font-family: var(--bl-font-numeric);
+  font-weight: var(--bl-weight-heading-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===========================================================================
+   3. L'OCRE — actions clés seulement
+   L'ocre ne porte JAMAIS de texte blanc (2,17:1). Son texte est --bl-on-accent
+   (6,40:1). Les deux actions clés du site public sont « Suivre » et
+   « S'inscrire » ; le reste du vert reste vert, titre du héros compris.
+   =========================================================================== */
+.tracking-form .input-group-text,
+.tracking-page .input-group-text {
+  background-color: var(--bl-accent) !important;
+  color: var(--bl-on-accent) !important;
+  border-color: var(--bl-accent) !important;
+  font-family: var(--bl-font-body);
+  font-weight: var(--bl-weight-body-medium);
+}
+.tracking-form .input-group-text:hover,
+.tracking-page .input-group-text:hover {
+  background-color: var(--bl-accent-dark) !important;
+}
+
+/* Bouton « S'inscrire » du bandeau. .auth-btn le distingue de « Connexion »,
+   qui reste un simple lien. */
+.btn-primary.auth-btn {
+  background-color: var(--bl-accent) !important;
+  border-color: var(--bl-accent) !important;
+  color: var(--bl-on-accent) !important;
+}
+.btn-primary.auth-btn:hover {
+  background-color: var(--bl-accent-dark) !important;
+}
+
+/* ===========================================================================
+   4. ACCESSIBILITÉ — le focus clavier doit se voir
+   =========================================================================== */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.btn:focus-visible,
+.nav-link:focus-visible {
+  outline: 2px solid var(--bl-primary);
+  outline-offset: 2px;
+  box-shadow: var(--bl-focus-ring);
+}

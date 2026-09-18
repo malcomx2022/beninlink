@@ -9,6 +9,13 @@
     <meta charset="utf-8">
     <title>{{ __('statement.title') }} {{ $s['number'] }}</title>
     <style>
+        /* Charte BeninLink. ⚠️ Les couleurs ci-dessous sont une COPIE de
+           public/beninlink/css/tokens.css — dompdf ne résout pas var(), donc
+           elles ne peuvent pas y être référencées. Correspondances :
+             #12503A = --bl-primary      #1A1A1A = --bl-text
+             #5F6B66 = --bl-text-muted   #E1E6E3 = --bl-border
+             #F7F9F8 = --bl-background
+           Toute retouche de la charte doit repasser ici. */
         @page { margin: 22mm 16mm 20mm 16mm; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #1A1A1A; margin: 0; }
         h1 { font-size: 18px; color: #12503A; margin: 0 0 2px; }
