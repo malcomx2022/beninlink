@@ -59,6 +59,17 @@
                     </div>
                 </div>
                 @if(isset($merchant_id))
+                    {{-- Lot 5 : même état vide que côté marchand. D10 coupe le module ;
+                         la page n'affichait qu'un titre et une rangée vide. --}}
+                    @if (!onlinePayoutEnabled())
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body text-center text-muted">
+                                    {{ __('levels.payout_unavailable') }}
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                     @if(onlinePayoutEnabled() && MerchantSearchSettings($merchant_id,'paypal_status') == \App\Enums\Status::ACTIVE) {{-- D10 --}}
                         <div class="col-md-6">
                             <a href="{{ route('payout.paypal.index',['merchant_id'=>$merchant_id]) }}" >

@@ -317,10 +317,24 @@ class WebAccentColorTest extends TestCase
         $this->assertStringContainsString("__('levels.accent_color')", $vue);
         $this->assertStringContainsString('type="color"', $vue);
 
-        foreach (['fr', 'en', 'es', 'bn', 'zh', 'ar', 'in'] as $langue) {
+        // Les langues SERVIES (lot 5, `config/locales.php`) doivent porter le
+        // libellé : sans entrée, l'écran afficherait la clé brute.
+        foreach (array_keys(config('locales.supported')) as $langue) {
             $libelles = require lang_path($langue . '/levels.php');
             $this->assertArrayHasKey('accent_color', $libelles, $langue);
             $this->assertNotSame('', trim($libelles['accent_color']), $langue);
+        }
+
+        // Les cinq locales en sommeil gardent la clé tant que leur fichier est
+        // là — le lot 5 ne les sert plus mais ne les supprime pas (règle du
+        // projet : 0 fichier retiré du socle). Si l'une venait à disparaître, ce
+        // test ne s'y opposerait pas ; tant qu'elle est là, elle reste à jour.
+        foreach (['es', 'bn', 'zh', 'ar', 'in'] as $langue) {
+            $fichier = lang_path($langue . '/levels.php');
+            if (! file_exists($fichier)) {
+                continue;
+            }
+            $this->assertArrayHasKey('accent_color', require $fichier, $langue);
         }
     }
 

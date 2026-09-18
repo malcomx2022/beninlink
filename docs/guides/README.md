@@ -114,6 +114,16 @@
   et le défaut touchait 16 dialogues, pas 2. Au passage : deux fuites de **taka
   bangladais** dans les libellés français, et deux fautes de français. Voir §12.5
   pour une affirmation du guide `socle/` que ce dépôt ne permet pas de vérifier.
+  **Lot 5 livré le 2026-09-18** : navigation et langues. Les 26 entrées du menu
+  passent sous six intitulés (les trois de la maquette, plus trois — elle en montre
+  trois pour un menu de huit) ; **les jeux de routes et de permissions sont comparés
+  avant/après et inscrits dans le test**, un regroupement ne devant rien perdre. Le
+  défaut des langues n'était pas le menu déroulant mais le **contrôleur**, qui
+  acceptait n'importe quelle chaîne : `/localization/xx` affichait les clés brutes,
+  durablement. « Retrait » ne mène plus à une page vide. ⚠️ **§13.3 ouvre un chantier
+  plus important que celui-ci : les SMS envoyés aux clients finaux sont en anglais**
+  — 20 gabarits, aucune variante française. §13.6 raconte une erreur commise ici et
+  le test qu'elle a produit.
 - `../../web/CARTOGRAPHIE.md`  Relevé de l'Étape 0 sur le socle We Courier
   (blocs A-I, constats de sécurité, routes mortes). À lire en premier.
 

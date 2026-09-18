@@ -1,24 +1,31 @@
 <!-- left sidebar -->
 <div class="col-12 nav-left-sidebar sidebar-dark">
     <ul class="navbar-nav">
-        <li class="nav-divider">
-            {{ __('menus.menu') }}
-        </li>
+
+        {{-- Lot 5 : trois intitulés, ceux de la maquette. Huit entrées seulement ici,
+             contre 26 côté opérateur : trois groupes suffisent. L'ordre suit celui de
+             l'app marchand — le marchand doit retrouver ses écrans au même endroit.
+             Toutes les entrées d'origine sont conservées, un test le vérifie. --}}
+        <li class="nav-divider">{{ __('menus.group_pilotage') }}</li>
         <li class="nav-item ">
             <a class="nav-link {{ request()->is('/*') ? 'active' : '' }}" href="{{ url('/dashboard') }}"><i
                     class="fa fa-home"></i>{{ __('dashboard.title') }}</a>
         </li>
-
         <li class="nav-item ">
-            <a class="nav-link {{ request()->is('merchant/support*') ? 'active' : '' }}"
-                href="{{ route('merchant-panel.support.index') }}"><i
-                    class="fa fa-comments"></i>{{ __('menus.support') }}</a>
+            <a class="nav-link {{ request()->is('merchant/parcel/*') ? 'active' : '' }}"
+                href="{{ route('merchant-panel.parcel.index') }}"><i
+                    class="fa fa-dolly"></i>{{ __('menus.parcel') }}</a>
+        </li>
+        <li class="nav-item ">
+            <a class="nav-link {{ request()->is('merchant/parcel-bank*') ? 'active' : '' }}"
+                href="{{ route('merchant-panel.parcel-bank.index') }}"><i
+                    class="fa fa-map"></i>{{ __('menus.parcel_bank') }}</a>
         </li>
 
+        <li class="nav-divider">{{ __('menus.group_finances') }}</li>
         <li class="nav-item ">
             <a class="nav-link {{ (request()->is('merchant/my-wallet*')) ? 'active' : '' }}" href="{{route('merchant-panel.my.wallet.index')}}"><i class="fa fa-wallet"></i>{{ __('parcel.my_wallet') }}</a>
         </li>
-
         <li class="nav-item">
             <a class="nav-link {{ request()->is('merchant/payment-request*', 'merchant/invoice*', 'merchant/payment/received*', 'merchant/online-payment*', 'merchant/invoice*') ? 'active' : '' }}"
                 href="#" data-toggle="collapse" aria-expanded="false" data-target="#accounts"
@@ -31,11 +38,15 @@
                         <a class="nav-link {{ request()->is('merchant/payment/received*') ? 'active' : '' }}"
                             href="{{ route('online.payment.received') }}"> {{ __('menus.payments_received') }}</a>
                     </li>
-                    {{-- payout --}}
-                    <li class="nav-item ">
-                        <a class="nav-link {{ request()->is('merchant/online-payment*') ? 'active' : '' }}"
-                            href="{{ route('online.payment.index') }}"> {{ __('menus.payout') }}</a>
-                    </li>
+                    {{-- Retrait (payout). Coupé par D10 : sans cette garde, le
+                         marchand cliquait et tombait sur une page vide — la page
+                         conditionne chaque passerelle, le menu ne conditionnait rien. --}}
+                    @if (onlinePayoutEnabled())
+                        <li class="nav-item ">
+                            <a class="nav-link {{ request()->is('merchant/online-payment*') ? 'active' : '' }}"
+                                href="{{ route('online.payment.index') }}"> {{ __('menus.payout') }}</a>
+                        </li>
+                    @endif
                     <li class="nav-item ">
                         <a class="nav-link {{ request()->is('merchant/invoice*') ? 'active' : '' }}"
                             href="{{ route('merchant.panel.invoice.index') }}">{{ __('menus.invoice') }}</a>
@@ -43,19 +54,6 @@
                 </ul>
             </div>
         </li>
-
-        <li class="nav-item ">
-            <a class="nav-link {{ request()->is('merchant/parcel/*') ? 'active' : '' }}"
-                href="{{ route('merchant-panel.parcel.index') }}"><i
-                    class="fa fa-dolly"></i>{{ __('menus.parcel') }}</a>
-        </li>
-        <li class="nav-item ">
-            <a class="nav-link {{ request()->is('merchant/parcel-bank*') ? 'active' : '' }}"
-                href="{{ route('merchant-panel.parcel-bank.index') }}"><i
-                    class="fa fa-map"></i>{{ __('menus.parcel_bank') }}</a>
-        </li>
-
-
         <li class="nav-item">
             <a class="nav-link {{ request()->is('merchant/reports/*') ? 'active' : '' }}" href="#"
                 data-toggle="collapse" aria-expanded="false" data-target="#reports" aria-controls="reports"><i
@@ -86,6 +84,7 @@
             </div>
         </li>
 
+        <li class="nav-divider">{{ __('menus.group_compte') }}</li>
         <li class="nav-item">
             <a class="nav-link {{ request()->is('merchant/settings*', 'merchant/shops*') ? 'active' : '' }}"
                 href="#" data-toggle="collapse" aria-expanded="false" data-target="#settings"
@@ -113,7 +112,11 @@
                 </ul>
             </div>
         </li>
-
+        <li class="nav-item ">
+            <a class="nav-link {{ request()->is('merchant/support*') ? 'active' : '' }}"
+                href="{{ route('merchant-panel.support.index') }}"><i
+                    class="fa fa-comments"></i>{{ __('menus.support') }}</a>
+        </li>
 
     </ul>
 </div>

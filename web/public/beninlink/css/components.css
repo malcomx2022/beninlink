@@ -79,3 +79,31 @@
   /* Seul l'incident partiel garde du poids : il reste en gras appuyé. */
   .bl-pill--partial { color: var(--bl-pill-partial-fg); font-weight: var(--bl-weight-heading-bold); }
 }
+
+/* ===========================================================================
+   UTILITAIRES — lot 5
+   =========================================================================== */
+
+/* Masqué à l'œil, lu par un lecteur d'écran. Défini ici plutôt que d'emprunter
+   `sr-only` (Bootstrap 4) ou `visually-hidden` (Bootstrap 5) : le back-office
+   charge les deux aujourd'hui, et le jour où l'un partira, ceci tiendra encore. */
+.bl-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Champ de période des tableaux de bord. Il portait `style="width: 15%"` d'un
+   côté et `30%` de l'autre — un pourcentage sur un champ de saisie donne une
+   largeur qui n'a rien à voir avec son contenu. */
+.bl-filter-date {
+  width: 12rem;
+  max-width: 100%;
+  display: inline-block;
+}
