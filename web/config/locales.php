@@ -32,6 +32,22 @@ return [
      * que montre la maquette validée (« 🇧🇯 FR »), et c'est juste — la langue
      * servie est celle du pays du produit, pas d'un autre.
      */
+    /**
+     * La langue de l'INSTALLATION — celle des messages adressés à un tiers qui
+     * n'a pas de session : le SMS envoyé à un client, à un livreur, au marchand.
+     *
+     * ⚠️ Pourquoi pas `config('app.locale')` : `Illuminate\Foundation\Application::setLocale()`
+     * **écrit** dans `app.locale` en même temps qu'il change la locale du
+     * traducteur. Or `LanguageManager` l'appelle à chaque requête dont la
+     * session porte une langue. `config('app.locale')` vaut donc, en cours de
+     * requête, la langue de **l'agent connecté** — exactement la valeur dont il
+     * faut se défaire. Cette clé-ci, personne ne la réécrit.
+     *
+     * C'est ici qu'une langue enregistrée par destinataire viendrait se
+     * brancher, en repli : voir `SmsTemplate::locale()`.
+     */
+    'default' => env('APP_LOCALE', 'fr'),
+
     'supported' => [
         'fr' => ['label' => 'levels.franch',  'flag' => 'flag-icon-bj'],
         'en' => ['label' => 'levels.english', 'flag' => 'flag-icon-us'],

@@ -7,7 +7,7 @@ use App\Enums\Wallet\WalletPaymentMethod;
 use App\Enums\Wallet\WalletStatus;
 use App\Enums\Wallet\WalletType;
 use App\Http\Services\SmsService;
-use App\Models\Backend\GeneralSettings;
+use App\Services\Sms\SmsTemplate;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\Wallet;
 use App\Repositories\Wallet\WalletInterface;
@@ -187,12 +187,14 @@ class WalletRepository implements WalletInterface{
             // marchand recevait donc un SMS au nom commercial et a la devise
             // d'un autre locataire, emis avec les identifiants d'operateur SMS
             // de cette autre societe et factures a elle.
-            $company  = GeneralSettings::find($wallet->company_id);
-            $marque   = $company->name ?? '';
-            $devise   = $company->currency ?? '';
-
-            $msg = "Dear ".$merchant->business_name.", you are recharges ".$devise.$wallet->amount." to your ".$marque." wallet.";
-            $response = app(SmsService::class)->forCompany($wallet->company_id)->sendSms($merchant->user->mobile, $msg); 
+            // La marque et la devise du message suivent la meme regle : c'est
+            // `SmsTemplate::forCompany()` qui les lit sur CETTE societe.
+            $sms = SmsTemplate::forCompany($wallet->company_id);
+            $msg = $sms->render('wallet_recharged', [
+                'merchant' => $merchant->business_name,
+                'amount'   => $sms->amount($wallet->amount),
+            ]);
+            $response = app(SmsService::class)->forCompany($wallet->company_id)->sendSms($merchant->user->mobile, $msg);
 
             return true; 
         } catch (\Throwable $th) {
@@ -250,8 +252,13 @@ class WalletRepository implements WalletInterface{
             $merchant->wallet_balance  = ($merchant->wallet_balance + $request->amount);
             $merchant->save();
 
-            $msg = "Dear ".$merchant->business_name.", you are recharges ".settings()->currency.$wallet->amount." to your ".settings()->name." wallet. Transaction id -".$wallet->transaction_id;
-            $response = app(SmsService::class)->sendSms($merchant->user->mobile, $msg); 
+            $sms = SmsTemplate::forCompany($wallet->company_id);
+            $msg = $sms->render('wallet_recharged_with_reference', [
+                'merchant'  => $merchant->business_name,
+                'amount'    => $sms->amount($wallet->amount),
+                'reference' => $wallet->transaction_id,
+            ]);
+            $response = app(SmsService::class)->sendSms($merchant->user->mobile, $msg);
             DB::commit();
             return true;
         } catch (\Throwable $th) {
