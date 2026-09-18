@@ -191,7 +191,7 @@
                                         </td>
                                         <td>{{dateFormat($income->date)}}</td>
                                         <td>
-                                            <img src="{{$income->image}}" alt="user" class="rounded" width="45" height="65">
+                                            <img src="{{$income->image}}" alt="{{ __('levels.receipt') }}" class="rounded" width="45" height="65">
                                         </td>
                                         <td>{{ formatAmount($income->amount) }}</td>
                                         @if(

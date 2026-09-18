@@ -118,7 +118,7 @@
                             <div class="row align-item-center" style="align-items: center">
                                 <div class="col-12">
                                     <div class="d-flex">
-                                        <img src="{{@$chat->user->image}}" alt="user" class="rounded" width="40" height="40">
+                                        <img src="{{@$chat->user->image}}" alt="" class="rounded" width="40" height="40">
                                         <span style="margin-left:10px;width:100%">
                                             <strong>{{@$chat->user->name}}</strong><br/>
                                             <span>{{@$chat->user->email}}</span><br/>
@@ -159,7 +159,7 @@
                         <div class="row align-item-center" style="align-items: center">
                             <div class="col-12">
                                 <div class="d-flex">
-                                    <img src="{{@$singleSupport->user->image}}" alt="user" class="rounded" width="40" height="40">
+                                    <img src="{{@$singleSupport->user->image}}" alt="" class="rounded" width="40" height="40">
                                     <span style="margin-left:10px;width:100%">
                                         <strong>{{@$singleSupport->user->name}}</strong><br/>
                                         <span>{{@$singleSupport->user->email}}</span><br/>

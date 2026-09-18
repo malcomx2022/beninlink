@@ -72,7 +72,7 @@
                                     <tbody>
                                         <tr>
                                             <td style="width:140px;  border-right: 1px solid;padding-right:2px">
-                                                <img alt="Logo" src="{{ settings()->logo_image }}" class="logo"
+                                                <img alt="{{ settings()->name }}" src="{{ settings()->logo_image }}" class="logo"
                                                     style="width:70px">
                                             </td>
                                             <td style="padding-left: 2px;width:100%;">

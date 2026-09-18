@@ -200,4 +200,10 @@ return array (
     // que le marchand doit savoir ou reprendre son fichier.
     'import_wallet_insufficient' => "Ligne :line — solde insuffisant : il manque :missing. Aucun colis n'a ete importe.",
     'import_merchant_wallet_insufficient' => "Ligne :line — le solde de :merchant est insuffisant : il manque :missing. Aucun colis n'a ete importe.",
+
+    /* Lot 6bis (2026-09-18) — la preuve de livraison : deux libelles restes
+       en anglais, et l'alternative textuelle de leurs deux images. */
+    'delivered_photo' => 'Photo de livraison',
+    'signature' => 'Signature',
+
 );

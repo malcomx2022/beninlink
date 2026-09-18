@@ -132,7 +132,7 @@
                                     <td>
                                         <div class="row width300px">
                                             <div class="col-4">
-                                                <img src="{{$fund_transfer->fromAccount->user->image}}" alt="Image" class="rounded" width="40" height="40">
+                                                <img src="{{$fund_transfer->fromAccount->user->image}}" alt="" class="rounded" width="40" height="40">
                                             </div>
                                             <div class="col-8">
                                                 <strong> {{$fund_transfer->fromAccount->user->name}}</strong><br>
@@ -192,7 +192,7 @@
                                     <td>
                                         <div class="row width300px">
                                             <div class="col-4">
-                                                <img src="{{$fund_transfer->toAccount->user->image}}" alt="Image" class="rounded" width="40" height="40">
+                                                <img src="{{$fund_transfer->toAccount->user->image}}" alt="" class="rounded" width="40" height="40">
                                             </div>
                                             <div class="col-8">
                                                 <strong> {{$fund_transfer->toAccount->user->name}}</strong><br>

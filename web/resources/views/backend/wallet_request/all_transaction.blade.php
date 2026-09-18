@@ -23,7 +23,7 @@
 
                         <div class="row align-items-center">
                             <div class="col-md-4">
-                                <img src="{{ @$wallet->user->image }}" alt="user" class="rounded" width="40"
+                                <img src="{{ @$wallet->user->image }}" alt="" class="rounded" width="40"
                                     height="40">
                             </div>
                             <div class="col-md-8">

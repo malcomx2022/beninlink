@@ -60,7 +60,7 @@
                                 @foreach($companies as $company)
                                 <tr>
                                     <td>{{$i++}}</td>
-                                    <td> <img src="{{$company->company->LogoImage}}" alt="user" class="rounded" width="40" height="40"></td>
+                                    <td> <img src="{{$company->company->LogoImage}}" alt="" class="rounded" width="40" height="40"></td>
                                     <td>{{@$company->company->name}}</td> 
                                     <td> 
                                         @if(!empty($company->tenantDetails) && isset($company->tenantDetails->domains) )
@@ -72,7 +72,7 @@
                                     <td>
                                         <div class="d-flex">
                                             <div  >
-                                                <img src="{{$company->image}}" alt="user" class="rounded" width="40" height="40">
+                                                <img src="{{$company->image}}" alt="" class="rounded" width="40" height="40">
                                             </div>
                                             <div> 
                                                 <strong>{{$company->name}}</strong>

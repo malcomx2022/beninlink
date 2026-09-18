@@ -58,7 +58,7 @@
                                             @enderror
                                         </div>
                                         <div class="col-4 mt-3 mt-md-0">
-                                            <img src="{{auth()->user()->image}}" alt="user" class="rounded" width="100" style="aspect-ratio:1!important">
+                                            <img src="{{auth()->user()->image}}" alt="" class="rounded" width="100" style="aspect-ratio:1!important">
                                         </div>
                                     </div>
                                 </div>

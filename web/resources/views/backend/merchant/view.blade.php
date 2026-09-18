@@ -35,7 +35,7 @@
                         <div class="card card-fluid">
                             <div class="card-body text-center">
                                 <a href="#" class="user-avatar user-avatar-xl my-3">
-                                  <img src="{{$singleMerchant->user->image}}" alt="User Avatar" class="rounded-circle user-avatar-xl">
+                                  <img src="{{$singleMerchant->user->image}}" alt="" class="rounded-circle user-avatar-xl">
                                 </a>
                                 <h3 class="card-title mb-2 text-truncate">
                                     <a href="#">{{$singleMerchant->user->name}}</a>

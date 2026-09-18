@@ -54,7 +54,7 @@
                                 <tr>
                                     <td>{{$i++}}</td>
                                     <td>
-                                        <img src="{{ $pushNotification->image }}" alt="Image" width="45" height="65">
+                                        <img src="{{ $pushNotification->image }}" alt="" width="45" height="65">
                                     </td>
                                     <td>{{ Str::limit(strip_tags($pushNotification->title), 50) }}</td>
                                     <td>{{ Str::limit(strip_tags($pushNotification->description), 50) }}</td>

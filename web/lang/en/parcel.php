@@ -207,4 +207,10 @@ return array (
     'merchant_wallet_insufficient' => "This merchant's balance is insufficient: :missing short.",
     'import_wallet_insufficient' => 'Row :line — insufficient balance: :missing short. Nothing was imported.',
     'import_merchant_wallet_insufficient' => 'Row :line — :merchant is :missing short. Nothing was imported.',
+
+    /* Lot 6bis (2026-09-18) — la preuve de livraison : deux libelles restes
+       en anglais, et l'alternative textuelle de leurs deux images. */
+    'delivered_photo' => 'Delivered photo',
+    'signature' => 'Signature',
+
 );

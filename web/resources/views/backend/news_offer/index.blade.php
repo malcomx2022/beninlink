@@ -49,7 +49,7 @@
                                     <td>{{$i++}}</td>
                                     <td>{{ $news_offer->title }}</td>
                                     <td>
-                                        <img src="{{ $news_offer->image }}" alt="Image" width="45" height="65">
+                                        <img src="{{ $news_offer->image }}" alt="" width="45" height="65">
                                     </td>
                                     <td>{!! $news_offer->my_status !!}</td>
                                     <td>

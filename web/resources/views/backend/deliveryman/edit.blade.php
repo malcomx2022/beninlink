@@ -97,7 +97,7 @@
                                             <input id="image_id" type="file" name="image_id" data-parsley-trigger="change" autocomplete="off" class="form-control"  require>
                                         </div>
                                         <div class="col-3">
-                                            <img src="{{static_asset($deliveryman->user->image)}}" alt="user" class="rounded"  width="75" height="75">
+                                            <img src="{{static_asset($deliveryman->user->image)}}" alt="" class="rounded"  width="75" height="75">
                                         </div>
                                     </div>
 
@@ -174,7 +174,7 @@
                                             <input id="driving_license_image_id" type="file" name="driving_license_image_id" data-parsley-trigger="change" autocomplete="off" class="form-control" value="{{ old('driving_license_image_id') }}" require>
                                         </div>
                                         <div class="col-3">
-                                            <img src="{{static_asset($deliveryman->driving_license_image)}}" alt="user" class="rounded"  width="75" height="75">
+                                            <img src="{{static_asset($deliveryman->driving_license_image)}}" alt="{{ __('levels.driving_license') }}" class="rounded"  width="75" height="75">
                                         </div>
                                     </div>
 

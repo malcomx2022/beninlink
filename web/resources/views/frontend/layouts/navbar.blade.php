@@ -4,7 +4,7 @@
         <div class="container flex-lg-row flex-nowrap align-items-center">
             <div class="navbar-brand w-100 pt-0">
                 <a href="{{ url('/') }}">
-                    <img class="logo" src="{{ settings()->logo_image }}" width="200"  alt="Logo">
+                    <img class="logo" src="{{ settings()->logo_image }}" width="200"  alt="{{ settings()->name }}">
                 </a>
             </div>
             <div class=" navbar-collapse offcanvas offcanvas-nav offcanvas-start text-bg-dark "  tabindex="-1" id="offcanvasDarkNavbar" aria-labelledby="offcanvasDarkNavbarLabel">

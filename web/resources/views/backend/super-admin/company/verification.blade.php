@@ -6,7 +6,7 @@
                 <div class="col-lg-5">
                     <div class="card-header text-center">
                         <a href="{{url('/')}}">
-                            <img class="logo-img" src="{{ settings()->logo_image }}" alt="logo">
+                            <img class="logo-img" src="{{ settings()->logo_image }}" alt="{{ settings()->name }}">
                         </a>
                         <span class="splash-description">Confirm OTP</span>
                     </div>

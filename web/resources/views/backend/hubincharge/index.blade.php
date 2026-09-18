@@ -65,7 +65,7 @@
                                     <td>
                                         <div class="row">
                                             <div class="pr-3">
-                                                <img src="{{$incharge->user->image}}" alt="user" class="rounded" width="40" height="40">
+                                                <img src="{{$incharge->user->image}}" alt="" class="rounded" width="40" height="40">
                                             </div>
                                             <div>
                                                 <strong>{{$incharge->user->name}}</strong>

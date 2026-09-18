@@ -31,7 +31,7 @@
                     <div class="card mb-1 pb-5">
                         <div class="card-body">
                             <div class="text-center">
-                                <img src="{{@$user->image}}" alt="user" class="img-responsive rounded-circle" width="100" >
+                                <img src="{{@$user->image}}" alt="" class="img-responsive rounded-circle" width="100" >
                                 <p class="mt-2 mb-0"><strong>{{@$user->name}}</strong></p>
                                 <p class=" mb-0">{{@$user->mobile}}</p>
                                 <p>{{@$user->address}}</p>

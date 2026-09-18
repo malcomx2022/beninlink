@@ -40,12 +40,12 @@
                                             </div>
                                             <div class="row mt-2">
                                                 <div class="col-md-6">
-                                                    <strong class="mb-2">Delivered Photo</strong>
-                                                    <img src="{{ static_asset(@$log->delivered_image) }}" style="width: 100%;height: 300px;" alt="delivered_image" class="img-responsive mt-2" >
+                                                    <strong class="mb-2">{{ __('parcel.delivered_photo') }}</strong>
+                                                    <img src="{{ static_asset(@$log->delivered_image) }}" style="width: 100%;height: 300px;" alt="{{ __('parcel.delivered_photo') }}" class="img-responsive mt-2" >
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <strong class="mb-2">Signature</strong>
-                                                    <img src="{{static_asset(@$log->signature_image)}}" style="width: 100%;height: 150px;"  alt="signature_image" class="img-responsive mt-2" >
+                                                    <strong class="mb-2">{{ __('parcel.signature') }}</strong>
+                                                    <img src="{{static_asset(@$log->signature_image)}}" style="width: 100%;height: 150px;"  alt="{{ __('parcel.signature') }}" class="img-responsive mt-2" >
                                                 </div>
                                             </div>
                                         </div>

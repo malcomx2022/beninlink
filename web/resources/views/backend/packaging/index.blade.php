@@ -66,7 +66,7 @@
                                     </td>
                                     <td>{{ formatAmount($packaging->price) }}</td>
                                     <td>
-                                        <img src="{{$packaging->image}}" alt="user" class="rounded" width="50" height="50">
+                                        <img src="{{$packaging->image}}" alt="" class="rounded" width="50" height="50">
                                     </td>
                                     @if (hasPermission('packaging_update') == true || hasPermission('packaging_delete') == true )
                                     <td>

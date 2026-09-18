@@ -36,7 +36,7 @@
                         <tr>
                             <td  style="border-bottom: none!important;" >
                                 <div style="text-align: center;margin-bottom:10px!important">
-                                    {{-- <img alt="Logo" src="{{settings()->logo_image }}" class="logo" style="width:150px"> --}}
+                                    {{-- <img alt="{{ settings()->name }}" src="{{settings()->logo_image }}" class="logo" style="width:150px"> --}}
 
                                 </div>
                             </td>

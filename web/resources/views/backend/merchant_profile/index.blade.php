@@ -32,7 +32,7 @@
                    <div class="card mb-1 pb-5">
                        <div class="card-body">
                            <div class="text-center">
-                               <img src="{{@$merchat->user->image}}" alt="user" class="img-responsive rounded-circle" width="100" >
+                               <img src="{{@$merchat->user->image}}" alt="" class="img-responsive rounded-circle" width="100" >
                                <p class="mt-2 mb-0"><strong>{{@$merchat->user->name}}</strong></p>
                                <p class=" mb-0">{{@$merchat->user->mobile}}</p>
                                <p>{{@$merchat->address}}</p>
@@ -128,7 +128,7 @@
                         <div class="list-group-item ">
                             <div class="d-flex">
                                 <span class="w-25">{{ __('levels.nid') }} : </span>
-                                <span><img src="{{$merchat->nid}}" alt="user" class=" img-responsive "   width="100" style="object-fit:contain" ></span>
+                                <span><img src="{{$merchat->nid}}" alt="{{ __('levels.nid') }}" class=" img-responsive "   width="100" style="object-fit:contain" ></span>
                             </div>
                         </div>
                    </div>
@@ -150,7 +150,7 @@
                         <div class="list-group-item ">
                             <div class="d-flex">
                                 <span class="w-25">{{ __('levels.trade_license') }} : </span>
-                                <span> <img src="{{$merchat->trade}}" alt="user" class=" img-responsive"   width="100"  style="object-fit:contain"></span>
+                                <span> <img src="{{$merchat->trade}}" alt="{{ __('levels.trade_license') }}" class=" img-responsive"   width="100"  style="object-fit:contain"></span>
                             </div>
                         </div>
                    </div>

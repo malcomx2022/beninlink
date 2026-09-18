@@ -4,7 +4,7 @@
         <div class="section mt-2">
             <p>1. Please configure your PHP settings to match following requirements:</p>
             <hr />
-            <div>
+            <div class="table-responsive">
                 <table width="100%">
                     <thead>
                         <tr>
@@ -34,7 +34,7 @@
         <div class="section mt-2">
             <p>2. Please make sure the extensions/settings listed below are installed/enabled:</p>
             <hr />
-            <div>
+            <div class="table-responsive">
                 <table width="100%">
                     <thead>
                         <tr>
@@ -319,7 +319,7 @@
         <div class="section mt-2">
             <p>3. Please make sure you have set the <strong>writable</strong> permission on the following folders/files:</p>
             <hr />
-            <div>
+            <div class="table-responsive">
                 <table width="100%" >
                     <tbody>
                         <?php

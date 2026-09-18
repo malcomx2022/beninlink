@@ -153,6 +153,42 @@ class QueuedDeliveryTest extends TestCase
         $this->assertTrue($mail->hasReplyTo('aicha@example.test'));
     }
 
+    /**
+     * Les deux courriels d'inscription figent la société **entière**.
+     *
+     * Leur gabarit lisait `settings()` cinq fois — le titre, le logo, la raison
+     * sociale dans le corps, le courriel et le téléphone de contact, les
+     * mentions de bas de page. Bâti par le worker, `settings()` retombe sur la
+     * société 1 : un marchand de « Kola Distribution » recevait un message
+     * signé du premier transporteur de la base, logo compris. Relevé en posant
+     * l'alternative textuelle du logo — on ne pouvait pas y écrire un nom faux.
+     */
+    public function test_the_two_signup_mails_freeze_the_whole_carrier(): void
+    {
+        foreach ([\App\Mail\MerchantSignup::class, \App\Mail\CompanySignup::class] as $classe) {
+            $mail = new $classe(['name' => 'Kola Distribution', 'email' => 'kola@example.test']);
+            $mail->build();
+            $rendu = $mail->render();
+
+            $this->assertStringContainsString(settings()->name, $rendu, $classe);
+            $this->assertStringContainsString('alt="' . settings()->name . '"', $rendu, $classe);
+        }
+    }
+
+    /** Et le courriel de contact fige aussi son nom et ses mentions. */
+    public function test_the_contact_mail_freezes_its_brand_too(): void
+    {
+        $mail = new ContactMail([
+            'name' => 'Aïcha Kora',
+            'email' => 'aicha@example.test',
+            'subject' => 'Question',
+            'message' => 'Bonjour.',
+        ]);
+        $mail->build();
+
+        $this->assertStringContainsString('alt="' . settings()->name . '"', $mail->render());
+    }
+
     // 3 — exécuté, le job livre ------------------------------------------------
 
     public function test_the_sms_job_delivers_through_the_service_for_the_right_company(): void
