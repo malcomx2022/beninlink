@@ -254,6 +254,7 @@ return [
 
     //new update 11-6-23
     'primary_color'   => 'Primary Color',
+    'accent_color'    => 'Accent Color (key actions)',
     'text_color'      => 'Text Color',
     'front_web'       => 'Front Web',
     'social_link'     => 'Social Link',

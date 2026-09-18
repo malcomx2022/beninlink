@@ -122,6 +122,12 @@
   acceptait n'importe quelle chaîne : `/localization/xx` affichait les clés brutes,
   durablement. « Retrait » ne mène plus à une page vide. §13.6 raconte une erreur
   commise ici et le test qu'elle a produit.
+  **Lot 3 livré le 2026-09-18** (livré par une autre session, PR #87) : l'ocre
+  réglable par transporteur. L'audit chiffrait le lot à « 1 migration » ; l'ocre
+  porte en réalité **quatre** jetons, dont deux sont des **contrastes mesurés contre
+  lui** — laisser `--bl-on-accent` figé sur un ocre devenu bleu marine donnait
+  **1,01:1**, un libellé non pas difficile à lire mais **invisible**. D'où
+  `App\Services\Brand\AccentColor`, qui recalcule les trois jetons dérivés. §14.
   **Lot SMS livré le 2026-09-18** : le chantier ouvert au §13.3 — le seul texte du
   produit qui atteint quelqu'un qui n'a jamais ouvert le back-office. **24 phrases
   anglaises** (et non 20), plus 21 phrases bengalies devenues mortes depuis le lot 5,
@@ -136,7 +142,7 @@
   « centre de tri » plutôt que « entrepôt » et un formateur de montant qui renonce à
   l'espace insécable de `formatAmount()`. 11 des 17 messages tiennent en un seul SMS.
   La langue du **destinataire** reste à trancher : aucune colonne ne la porte, la
-  couture est isolée dans `SmsTemplate::locale()` (§14.5).
+  couture est isolée dans `SmsTemplate::locale()` (§15.5).
 - `../../web/CARTOGRAPHIE.md`  Relevé de l'Étape 0 sur le socle We Courier
   (blocs A-I, constats de sécurité, routes mortes). À lire en premier.
 

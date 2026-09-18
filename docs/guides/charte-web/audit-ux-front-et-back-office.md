@@ -16,7 +16,8 @@
 | 2026-09-18 | **Lot 2 livré.** Voir §11 — la sémantique des statuts, une **triple** copie réduite à une table, et deux constats de code mort que l'audit n'avait pas vus. |
 | 2026-09-18 | **Lot 4 livré.** Voir §12 — la francisation, et le mécanisme d'anglais **invisible** que l'audit avait entièrement manqué : 45 chaînes rendues en anglais par `lang/fr.json`. |
 | 2026-09-18 | **Lot 5 livré.** Voir §13 — la navigation et les langues. Le vrai défaut n'était pas le menu déroulant mais le **contrôleur**, qui acceptait n'importe quelle locale. Et un chantier neuf est ouvert : **les SMS envoyés aux clients sont en anglais**. |
-| 2026-09-18 | **Lot SMS livré.** Voir §14 — les 24 phrases anglaises envoyées aux clients, et deux choses que l'audit ignorait : `App::setLocale()` **réécrit** `config('app.locale')` (mon premier jet est tombé dedans), et un caractère hors alphabet GSM-7 **double la facture** de chaque SMS. |
+| 2026-09-18 | **Lot 3 livré.** Voir §14 — l'ocre réglable par transporteur. L'audit chiffrait le lot à « 1 migration » : l'ocre porte **quatre** jetons, dont deux sont des contrastes mesurés contre lui, qu'il fallait recalculer. Arbitrage §9.3 tranché. |
+| 2026-09-18 | **Lot SMS livré.** Voir §15 — les 24 phrases anglaises envoyées aux clients, et deux choses que l'audit ignorait : `App::setLocale()` **réécrit** `config('app.locale')` (mon premier jet est tombé dedans), et un caractère hors alphabet GSM-7 **double la facture** de chaque SMS. |
 
 ---
 
@@ -589,7 +590,7 @@ libellé 12 px gris) se pose dans un second temps — et **par des classes
 | **0** ✅ | Trancher l'écart maquette / `colors.ts` (§1.3) · valider les six pastilles corrigées (§5.3) | *fait le 2026-09-18* |
 | **1** ✅ | `tokens.css` + `theme-backoffice.css` + polices auto-hébergées + les 2 `<link>` · `--h-font-family` · les 3 viewports · `lang` | **fait** — voir §10 |
 | **2** ✅ | `StatusParcel()` : sémantique + `else` de repli · pastilles `bl-pill` · douane aux couleurs de la charte | **fait** — voir §11. L'audit avait sous-estimé le chantier : la table existait en **trois** copies, pas une |
-| **3** | `accent_color` en base + réglage + `:root` | L'ocre devient réglable par transporteur. ⚠️ **Les défauts de couleur et la migration de données sont déjà faits** au lot 1 (voir §10) : ce lot ne porte plus que l'accent |
+| **3** ✅ | `accent_color` en base + réglage + `:root` | **fait** — voir §14. L'audit n'avait vu qu'une colonne : l'ocre porte **quatre** jetons, dont trois sont des contrastes mesurés contre lui. Les rendre réglables sans les recalculer aurait livré du texte illisible |
 | **4** ✅ | `auth/login` · les 2 lignes de `custom.js` · les 11 titres · les 85 placeholders · les `data-title` | **fait** — voir §12. L'audit comptait 85 placeholders : il y en avait **161**, et il avait manqué **45 chaînes** rendues en anglais par `lang/fr.json` |
 | **5** ✅ | Sidebar groupé · « Retrait » conditionné + état vide · sélecteur de langue réduit à FR/EN · filtre du tableau de bord | **fait** — voir §13. Le sélecteur n'était que la partie visible : `LocalizationController` acceptait **n'importe quelle** chaîne |
 | **6** | `focus-visible` · `alt` par lot · 42 `table-responsive` · les 2 `http://` | Accessibilité et petits écrans |
@@ -610,12 +611,12 @@ les trois paniers d'écrans — front public, back-office opérateur, panneau ma
 2. ~~**Les six pastilles assombries** du §5.3.~~ **Validées et implémentées**
    dans `tokens.css`. Un test recalcule les six contrastes à chaque exécution :
    un commentaire pourrait mentir, pas lui.
-3. **Jusqu'où pousser le multi-tenant.** Trois options : (a) la charte est figée
-   dans `tokens.css` ; (b) `primary_color` + `accent_color` restent réglables par
-   transporteur, la charte n'étant que le **défaut** ; (c) les deux, avec un
-   verrou pour le tenant BeninLink. Recommandation : **(b)** — le socle est
-   multi-tenant par nature, et un transporteur qui achète le SaaS voudra sa
-   couleur. La charte est un défaut d'usine, pas une prison.
+3. ~~**Jusqu'où pousser le multi-tenant.**~~ **Tranché le 2026-09-18 : option (b).**
+   `primary_color` (lot 1) et `accent_color` (lot 3) sont réglables par
+   transporteur ; la charte est le **défaut d'usine, pas une prison**. Avec une
+   nuance que l'implémentation a imposée : tant que le transporteur est resté sur
+   la charte, **rien n'est injecté** — `tokens.css` garde le dernier mot sur
+   ses propres valeurs, mesurées à la main (§14.2).
 4. **La refonte visuelle du back-office va-t-elle jusqu'à la maquette** (lot 7),
    ou s'arrête-t-elle à la cohérence de charte (lots 1-6) ? Les lots 1-6 donnent
    l'essentiel du bénéfice pour une fraction du risque de fusion.
@@ -1055,9 +1056,9 @@ remettant un placeholder anglais, en rétablissant `denyButtonText` et en remett
 - **Les noms de feuille des exports Excel** (`data-title="Parcel Status Reports"`,
   lus par `reports/reports.js`) restent en anglais : ils nomment un fichier
   téléchargé, pas un écran. À prendre avec le lot 5.
-- Le sidebar reste à plat (lot 5), l'ocre non réglable par transporteur (lot 3), la
-  forme des chronologies de suivi (lot 7).
-
+- Le sidebar reste à plat, l'ocre non réglable par transporteur, la forme des
+  chronologies de suivi (lot 7). *(Les deux premiers ont été livrés depuis : le
+  lot 5 au §13 et le lot 3 au §14.)*
 ---
 
 ## 13. Lot 5 — ce qui a été livré le 2026-09-18
@@ -1209,17 +1210,132 @@ bien les quinze : le groupe s'affiche, même si l'entrée reste masquée.)
 - **Les dossiers de langue `es`/`zh`/`ar`/`bn`/`in`** restent sur le disque (règle
   du projet) ; ils ne sont plus servis.
 - **Les noms de feuille des exports Excel** restent en anglais (relevé au §12.8).
-- L'ocre non réglable par transporteur (lot 3), la forme des chronologies (lot 7).
+- La forme des chronologies de suivi (lot 7). *(L'ocre non réglable par
+  transporteur, que ce lot laissait aussi de côté, a été livré depuis — §14.)*
 
 ---
 
-## 14. Lot SMS — ce qui a été livré le 2026-09-18
+## 14. Lot 3 — ce qui a été livré le 2026-09-18
+
+### 14.1 Ce que l'audit avait sous-estimé : l'ocre n'est pas **une** couleur
+
+Le §8 annonçait « `accent_color` en base », et la ligne 13 du classement chiffrait
+le coût à « 1 migration ». Le lot 1 avait pourtant déjà écrit, dans `tokens.css`,
+que l'ocre vit en **quatre** jetons :
+
+| Jeton | Rôle | Contrainte |
+|---|---|---|
+| `--bl-accent` | l'ocre lui-même | — |
+| `--bl-accent-dark` | variante de survol | — |
+| `--bl-on-accent` | l'encre posée **dessus** | **6,40:1** sur l'ocre |
+| `--bl-accent-text` | l'ocre **en texte** sur blanc | **5,93:1** |
+
+Les deux derniers sont des contrastes **mesurés contre le premier**. Rendre le
+premier réglable en laissant les autres fixes, c'est poser le brun chaud `#3A2A06`
+sur le bleu marine qu'un transporteur aura choisi : **1,01:1**. Les deux couleurs
+ont presque la même luminance — le libellé du bouton ne serait pas « difficile à
+lire », il serait **invisible**.
+
+Le lot 1 avait écrit que ces valeurs sont « mesurées, pas choisies à l'œil » : on
+ne pouvait donc pas les laisser figées quand leur référence, elle, bouge.
+
+D'où une classe plutôt qu'une simple colonne : `App\Services\Brand\AccentColor`
+**recalcule les trois jetons dérivés** à partir de la couleur du transporteur.
+
+### 14.2 La charte garde le dernier mot sur elle-même
+
+Quand le transporteur est resté sur l'ocre, `AccentColor::jetons()` rend un tableau
+**vide** : aucun bloc `<style>` n'est émis, et `tokens.css` continue de servir ses
+quatre valeurs. C'est volontaire à deux titres :
+
+1. les valeurs de la charte ont été **mesurées à la main** au lot 1 et sont
+   meilleures que ce qu'un calcul produit — `#3A2A06` est un brun chaud, pas un
+   noir. Le calcul ne sert qu'aux couleurs que **personne n'a mesurées** ;
+2. une installation par défaut — c'est-à-dire la nôtre — **ne paie pas un octet**
+   pour ce lot.
+
+### 14.3 La promesse tenue : aucune couleur ne peut rendre un texte illisible
+
+`AccentColor::encre()` essaie d'abord les deux couleurs de la charte (l'encre douce
+`#1A1A1A` et le blanc) et garde la meilleure ; si aucune n'atteint AA, elle retombe
+sur le **noir ou le blanc purs**, qui l'atteignent toujours. La couleur la plus
+défavorable qui soit — celle dont les contrastes au noir et au blanc s'égalisent —
+y tient encore **4,58:1**.
+
+`AccentColor::texte()` assombrit l'accent par pas de 8 % jusqu'à AA sur blanc : la
+teinte choisie est **gardée**, pas remplacée par un gris. C'est ce que la charte
+fait déjà à la main pour l'ocre (`#8A5A00`) et pour le vert de succès.
+
+Ce n'est pas une promesse de commentaire : `WebAccentColorTest` **balaie 4 096
+couleurs** et recalcule chaque contraste. Un balayage plus fin, de 140 608 couleurs,
+a servi à l'écriture : **zéro échec**, pire cas **4,50:1** — la cible elle-même.
+
+### 14.4 Les fichiers
+
+| Fichier | Rôle |
+|---|---|
+| `web/app/Services/Brand/AccentColor.php` | **Toute la règle.** Normalisation, contraste, les trois dérivés. Ne connaît pas la base. |
+| `web/resources/views/beninlink/brand-accent.blade.php` | Le fragment injecté. Il n'écrit que ce que la classe lui donne. |
+| `web/database/migrations/2026_09_18_110000_add_accent_color_to_general_settings.php` | La colonne, avec le défaut de la charte. |
+| `web/tests/Feature/WebAccentColorTest.php` | 12 tests, dont le balayage et la comparaison jeton par jeton avec `tokens.css`. |
+
+Quatre fichiers existants, d'une poignée de lignes chacun : le seeder (les deux
+sociétés), `GeneralSettingsRepository::update()`, l'écran des paramètres, et un
+`@include` dans **chacune des deux mises en page**. Les sept `lang/*/levels.php`
+reçoivent le libellé — y compris les cinq locales que le lot 4 laissait de côté :
+sans entrée, l'écran afficherait la clé brute `levels.accent_color`.
+
+Ce sont bien **deux** mises en page et pas plus : les cinq autres vues qui chargent
+`tokens.css` (les trois impressions, `api/docs`, `fedapay_callback`) n'emploient
+aucun jeton d'accent — et un test le vérifie, pour que l'ajout d'un accent dans
+l'une d'elles ne passe pas inaperçu.
+
+### 14.5 Un défaut voisin, corrigé au passage
+
+La couleur finit dans un bloc `<style>`. Blade échappe `<` et `>` — on ne sort donc
+pas de l'élément — mais **`;`, `{` et `}` passent**, et suffisent à injecter du CSS
+dans sa propre vitrine. `accent_color` est **normalisée à l'écriture** : un
+hexadécimal, ou rien. Une saisie douteuse ne s'enregistre pas, et la page retombe
+sur l'ocre de `tokens.css`.
+
+⚠️ **`primary_color` et `text_color`, eux, ne le sont toujours pas** : ils datent du
+socle et le lot 1 ne les a pas touchés sur ce point. La portée est faible (il faut
+le droit `general_settings_update`, et l'effet s'arrête au site du transporteur
+lui-même), mais c'est le même trou. À prendre avec le lot 6, qui touche déjà ces
+vues — ou plus tôt si l'on ouvre l'écran des paramètres à un rôle moins large.
+
+### 14.6 Les tests mordent, vérifié
+
+Quatre régressions introduites exprès, une à la fois :
+
+| Ce qu'on défait | Ce qui échoue |
+|---|---|
+| `jetons()` ne rend que `--bl-accent` (le lot 3 « naïf ») | 2 tests |
+| la normalisation retirée à l'écriture | 1 test |
+| l'`@include` retiré du back-office | 1 test |
+| la migration retirée | 5 tests |
+
+### 14.7 Ce que le lot 3 ne livre PAS
+
+- **Les jetons de pastille ne suivent pas l'accent.** `--bl-pill-*` sont des
+  **sémantiques de statut**, partagées avec `mobile/` : un colis en transit doit
+  être de la même couleur pour tout le monde, quel que soit le transporteur. Un
+  test le fige.
+- **Le back-office n'injecte toujours pas `primary_color`.** Seul le site public le
+  fait, depuis le socle. Ce n'est pas une régression de ce lot — c'est un constat
+  qu'il rend visible, à traiter avec le lot 6 ou 7.
+- **Aucun aperçu en direct** dans l'écran des paramètres : on enregistre, puis on
+  recharge. Un aperçu demanderait du JavaScript dans une vue du socle.
+
+---
+
+## 15. Lot SMS — ce qui a été livré le 2026-09-18
 
 Le chantier ouvert au §13.3. C'est le seul texte du produit qui atteint quelqu'un
 qui n'a jamais ouvert le back-office : il arrive sur le téléphone d'un client, d'un
 livreur, d'un marchand.
 
-### 14.1 Le décompte exact — le §13.3 était approximatif
+### 15.1 Le décompte exact — le §13.3 était approximatif
 
 §13.3 annonçait « **20 messages** dans ce seul fichier » et « des SMS dans trois
 autres dépôts (`Merchant`, `Company`, `Wallet`) ». Relevé complet :
@@ -1240,7 +1356,7 @@ Résultat : **17 gabarits** dans `lang/fr/sms.php` et `lang/en/sms.php` couvrent
 (« ramassage affecté » existe en version simple, reprogrammée et en masse — trois
 copies, dont deux avec une espace manquante après `Dear`).
 
-### 14.2 Les trois défauts fermés
+### 15.2 Les trois défauts fermés
 
 **1. La langue était celle de l'agent qui clique.** Le destinataire d'un SMS n'est
 presque jamais la personne connectée : c'est un client final, un livreur, un
@@ -1260,7 +1376,7 @@ en dur dans deux gabarits anglais, `parcel_created` envoyait `(15000)` nu, et
 `WalletRepository` collait `settings()->currency` contre le nombre sans séparateur
 (`FCFA15000`).
 
-### 14.3 Le piège dans lequel mon premier jet est tombé
+### 15.3 Le piège dans lequel mon premier jet est tombé
 
 `SmsTemplate::locale()` lisait d'abord `config('app.locale')` — la langue de
 l'installation, pensais-je, par opposition à la session.
@@ -1281,7 +1397,7 @@ D'où `config('locales.default')`, une clé que **rien ne réécrit**, ajoutée 
 explicitement (`assertSame('en', config('app.locale'))`) avant de vérifier que le
 SMS reste français. Vérifié : en remettant `config('app.locale')`, il échoue.
 
-### 14.4 Une contrainte que rien dans le dépôt ne mentionnait : le coût
+### 15.4 Une contrainte que rien dans le dépôt ne mentionnait : le coût
 
 Un SMS tient **160 caractères** dans l'alphabet GSM 03.38 (7 bits). Dès qu'**un
 seul** caractère en sort, le message bascule en UCS-2 et ne tient plus que **70
@@ -1317,7 +1433,7 @@ Le plus long (`delivery_rescheduled_customer`, 199 caractères) tient en 2 segme
 il en aurait demandé 3 en UCS-2. `test_a_rendered_message_never_exceeds_two_sms_parts`
 plafonne à deux segments, pour qu'un ajout de texte ne passe pas inaperçu.
 
-### 14.5 La question métier, tranchée avec une couture
+### 15.5 La question métier, tranchée avec une couture
 
 **Faut-il la langue du destinataire ?** Oui, en principe. Mais **aucune colonne ne
 la porte** : ni `users`, ni `merchants`, ni `parcels` (vérifié sur les 200+
@@ -1333,7 +1449,7 @@ où une colonne portera la préférence du destinataire, `render()` recevra le
 destinataire, cette méthode lira sa préférence et retombera sur la langue de
 l'installation. **Aucun des 24 points d'appel ne bougera.**
 
-### 14.6 Ce que le lot SMS ne livre PAS
+### 15.6 Ce que le lot SMS ne livre PAS
 
 - **Les 12 `$msgNotification` anglais** de `ParcelRepository` sont **du code mort** :
   `PushNotificationService::sendStatusPushNotification()` **ignore son paramètre
@@ -1357,7 +1473,7 @@ l'installation. **Aucun des 24 points d'appel ne bougera.**
 - Les **noms de feuille des exports Excel** (§12.8) et les **42 tableaux non
   responsives** (lot 6) restent où ils sont.
 
-### 14.7 Fichiers du lot
+### 15.7 Fichiers du lot
 
 **Ajoutés (4)** — ils traversent une fusion sans conflit :
 
@@ -1376,6 +1492,6 @@ l'installation. **Aucun des 24 points d'appel ne bougera.**
 | `app/Repositories/Wallet/WalletRepository.php` | 2 messages ; `GeneralSettings` devenu inutile, retiré |
 | `app/Http/Services/SmsService.php` | le suffixe du code de vérification |
 | `app/Http/Controllers/Backend/MerchantController.php` | 2 messages flash anglais (`Invalid OTP`, `Resend OTP`) → clés `auth.*` déjà présentes |
-| `config/locales.php` | la clé `default` (§14.3) |
+| `config/locales.php` | la clé `default` (§15.3) |
 
 Suite complète : **516 tests, 3 021 assertions, vert**.

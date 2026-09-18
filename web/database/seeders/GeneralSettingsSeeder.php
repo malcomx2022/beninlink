@@ -37,6 +37,7 @@ class GeneralSettingsSeeder extends Seeder
         $row->invoice_prefix       = 'we';
         $row->current_version      = '1';
         $row->primary_color        = '#12503A'; // vert profond — charte BeninLink
+        $row->accent_color         = '#E0A63C'; // ocre — actions clés, réglable (lot 3)
         $row->text_color           = '#ffffff';
         $row->save();
 
@@ -56,6 +57,7 @@ class GeneralSettingsSeeder extends Seeder
         $row->invoice_prefix       = 'co';
         $row->current_version      = '1';
         $row->primary_color        = '#12503A'; // vert profond — charte BeninLink
+        $row->accent_color         = '#E0A63C'; // ocre — actions clés, réglable (lot 3)
         $row->text_color           = '#ffffff'; 
         $row->subscription_id      = 1;
         $row->plan_id              = 1;

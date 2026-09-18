@@ -332,6 +332,7 @@ return [
     
     //new update 11-6-23
     'primary_color'   => 'Color primario',
+    'accent_color'    => 'Color de acento (acciones clave)',
     'text_color'      => 'Color de texto',
     'front_web'       => 'Web frontal',
     'social_link'     => 'Vínculo social',
