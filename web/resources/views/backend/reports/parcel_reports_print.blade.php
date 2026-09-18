@@ -7,6 +7,12 @@
     <title> {{ __('reports.parcel_reports') }} | print</title>
     <link rel="shortcut icon" href="{{ static_asset(settings()->favicon_image)}}" type="image/x-icon">
     <link rel="stylesheet" href="{{ static_asset('backend/')}}/css/reports_print.css">
+    {{-- Document autonome : il ne charge ni Bootstrap ni les feuilles de la
+         charte. Les pastilles de statut ont besoin des DEUX — tokens.css pour les
+         valeurs, components.css pour le composant (qui passe en contours à
+         l'impression plutôt qu'en fonds pleins). --}}
+    <link rel="stylesheet" href="{{ static_asset('beninlink/css/tokens.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('beninlink/css/components.css') }}">
 </head>
 <body>
     <div class="print" style="text-align: right" >

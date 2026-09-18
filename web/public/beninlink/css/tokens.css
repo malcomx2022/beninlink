@@ -153,6 +153,13 @@
   --bl-pill-done-bg:    #E1F3EA;  --bl-pill-done-fg:    #0F6B45;  /* 5,67:1 */
   --bl-pill-return-bg:  #FBE6E9;  --bl-pill-return-fg:  #9E2A20;  /* 6,27:1 */
 
+  /* Septième famille, absente de la maquette : la LIVRAISON PARTIELLE. La charte
+     lui réserve l'orange (colors.ts : « Orange = AVERTISSEMENT douanier, retard,
+     livraison partielle »). Seule famille à fond PLEIN — un pâle orange ne se
+     distingue pas du pâle ocre de « transit » : 1,05:1 entre les deux fonds.
+     Voir components.css pour le raisonnement complet. */
+  --bl-pill-partial-bg: #D98324;  --bl-pill-partial-fg: #3A2A06;  /* 4,77:1 */
+
   /* =========================================================================
      6. TYPOGRAPHIE — mobile/src/theme/typography.ts
      ========================================================================= */

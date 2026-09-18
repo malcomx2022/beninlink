@@ -318,26 +318,11 @@ input[type='checkbox']:checked {
 .text-muted   { color: var(--bl-text-muted) !important; }
 
 /* ===========================================================================
-   8. PASTILLES DE STATUT — les six familles (tokens.css §5)
-   Les classes sont posées par StatusParcel() côté PHP. Tant que ce lot ne l'a
-   pas réécrit (lot 2), elles ne sont pas encore émises : la définition est ici
-   d'avance, pour que le lot 2 n'ait plus que du PHP à écrire.
+   8. PASTILLES DE STATUT — définies dans components.css
+   Elles s'affichent aussi sur le SITE PUBLIC (frontend/pages/tracking) et dans
+   deux états de rapport autonomes, qui ne chargent pas cette feuille : le
+   composant vit donc dans public/beninlink/css/components.css, chargé partout.
    =========================================================================== */
-.bl-pill {
-  display: inline-block;
-  white-space: nowrap;
-  font-family: var(--bl-font-heading);
-  font-weight: var(--bl-weight-heading);
-  font-size: var(--bl-size-xs);
-  padding: 4px 9px;
-  border-radius: var(--bl-radius-pill);
-}
-.bl-pill--wait    { background: var(--bl-pill-wait-bg);    color: var(--bl-pill-wait-fg); }
-.bl-pill--transit { background: var(--bl-pill-transit-bg); color: var(--bl-pill-transit-fg); }
-.bl-pill--hub     { background: var(--bl-pill-hub-bg);     color: var(--bl-pill-hub-fg); }
-.bl-pill--assign  { background: var(--bl-pill-assign-bg);  color: var(--bl-pill-assign-fg); }
-.bl-pill--done    { background: var(--bl-pill-done-bg);    color: var(--bl-pill-done-fg); }
-.bl-pill--return  { background: var(--bl-pill-return-bg);  color: var(--bl-pill-return-fg); }
 
 /* ===========================================================================
    9. SURFACES — cartes et tableaux, au grain de la maquette

@@ -318,9 +318,10 @@
                                                 </div>
                                             </td>
                                             <td>{!! $parcel->parcel_status !!} <br>
+                                                {{-- Marqueur « ce colis a connu une livraison partielle », en plus du
+                                                     statut courant. Incident, donc orange : le socle le mettait en vert. --}}
                                                 @if ($parcel->partial_delivered && $parcel->status != \App\Enums\ParcelStatus::PARTIAL_DELIVERED)
-                                                    <span
-                                                        class="badge badge-pill badge-success mt-2">{{ trans('parcelStatus.' . \App\Enums\ParcelStatus::PARTIAL_DELIVERED) }}</span>
+                                                    <span class="mt-2 d-inline-block">{!! StatusParcel(\App\Enums\ParcelStatus::PARTIAL_DELIVERED) !!}</span>
                                                 @endif
                                                 <br />
                                                 <span>{{ __('parcel.updated_on') }}:

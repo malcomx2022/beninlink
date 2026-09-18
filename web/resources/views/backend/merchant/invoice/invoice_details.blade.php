@@ -71,11 +71,16 @@
                                         <td>{{@$invoiceParcel->parcel->invoice_no}}</td>
                                         <td>{{@$invoiceParcel->parcel->tracking_id}}</td>
                                         <td> 
+                                            {{-- Retour : incident. Le socle le peignait en `badge-info` (bleu), la
+                                                 couleur des mentions neutres. La pastille vient maintenant de
+                                                 ParcelStage, qui le range dans la famille « retour ». --}}
                                             @if( $invoiceParcel->parcel_status == \App\Enums\ParcelStatus::RETURN_TO_COURIER )
-                                                <span class="badge badge-pill badge-info mb-2">{{ trans("parcelStatus.24")}}</span> <br/>
+                                                <span class="mb-2 d-inline-block">{!! StatusParcel(\App\Enums\ParcelStatus::RETURN_TO_COURIER) !!}</span> <br/>
                                             @endif
                                             @if($invoiceParcel->parcel->partial_delivered == \App\Enums\BooleanStatus::YES)   
-                                                <span class="badge badge-pill badge-success mt-2">{{ trans("parcelStatus.".\App\Enums\ParcelStatus::PARTIAL_DELIVERED )}}</span>
+                                                {{-- Livraison partielle : incident, donc ORANGE. Le socle la mettait
+                                                     en vert — la couleur du colis livré, sur un relevé d'argent. --}}
+                                                <span class="mt-2 d-inline-block">{!! StatusParcel(\App\Enums\ParcelStatus::PARTIAL_DELIVERED) !!}</span>
                                             @else
                                                 @if( $invoiceParcel->parcel->status != \App\Enums\ParcelStatus::RETURN_TO_COURIER )
                                                     {!! @$invoiceParcel->parcel->parcel_status !!}

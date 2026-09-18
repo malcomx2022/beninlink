@@ -90,7 +90,17 @@
   écraser celle d'un transporteur. Six fichiers du socle touchés, d'une poignée de
   lignes chacun. `WebBrandCharterTest` compare `tokens.css` à `colors.ts` jeton par
   jeton et **recalcule les contrastes**, pour qu'une re-fusion du socle ne défasse
-  pas tout en silence. Voir §10 pour ce que le lot 1 ne livre pas encore.
+  pas tout en silence.
+  **Lot 2 livré le 2026-09-18** : la sémantique des statuts colis. L'audit avait
+  sous-estimé le chantier — la table de couleurs existait en **trois** copies, dont
+  une morte et fautive par construction ; les trois délèguent désormais à
+  `ParcelStage`, portage de `mobile/src/domain/parcelStatus.ts`. « En attente »
+  cesse d'être rouge, la livraison partielle passe en orange (y compris sur les
+  détails de facture, où elle était verte sur un relevé d'argent), les neuf retours
+  deviennent une famille, et les 14 codes `_CANCEL` ne rendent plus une cellule
+  vide. Voir §10.4 et §11.8 pour ce qui n'est pas encore livré, et §11.6 pour deux
+  constats de **code mort** trouvés en chemin (une vue portant une erreur fatale,
+  un mailable dont le nom de vue ne résout pas sous Linux).
 - `../../web/CARTOGRAPHIE.md`  Relevé de l'Étape 0 sur le socle We Courier
   (blocs A-I, constats de sécurité, routes mortes). À lire en premier.
 

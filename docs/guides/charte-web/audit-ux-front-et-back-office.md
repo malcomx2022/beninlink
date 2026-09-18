@@ -13,6 +13,7 @@
 | 2026-09-18 | **Arbitrage §9.1 tranché : `mobile/src/theme/colors.ts` l'emporte** sur la maquette pour les cinq jetons divergents. La maquette a été corrigée ; elle n'est plus une source concurrente. |
 | 2026-09-18 | **Six pastilles corrigées validées** (§9.2) et implémentées. |
 | 2026-09-18 | **Lot 1 livré.** Voir §10 — ce que le lot 1 a effectivement fait, et en quoi il s'écarte du plan. |
+| 2026-09-18 | **Lot 2 livré.** Voir §11 — la sémantique des statuts, une **triple** copie réduite à une table, et deux constats de code mort que l'audit n'avait pas vus. |
 
 ---
 
@@ -172,8 +173,13 @@ les leurs, alors que la vue est correctement écrite.
 ~380 autres **sans en ouvrir une seule**.
 
 ### 2.6 Sémantique des statuts colis : incohérente avec la charte
-`app/Http/Helper/Helper.php:314-373` (`StatusParcel()`) est le **point unique**
-qui rend la pastille de statut. Sa table de couleurs contredit la charte :
+
+> ⚠️ **Ce paragraphe se trompe sur un point, corrigé au lot 2 :** `StatusParcel()`
+> n'était **pas** le point unique. La même table existait en **trois** copies —
+> voir §11.1. Le reste du constat ci-dessous est exact.
+
+`app/Http/Helper/Helper.php:314-373` (`StatusParcel()`) rend la pastille de
+statut. Sa table de couleurs contredit la charte :
 
 | Statut | Rendu actuel | Charte (`mobile/src/domain/parcelStatus.ts` + `colors.ts`) |
 |---|---|---|
@@ -566,7 +572,7 @@ libellé 12 px gris) se pose dans un second temps — et **par des classes
 |---|---|---|
 | **0** ✅ | Trancher l'écart maquette / `colors.ts` (§1.3) · valider les six pastilles corrigées (§5.3) | *fait le 2026-09-18* |
 | **1** ✅ | `tokens.css` + `theme-backoffice.css` + polices auto-hébergées + les 2 `<link>` · `--h-font-family` · les 3 viewports · `lang` | **fait** — voir §10 |
-| **2** | `StatusParcel()` : sémantique + `else` de repli · pastilles `bl-pill` · douane aux couleurs de la charte | Les statuts se lisent **comme dans l'app**. Les classes `.bl-pill--*` sont **déjà définies** par le lot 1 : il ne reste que du PHP |
+| **2** ✅ | `StatusParcel()` : sémantique + `else` de repli · pastilles `bl-pill` · douane aux couleurs de la charte | **fait** — voir §11. L'audit avait sous-estimé le chantier : la table existait en **trois** copies, pas une |
 | **3** | `accent_color` en base + réglage + `:root` | L'ocre devient réglable par transporteur. ⚠️ **Les défauts de couleur et la migration de données sont déjà faits** au lot 1 (voir §10) : ce lot ne porte plus que l'accent |
 | **4** | `auth/login` · les 2 lignes de `custom.js` · les 11 titres · les 85 placeholders · les `data-title` | Plus d'anglais sur les écrans d'entrée |
 | **5** | Sidebar groupé · « Retrait » conditionné + état vide · sélecteur de langue réduit à FR/EN · filtre du tableau de bord | Ergonomie du back-office |
@@ -723,3 +729,146 @@ qu'un commentaire annonçant « 5,24:1 » peut mentir, un calcul non.
 Vérifié : en faisant dériver un jeton, en remettant l'ancien rouge dans la
 maquette, en rétablissant le viewport bloquant, `lang="en"` et en retirant un
 `<link>`, **les tests concernés échouent** — ils ne sont pas décoratifs.
+
+---
+
+## 11. Lot 2 — ce qui a été livré le 2026-09-18
+
+### 11.1 L'audit avait sous-estimé le chantier : la table existait en **trois** copies
+
+Le §2.6 annonçait « `StatusParcel()` est le **point unique** ». C'était faux. La
+même table, avec la même sémantique fautive, le même trou de 14 codes, le même
+`else` absent et la même variable non initialisée, vivait à trois endroits :
+
+| Copie | État | Portée |
+|---|---|---|
+| `Helper.php` — `StatusParcel()` | vivante | 5 vues (états et impressions) |
+| `Parcel.php` — `getParcelStatusAttribute()` | vivante | **6 vues** — c'est le badge principal du produit |
+| `Parcel.php` — `getStatusParcelAttribute()` | **morte** | aucune : rien ne lit `$parcel->status_parcel`, et la colonne n'existe pas |
+
+La troisième était fautive par construction : un accesseur Eloquent reçoit la
+valeur de **sa colonne**, pas un code de statut. Appelée, elle recevait `null` et
+retombait sur « Undefined variable ».
+
+**Les trois délèguent désormais à `App\Services\Parcel\ParcelStage`** — 174 lignes
+de table dupliquée remplacées par 59 lignes de délégation documentée. Aucune
+signature ne change : les onze vues appelantes sont intactes.
+
+### 11.2 La sémantique, statut par statut
+
+`ParcelStage` est le **portage de `mobile/src/domain/parcelStatus.ts`** : la même
+réduction 33 → 7, avec la même règle pour les annulations (un `_CANCEL` ramène le
+colis à l'étape **amont**, il ne crée pas d'étape « annulé »). C'est cette règle
+qui ferme, en passant, les 14 codes que le socle ne couvrait pas.
+
+| Statut | Avant | Après |
+|---|---|---|
+| En attente | **rouge** (`badge-danger`) | neutre — le rouge est réservé à l'incident |
+| Reçu par le ramasseur | **vert** | transit — le vert veut dire *livré* |
+| Livraison partielle | **vert** | **orange**, incident |
+| Les 9 retours + `ASSIGN_MERCHANT` | `dark` / `info` / `success` mêlés | une seule famille |
+| Transfert entre hubs | route en **rouge**, avec un « To » anglais | famille *entrepôt*, flèche `→` |
+| Les 14 codes `_CANCEL` | *rien* — variable indéfinie, cellule vide | l'étape amont |
+| Un code inconnu | *rien* | neutre, avec le vrai libellé |
+
+Le repli est volontairement le **neutre** : si l'éditeur ajoute un statut, mieux
+vaut une pastille grise qu'un vert ou un rouge inventé. Le libellé, lui, reste
+celui du backend (`lang/fr/parcelStatus.php`) — l'opérateur lit toujours le vrai
+statut, la couleur n'a jamais porté l'information seule.
+
+### 11.3 Une septième pastille, que la maquette n'avait pas
+
+La maquette définit six familles ; il n'y a pas de ligne pour la **livraison
+partielle**. Or `colors.ts` lui réserve explicitement l'orange (« Orange =
+AVERTISSEMENT douanier, retard, **livraison partielle** »).
+
+La septième famille est donc ajoutée — et c'est la **seule à fond plein**. Ce
+n'est pas un choix esthétique : un fond pâle orange ne se distingue pas du pâle
+ocre de « transit », **1,05:1 entre les deux fonds**, deux familles illisibles
+côte à côte dans une même colonne. Le fond plein tranche, et c'est le statut où
+l'opérateur doit agir — le COD encaissé ne correspond pas à la commande. 4,77:1.
+
+**À faire valider** : c'est un ajout à une maquette validée.
+
+### 11.4 Six vues peignaient encore un statut à la main
+
+Quatre vues **vivantes** peignaient « livraison partielle » en `badge-success`
+(vert) et un retour en `badge-info` (bleu) directement dans le HTML — dont les
+**deux écrans de détail de facture**, côté transporteur et côté marchand. C'est
+l'endroit où le défaut coûtait le plus : du vert, sur un relevé d'argent, pour un
+colis dont l'encaissement ne suit pas la commande.
+
+Elles passent toutes par `StatusParcel()`. Un test empêche la recopie de revenir.
+
+### 11.5 Où la pastille devait vivre — et le piège des documents autonomes
+
+Le composant `.bl-pill` était dans `theme-backoffice.css` (lot 1). Il en sort,
+pour `public/beninlink/css/components.css` : **trois états d'impression sont des
+documents autonomes** qui ne chargent ni Bootstrap ni la charte. Ils reçoivent
+donc `tokens.css` **et** `components.css` — sans les jetons, les `var(--bl-pill-*)`
+seraient vides, et les pastilles transparentes **sans aucune erreur visible**.
+
+Au passage, `reports_print.css` peignait les badges dans une **troisième palette**
+(`#da0419`, `#5969ff`, `#21ae41`…), ni Bootstrap ni la charte.
+
+Et à l'impression, les pastilles passent en **contours** plutôt qu'en fonds
+pleins : sept aplats, c'est de l'encre pour rien, et en niveaux de gris ils se
+confondent. Les sept contours tiennent AA sur blanc (5,93 à 13,87:1).
+
+### 11.6 Deux constats de code mort, trouvés en chemin
+
+Aucun des deux n'est corrigé par ce lot — il n'y a **aucun comportement à
+corriger** — mais les deux mordraient au premier branchement :
+
+**a) `resources/views/backend/merchant/invoice/invoice_pdf.blade.php` — vue morte
+portant une erreur fatale.** Rien ne la rend. Elle référence
+`ParcelStatus::RETURN_TRANSFER_BY_HUB` et `ParcelStatus::RETURN_RECEIVED_PARCEL`,
+**qui n'existent pas** dans l'énumération. Vérifié : pour un colis **livré** —
+le cas normal sur un relevé — PHP lève `Error: Undefined constant`. Seul le
+court-circuit du `||` la sauve quand le colis est en retour. Elle porte aussi une
+chaîne anglaise en dur (« And Partial Delivered »).
+
+**b) `app/Mail/InvoicePDFSend.php` — mailable mort, avec un nom de vue qui ne
+résout pas sous Linux.** Jamais instancié. Il demande
+`backend.merchant.invoice.invoice_mail_pdf`, or le fichier s'appelle
+**`Invoice_mail_pdf.blade.php`** — majuscule. Vérifié par `view()->exists()` :
+`invoice_mail_pdf` → **introuvable**, `Invoice_mail_pdf` → trouvée. Cela
+fonctionnerait sur le poste de développement (WAMP, casse insensible) et
+échouerait en production. Il porte aussi `from: admin@example.com` et le sujet
+« Invoice P D F Send » — des restes de l'éditeur.
+
+Ces deux-là appartiennent à un lot de nettoyage, avec les **routes mortes** déjà
+relevées dans `web/CARTOGRAPHIE.md`. Rien ne s'y décide seul : la règle du projet
+est **0 fichier supprimé du socle**.
+
+### 11.7 Le filet
+
+`ParcelStageTest` — 14 tests. Le principal **lit `mobile/src/domain/parcelStatus.ts`
+et compare la table code par code** : une retouche d'un côté sans l'autre fait
+échouer la suite, plutôt que de laisser un marchand voir deux stades différents
+pour le même colis selon qu'il regarde son téléphone ou le back-office. Les autres
+fixent les 33 codes rangés, le repli, la charte statut par statut, l'accord des
+**trois** points d'entrée sur la même sortie, l'échappement du libellé, la garde
+sur les deux hubs, l'absence de recopie dans les vues, et le câblage des documents
+autonomes.
+
+Vérifié que ces tests mordent : en remettant « livraison partielle » en *livré* et
+en retirant un code de la table, trois tests échouent. **Une limite connue** : le
+test des annulations ne peut pas détecter un code *retiré* de la table quand son
+étape attendue est `WAIT`, puisque c'est aussi le repli — c'est le test « les 33
+codes ont une étape » qui l'attrape.
+
+### 11.8 Ce que le lot 2 ne livre PAS
+
+- **La chronologie de suivi n'est pas touchée** — ni celle du back-office
+  (`parcel/logs`) ni la **publique** (`frontend/pages/tracking`). Elles lisent
+  `parcel_events.parcel_status`, une colonne, pas l'accesseur, et ont leur propre
+  habillage (`timeline.css`, `logs.css`). Le lot 1 en a corrigé les couleurs ; leur
+  **forme** (les nœuds de la maquette) est le lot 7.
+  C'est pourquoi le site public **ne charge pas** `components.css` : aucune de ses
+  vues ne rend de pastille, et une feuille inutilisée est une requête pour rien.
+- **Les regroupements de l'app ne sont pas portés** (`TIMELINE_ORDER`,
+  `TAB_STAGES`) : aucune vue du web ne groupe encore les colis par étape. Les
+  porter maintenant serait du code mort — or ce lot vient d'en constater deux cas.
+- Le sidebar reste à plat (lot 5), la page de connexion en anglais (lot 4), l'ocre
+  non réglable par transporteur (lot 3).
