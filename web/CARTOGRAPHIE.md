@@ -2166,13 +2166,13 @@ dépôt, pas route par route.
 
 ### Effet sur le cliquet
 
-| | Au départ | 1re passe | 2e passe | 3e passe |
-|---|---|---|---|---|
-| Prouvées | 7 | 33 | 57 | **85** |
-| Exemptées | 33 | 35 | 35 | 35 |
-| Publiques | 6 | 6 | 6 | 6 |
-| Routes mortes retirées | — | — | — | **2** |
-| **Héritées (plafond)** | **171** | 143 | 119 | **89** |
+| | Au départ | 1re | 2e | 3e | 4e |
+|---|---|---|---|---|---|
+| Prouvées | 7 | 33 | 57 | 85 | **90** |
+| Exemptées | 33 | 35 | 35 | 35 | 35 |
+| Publiques | 6 | 6 | 6 | 6 | 6 |
+| Routes mortes retirées | — | — | — | 2 | 2 |
+| **Héritées (plafond)** | **171** | 143 | 119 | 89 | **84** |
 
 Les deux routes de `front-web/section` passent en *exemptées* : leur paramètre
 nommé `{id}` est en réalité un **type** de section — `SectionController::edit($type)`
@@ -2310,7 +2310,64 @@ d'abord pouvoir réussir.** Si le chemin échoue tout seul, le refus ne prouve r
 
 Suite complète après les trois passes : **621 tests, 44 552 assertions, vert.**
 
-### Ce qui reste dans l'arriéré : 89 routes
+
+### Quatrième passe — la paie (5 routes)
+
+`SalaryRepository` lisait **nu partout** : `get()`, `edit()`, `update()`,
+`delete()`, `singleSalaryGenerate()`. Le bulletin de paie d'un agent d'une autre
+société — bénéficiaire, mois, montant, compte bancaire — s'ouvrait en changeant
+l'identifiant dans l'URL, et l'écran `pay-slip` l'imprime. C'est une **donnée
+personnelle**.
+
+Deux des cinq méthodes déplaçaient de l'argent :
+
+- `update()` **créditait le compte bancaire de l'autre société** du montant lu,
+  réécrivait sa ligne de paie (bénéficiaire, compte, montant, mois), puis débitait
+  le nôtre. Un désordre comptable à cheval sur deux sociétés.
+- `delete()` créditait ce même compte avant d'effacer la ligne.
+
+`salaryGenerateDelete()` faisait exception : elle comparait déjà `company_id`. Elle
+est inscrite, pas corrigée.
+
+⚠️ Et `SalaryController::update()` lisait nu **dans le contrôleur**, avec
+l'identifiant dans le **corps** — l'angle mort du filet, deuxième occurrence après
+`HubPayment::processed()`. Le motif se confirme : dans ce socle, les `update()`
+prennent `$request->id`, donc les chemins d'écriture sont précisément ceux que le
+filet ne voit pas.
+
+### ⚠️ Deux corrections de mes propres constats
+
+**1. `Profile` n'était pas une fuite.** Je l'avais mis en tête des priorités de la
+passe suivante — à tort. `ProfileRepository::get()` est bien `User::find($id)` nu,
+mais ses **deux seuls appelants** ne lui passent jamais un identifiant choisi par
+l'appelant : `Backend\ProfileController` lit `auth()->user()->id` (ses routes sont
+déjà *exemptées* pour cette raison) et `Api\V10\AuthController` fait de même. Le
+dépôt est nu, le chemin ne l'est pas. Rien à corriger.
+
+**2. Le sabotage du test du contrôleur de paie ne mord pas, et c'est explicable.**
+L'écran porte maintenant **deux** gardes — sur le bulletin, et sur le compte
+bancaire. Retirer le premier seul ne fait pas rougir le test, parce que le second
+(`AccountRepository::get()`, `companywise()` depuis S24) attrape déjà le cas. Il
+faut retirer **les deux** pour voir revenir le comportement du socle : `Attempt to
+read property "balance" on null`, un **500**. L'écran ne servait donc pas le
+bulletin du voisin par ce chemin, il plantait ; ce que ce lot ajoute là, c'est un
+refus propre. Le périmètre de la paie, lui, est prouvé par les trois autres tests,
+sur le dépôt. C'est écrit dans le docblock du test.
+
+### Et un sabotage qui, une fois de plus, n'en était pas un
+
+Le sabotage de `SalaryRepository::get()` a d'abord répondu vert : mon ancre de
+remplacement supposait que `edit()` suivait `get()`, alors que `store()` s'intercale
+entre les deux. Le remplacement n'a jamais eu lieu. Refait sur la position exacte,
+il rougit.
+
+C'est la **troisième** fois dans ce chantier (après S27 et la fixture des chemins
+d'argent). La règle est claire : **après un sabotage, vérifier que le fichier a
+réellement changé avant de lire le résultat des tests.**
+
+Suite complète : **626 tests, 44 576 assertions, vert.**
+
+### Ce qui reste dans l'arriéré : 84 routes
 
 Les deux familles graves — le vol de ligne et les chemins d'argent — sont fermées.
 Ce qui reste est de la **lecture nue** (`get($id)` en `Modele::find($id)`, donc
@@ -2321,18 +2378,19 @@ inscrire plutôt qu'à corriger :
 |---|---|
 | `Fraud` (back-office) | une fiche de fraude d'une autre société |
 | `HubPaymentRequest` | une demande de versement d'un entrepôt |
-| `Profile` | 🔴 `User::with('upload')->find($id)` — la fiche d'un agent d'une autre société |
 | `Income` / `Expense::update` | une écriture de recette, son compte, son marchand |
 | `AccountHead` | un poste comptable |
-| `Salary` | 🔴 un bulletin de paie d'une autre société |
 | `MerchantPayment::edit` | un compte de versement de marchand |
 | `Currency::getFind` | une devise (objet de plateforme — à exempter, probablement) |
 | `Wallet::getFind` | une recharge de portefeuille |
 | `User`, `Merchant`, `Parcel::update`, `Expense`, `FundTransfer`, `DeliveryCategory`, `DeliveryMan`, `HubInCharge`, `AccountHeads` | reste à dépouiller méthode par méthode |
 
-Deux d'entre elles méritent d'ouvrir la prochaine passe : **`Salary`** (un bulletin
-de paie est une donnée personnelle) et **`Profile`** (la fiche d'un agent, avec son
-téléphone et son adresse).
+`Salary` et `Profile` sont traités ou écartés ci-dessus. Les suivantes à ouvrir, par
+ordre de gravité décroissante : **`Income` / `Expense::update`** (des écritures
+comptables, et `Expense::update` lit nu avant de toucher un compte), puis
+**`Wallet::getFind`**, **`MerchantPayment::edit`** et **`Fraud`** (back-office).
+`Currency` est un objet de plateforme : à *exempter* plutôt qu'à corriger, comme les
+plans et les sociétés du panneau central.
 
 ### Couverture
 

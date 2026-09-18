@@ -172,6 +172,15 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/hub-payment/reject/{id}' => BackOfficeRecordTakeoverTest::class,
         'GET admin/hub-payment/cancel-process/{id}' => BackOfficeRecordTakeoverTest::class,
         'GET admin/hub-payment/cancel-reject/{id}' => BackOfficeRecordTakeoverTest::class,
+        // S29, 4e passe — LA PAIE. Le depot lisait nu partout, et deux de ses
+        // methodes deplacaient de l'argent : `update()` creditait le compte bancaire
+        // de l'AUTRE societe du montant lu, reecrivait sa ligne de paie, puis
+        // debitait le notre. Un bulletin de paie est une donnee personnelle.
+        'GET admin/salarys/edit/{id}' => SalaryScopeTest::class,
+        'GET admin/salary/pay-slip/{id}' => SalaryScopeTest::class,
+        'DELETE admin/salary/delete/{id}' => SalaryScopeTest::class,
+        'GET admin/salary/salary-generate/edit/{id}' => SalaryScopeTest::class,
+        'DELETE admin/salary/salary-generate/delete/{id}' => SalaryScopeTest::class,
     ];
 
     /**
@@ -269,8 +278,6 @@ class WebIsolationCoverageTest extends TestCase
         'DELETE admin/parcel/delete/{id}',
         'DELETE admin/payment/delete/{id}',
         'DELETE admin/push-notification/delete/{id}',
-        'DELETE admin/salary/delete/{id}',
-        'DELETE admin/salary/salary-generate/delete/{id}',
         'DELETE admin/sms-settings/delete/{id}',
         'DELETE admin/user/delete/{id}',
         'DELETE category/delete/{id}',
@@ -315,9 +322,6 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/payment/edit/{id}',
         'GET admin/payment/process/{id}',
         'GET admin/payment/reject/{id}',
-        'GET admin/salary/pay-slip/{id}',
-        'GET admin/salary/salary-generate/edit/{id}',
-        'GET admin/salarys/edit/{id}',
         'GET admin/sms-settings/edit/{id}',
         'GET admin/users/edit/{id}',
         'GET admin/users/permissions/{id}',
@@ -344,7 +348,7 @@ class WebIsolationCoverageTest extends TestCase
     ];
 
     /** Le compte figé de l'arriéré. Il descend, il ne monte pas. */
-    private const PLAFOND_HERITAGE = 89;
+    private const PLAFOND_HERITAGE = 84;
 
     protected function setUp(): void
     {

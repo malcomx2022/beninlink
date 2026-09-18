@@ -76,7 +76,8 @@ class SalaryRepository  implements SalaryInterface
     }
 
     public function singleSalaryGenerate($id){
-        return SalaryGenerate::find($id);
+        // S29 — lecture nue de la ligne de paie generee d'une autre societe.
+        return SalaryGenerate::companywise()->find($id);
     }
 
 
@@ -116,7 +117,10 @@ class SalaryRepository  implements SalaryInterface
         return Salary::companywise()->orderBy('id','desc')->paginate(10);
     }
     public function get($id){
-        return Salary::find($id);
+        // S29 — lecture NUE : le bulletin de paie d'un agent d'une AUTRE societe —
+        // montant, mois, compte bancaire — s'ouvrait en changeant l'identifiant.
+        // C'est une donnee personnelle, et l'ecran `pay-slip` l'imprime.
+        return Salary::companywise()->find($id);
     }
     public function store($request){
         try {
@@ -146,11 +150,20 @@ class SalaryRepository  implements SalaryInterface
         }
     }
     public function edit($id){
-        return Salary::find($id);
+        // S29 — meme lecture nue que `get()`.
+        return Salary::companywise()->find($id);
     }
     public function update($id,$request){
         try {
-            $salary  = Salary::find($id);
+            // S29 — lecture NUE avant des mouvements d'argent. Sur le bulletin d'une
+            // AUTRE societe, cette methode CREDITAIT son compte bancaire du montant
+            // lu, reecrivait sa ligne de paie (beneficiaire, compte, montant), puis
+            // debitait le notre. Un desordre comptable a cheval sur deux societes.
+            $salary  = Salary::companywise()->find($id);
+
+            if (blank($salary)) {
+                return false;
+            }
             //income
             $transaction                       = new BankTransaction();
             $transaction->company_id           = settings()->id;
@@ -191,7 +204,13 @@ class SalaryRepository  implements SalaryInterface
     }
     public function delete($id){
         try {
-            $salary             =  Salary::find($id);
+            // S29 — meme lecture nue : la suppression CREDITAIT le compte bancaire
+            // de l'autre societe avant d'effacer sa ligne de paie.
+            $salary             =  Salary::companywise()->find($id);
+
+            if (blank($salary)) {
+                return false;
+            }
             $account            = Account::find($salary->account_id);
             $account->balance   = ($account->balance + $salary->amount);
             $account->save();
