@@ -218,7 +218,15 @@ class ParcelController extends Controller
     public function logs($id)
     {
         $parcel         = $this->repo->get($id);
-        $parcelevents   = $this->repo->parcelEvents($id);
+        // S25 — `ParcelRepository::get()` est `companywise()`, `parcelEvents()`
+        // ne l'est pas : sans cette garde, un colis hors périmètre rendait un
+        // `$parcel` nul MAIS la chronologie de l'autre société — livreur, dates,
+        // chemins de la photo et de la signature de livraison. On ne scope pas
+        // `parcelEvents()` lui-même : le suivi PUBLIC par numéro l'appelle
+        // (`Frontend\FrontendController`), et c'est sa raison d'être (cf. S17).
+        abort_if(blank($parcel), 404);
+
+        $parcelevents   = $this->repo->parcelEvents($parcel->id);
         return view('backend.parcel.logs', compact('parcel','parcelevents'));
     }
 
@@ -1517,7 +1525,9 @@ class ParcelController extends Controller
     public function deliveredInfo($id)
     {
         $parcel         = $this->repo->get($id);
-        $parcelevents   = $this->repo->parcelEvents($id);
+        abort_if(blank($parcel), 404);   // S25 — voir `logs()` ci-dessus
+
+        $parcelevents   = $this->repo->parcelEvents($parcel->id);
         return view('backend.parcel.parcel-delivered-info', compact('parcel','parcelevents'));
     }
 

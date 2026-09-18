@@ -66,6 +66,10 @@ class WebAccessibilityTest extends TestCase
      */
     private function balisesImg(string $source): array
     {
+        // Les commentaires Blade sortent d'abord : un commentaire qui PARLE d'une
+        // balise image en citant son nom n'est pas une image. C'est arrivé.
+        $source = preg_replace('/\{\{--.*?--\}\}/s', '', $source) ?? $source;
+
         $out = [];
         $n = strlen($source);
 

@@ -80,6 +80,8 @@ class SupportController extends Controller
     {
         $departments   = $this->repo->departments();
         $singleSupport = $this->repo->get($id);
+        abort_if(blank($singleSupport), 404);
+
         return view('backend.support.edit',compact('departments','singleSupport'));
     }
 
@@ -111,6 +113,10 @@ class SupportController extends Controller
 
      public function view($id){
         $singleSupport = $this->repo->get($id);
+        // S23 — hors périmètre, le dépôt ne rend rien : on s'arrête ici plutôt
+        // que de rendre la vue avec un ticket nul et d'aller chercher le fil.
+        abort_if(blank($singleSupport), 404);
+
         $chats = $this->repo->chats($id);
         return view('backend.support.view',compact('singleSupport','chats'));
      }

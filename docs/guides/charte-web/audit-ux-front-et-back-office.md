@@ -22,6 +22,7 @@
 | 2026-09-18 | **Lot 6 livré.** Voir §16 — accessibilité. Le troisième `http://`, absent des vues, faisait rendre à Laravel des URL en clair : le lien de réinitialisation de mot de passe et le `callback_url` de FedaPay. Une ligne manquait à notre configuration nginx. |
 | 2026-09-18 | **Lot 6 complété.** Voir §19 — le §16 pose l'attribut `alt` ; il restait sa **qualité** : 91 des 106 valeurs préexistantes étaient inutilisables (`alt="user"` sur le logo des réglages, `alt="stripe.png"` sur l'image de PayPal). Et son `alt="{{ settings()->name }}"` dans trois courriels **bâtis par le worker** rendait F4 visible. Plus trois défauts de sécurité dans le journal d'activité (§19.6). |
 | 2026-09-18 | **S22 corrigé.** Les trois défauts du journal d'activité relevés au §19.6 : périmètre société, permission de route, échappement. Détail dans `web/CARTOGRAPHIE.md`. Au passage, le constat systémique : **31 des 100 routes à identifiant** du back-office ne portent aucune permission, et les **12** `::find($id)` de ses contrôleurs aucun périmètre. |
+| 2026-09-18 | **S23 à S26 corrigés**, et les cinq routes mortes retirées. Les quatre fuites du back-office avaient la forme de S22 : liste scopée, détail en `find($id)` nu. Deux élargissements assumés (le fil d'un ticket, les quatre méthodes du dépôt des boutiques) et un verbe corrigé (`GET` → `PUT` sur une écriture). **Aucune permission ajoutée** : cela reste une décision. |
 
 ---
 
@@ -1979,8 +1980,11 @@ le chiffre que cette section annonçait d'abord (« 31 des 100 routes à `{id}` 
 complet : **258 routes à paramètre**, **53 sans permission**. Mais seulement
 **6** relèvent d'une décision de permission ; 5 sont des **routes mortes**, 26
 appartiennent au panneau marchand où l'appartenance, pas la permission, est le
-mécanisme, et 10 portent un `{id}` purement décoratif. Et **4 sont des fuites
-vérifiées** — S23 à S26 de `web/CARTOGRAPHIE.md`, où vit l'inventaire complet.
+mécanisme, et 10 portent un `{id}` purement décoratif. Et **4 étaient des fuites
+vérifiées** — S23 à S26, ✅ **corrigées le 2026-09-18**, comme les cinq routes
+mortes. `web/CARTOGRAPHIE.md` porte l'inventaire complet et le détail des quatre.
+Les **permissions**, elles, restent entières : corriger la fuite et poser la garde
+d'accès sont deux gestes distincts, et seul le premier est fait.
 
 ### 19.7 Autres constats, signalés et non corrigés
 

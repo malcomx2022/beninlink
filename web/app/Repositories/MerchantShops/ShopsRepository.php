@@ -8,24 +8,58 @@ use App\Repositories\MerchantShops\ShopsInterface;
 
 class ShopsRepository implements ShopsInterface{
 
+        /**
+         * S26 — le périmètre société de ce dépôt, qui n'en avait aucun.
+         *
+         * `MerchantShops` ne porte pas de `company_id` : le rattachement passe
+         * par son marchand. Les quatre lectures et écritures de cette classe
+         * faisaient `where('id', …)` nu — un compte authentifié atteignait donc
+         * la boutique d'un marchand de n'importe quelle société : adresse,
+         * téléphone, et pour `defaultShop()` la possibilité de **changer** la
+         * boutique par défaut d'un concurrent.
+         *
+         * ⚠️ Ne pas confondre avec `MerchantPanel\Shops\ShopsRepository`, que
+         * **S18** a scopé sur le marchand CONNECTÉ : celui-ci sert le
+         * back-office, où l'opérateur agit légitimement sur les boutiques de
+         * tous les marchands — mais de SA société seulement.
+         */
+        private function boutiquesDeLaSociete(){
+            return MerchantShops::whereHas('merchant', function ($query) {
+                $query->companywise();
+            });
+        }
+
         public function all(){
-           return MerchantShops::orderBy('id','desc')->paginate(10);
+           return $this->boutiquesDeLaSociete()->orderBy('id','desc')->paginate(10);
         }
         public function get($id){
-            return MerchantShops::where('id',$id)->first();
+            return $this->boutiquesDeLaSociete()->where('id',$id)->first();
         }
 
         public function merchant_shops_get($id){
-            return MerchantShops::where('merchant_id',$id)->get();
+            return $this->boutiquesDeLaSociete()->where('merchant_id',$id)->get();
         }
 
     public function defaultShop($merchant_id,$id) {
-        $merchantShops              = MerchantShops::where(['default_shop'=>Status::ACTIVE,'merchant_id'=>$merchant_id])->get();
-        foreach ($merchantShops as $merchant){
-            $merchant->default_shop = Status::INACTIVE;
-            $merchant->save();
+        // La boutique visée d'abord : hors périmètre, on ne touche à RIEN. Le
+        // socle basculait les anciennes boutiques par défaut AVANT de chercher
+        // la nouvelle, puis faisait une erreur fatale sur `null` — laissant le
+        // marchand sans boutique par défaut du tout.
+        $merchantShop = $this->boutiquesDeLaSociete()
+            ->where(['id' => $id, 'merchant_id' => $merchant_id])->first();
+
+        if (blank($merchantShop)) {
+            return false;
         }
-        $merchantShop               = MerchantShops::where(['id'=>$id,'merchant_id'=>$merchant_id])->first();
+
+        $this->boutiquesDeLaSociete()
+            ->where(['default_shop' => Status::ACTIVE, 'merchant_id' => $merchant_id])
+            ->get()
+            ->each(function ($boutique) {
+                $boutique->default_shop = Status::INACTIVE;
+                $boutique->save();
+            });
+
         $merchantShop->default_shop = Status::ACTIVE;
         $merchantShop->save();
 

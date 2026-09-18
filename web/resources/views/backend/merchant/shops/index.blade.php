@@ -46,7 +46,13 @@
                                 @if($shop->default_shop == \App\Enums\Status::ACTIVE)
                                         <span class="badge badge-pill badge-primary mt-2">{{ __('merchantshops.default') }}</span>
                                     @else
-                                        <a href="{{ route('merchant.shops.default',['merchant_id' => $shop->merchant_id,'id' => $shop->id]) }}" class=" default_shop_button mt-2">{{ __('merchantshops.add_default') }}</a>
+                                        {{-- S26 — c'était un lien : un GET qui écrit se déclenche depuis une
+                                             balise image distante et échappe à la protection CSRF. --}}
+                                        <form action="{{ route('merchant.shops.default',['merchant_id' => $shop->merchant_id,'id' => $shop->id]) }}" method="post" class="d-inline confirm-submit">
+                                            @csrf
+                                            @method('PUT')
+                                            <button type="submit" class="btn btn-link p-0 default_shop_button mt-2">{{ __('merchantshops.add_default') }}</button>
+                                        </form>
                                     @endif
 
                             </td>
