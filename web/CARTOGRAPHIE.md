@@ -1217,6 +1217,7 @@ vestige du squelette Laravel.
 | ~~S25~~ | B | ~~La chronologie d'un colis d'une autre société était lisible~~ — ✅ **corrigé le 2026-09-18** : les **deux** écrans concernés (`logs`, `deliveredInfo`) s'arrêtent en 404 si le colis est hors périmètre, et passent ensuite `$parcel->id` — le colis **déjà vérifié** — au lieu de l'identifiant brut. `parcelEvents()` reste volontairement non scopé : le **suivi public par numéro** l'appelle, c'est sa raison d'être (cf. S17), et un test l'inscrit | `Backend\ParcelController` |
 | ~~S26~~ | B | ~~La boutique par défaut de n'importe quel marchand se changeait sur un GET~~ — ✅ **corrigé le 2026-09-18** : les **quatre** méthodes du dépôt back-office des boutiques passent par `boutiquesDeLaSociete()` (`whereHas('merchant', companywise())` — la table ne porte pas de `company_id`) ; l'ordre est inversé pour ne rien toucher quand la cible est hors périmètre, là où le socle basculait les anciennes **avant** de la chercher puis plantait sur `null` ; la route devient **PUT** et la vue soumet un formulaire `@csrf`. La permission reste une décision | `MerchantShops\ShopsRepository` · `MerchantShopsController` · `routes/web.php` |
 | ~~S27~~ | A | ~~L'éditeur du fichier `.env` répondait **200 sans authentification**~~ — 🔴 ✅ **corrigé le 2026-09-18** : `geo-sot/laravel-env-editor` monte onze routes sous `/env-editor` avec le seul middleware `['web']`, depuis un fournisseur **auto-découvert** qui ne teste aucun environnement. `GET /env-editor` et `GET /env-editor/files` répondaient **200 à un visiteur anonyme** : lecture et écriture des identifiants de base, d'`APP_KEY`, des clés FedaPay et de la messagerie, régénération de la clé d'application, téléchargement et restauration de sauvegardes. Le garde `BlockEnvEditorRoutes` répond **404** pour les onze routes ; la **bibliothèque** reste en place, l'installeur en a besoin (voir « ✅ S27 » plus bas). Second versant relevé au moment de commiter : les sauvegardes du paquet sont des **copies intégrales de `.env`** (`APP_KEY` en clair) et `storage/env-editor` n'était **pas ignoré par git** — corrigé aussi. Relevé en inventoriant les routes web à paramètre pour le filet d'isolation | `config/env-editor.php` · `App\Http\Middleware\BlockEnvEditorRoutes` · `web/.gitignore` |
+| ~~S28~~ | I | ~~La carte des courses du livreur répondait **200 sans authentification**~~ — 🔴 ✅ **corrigé le 2026-09-18** : `GET /deliveryMan/parcel/map/{id}/{lat}/{long}/{status}` était déclarée dans `routes/web.php` **hors du groupe `auth`** — juste après la fermeture d'un groupe, à la même indentation. Sa pile s'arrêtait à la tenancy : ni `auth`, ni `hasPermission`. Et `User::find($id)` était **nu**. La vue écrit `@json($mapParcels)` dans le source de la page : **nom, téléphone et adresse du client final**, nom, téléphone et adresse du marchand, montant à encaisser, numéro de suivi. Prouvé par appel HTTP anonyme : **200**, téléphone et adresse dans le corps. La route est retirée (aucune vue, aucun script, aucun nom de route — la retirer ne retire l'accès à personne) et le contrôleur est scopé pour que la remonter ne rouvre pas la fuite. Relevé en inventoriant les routes web à paramètre pour le filet | `routes/web.php` · `MapParcelController` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
 
@@ -1592,11 +1593,15 @@ de permission, et **4 sont des fuites vérifiées (S23–S26)** — vit dans
 « 📋 Inventaire » en fin de document.
 
 Le filet **S7** ne couvre que les routes `/api/v10` (`IsolationCoverageTest`).
-Le back-office n'a pas d'équivalent, et c'est ce qui a laissé passer celui-ci.
-**Élargir le filet aux routes web à identifiant est un chantier à ouvrir** : il
-demande de décider, route par route, quelle permission s'applique — et ajouter
-une permission là où il n'y en avait aucune **retire l'accès** à un rôle qui ne la
-porte pas. Ce n'est pas un correctif mécanique.
+Le back-office n'avait pas d'équivalent, et c'est ce qui a laissé passer celui-ci.
+✅ **Il en a un depuis le 2026-09-18** : `WebIsolationCoverageTest`, décrit en fin
+de document. Il ne prétend pas que le back-office est isolé — il gèle l'arriéré et
+rend l'oubli impossible à ignorer.
+
+La question des **permissions** reste entière, et reste une décision : ajouter une
+permission là où il n'y en avait aucune **retire l'accès** à un rôle qui ne la
+porte pas. Ce n'est pas un correctif mécanique, et le filet ne le fait pas à notre
+place — il ne parle que de portée, pas de droits.
 
 ### Couverture
 
@@ -1905,3 +1910,186 @@ Vérifié par **deux sabotages** : le garde retiré de la configuration fait rou
 traînait, et la suite lisait la configuration **mise en cache** au lieu du fichier.
 Le sabotage n'a rien prouvé jusqu'à `php artisan config:clear`. À retenir pour tout
 test qui lit `config()` : un cache de configuration rend un sabotage muet.
+
+
+## ✅ S28 — la carte des courses du livreur (2026-09-18)
+
+🔴 **Données personnelles de clients finals, sans authentification.**
+
+```
+GET /deliveryMan/parcel/map/{id}/{lat}/{long}/{status}  → 200  (visiteur anonyme)
+```
+
+La pile de middlewares, mesurée avant correction :
+
+```
+web, XSS, IsInstalled, PreventAccessFromCentralDomains,
+InitializeTenancyByDomain, CompanyActivationMiddleware
+```
+
+Ni `auth`, ni `hasPermission`. La route était déclarée dans `routes/web.php`
+**juste après le `});` d'un groupe, à la même indentation** — la forme même d'une
+ligne qu'on lit comme étant « dedans ».
+
+Et `User::find($id)` était **nu** : n'importe quel identifiant d'utilisateur, de
+n'importe quelle société, était accepté.
+
+Ce que la page rendait : `parcel-map.blade.php` écrit `@json($mapParcels)` dans le
+source, et la charge utile porte, colis par colis —
+
+| Champ | |
+|---|---|
+| `customer_name`, `customer_phone`, `customer_address` | le **client final**, un tiers qui n'a jamais eu de compte chez nous |
+| `merchant_business_name`, `merchant_phone`, `merchant_address` | le marchand |
+| `current_payable` | ce qu'il y a à encaisser, porte par porte |
+| `tracking_id`, `latitude`, `longitude` | le colis et sa position |
+
+Prouvé par appel HTTP anonyme : **200**, avec le téléphone et l'adresse du client
+dans le corps de la réponse.
+
+### Le correctif
+
+**La route est retirée.** Vérifié avant : aucune vue, aucun script ne l'appelle,
+et elle ne portait **même pas de nom de route** — rien ne pouvait donc la
+référencer. La retirer ne retire l'accès à personne.
+
+Le contrôleur et la vue **restent** (0 fichier supprimé du socle), et la portée
+est posée dans le contrôleur :
+
+```php
+$livreur = User::companywise()->with('deliveryman')->find($id);
+abort_if(blank($livreur) || blank($livreur->deliveryman), 404);
+```
+
+Deux raisons de le faire alors qu'aucune route n'y mène plus : si quelqu'un la
+remonte un jour, elle ne rouvre pas la fuite ; et le socle faisait
+`User::find($id)->deliveryman->id`, donc une **erreur fatale sur `null`** dès
+qu'on passait l'identifiant d'un utilisateur qui n'est pas livreur.
+
+### Couverture
+
+`tests/Feature/DeliverymanMapLeakTest.php` — 7 tests : plus aucune route ne mène
+au contrôleur ; l'URL qui répondait 200 répond 404 ; **l'hôte du test sert bien
+les routes du locataire** (sans quoi le 404 précédent ne prouverait rien) ; le
+contrôleur refuse un utilisateur d'une autre société ; un utilisateur qui n'est
+pas livreur donne un 404 et non une erreur fatale ; son propre livreur est
+toujours servi ; et un test qui tient l'**enjeu** — la vue verse bien la charge
+utile dans la page, et cette charge utile porte bien les champs clients — pour
+qu'on ne remonte pas la route en croyant qu'il ne s'agissait que d'une carte.
+
+Vérifié par **deux sabotages** : la route remise fait rougir 2 tests, la portée du
+contrôleur retirée en fait rougir 2 autres.
+
+## ✅ Le filet d'isolation du web (2026-09-18)
+
+`tests/Feature/WebIsolationCoverageTest.php` — le pendant de
+`IsolationCoverageTest`, qui ne couvre que `/api/v10`.
+
+### La surface, enfin mesurée
+
+Le socle n'enregistre les routes du locataire que si `request()->getHost()` figure
+dans la table `domains`. Conséquence : **`php artisan route:list` ne les voit
+pas**, et personne n'avait jamais lu la liste en entier. C'est le fait central de
+ce lot — les deux failles ci-dessus vivaient là.
+
+| | |
+|---|---|
+| Routes à paramètre, toutes origines | **249** |
+| … `/api/v10` (filet S7) | 31 |
+| … montées par un **paquet** | 6 |
+| … publiques ou d'authentification | 9 |
+| … **routes d'application du back-office** | **203** |
+
+`admin/` 166, `merchant/` 31, `super-admin/` 6, plus **deux à la racine**
+(`category/edit/{id}`, `category/delete/{id}`) qu'un filtre par préfixe aurait
+manquées.
+
+### Les quatre invariants
+
+1. **Tout est classé** — prouvée (avec son test), exemptée (avec le motif pour
+   lequel le paramètre ne désigne pas la ressource d'autrui), publique à dessein
+   (avec le motif), ou héritée. Une route neuve hors de ces listes fait échouer la
+   suite : on ne peut plus en ajouter une sans dire ce qu'on a fait de sa portée.
+2. **L'arriéré ne peut que rétrécir** — 171 routes héritées, plafond figé. Le seul
+   mouvement autorisé est `HERITAGE` → `PROUVEES`, et il baisse le plafond.
+3. **Une route de locataire est authentifiée**, ou déclarée publique avec un
+   motif. C'est l'invariant qui aurait attrapé **S28** le jour où elle a été
+   écrite. Une seule route d'application était nue sur les 203 : celle-là.
+4. **Aucun paquet ne monte de routes web en silence** — le critère est l'**espace
+   de noms de l'action**, pas le préfixe d'URL : un paquet peut monter ses routes
+   n'importe où, y compris sous `admin/`, et c'est le nom de sa classe qui le
+   trahit. C'est l'invariant qui aurait attrapé **S27**. Au premier passage il a
+   d'ailleurs sorti deux paquets de plus (`laravel/sanctum`,
+   `spatie/laravel-ignition`) qui n'étaient déclarés nulle part.
+
+État de départ : **7 prouvées** (S22 à S26), **33 exemptées**, **6 publiques**,
+**171 héritées**.
+
+### Ce que ce filet n'est pas
+
+Il **ne dit pas** que le back-office est isolé. L'arriéré de 171 est la mesure
+honnête du contraire : ces écrans suivent le motif de S22 à S26 — liste scopée,
+détail en `find($id)`. Certains sont sûrement sans danger, d'autres sûrement pas ;
+personne ne l'a vérifié, et c'est tout le point de l'inscrire.
+
+Il ne parle pas non plus de **droits** : les permissions restent la décision
+ouverte de l'inventaire.
+
+### Deux garde-fous repris de l'API
+
+- Pas de **déclaration fantôme** : une entrée qui ne correspond plus à une route
+  fait échouer le test (sinon le filet se vide de lui-même à mesure que les routes
+  bougent).
+- **F6** : un test déclaré doit utiliser `RefreshDatabase`. Une preuve d'isolation
+  demande d'atteindre la ressource d'un autre compte, donc de l'avoir écrite ; un
+  test sans base migrée ne peut pas la produire. Le filet de l'API avait déjà été
+  pris en défaut là-dessus.
+
+### Le mécanisme, réutilisable
+
+`tests/Concerns/MountsTenantRoutes.php`. `BackOfficeScopingTest` affirmait que les
+routes du back-office étaient « hors de portée d'un test » : c'était **faux**, il
+suffit de semer le domaine. Le commentaire est corrigé.
+
+Deux obstacles, dans cet ordre, et le second est un piège :
+
+1. `routes/web.php` n'enregistre ses routes que si l'hôte figure dans `domains` et
+   si `app.app_installed` vaut `yes`.
+2. `PreventAccessFromCentralDomains` refuse par **404** tout appel dont l'hôte est
+   un domaine central — et `config('tenancy.central_domains')` contient
+   `localhost` et `127.0.0.1`, c'est-à-dire l'hôte des tests.
+
+Un 404 « route absente » et un 404 « hôte central » sont indistinguables : on
+croit que la route n'est pas montée alors qu'elle l'est. D'où le second domaine
+(`pme.test`) et, dans `DeliverymanMapLeakTest`, un test dont le seul rôle est de
+vérifier que l'hôte utilisé sert bien les routes du locataire.
+
+C'est ce trait qui a permis de **prouver S28 par un appel HTTP** au lieu de le
+déduire d'une déclaration.
+
+### Vérification
+
+**Six sabotages**, un par invariant, chacun vérifié rouge : une route neuve non
+classée, la route de S28 remise (elle fait rougir **deux** invariants), une entrée
+dans l'arriéré au-delà du plafond, une déclaration pointant une route disparue,
+une couverture déclarée par un test sans base migrée, un paquet retiré de la liste.
+
+⚠️ Le sabotage F6 a d'abord répondu vert parce que le test de remplacement que
+j'avais choisi utilisait `RefreshDatabase` lui aussi : le sabotage ne sabotait
+rien. Refait avec `FedaPayWebhookTest` — celui-là même qui avait révélé F6 côté
+API — il rougit. Un sabotage qui passe au vert est d'abord un sabotage à
+vérifier, pas un test à féliciter.
+
+### Trois constats à part, signalés et non corrigés
+
+- `admin/profile/{id}` et `merchant/profile/{id}` comparent bien à l'utilisateur
+  connecté, mais répondent **`abort(500)`** au lieu de 403 ou 404 : un refus
+  d'accès annoncé comme une panne serveur. Même famille que S15.
+- `POST admin/income/search-account/{id}` est une **route morte** : personne ne
+  l'appelle — même l'écran des revenus appelle celle des dépenses — et son
+  contrôleur passe l'objet `Request` à `find()`, qui le traite comme un tableau de
+  clés (`Request` est `Arrayable`) et renvoie donc une **collection** au lieu d'un
+  compte. Depuis S24 c'est scopé, donc sans fuite.
+- Une route du socle déclare son action avec un **antislash de tête**
+  (`\App\Http\Controllers\…`) là où toutes les autres n'en ont pas. Sans le
+  `ltrim` de l'invariant 4, elle passait pour un paquet tiers.

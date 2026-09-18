@@ -31,10 +31,16 @@ use Tests\TestCase;
  * Toutes ont la même forme, celle de **S22** : la LISTE est scopée par société,
  * le DÉTAIL fait `find($id)` nu. Changer l'identifiant dans l'URL suffisait.
  *
- * Les routes du back-office ne sont montées qu'avec un domaine de locataire,
- * hors de portée d'un test : on exerce donc les dépôts et les contrôleurs
- * directement, et on lit la déclaration des routes. C'est la méthode
- * d'`OnlinePayoutModuleDisabledTest` et d'`ActivityLogAccessTest`.
+ * Les routes du back-office ne sont montées qu'avec un domaine de locataire :
+ * on exerce donc les dépôts et les contrôleurs directement, et on lit la
+ * déclaration des routes. C'est la méthode d'`OnlinePayoutModuleDisabledTest` et
+ * d'`ActivityLogAccessTest`.
+ *
+ * ⚠️ Ce commentaire ajoutait « hors de portée d'un test ». C'était faux : il
+ * suffit de semer le domaine. `Tests\Concerns\MountsTenantRoutes` le fait, et
+ * c'est ce qui a permis de prouver S28 par un appel HTTP. Les tests ci-dessous
+ * gardent leur forme — ils prouvent ce qu'ils prouvent — mais un test NEUF sur
+ * le back-office devrait passer par le trait et appeler la route pour de vrai.
  *
  * Repère : les données semées appartiennent à la **société 2**, et `settings()`
  * vaut la **société 1** dans un test. Le voisin d'une autre société est donc

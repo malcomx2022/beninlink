@@ -1043,7 +1043,14 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                 // FCM Token
             });
 
-            Route::get('/deliveryMan/parcel/map/{id}/{lat}/{long}/{status}',           [MapParcelController::class, 'parcelMap']);
+            // S28 — la carte des courses du livreur est RETIREE : declaree hors du
+            // groupe `auth`, elle repondait 200 a un visiteur anonyme et versait
+            // dans la page le nom, le telephone et l'adresse des clients ainsi que
+            // le montant a encaisser (`@json($mapParcels)`). Aucune vue, aucun
+            // script ne l'appelait et elle ne portait pas de nom de route : la
+            // retirer ne retire l'acces a personne. Le controleur et la vue restent
+            // en place (0 fichier supprime du socle) et la methode est desormais
+            // scopee — voir `DeliverymanMapLeakTest`.
         });
     endif;
 

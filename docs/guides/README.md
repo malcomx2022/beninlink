@@ -163,7 +163,21 @@
   concerné depuis toujours — les trois mailables figent désormais la société.
   ⚠️ **§17.6 relève trois défauts de sécurité dans les huit lignes du journal
   d'activité** : aucun périmètre société, aucune permission sur la route, et une
-  sortie non échappée (XSS stocké). Signalés, non corrigés, à passer avant la suite.
+  sortie non échappée (XSS stocké). ✅ Corrigés (S22).
+  **Filet d'isolation du web livré le 2026-09-18** (§20) — le pendant de
+  `IsolationCoverageTest` pour les **203** routes web à paramètre. Le fait central :
+  le socle n'enregistre les routes du locataire que si l'hôte figure dans la table
+  `domains`, donc **`route:list` ne les voit pas** et personne n'avait lu la liste
+  en entier. Le filet ne prétend pas que le back-office est isolé — il gèle
+  l'arriéré (171 routes non prouvées, plafond qui descend seulement) et pose les
+  deux invariants qui auraient attrapé S27 et S28 le jour où ils ont été écrits.
+  🔴 Les deux, l'inventaire les a fait tomber : **S27**, `GET /env-editor`
+  répondait **200 sans authentification** (lecture et écriture du fichier
+  d'environnement, `APP_KEY`, clés FedaPay) ; **S28**, la carte des courses du
+  livreur répondait **200 sans authentification** et versait dans la page le
+  **nom, le téléphone et l'adresse des clients finals** plus le montant à
+  encaisser. La leçon du lot : **une surface que personne ne lit en entier n'est
+  pas une surface sûre** — désormais la suite de tests la lit à chaque commit.
 - `../../web/CARTOGRAPHIE.md`  Relevé de l'Étape 0 sur le socle We Courier
   (blocs A-I, constats de sécurité, routes mortes). À lire en premier.
 

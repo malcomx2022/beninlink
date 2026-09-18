@@ -154,6 +154,15 @@ avant les apps.
   jamais échouer l'écriture métier, et un même fait ne donne **qu'une** notification.
 - Toute route `/api/v10` à identifiant est inscrite dans `tests/Feature/IsolationCoverageTest`
   avec le test prouvant qu'un compte n'atteint pas la ressource d'un autre (S7).
+- Toute route **web** à paramètre est inscrite dans `tests/Feature/WebIsolationCoverageTest` :
+  prouvée (avec son test), exemptée (avec le motif pour lequel son paramètre ne désigne
+  pas la ressource d'autrui), ou publique à dessein (avec le motif). L'**héritage** est
+  fermé : son plafond descend, il ne monte pas. Une route de locataire porte `auth` —
+  c'est l'invariant de **S28**, une carte des courses déclarée hors du groupe `auth` qui
+  versait dans la page le nom, le téléphone et l'adresse des clients. Et un paquet ne
+  monte pas de routes web sans être déclaré — invariant de **S27**.
+  Pour appeler une route de locataire dans un test : `Tests\Concerns\MountsTenantRoutes`
+  (semer le domaine ne suffit pas — l'appel doit viser un hôte **non central**, sinon 404).
 - Jamais de clés en dur : `FEDAPAY_*` dans `web/.env`.
 
 ## Étape 0 — cartographie (à lire AVANT de coder ici)
