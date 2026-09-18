@@ -45,7 +45,9 @@ class IncomeRepository implements IncomeInterface {
 
     // get single row
     public function get($id){
-        return Income::with('parcel')->find($id);
+        // S30 — lecture NUE : l'ecriture de recette d'une AUTRE societe — son
+        // montant, son compte, son marchand, son colis.
+        return Income::companywise()->with('parcel')->find($id);
     }
     // All request data store in User tabel.
     public function store($request)
@@ -223,7 +225,14 @@ class IncomeRepository implements IncomeInterface {
     {
         try {
             //update previus
-            $inc                                      = Income::find($id);
+            // S30 — lecture NUE avant des mouvements d'argent : cette methode touche
+            // le compte bancaire ET le releve du marchand rattaches a la recette lue.
+            $inc                                      = Income::companywise()->find($id);
+
+            if (blank($inc)) {
+                return false;
+            }
+
             if($inc->account_head_id     == 1):
                 //merchant statements
                 $prevmerchant                         = Merchant::find($inc->merchant_id);

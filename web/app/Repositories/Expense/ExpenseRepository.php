@@ -148,7 +148,15 @@ class ExpenseRepository implements ExpenseInterface{
     {
         try {
             DB::beginTransaction();
-            $expense                    = Expense::find($id);
+            // S30 — la LECTURE etait `companywise()` (juste au-dessus), l'ECRITURE non :
+            // cette methode REND LE SOLDE au compte bancaire rattache a la depense lue.
+            $expense                    = Expense::companywise()->find($id);
+
+            if (blank($expense)) {
+                DB::rollBack();
+                return false;
+            }
+
             // return balance
             $account                    = Account::find($expense->account_id);
             $account->balance           = $account->balance + $expense->amount;

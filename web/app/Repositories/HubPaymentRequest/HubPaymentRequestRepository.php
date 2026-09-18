@@ -15,7 +15,8 @@ class HubPaymentRequestRepository implements HubPaymentRequestInterface {
     }
 
     public function get($id){
-        return HubPayment::where('id',$id)->first();
+        // S30 — lecture nue de la demande de versement d'un entrepot d'une autre societe.
+        return HubPayment::companywise()->where('id',$id)->first();
     }
 
     public function store($request){
@@ -40,7 +41,14 @@ class HubPaymentRequestRepository implements HubPaymentRequestInterface {
     public function update($id,$request){
         try {
 
-            $payment                   = HubPayment::find($id);
+            // S30 — lecture nue : la demande d'une autre societe se reecrivait, et la
+            // ligne suivante la RATTACHAIT a l'entrepot de l'agent connecte.
+            $payment                   = HubPayment::companywise()->find($id);
+
+            if (blank($payment)) {
+                return false;
+            }
+
             $payment->hub_id           = auth()->user()->hub_id;
             $payment->amount           = $request->amount;
             $payment->description      = $request->description;

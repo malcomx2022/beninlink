@@ -270,7 +270,6 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('income',                      [IncomeController::class, 'index'])->name('income.index')->middleware('hasPermission:income_read');
                         Route::get('income/filter',               [IncomeController::class, 'filter'])->name('income.filter')->middleware('hasPermission:income_read');
                         Route::get('income/create',               [IncomeController::class, 'create'])->name('income.create')->middleware('hasPermission:income_create');
-                        Route::post('income/search-account/{id}', [IncomeController::class, 'searchAccount'])->name('income.search-account');
                         Route::post('income/store',               [IncomeController::class, 'store'])->name('income.store')->middleware('hasPermission:income_create');
                         Route::get('income/edit/{id}',            [IncomeController::class, 'edit'])->name('income.edit')->middleware('hasPermission:income_update');
                         Route::put('income/update/{id}',          [IncomeController::class, 'update'])->name('income.update')->middleware('hasPermission:income_update');

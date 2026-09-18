@@ -181,6 +181,33 @@ class WebIsolationCoverageTest extends TestCase
         'DELETE admin/salary/delete/{id}' => SalaryScopeTest::class,
         'GET admin/salary/salary-generate/edit/{id}' => SalaryScopeTest::class,
         'DELETE admin/salary/salary-generate/delete/{id}' => SalaryScopeTest::class,
+        // S30, 5e passe — L'ARGENT. Sept depots touchant a des comptes bancaires
+        // lisaient nu, et pour six d'entre eux c'etait avant un mouvement d'argent :
+        // rendre un solde, rejouer un virement, remettre un versement en attente de
+        // paiement, reaffecter une demande a un autre marchand ou a un autre entrepot.
+        'GET admin/income/edit/{id}' => BackOfficeMoneyScopeTest::class,
+        'PUT admin/income/update/{id}' => BackOfficeMoneyScopeTest::class,
+        'DELETE admin/income/delete/{id}' => BackOfficeMoneyScopeTest::class,
+        'GET admin/expense/edit/{id}' => BackOfficeMoneyScopeTest::class,
+        'PUT admin/expense/update/{id}' => BackOfficeMoneyScopeTest::class,
+        'DELETE admin/expense/delete/{id}' => BackOfficeMoneyScopeTest::class,
+        'GET admin/fund-transfer/edit/{id}' => BackOfficeMoneyScopeTest::class,
+        'PUT admin/fund-transfer/update/{id}' => BackOfficeMoneyScopeTest::class,
+        'DELETE admin/fund-transfer/delete/{id}' => BackOfficeMoneyScopeTest::class,
+        'GET admin/accounts/edit/{id}' => BackOfficeMoneyScopeTest::class,
+        'PUT admin/accounts/update/{id}' => BackOfficeMoneyScopeTest::class,
+        'DELETE admin/accounts/delete/{id}' => BackOfficeMoneyScopeTest::class,
+        'GET admin/payment/edit/{id}' => BackOfficeMoneyScopeTest::class,
+        'GET admin/payment/process/{id}' => BackOfficeMoneyScopeTest::class,
+        'GET admin/payment/reject/{id}' => BackOfficeMoneyScopeTest::class,
+        'GET admin/payment/cancel-process/{id}' => BackOfficeMoneyScopeTest::class,
+        'GET admin/payment/cancel-reject/{id}' => BackOfficeMoneyScopeTest::class,
+        'DELETE admin/payment/delete/{id}' => BackOfficeMoneyScopeTest::class,
+        'GET admin/hub/payment-request/edit/{id}' => BackOfficeMoneyScopeTest::class,
+        'PUT admin/hub/payment-request/update/{id}' => BackOfficeMoneyScopeTest::class,
+        'DELETE admin/hub/payment-request/delete/{id}' => BackOfficeMoneyScopeTest::class,
+        'GET admin/hub/cash-received-deliveryman/edit/{id}' => BackOfficeMoneyScopeTest::class,
+        'DELETE admin/hub/cash-received-deliveryman/delete/{id}' => BackOfficeMoneyScopeTest::class,
     ];
 
     /**
@@ -261,41 +288,28 @@ class WebIsolationCoverageTest extends TestCase
      * `PROUVEES` avec son test, et le plafond descend d'autant. C'est le cliquet.
      */
     private const HERITAGE = [
-        'DELETE admin/accounts/delete/{id}',
         'DELETE admin/currency/delete/{id}',
         'DELETE admin/delivery-category/delete/{id}',
         'DELETE admin/deliveryman/delete/{id}',
-        'DELETE admin/expense/delete/{id}',
         'DELETE admin/fraud/delete/{id}',
-        'DELETE admin/fund-transfer/delete/{id}',
-        'DELETE admin/hub/cash-received-deliveryman/delete/{id}',
         'DELETE admin/hub/incharge/{hubID}/delete/{id}',
-        'DELETE admin/hub/payment-request/delete/{id}',
-        'DELETE admin/income/delete/{id}',
         'DELETE admin/merchant/delete/{id}',
         'DELETE admin/merchant/paymentinfo/delete/{id}',
         'DELETE admin/merchant/{merchant}/delivery-charge/delete/{id}',
         'DELETE admin/parcel/delete/{id}',
-        'DELETE admin/payment/delete/{id}',
         'DELETE admin/push-notification/delete/{id}',
         'DELETE admin/sms-settings/delete/{id}',
         'DELETE admin/user/delete/{id}',
         'DELETE category/delete/{id}',
-        'GET admin/accounts/edit/{id}',
         'GET admin/currency/edit/{id}',
         'GET admin/customs/rules/edit/{id}',
         'GET admin/delivery-category/edit/{id}',
         'GET admin/deliveryman/edit/{id}',
-        'GET admin/expense/edit/{id}',
         'GET admin/fraud/edit/{id}',
-        'GET admin/fund-transfer/edit/{id}',
-        'GET admin/hub/cash-received-deliveryman/edit/{id}',
         'GET admin/hub/incharge/{hubID}/assigned/{id}',
         'GET admin/hub/incharge/{hubID}/create',
         'GET admin/hub/incharge/{hubID}/edit/{id}',
         'GET admin/hub/incharge/{hubID}/index',
-        'GET admin/hub/payment-request/edit/{id}',
-        'GET admin/income/edit/{id}',
         'GET admin/merchant/edit/{id}',
         'GET admin/merchant/invoice-generate/{id}',
         'GET admin/merchant/view/{id}',
@@ -317,11 +331,6 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/parcel/print/{id}',
         'GET admin/parcel/print/{id}/label',
         'GET admin/parcel/status-update/{id}/{status_id}',
-        'GET admin/payment/cancel-process/{id}',
-        'GET admin/payment/cancel-reject/{id}',
-        'GET admin/payment/edit/{id}',
-        'GET admin/payment/process/{id}',
-        'GET admin/payment/reject/{id}',
         'GET admin/sms-settings/edit/{id}',
         'GET admin/users/edit/{id}',
         'GET admin/users/permissions/{id}',
@@ -330,17 +339,11 @@ class WebIsolationCoverageTest extends TestCase
         'GET merchant/invoice/journal/{merchant_id}/{invoice_id}',
         'GET merchant/invoice/pdf/{merchant_id}/{invoice_id}',
         'POST admin/hub/incharge/{hubID}/store',
-        'POST admin/income/search-account/{id}',
         'POST admin/merchant/{merchant}/delivery-charge/store',
-        'PUT admin/accounts/update/{id}',
         'PUT admin/customs/alerts/{id}/resolve',
         'PUT admin/customs/rules/update/{id}',
         'PUT admin/delivery-zone/countries/{id}',
-        'PUT admin/expense/update/{id}',
-        'PUT admin/fund-transfer/update/{id}',
         'PUT admin/hub/incharge/{hubID}/update/{id}',
-        'PUT admin/hub/payment-request/update/{id}',
-        'PUT admin/income/update/{id}',
         'PUT admin/merchant/update/{id}',
         'PUT admin/merchant/{merchant}/delivery-charge/update/{id}',
         'PUT admin/parcel/update/{id}',
@@ -348,7 +351,7 @@ class WebIsolationCoverageTest extends TestCase
     ];
 
     /** Le compte figé de l'arriéré. Il descend, il ne monte pas. */
-    private const PLAFOND_HERITAGE = 84;
+    private const PLAFOND_HERITAGE = 60;
 
     protected function setUp(): void
     {

@@ -23,7 +23,10 @@ class ReceivedRepository implements ReceivedInterface {
     }
 
     public function get($id){
-        return CashReceivedFromDeliveryman::find($id);
+        // S30 — lecture nue : la remise d'especes d'un livreur d'une autre societe.
+        // `update()` et `delete()` etaient deja scopees — la dissymetrie habituelle,
+        // ici dans l'autre sens.
+        return CashReceivedFromDeliveryman::companywise()->find($id);
     }
     /**
      * Remise d'especes du livreur a son agence — le pendant de la livraison.
