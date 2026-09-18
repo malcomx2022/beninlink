@@ -27,6 +27,8 @@
             --bs-primary:{{ settings()->primary_color }};
         }
     </style>
+    {{-- L'ocre du transporteur (lot 3). Vide tant qu'il est resté sur la charte. --}}
+    @include('beninlink.brand-accent')
 </head>
 <body>   
     @include('frontend.layouts.navbar')

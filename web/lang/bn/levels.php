@@ -235,6 +235,7 @@ cash_collection, selling_price, customer_name, invoice_no, customer_phone, custo
 
 //new update 11-6-23
 'primary_color'   => 'মৌলিক রঙ',
+'accent_color'    => 'অ্যাকসেন্ট রঙ',
 'text_color'      => 'লেখার রঙ',
 'front_web'       => 'ফ্রন্ট ওয়েব',
 'social_link'     => 'সামাজিক লিংক',
