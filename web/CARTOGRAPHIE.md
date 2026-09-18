@@ -1220,6 +1220,7 @@ vestige du squelette Laravel.
 | ~~S28~~ | I | ~~La carte des courses du livreur répondait **200 sans authentification**~~ — 🔴 ✅ **corrigé le 2026-09-18** : `GET /deliveryMan/parcel/map/{id}/{lat}/{long}/{status}` était déclarée dans `routes/web.php` **hors du groupe `auth`** — juste après la fermeture d'un groupe, à la même indentation. Sa pile s'arrêtait à la tenancy : ni `auth`, ni `hasPermission`. Et `User::find($id)` était **nu**. La vue écrit `@json($mapParcels)` dans le source de la page : **nom, téléphone et adresse du client final**, nom, téléphone et adresse du marchand, montant à encaisser, numéro de suivi. Prouvé par appel HTTP anonyme : **200**, téléphone et adresse dans le corps. La route est retirée (aucune vue, aucun script, aucun nom de route — la retirer ne retire l'accès à personne) et le contrôleur est scopé pour que la remonter ne rouvre pas la fuite. Relevé en inventoriant les routes web à paramètre pour le filet | `routes/web.php` · `MapParcelController` |
 | ~~S29~~ | B | ~~Dans le back-office, **les écritures étaient moins scopées que les lectures**~~ — ✅ **première passe le 2026-09-18** : motif dominant de l'arriéré du filet, et il s'était glissé dans mes propres correctifs. Trois formes fermées. **La vitrine** : les six dépôts `FrontWeb` lisent en `companyWise()->findOrFail()` mais supprimaient en `Modele::destroy($id)` **nu** — la question, l'article, le service, le partenaire, le lien social ou le bloc « pourquoi nous » d'un autre transporteur se supprimait en changeant l'identifiant, et le site public de la victime perdait son contenu. **⚠️ Le trou de S23** : ce lot avait scopé les trois *lectures* du support et laissé `update()` et `delete()` nues — on réécrivait le ticket d'un autre transporteur et on s'en attribuait la paternité par le `user_id`. **⚠️ Le trou de S26** : idem pour les boutiques, et `update()` lisant `merchant_id` dans la requête permettait en plus de **rattacher** la boutique à un autre marchand. Plus cinq écrans du panneau marchand qui répondaient **500** au lieu de 404 hors périmètre | `FrontWeb/*Repository` × 6 · `SupportRepository` · `MerchantShops\ShopsRepository` · `MerchantShopsController` · `MerchantPanel\MerchantParcelController` |
 | ~~S30~~ | C | ~~L'argent du back-office : sept dépôts touchant à des comptes bancaires lisaient **nu**~~ — ✅ **corrigé le 2026-09-18** (5ᵉ passe sur l'arriéré). Pour six d'entre eux la lecture nue précédait un **mouvement d'argent** : `Income::update` touche le compte bancaire **et** le relevé du marchand rattachés à la recette lue ; `Expense::update` **rend le solde** au compte de la dépense lue ; `FundTransfer::update` rejoue un **virement** entre ses deux comptes ; `MerchantManage\Payment::update` réécrit la demande de versement et la **réaffecte** à un autre marchand ; `cancelReject` remet le versement rejeté **en attente de paiement** ; `Account::update` réécrit le compte bancaire ; `HubPaymentRequest::update` **rattache** la demande à l'entrepôt de l'agent connecté. Plus le **décaissement** d'un versement marchand, lu nu dans le contrôleur avec l'identifiant dans le corps — 3ᵉ occurrence de l'angle mort du filet | `Income` · `Expense` · `FundTransfer` · `MerchantManage\Payment` · `Account` · `HubPaymentRequest` · `ReceivedRepository` · `MerchantmanagePaymentController` |
+| ~~S31~~ | B | ~~Les responsables d'entrepôt : périmètre par `hub_id` **et par rien d'autre**~~ — ✅ **corrigé le 2026-09-18** (6ᵉ passe). `hub_incharges` ne porte pas de `company_id`, donc `where('hub_id', $hubID)` acceptait l'entrepôt de n'importe quelle société. **Neuf points dans un seul dépôt**, et le plus grave n'est pas une lecture : la rafle d'`assignedHub()` passe tous les autres responsables actifs de l'entrepôt à inactif — chez l'autre société, une **interruption de service**. Elle réécrivait aussi le `hub_id` d'un utilisateur sans vérifier qu'il est à nous, `delete()` était `destroy($id)` **sans même le `hub_id`**, et `users()` nommait les **administrateurs de tous les transporteurs** dans le menu déroulant | `HubInChargeRepository` · `HubInChargeController` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
 
@@ -2531,3 +2532,86 @@ suppression gardée :
 
 `Currency` reste à **exempter** : une devise est un objet de plateforme, comme les
 plans et les sociétés du panneau central.
+
+
+## ✅ S31 — les responsables d'entrepôt (2026-09-18, 6ᵉ passe)
+
+`HubInChargeRepository` était scopé par `hub_id` **et par rien d'autre**. Or
+`hub_incharges` ne porte pas de `company_id` : le périmètre doit passer par
+l'entrepôt, exactement comme `merchant_shops` passe par le marchand (S26).
+`where('hub_id', $hubID)` acceptait donc l'entrepôt de n'importe quelle société.
+
+Neuf points dans un seul dépôt — le record du chantier :
+
+| Méthode | Ce qu'elle faisait |
+|---|---|
+| `all`, `get` | la liste et la fiche des responsables d'un entrepôt d'autrui |
+| `hub` | `Hub::findOrFail($hubID)` nu — la fiche de l'entrepôt |
+| `users` | `User::where('user_type', ADMIN)` **sans filtre** : le menu déroulant nommait les administrateurs de **tous** les transporteurs |
+| `store`, `update` | nommer un responsable sur l'entrepôt d'autrui, avec n'importe quel agent |
+| `assignedHub` (rafle) | 🔴 passe **tous** les autres responsables actifs de l'entrepôt à inactif — chez l'autre société, une **interruption de service** |
+| `assignedHub` (agent) | réécrivait le `hub_id` d'un utilisateur sans vérifier qu'il est à nous |
+| `delete` | `HubInCharge::destroy($id)` nu, **sans même le `hub_id`** |
+
+### Ce qui distingue ce lot des précédents
+
+Les cinq passes antérieures fermaient des **lectures** et des **écritures sur une
+ligne**. Ici le défaut le plus grave est une **écriture de masse** : la rafle
+d'`assignedHub()` désactive d'un coup tous les responsables actifs de l'entrepôt
+visé. Exercée sur l'entrepôt d'un concurrent, elle ne lit rien et ne vole rien —
+elle le **prive de son responsable d'entrepôt**, et l'écran de la victime n'en dit
+pas la cause.
+
+`users()` mérite aussi d'être noté à part : ce n'est pas un identifiant qui fuyait,
+c'est un **annuaire**. Le menu déroulant de l'écran listait les administrateurs de
+toutes les sociétés de la plateforme, avec leurs noms.
+
+### ⚠️ Deux requêtes laissées non scopées, à dessein
+
+`HubInChargeController::assigned()` garde deux `HubInCharge::where(...)` sans filtre
+société : ce sont des contrôles d'**unicité** (« cet agent est-il déjà responsable
+ailleurs ? »). Non scopés, ils rejettent *trop* — ils ne divulguent rien. Et depuis
+que `users()` est scopé, un agent ne peut plus y soumettre l'identifiant d'un
+utilisateur d'autrui. Les laisser fait même surfacer les données aberrantes qu'a pu
+laisser l'ancien défaut, au lieu de les accepter en silence.
+
+### Couverture et vérification
+
+`tests/Feature/HubInChargeScopeTest.php` — 10 tests, dont un **contrôle négatif
+complet** : sur mon propre entrepôt, la nomination bascule bien l'ancien responsable
+et réécrit bien le `hub_id` de l'agent. C'est le comportement voulu de la rafle, et
+il devait continuer de fonctionner dans son périmètre.
+
+**Onze sabotages, onze morsures.**
+
+⚠️ Le onzième n'en était pas un au premier essai : le garde sur le `hub_id` de
+l'agent restait vert, parce que mes tests s'arrêtaient au garde **précédent** (celui
+sur l'entrepôt) et ne l'atteignaient jamais. Ce garde ne protège plus rien depuis une
+base saine — `store()` et `update()` refusent déjà un agent d'autrui — mais il
+protège les **données que l'ancien défaut a pu laisser** : une ligne
+`hub_incharges` qui apparie notre entrepôt à leur agent. J'ai donc écrit un test qui
+reproduit exactement cet état aberrant. Sans lui, le garde serait resté non exercé.
+
+C'est une variante nouvelle du symptôme connu : **un sabotage vert ne veut pas
+toujours dire que le test est faible — parfois le garde est simplement inatteignable
+par le chemin testé, et il faut mettre en scène l'état qui le rend atteignable.**
+
+Suite complète : **643 tests, 44 668 assertions, vert.**
+
+### Le cliquet après six passes
+
+| | Départ | 1re | 2e | 3e | 4e | 5e | 6e |
+|---|---|---|---|---|---|---|---|
+| Prouvées | 7 | 33 | 57 | 85 | 90 | 113 | **120** |
+| **Héritées (plafond)** | **171** | 143 | 119 | 89 | 84 | 60 | **53** |
+
+### Ce qui reste : 53 routes
+
+| Famille | Routes | État |
+|---|---|---|
+| `MerchantInvoiceController` | 9 | les relevés marchands — `ownsOrAbort()` existe depuis S20, à vérifier et inscrire |
+| `ParcelController` (back-office) | 8 | `get()` scopé société **et hub**, `update()` nu |
+| `Merchant` (5), `MerchantPaymentAccount` (4), `MerchantDeliveryCharge` (6) | 15 | `get()` scopé, `update()` nu |
+| `User` (3), `SmsSettings` (3), `Customs` (3), `Category` (2), `DeliveryCategory` (2), `DeliveryMan` (2), `Fraud` (2), `Currency` (2), `PushNotification` (1), `DeliveryZone` (1) | 21 | divers |
+
+`Currency` reste à **exempter** : une devise est un objet de plateforme.

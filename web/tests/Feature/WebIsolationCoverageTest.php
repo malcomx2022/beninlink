@@ -208,6 +208,18 @@ class WebIsolationCoverageTest extends TestCase
         'DELETE admin/hub/payment-request/delete/{id}' => BackOfficeMoneyScopeTest::class,
         'GET admin/hub/cash-received-deliveryman/edit/{id}' => BackOfficeMoneyScopeTest::class,
         'DELETE admin/hub/cash-received-deliveryman/delete/{id}' => BackOfficeMoneyScopeTest::class,
+        // S31, 6e passe — LES RESPONSABLES D'ENTREPOT. Le depot etait scope par
+        // `hub_id` et par rien d'autre, alors que `hub_incharges` ne porte pas de
+        // `company_id` : le perimetre passe par l'entrepot (comme les boutiques par
+        // le marchand, S26). Le plus grave n'etait pas une lecture : la rafle
+        // d'`assignedHub()` DESACTIVAIT les responsables en place de l'autre societe.
+        'GET admin/hub/incharge/{hubID}/index' => HubInChargeScopeTest::class,
+        'GET admin/hub/incharge/{hubID}/create' => HubInChargeScopeTest::class,
+        'POST admin/hub/incharge/{hubID}/store' => HubInChargeScopeTest::class,
+        'GET admin/hub/incharge/{hubID}/edit/{id}' => HubInChargeScopeTest::class,
+        'PUT admin/hub/incharge/{hubID}/update/{id}' => HubInChargeScopeTest::class,
+        'GET admin/hub/incharge/{hubID}/assigned/{id}' => HubInChargeScopeTest::class,
+        'DELETE admin/hub/incharge/{hubID}/delete/{id}' => HubInChargeScopeTest::class,
     ];
 
     /**
@@ -292,7 +304,6 @@ class WebIsolationCoverageTest extends TestCase
         'DELETE admin/delivery-category/delete/{id}',
         'DELETE admin/deliveryman/delete/{id}',
         'DELETE admin/fraud/delete/{id}',
-        'DELETE admin/hub/incharge/{hubID}/delete/{id}',
         'DELETE admin/merchant/delete/{id}',
         'DELETE admin/merchant/paymentinfo/delete/{id}',
         'DELETE admin/merchant/{merchant}/delivery-charge/delete/{id}',
@@ -306,10 +317,6 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/delivery-category/edit/{id}',
         'GET admin/deliveryman/edit/{id}',
         'GET admin/fraud/edit/{id}',
-        'GET admin/hub/incharge/{hubID}/assigned/{id}',
-        'GET admin/hub/incharge/{hubID}/create',
-        'GET admin/hub/incharge/{hubID}/edit/{id}',
-        'GET admin/hub/incharge/{hubID}/index',
         'GET admin/merchant/edit/{id}',
         'GET admin/merchant/invoice-generate/{id}',
         'GET admin/merchant/view/{id}',
@@ -338,12 +345,10 @@ class WebIsolationCoverageTest extends TestCase
         'GET merchant/invoice/csv/{merchant_id}/{invoice_id}',
         'GET merchant/invoice/journal/{merchant_id}/{invoice_id}',
         'GET merchant/invoice/pdf/{merchant_id}/{invoice_id}',
-        'POST admin/hub/incharge/{hubID}/store',
         'POST admin/merchant/{merchant}/delivery-charge/store',
         'PUT admin/customs/alerts/{id}/resolve',
         'PUT admin/customs/rules/update/{id}',
         'PUT admin/delivery-zone/countries/{id}',
-        'PUT admin/hub/incharge/{hubID}/update/{id}',
         'PUT admin/merchant/update/{id}',
         'PUT admin/merchant/{merchant}/delivery-charge/update/{id}',
         'PUT admin/parcel/update/{id}',
@@ -351,7 +356,7 @@ class WebIsolationCoverageTest extends TestCase
     ];
 
     /** Le compte figé de l'arriéré. Il descend, il ne monte pas. */
-    private const PLAFOND_HERITAGE = 60;
+    private const PLAFOND_HERITAGE = 53;
 
     protected function setUp(): void
     {
