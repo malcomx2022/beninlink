@@ -23,7 +23,9 @@ class AssetRepository implements AssetInterface{
     }
 
     public function get($id){
-        return Asset::find($id);
+        // S29 — lecture nue : la fiche d'un bien d'une AUTRE societe (fournisseur,
+        // montant, numero de facture) s'ouvrait en changeant l'identifiant.
+        return Asset::companywise()->find($id);
     }
 
     // All request data store in NewsOffer tabel.
@@ -56,7 +58,15 @@ class AssetRepository implements AssetInterface{
     public function update($request)
     {
         try {
-            $asset                     = Asset::find($request->id);
+            // S29 — VOL DE LIGNE : `Asset::find($request->id)` etait NU, et la ligne
+            // suivante ecrasait `company_id` avec la societe connectee. La ligne
+            // d'une autre societe n'etait donc pas seulement lue : elle etait
+            // TRANSFEREE chez nous, et disparaissait de chez son proprietaire.
+            $asset                     = Asset::companywise()->find($request->id);
+
+            if (blank($asset)) {
+                return false;
+            }
             $asset->company_id         = settings()->id;
             $asset->author             = Auth::user()->id;
             $asset->name               = $request->name;

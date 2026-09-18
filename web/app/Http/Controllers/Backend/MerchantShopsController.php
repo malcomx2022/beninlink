@@ -55,12 +55,16 @@ class MerchantShopsController extends Controller
 
     public function edit($id){
 
+        // S29 — le garde etait POSE APRES la dereference : hors perimetre,
+        // `$edit_shop` est `null` et `$edit_shop->merchant_id` faisait une erreur
+        // fatale avant d'arriver au `blank()`. Un refus d'acces annonce comme une
+        // panne serveur (meme famille que S15). On verifie d'abord.
         $edit_shop      = $this->repo->get($id);
+        abort_if(blank($edit_shop), 404);
+
         $merchant_id    = $edit_shop->merchant_id;
         $singleMerchant = $this->repoMerchant->get($merchant_id);
-        if(blank($singleMerchant) || blank($edit_shop)){
-            abort(404);
-        }
+        abort_if(blank($singleMerchant), 404);
         return view('backend.merchant.shops.edit', compact('edit_shop','merchant_id','singleMerchant'));
     }
 
@@ -75,7 +79,11 @@ class MerchantShopsController extends Controller
         }
     }
     public function delete($id){
-        $this->repo->delete($id);
+        // S29 — le socle annoncait un succes sans regarder ce que le depot avait
+        // fait. Hors perimetre le depot ne supprime rien : on repond 404 plutot
+        // que de feliciter l'agent d'une suppression qui n'a pas eu lieu.
+        abort_unless($this->repo->delete($id), 404);
+
         Toastr::success(__('merchantshops.delete_msg'),__('message.success'));
         return back();
     }

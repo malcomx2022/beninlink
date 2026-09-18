@@ -24,7 +24,9 @@ class HubRepository implements HubInterface{
         return Hub::companywise()->get();
     }
     public function get($id){
-        return Hub::find($id);
+        // S29 — lecture nue : la fiche d'un entrepot d'une AUTRE societe (adresse,
+        // telephone, coordonnees) s'ouvrait en changeant l'identifiant.
+        return Hub::companywise()->find($id);
     }
 
     public function store($request){
@@ -47,7 +49,13 @@ class HubRepository implements HubInterface{
     public function update($id, $request)
     {
         try {
-            $hub           = Hub::find($id);
+            // S29 — VOL DE LIGNE : recherche nue, puis `company_id` ecrase par la
+            // societe connectee — la ligne d'une autre societe etait TRANSFEREE.
+            $hub           = Hub::companywise()->find($id);
+
+            if (blank($hub)) {
+                return false;
+            }
             $hub->company_id = settings()->id;
             $hub->name     = $request->name;
             $hub->phone    = $request->phone;

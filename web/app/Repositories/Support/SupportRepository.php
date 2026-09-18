@@ -82,7 +82,16 @@ class SupportRepository implements SupportInterface {
     public function update($id,$request)
     {
         try {
-            $support                    =  Support::find($id);
+            // S29 — ⚠️ TROU DE S23 : ce lot-la avait scope les LECTURES du support
+            // (`all`, `get`, `chats`) et laisse les ECRITURES nues. `Support::find($id)`
+            // ici permettait de reecrire le ticket d'un autre transporteur — sujet,
+            // description, piece jointe — et de s'en attribuer la paternite par le
+            // `user_id` juste en dessous. Le `catch` vide rendait l'echec muet.
+            $support                    =  $this->ticketsVisibles()->find($id);
+
+            if (blank($support)) {
+                return false;
+            }
 
             $support->user_id           = Auth::User()->id;
             $support->department_id     = $request->department_id;
@@ -121,7 +130,11 @@ class SupportRepository implements SupportInterface {
         }
     }
     public function delete($id){
-        return Support::destroy($id);
+        // S29 — meme trou que `update()` : `Support::destroy($id)` etait nu, donc le
+        // ticket d'un autre transporteur se supprimait en changeant l'identifiant.
+        $support = $this->ticketsVisibles()->find($id);
+
+        return $support ? $support->delete() : 0;
     }
 
     public function file($image_id = '', $image)

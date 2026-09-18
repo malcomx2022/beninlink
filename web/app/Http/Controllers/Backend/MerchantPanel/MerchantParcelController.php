@@ -173,7 +173,13 @@ class MerchantParcelController extends Controller
     public function logs($id)
     {
         $parcel       = $this->repo->get($id);
-        $parcelevents = $this->repo->parcelEvents($id);
+        // S29 — le perimetre est bien pose dans le depot (`ownedParcels()`), mais
+        // hors perimetre `get()` rend `null` et la ligne suivante dereferencait :
+        // l'ecran repondait 500 la ou tout le reste du panneau repond 404. Meme
+        // famille que S15 : un refus d'acces annonce comme une panne serveur.
+        abort_if(blank($parcel), 404);
+
+        $parcelevents = $this->repo->parcelEvents($parcel->id);
         return view('backend.merchant_panel.parcel.logs', compact('parcel','parcelevents'));
     }
 
@@ -181,6 +187,8 @@ class MerchantParcelController extends Controller
     public function duplicate($id)
     {
         $parcel          = $this->repo->get($id);
+        abort_if(blank($parcel), 404); // S29
+
         $merchant        = $this->merchant->get($parcel->merchant_id);
         $shops           = $this->shop->all($parcel->merchant_id);
         $deliveryCharges = DeliveryCharge::companywise()->where('category_id',$parcel->category_id)->get();
@@ -198,7 +206,9 @@ class MerchantParcelController extends Controller
     {
         // return $this->repo->details($id);
         $parcel       = $this->repo->details($id);
-        $parcelevents = $this->repo->parcelEvents($id);
+        abort_if(blank($parcel), 404); // S29
+
+        $parcelevents = $this->repo->parcelEvents($parcel->id);
         return view('backend.merchant_panel.parcel.details',compact('parcel','parcelevents'));
     }
 
@@ -206,6 +216,8 @@ class MerchantParcelController extends Controller
     {
         $userID = Auth::user()->id;
         $parcel = $this->repo->get($id);
+        abort_if(blank($parcel), 404); // S29
+
         if($parcel->status == ParcelStatus::PENDING){
             $merchant = $this->repo->getMerchant($userID);
             $shops = $this->repo->getShops($merchant->id);
@@ -254,6 +266,8 @@ class MerchantParcelController extends Controller
     {
         $userID = Auth::user()->id;
         $parcel = $this->repo->get($id);
+        abort_if(blank($parcel), 404); // S29
+
         if($parcel->status == ParcelStatus::PENDING){
             $this->repo->delete($id,$userID);
             Toastr::success(__('parcel.delete_msg'),__('message.success'));

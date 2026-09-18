@@ -11,7 +11,8 @@ class AssetCategoryRepository implements AssetCategoryInterface{
     }
 
     public function get($id){
-        return Assetcategory::find($id);
+        // S29 — lecture nue, comme `Asset`.
+        return Assetcategory::companywise()->find($id);
     }
 
     public function store($request){
@@ -32,7 +33,15 @@ class AssetCategoryRepository implements AssetCategoryInterface{
     {
 
         try {
-            $assetcategory               =  Assetcategory::find($request->id);
+            // S29 — VOL DE LIGNE : `Assetcategory::find($request->id)` etait NU, et la ligne
+            // suivante ecrasait `company_id` avec la societe connectee. La ligne
+            // d'une autre societe n'etait donc pas seulement lue : elle etait
+            // TRANSFEREE chez nous, et disparaissait de chez son proprietaire.
+            $assetcategory               =  Assetcategory::companywise()->find($request->id);
+
+            if (blank($assetcategory)) {
+                return false;
+            }
             $assetcategory->company_id   = settings()->id;
             $assetcategory->title        = $request->title;
             $assetcategory->position     = $request->position;

@@ -35,7 +35,15 @@ class PackagingRepository implements PackagingInterface{
     public function update($request)
     {
         try {
-            $packaging                  = Packaging::find($request->id);
+            // S29 — VOL DE LIGNE : `Packaging::find($request->id)` etait NU, et la ligne
+            // suivante ecrasait `company_id` avec la societe connectee. La ligne
+            // d'une autre societe n'etait donc pas seulement lue : elle etait
+            // TRANSFEREE chez nous, et disparaissait de chez son proprietaire.
+            $packaging                  = Packaging::companywise()->find($request->id);
+
+            if (blank($packaging)) {
+                return false;
+            }
             $packaging->company_id      = settings()->id;
             $packaging->name            = $request->name;
             $packaging->price           = $request->price;

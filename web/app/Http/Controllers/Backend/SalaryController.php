@@ -57,8 +57,14 @@ class SalaryController extends Controller
         return view('backend.salary.edit',compact('singleSalary','accounts'));
     }
     public function update(UpdateRequest $request){
-        $salary    = Salary::find($request->id);
+        // S29 — `Salary::find($request->id)` etait NU, dans le controleur, et
+        // l'identifiant voyage dans le CORPS : angle mort de
+        // `WebIsolationCoverageTest`, qui n'enumere que les routes a parametre.
+        $salary    = Salary::companywise()->find($request->id);
+        abort_if(blank($salary), 404);
+
         $account  = $this->accounts->get($salary->account_id);
+        abort_if(blank($account), 404);
         $total_balance = $account->balance+$salary->amount;
          if((double) $total_balance < (double) $request->amount):
             Toastr::warning(__('salary.not_enough_balance'),__('message.warning'));

@@ -33,7 +33,15 @@ class DesignationRepository implements DesignationInterface{
     public function update($id, $request)
     {
         try {
-            $designation         = Designation::find($id);
+            // S29 — VOL DE LIGNE : `Designation::find($id)` etait NU, et la ligne
+            // suivante ecrasait `company_id` avec la societe connectee. La ligne
+            // d'une autre societe n'etait donc pas seulement lue : elle etait
+            // TRANSFEREE chez nous, et disparaissait de chez son proprietaire.
+            $designation         = Designation::companywise()->find($id);
+
+            if (blank($designation)) {
+                return false;
+            }
             $designation->company_id   = settings()->id;
             $designation->title  = $request->title;
             $designation->company_id = settings()->id;  

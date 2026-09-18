@@ -56,6 +56,13 @@ class FaqRepository implements FaqInterface
 
     public function delete($id)
     {
-        return Faq::destroy($id);
+        // S29 — `Faq::destroy($id)` etait NU : la question d'un AUTRE transporteur se
+        // supprimait en changeant l'identifiant dans l'URL. Le depot lit pourtant
+        // bien avec `companyWise()` juste au-dessus (`getFind`) : la LECTURE etait
+        // scopee, la SUPPRESSION non. On resout d'abord, on supprime ensuite —
+        // hors perimetre, rien n'est touche et la valeur de retour le dit.
+        $ligne = Faq::companyWise()->find($id);
+
+        return $ligne ? $ligne->delete() : 0;
     }
 }

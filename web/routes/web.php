@@ -599,7 +599,6 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('asset-category/create',         [AssetcategoryController::class, 'create'])->name('asset-category.create')->middleware('hasPermission:asset_category_create');
                         Route::post('asset-category/store',         [AssetcategoryController::class, 'store'])->name('asset-category.store')->middleware('hasPermission:asset_category_create');
                         Route::get('asset-category/edit/{id}',      [AssetcategoryController::class, 'edit'])->name('asset-category.edit')->middleware('hasPermission:asset_category_update');
-                        Route::get('asset-category/view/{id}',      [AssetcategoryController::class, 'view'])->name('asset-category.view')->middleware('hasPermission:asset_category_read');
                         Route::put('asset-category/update',         [AssetcategoryController::class, 'update'])->name('asset-category.update')->middleware('hasPermission:asset_category_update');
                         Route::delete('asset-category/delete/{id}', [AssetcategoryController::class, 'destroy'])->name('asset-category.delete')->middleware('hasPermission:asset_category_delete');
                         // News & Offer
@@ -614,7 +613,6 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('assets/create',         [AssetController::class, 'create'])->name('asset.create')->middleware('hasPermission:assets_create');
                         Route::post('assets/store',         [AssetController::class, 'store'])->name('asset.store')->middleware('hasPermission:assets_create');
                         Route::get('assets/edit/{id}',      [AssetController::class, 'edit'])->name('asset.edit')->middleware('hasPermission:assets_update');
-                        Route::get('assets/view/{id}',      [AssetController::class, 'view'])->name('asset.view')->middleware('hasPermission:assets_read');
                         Route::put('assets/update',         [AssetController::class, 'update'])->name('asset.update')->middleware('hasPermission:assets_update');
                         Route::delete('assets/delete/{id}', [AssetController::class, 'destroy'])->name('asset.delete')->middleware('hasPermission:assets_delete');
                         //reports

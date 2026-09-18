@@ -25,7 +25,12 @@ class InvoiceController extends Controller
 
     public function InvoiceDetails($invoiceId){
 
+        // S29 — `InvoiceDetails()` est bien scope sur le marchand connecte, mais
+        // hors perimetre il rend `null` et la ligne suivante dereferencait : 500 la
+        // ou tout le reste du panneau repond 404 (meme famille que S15).
         $invoice = $this->repo->InvoiceDetails($invoiceId);
+        abort_if(blank($invoice), 404);
+
         $invoiceParcels = InvoiceParcel::where('invoice_id',$invoice->id)->paginate(10);
         return view('backend.merchant_panel.invoice.invoice_details', compact('invoice','invoiceParcels'));
     }

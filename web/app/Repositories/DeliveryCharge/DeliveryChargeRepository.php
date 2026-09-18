@@ -81,7 +81,13 @@ class DeliveryChargeRepository implements DeliveryChargeInterface{
     public function update($request)
     {
         try {
-            $delivery_charge               = DeliveryCharge::find($request->id);
+            // S29 — VOL DE LIGNE : recherche nue, puis `company_id` ecrase par la
+            // societe connectee — la ligne d'une autre societe etait TRANSFEREE.
+            $delivery_charge               = DeliveryCharge::companywise()->find($request->id);
+
+            if (blank($delivery_charge)) {
+                return false;
+            }
             $delivery_charge->company_id   = settings()->id;
             $delivery_charge->category_id  = $request->category;
             // When category select kg. then weight = null
