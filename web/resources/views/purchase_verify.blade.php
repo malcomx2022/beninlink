@@ -4,7 +4,7 @@
 @section('message-headline', __('This domain is inactive.'))
 @section('message-title', __('WemaxDevs Product Activation.')) 
 @section('logo')
-<img src="{{ static_asset('wemaxdevs.png') }}" width="200px"/>
+<img alt="WemaxDevs" src="{{ static_asset('wemaxdevs.png') }}" width="200px"/>
 @endsection
 @section('message') 
     <h4>Instruction for activating purchase code</h4>

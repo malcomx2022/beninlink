@@ -10,7 +10,7 @@
                 <div class="card auth-boxs">
                     <div class="card-header text-center">
                         <a href="{{ url('/') }}" class="navbar-brand">
-                            <img src="{{ settings()->logo_image }}" class="logo" />
+                            <img alt="{{ settings()->name }}" src="{{ settings()->logo_image }}" class="logo" />
                         </a>
                         <h3 class="mb-1">{{ __('auth.registration_form') }}</h3>
                         <p>Please enter your user information.</p>

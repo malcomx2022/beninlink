@@ -334,7 +334,7 @@
             @elseif(!empty($request->tracking_id) && !$parcel) 
                 <div class="row my-5">
                     <div class="col-lg-6 m-auto">
-                        <img src="{{ static_asset('frontend/images/parcel-was-not-found.png') }}" width="100%"/>
+                        <img alt="{{ __('No parcel matches this tracking number') }}" src="{{ static_asset('frontend/images/parcel-was-not-found.png') }}" width="100%"/>
                     </div>
                 </div> 
             @endif

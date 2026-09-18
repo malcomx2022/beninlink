@@ -1,4 +1,5 @@
 
+<div class="table-responsive">
 <table class="table ">
     <thead>
         <tr class="bg-primary  ">
@@ -32,4 +33,5 @@
 
     </tbody>
 </table>
+</div>
 

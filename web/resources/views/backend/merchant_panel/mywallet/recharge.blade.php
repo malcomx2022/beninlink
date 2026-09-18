@@ -82,6 +82,6 @@
         </div>
     </div>
     <div class="col-lg-6">
-        <img src="{{ static_asset('backend/images/default/payout/wallet.png') }}" class="w-100" />
+        <img alt="" src="{{ static_asset('backend/images/default/payout/wallet.png') }}" class="w-100" />
     </div>
 </div>

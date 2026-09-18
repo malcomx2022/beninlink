@@ -18,6 +18,7 @@
 | 2026-09-18 | **Lot 5 livré.** Voir §13 — la navigation et les langues. Le vrai défaut n'était pas le menu déroulant mais le **contrôleur**, qui acceptait n'importe quelle locale. Et un chantier neuf est ouvert : **les SMS envoyés aux clients sont en anglais**. |
 | 2026-09-18 | **Lot 3 livré.** Voir §14 — l'ocre réglable par transporteur. L'audit chiffrait le lot à « 1 migration » : l'ocre porte **quatre** jetons, dont deux sont des contrastes mesurés contre lui, qu'il fallait recalculer. Arbitrage §9.3 tranché. |
 | 2026-09-18 | **Lot SMS livré.** Voir §15 — les 24 phrases anglaises envoyées aux clients, et deux choses que l'audit ignorait : `App::setLocale()` **réécrit** `config('app.locale')` (mon premier jet est tombé dedans), et un caractère hors alphabet GSM-7 **double la facture** de chaque SMS. |
+| 2026-09-18 | **Lot 6 livré.** Voir §16 — accessibilité. Le troisième `http://`, absent des vues, faisait rendre à Laravel des URL en clair : le lien de réinitialisation de mot de passe et le `callback_url` de FedaPay. Une ligne manquait à notre configuration nginx. |
 
 ---
 
@@ -593,7 +594,7 @@ libellé 12 px gris) se pose dans un second temps — et **par des classes
 | **3** ✅ | `accent_color` en base + réglage + `:root` | **fait** — voir §14. L'audit n'avait vu qu'une colonne : l'ocre porte **quatre** jetons, dont trois sont des contrastes mesurés contre lui. Les rendre réglables sans les recalculer aurait livré du texte illisible |
 | **4** ✅ | `auth/login` · les 2 lignes de `custom.js` · les 11 titres · les 85 placeholders · les `data-title` | **fait** — voir §12. L'audit comptait 85 placeholders : il y en avait **161**, et il avait manqué **45 chaînes** rendues en anglais par `lang/fr.json` |
 | **5** ✅ | Sidebar groupé · « Retrait » conditionné + état vide · sélecteur de langue réduit à FR/EN · filtre du tableau de bord | **fait** — voir §13. Le sélecteur n'était que la partie visible : `LocalizationController` acceptait **n'importe quelle** chaîne |
-| **6** | `focus-visible` · `alt` par lot · 42 `table-responsive` · les 2 `http://` | Accessibilité et petits écrans |
+| **6** ✅ | `focus-visible` · `alt` par lot · 42 `table-responsive` · les 2 `http://` | **fait** — voir §16. Trois des quatre items étaient déjà livrés par le lot 1. Les deux comptes étaient faux : **47** images sans `alt` et non 127 (le compte naïf coupe les balises Blade), **5** tableaux d'écran et non 42. Et le `http://` le plus coûteux n'était pas dans une vue |
 | **7** | Forme fine de la maquette (KPI, topbar, timeline de suivi) | Fidélité à la maquette |
 | **hors lot** | Migration Bootstrap 4 → 5 (217 `data-toggle`) | *chantier propre, jamais emboîté ici* |
 
@@ -1495,3 +1496,188 @@ l'installation. **Aucun des 24 points d'appel ne bougera.**
 | `config/locales.php` | la clé `default` (§15.3) |
 
 Suite complète : **516 tests, 3 021 assertions, vert**.
+
+---
+
+## 16. Lot 6 — ce qui a été livré le 2026-09-18
+
+### 16.1 Trois items sur quatre étaient déjà faits
+
+Le §8 annonçait `focus-visible`, les `alt`, les 42 `table-responsive` et les deux
+`http://`. À la vérification, **le lot 1 avait déjà livré** :
+
+| Item | Où il vit depuis le lot 1 |
+|---|---|
+| `:focus-visible` sur liens, boutons et champs | `theme-frontend.css` §4 et `theme-backoffice.css` §10 |
+| Les trois `viewport` qui bloquaient le zoom | `header.blade.php`, `master.blade.php`, `installer`, `parcel-map` |
+| Le sidebar inactif à 4,30:1 | `.nav-left-sidebar .navbar-nav .nav-link` → `--bl-text-muted` |
+
+Ils ne sont pas refaits. Ils sont désormais **tenus par des tests** — ce sont des
+lignes du socle, donc précisément ce qu'une montée de We Courier réécrit.
+
+### 16.2 Les images : 47, pas 127 — et le piège de mesure vaut d'être dit
+
+Le premier comptage en a trouvé **127**. Il était faux, et d'une façon qui se
+reproduira chez quiconque refait la mesure vite :
+
+```
+<img[^>]*>     ← FAUX sur du Blade
+```
+
+`->` contient un `>`. La classe `[^>]` s'arrête donc au premier `->` venu, en
+plein milieu de la balise, et un
+
+```html
+<img src="{{ $u->image }}" alt="Photo de profil">
+```
+
+passe pour **dépourvu d'alt**. Le compte juste, avec un lecteur qui respecte les
+guillemets, est **47 images dans 29 fichiers**. Le test embarque ce lecteur, et
+son commentaire explique pourquoi une expression régulière ne suffit pas.
+
+### 16.3 Un `alt` ne se remplit pas au kilomètre
+
+`alt="image"` répété 47 fois est **pire que rien** : un lecteur d'écran annonce
+alors « image » sans fin, et l'utilisateur perd le peu qu'il avait. Chaque image
+a donc été classée.
+
+**37 sont décoratives et reçoivent `alt=""`** — qui ne veut pas dire « je n'ai
+pas trouvé quoi écrire » mais « saute-moi » :
+
+- la vignette d'un tableau d'administration dont le **titre est dans la cellule
+  voisine** (articles, services, partenaires, arguments) ;
+- l'**avatar d'une notification**, dont le nom de la personne est rendu juste à
+  côté — l'annoncer deux fois est du bruit ;
+- l'illustration qui accompagne les écrans de connexion et d'inscription ;
+- les icônes de réseaux sociaux des courriels : elles sont dans des `<a>` **sans
+  `href`**, donc ce ne sont pas des liens (défaut du socle relevé, non corrigé
+  ici — il ne relève pas de ce lot).
+
+**Les dix autres portent une information que rien d'autre sur la page ne donne** :
+
+| Image | Ce que l'`alt` dit | Pourquoi |
+|---|---|---|
+| Logo du transporteur (7 vues) | `settings()->name` | Le logo **identifie le site**. Il ne s'appelle pas « logo » |
+| Logo de partenaire | le nom du partenaire | Il est **seul dans un lien** : sans alt, le lien est muet |
+| Pièce d'identité, registre de commerce | « Pièce d'identité téléversée » | La **présence** du document est l'information |
+| Badges Google Play / App Store | « Télécharger sur… » | Ce sont des liens |
+| Aperçu de bannière | « Bannière actuelle » | Dire ce qu'on voit, pas le nom du champ |
+
+**La plus importante est celle de la page de suivi public.** Quand aucun colis ne
+correspond au numéro saisi, le bloc ne contient **qu'une image** — pas une ligne
+de texte. Sans `alt`, la page ne disait strictement rien à qui ne la voit pas :
+le formulaire semblait n'avoir rien fait. Elle dit maintenant « Aucun colis ne
+correspond à ce numéro de suivi ».
+
+Les six textes passent par **`lang/fr.json`**, le mécanisme du lot 4, plutôt que
+par du français codé en dur : un seul fichier touché, et le test du lot 4 couvre
+**automatiquement** les nouvelles clés.
+
+### 16.4 Les tableaux : 5 écrans, pas 42
+
+Il y a bien **57** `<table>` sans `table-responsive`. Mais **52 ne sont pas des
+écrans**, et l'enveloppe n'y veut rien dire — `table-responsive` pose un
+`overflow-x: auto` sur un conteneur de page :
+
+| Cible | Tables | Pourquoi l'enveloppe est inutile |
+|---|---|---|
+| PDF (dompdf) | 22 | Une page PDF ne défile pas ; l'attribut est ignoré |
+| Impression | 18 | Une feuille de papier non plus |
+| Courriel | 9 | Le client de messagerie retire les `div` de mise en page ; Outlook rend en Word |
+| Installeur | 3 | Il tourne une fois, chez l'intégrateur, sur un poste de travail |
+
+C'est la même règle que le §6.7 posait pour le style en ligne : **ce qui vise le
+papier ou le courriel ne suit pas les conventions de l'écran.**
+
+Restent **5 vrais écrans**, tous enveloppés — dont les **trois matrices de
+permissions** (`role/create`, `role/edit`, `user/permissions`), les tableaux les
+plus larges de l'application : sur un téléphone, c'est la page entière qui
+défilait, et les colonnes de droite devenaient inatteignables. Cela compte pour
+des agents en hub, qui travaillent au téléphone.
+
+La liste des familles exclues vit **dans le test** : ajouter une exception
+demande de la justifier là, pas de la laisser passer en silence.
+
+### 16.5 Le contenu mixte — et le `http://` qui n'était pas dans une vue
+
+Les deux `http://` annoncés chargeaient Toastr depuis `cdn.bootcss.com`, dans
+l'**installeur**. Un navigateur bloque une ressource en clair sur une page servie
+en `https` : l'installeur perdait ses messages, sans rien dire ailleurs que dans
+la console. Le dépôt **livre déjà Toastr localement** (`public/backend/vendor/`) :
+les deux références pointent dessus, ce qui règle le contenu mixte **et** retire
+un CDN — dans le sens du §7.5.
+
+**Le troisième était ailleurs, et il coûte davantage.**
+
+En fastcgi, nginx termine le TLS et **ne le dit pas à PHP**. Sans
+`fastcgi_param HTTPS on`, `$_SERVER['HTTPS']` reste vide — et c'est la seule
+chose que Symfony consulte ici : `TrustProxies` ne s'applique pas, il n'y a pas
+de proxy HTTP devant, et `$proxies` vaut `null`. Notre propre
+`docs/guides/infra/nginx/beninlink.conf` ne posait pas cette ligne.
+
+Mesuré en construisant la requête telle que PHP-FPM la reçoit :
+
+| Configuration | `isSecure()` | `url('/reinitialiser')` |
+|---|---|---|
+| `beninlink.conf` tel qu'il était | **non** | `http://pme.beninlink.app/reinitialiser` |
+| avec `fastcgi_param HTTPS on` | oui | `https://pme.beninlink.app/reinitialiser` |
+
+Ce que cela vise :
+
+- le **lien de réinitialisation de mot de passe** envoyé par courriel ;
+- le **`callback_url` remis à FedaPay** (`FedaPayController` le construit avec
+  `route()`) — l'URL sur laquelle le client revient après avoir payé.
+
+L'en-tête HSTS déjà posé fait remonter un navigateur en `https`, mais seulement
+après une première visite du domaine, et il ne couvre pas une URL transmise à un
+tiers. **Une ligne** corrige la racine, et la détection de schéma de l'installeur
+(`if (!empty($_SERVER['HTTPS']))`) redevient juste du même coup — sans la
+retoucher.
+
+### 16.6 Ce que ce lot coûte à la carte de fusion, mesuré
+
+C'est le **seul lot qui ne pouvait pas s'ajouter par-dessus** : aucune feuille de
+style n'écrit un `alt`. Il touche donc des vues du socle, et le chiffre mérite
+d'être posé plutôt que tu :
+
+- **35 vues** en tout : **29** reçoivent un `alt`, **5** une enveloppe de
+  tableau, et l'installeur ses deux références locales ;
+- **15** d'entre elles étaient **déjà modifiées** par BeninLink — coût de fusion
+  nul, le conflit existait déjà ;
+- le coût réellement ajouté à la carte est donc de **20 fichiers**, et ils sont
+  nommés dans le message du commit.
+
+Pour comparaison, le lot 1 en avait touché **six**, et par choix : il pouvait
+s'ajouter par-dessus. Ici, non — et c'est la raison pour laquelle cet item
+traînait depuis le début du plan.
+
+⚠️ Ce chiffre est mesuré contre `eb56a37`, que `docs/guides/socle/` donne pour la
+base de fusion. Le lot 4 a signalé que cette affirmation n'est **pas vérifiable**
+en l'état (le dépôt a deux racines, toutes deux portant déjà des ajouts
+BeninLink). L'ordre de grandeur tient ; la précision, non, tant que ce guide
+n'est pas corrigé.
+
+### 16.7 Les tests mordent, vérifié
+
+Cinq régressions introduites exprès, une à la fois, depuis l'arbre livré :
+
+| Ce qu'on défait | Ce qui échoue |
+|---|---|
+| l'`alt` de la page de suivi retiré | 2 tests |
+| un `alt=""` d'avatar remplacé par « Photo » | 1 test |
+| une matrice de permissions dénudée | 1 test |
+| le CDN en clair rétabli | 1 test |
+| `fastcgi_param HTTPS on` retirée d'nginx | 1 test |
+
+### 16.8 Ce que le lot 6 ne livre PAS
+
+- **Les `<a>` sans `href`** des pieds de courriel : ce sont de faux liens, relevés
+  ici mais hors du périmètre d'un lot d'accessibilité des images.
+- **Le contraste des textes du socle en dehors du sidebar** n'a pas été
+  re-balayé : les six pastilles et les surfaces sémantiques l'ont été au lot 1.
+- **Aucun audit au lecteur d'écran** : ce lot corrige ce qu'un fichier peut
+  prouver. Les ordres de tabulation, les libellés de formulaire et les régions
+  ARIA demandent un essai réel, et c'est un autre travail.
+- **L'installeur reste en anglais** (§12.8), et son `lang="en"` est donc **juste**
+  — il n'est pas internationalisé du tout. Le corriger sans le traduire ferait
+  annoncer du français à un lecteur d'écran sur une page anglaise.

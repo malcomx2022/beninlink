@@ -54,7 +54,7 @@
                         </form>
                     </div>
                     <div class="col-lg-7 footer-img">
-                        <img class="img-responsive my-5 " src="{{ static_asset('images/default/we-courier-process.png') }}" width="100%" />
+                        <img alt="" class="img-responsive my-5 " src="{{ static_asset('images/default/we-courier-process.png') }}" width="100%" />
                     </div>
                 </div>
             </div>

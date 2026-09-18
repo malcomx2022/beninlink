@@ -27,7 +27,7 @@
             <small class="text-danger mt-2">{{ $message }}</small>
         @enderror
         <div class="mt-3">
-            <img src="{{ @$section['banner_image'] }}" width="30%" />
+            <img alt="{{ __('Current banner') }}" src="{{ @$section['banner_image'] }}" width="30%" />
         </div>
     </div>    
 </div>

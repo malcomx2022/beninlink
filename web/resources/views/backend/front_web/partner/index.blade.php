@@ -56,7 +56,7 @@
                                 <tr>
                                     <td>{{$i++}}</td>
                                     <td>{{@$partner->name}}</td>
-                                    <td><img src="{{ @$partner->image }}"/></td>
+                                    <td><img alt="" src="{{ @$partner->image }}"/></td>
                                     <td>{{@$partner->link}}</td> 
                                     <td>{!!@$partner->my_status!!}</td>
                                     <td>{{@$partner->position}}</td>

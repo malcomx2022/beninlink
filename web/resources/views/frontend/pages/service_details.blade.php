@@ -17,7 +17,7 @@
                             <div class="my-4 text-center" >
                                 <div class="service-box">
                                     <div class="icon-box d-flex"> 
-                                        <img src="{{ $service->image }}" width="100%"/>
+                                        <img alt="{{ $service->title }}" src="{{ $service->image }}" width="100%"/>
                                     </div>
                                 </div>
                             </div> 
@@ -36,7 +36,7 @@
                                     <div class="my-4" >
                                         <div class="service-box">
                                             <div class="icon-box d-flex"> 
-                                                <img src="{{ $latest_service->image }}" width="100%"/>
+                                                <img alt="" src="{{ $latest_service->image }}" width="100%"/>
                                             </div>
                                         </div>
                                     </div>

@@ -18,7 +18,12 @@
         <link rel="stylesheet" href="{{static_asset('backend')}}/libs/css/custom.css">
         <link rel="stylesheet" href="{{static_asset('backend')}}/css/custom.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/6.5.1/css/flag-icons.min.css" />
-        <link rel="stylesheet" href="http://cdn.bootcss.com/toastr.js/latest/css/toastr.min.css">
+        {{-- Toastr est livré AVEC le dépôt (public/backend/vendor/toastr/). Le socle
+             le chargeait depuis cdn.bootcss.com en http:// — du contenu mixte, donc
+             bloqué par le navigateur sur un site en https, et l'installeur perdait
+             ses messages sans rien dire. La copie locale règle les deux, et retire
+             un CDN de plus. --}}
+        <link rel="stylesheet" href="{{ static_asset('backend') }}/vendor/toastr/toastr.min.css">
 
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha512-1sCRPdkRXhBV2PBLUdRb4tMg1w2YPf37qatUFeS7zlBy7jJI8Lf4VHwWfZZfpXtYSLy85pkm9GaYVYMfw5BC1A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
         <link rel="stylesheet" href="{{static_asset('backend')}}/css/progressbar.css">
@@ -165,7 +170,7 @@
 <script src="{{static_asset('backend')}}/vendor/bootstrap-five/bootstrap.min.js"></script>
 <script src="{{static_asset('backend')}}/vendor/bootstrap/js/bootstrap.bundle.js"></script>
 <script src="{{static_asset('backend')}}/libs/js/custom.js"></script>
-<script src="http://cdn.bootcss.com/toastr.js/latest/js/toastr.min.js"></script>
+<script src="{{ static_asset('backend') }}/vendor/toastr/toastr.min.js"></script>
 {{-- SDK Firebase retiré avec le push navigateur (D12) : l'installateur ne s'en servait pas. --}}
 
 @include('installer.stepper_js')

@@ -31,12 +31,12 @@
 
     <li class="list-group-item profile-list-group-item justify-content-center">
         <span class="float-left font-weight-bold">{{ __('levels.nid') }}</span>
-        <span class="float-right profile-list-group-item-addresss"><img src="{{ $singleMerchant->nid }}" width="100px" /></span>
+        <span class="float-right profile-list-group-item-addresss"><img alt="{{ __('Uploaded identity document') }}" src="{{ $singleMerchant->nid }}" width="100px" /></span>
     </li>
 
     <li class="list-group-item profile-list-group-item justify-content-center">
         <span class="float-left font-weight-bold">{{ __('levels.trade_license') }}</span>
-        <span class="float-right profile-list-group-item-addresss"><img src="{{ $singleMerchant->trade }}" width="100px" /></span>
+        <span class="float-right profile-list-group-item-addresss"><img alt="{{ __('Uploaded trade licence') }}" src="{{ $singleMerchant->trade }}" width="100px" /></span>
     </li>
 
     <li class="list-group-item profile-list-group-item">

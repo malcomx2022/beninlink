@@ -90,6 +90,7 @@
 
                             @method('PUT')
                             @csrf
+                            <div class="table-responsive">
                             <table class="table" style="width:100%">
                                 <thead>
                                     <tr>
@@ -138,6 +139,7 @@
                                         </tr>
                                 </tbody>
                             </table>
+                            </div>
                         @endif
                     </div>
                 </div>
