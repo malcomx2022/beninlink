@@ -21,7 +21,16 @@ class MapParcelController extends Controller
     public function parcelMap($id,$lat,$long,$status)
     {
 
-        $user = User::find($id)->deliveryman->id;
+        // S28 — `User::find($id)` etait NU : n'importe quel identifiant
+        // d'utilisateur, de n'importe quelle societe, etait accepte, et la route
+        // qui menait ici vivait hors du groupe `auth`. La vue verse
+        // `@json($mapParcels)` dans la page : nom, telephone et adresse des
+        // clients, plus le montant a encaisser. La route est retiree ; la portee
+        // est posee ici aussi pour que la remonter ne rouvre pas la fuite.
+        $livreur = User::companywise()->with('deliveryman')->find($id);
+        abort_if(blank($livreur) || blank($livreur->deliveryman), 404);
+
+        $user = $livreur->deliveryman->id;
 
         $parcels =  Parcel::companywise()->orderBy('updated_at')->orderBy('priority_type_id')->with(['merchant'])->where('status',$status)->where(function($query) use ($user){
             $query->wherehas('parcelEvent',function($eventquery)  use ($user) {

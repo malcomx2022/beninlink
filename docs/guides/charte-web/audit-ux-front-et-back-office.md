@@ -23,6 +23,9 @@
 | 2026-09-18 | **Lot 6 complété.** Voir §19 — le §16 pose l'attribut `alt` ; il restait sa **qualité** : 91 des 106 valeurs préexistantes étaient inutilisables (`alt="user"` sur le logo des réglages, `alt="stripe.png"` sur l'image de PayPal). Et son `alt="{{ settings()->name }}"` dans trois courriels **bâtis par le worker** rendait F4 visible. Plus trois défauts de sécurité dans le journal d'activité (§19.6). |
 | 2026-09-18 | **S22 corrigé.** Les trois défauts du journal d'activité relevés au §19.6 : périmètre société, permission de route, échappement. Détail dans `web/CARTOGRAPHIE.md`. Au passage, le constat systémique : **31 des 100 routes à identifiant** du back-office ne portent aucune permission, et les **12** `::find($id)` de ses contrôleurs aucun périmètre. |
 | 2026-09-18 | **S23 à S26 corrigés**, et les cinq routes mortes retirées. Les quatre fuites du back-office avaient la forme de S22 : liste scopée, détail en `find($id)` nu. Deux élargissements assumés (le fil d'un ticket, les quatre méthodes du dépôt des boutiques) et un verbe corrigé (`GET` → `PUT` sur une écriture). **Aucune permission ajoutée** : cela reste une décision. |
+| 2026-09-18 | **S27 corrigé** : l'éditeur du fichier `.env` répondait **200 sans authentification** — onze routes montées par un paquet auto-découvert. Relevé en inventoriant les routes pour le filet. Second versant : les sauvegardes du paquet sont des copies intégrales de `.env` et leur répertoire n'était pas ignoré par git. |
+| 2026-09-18 | **S28 corrigé** : la carte des courses du livreur répondait **200 sans authentification** et versait dans la page le **nom, le téléphone et l'adresse des clients** plus le montant à encaisser. Route déclarée hors du groupe `auth`, `User::find($id)` nu, aucun appelant. Prouvé par appel HTTP. |
+| 2026-09-18 | **Filet d'isolation du web livré.** Voir §20 — le pendant de `IsolationCoverageTest` pour les **203** routes web à paramètre. Il ne prétend pas que le back-office est isolé : il gèle l'arriéré (171 routes non prouvées, un plafond qui ne monte pas) et pose les deux invariants qui auraient attrapé S27 et S28 le jour où ils ont été écrits. |
 
 ---
 
@@ -2012,3 +2015,119 @@ Suite complète : **543 tests, 44 136 assertions, vert**. Les tests nouveaux ont
 été vérifiés par sabotage : `alt="user"` remis sur l'aperçu du logo, PayPal
 renommé `stripe.png`, un courriel remis à `settings()` au rendu, l'enveloppe de
 l'installeur retirée — chacun échoue en nommant le fichier.
+
+
+---
+
+## 20. Le filet d'isolation du web — ce qui a été livré le 2026-09-18
+
+### Ce que l'audit demandait
+
+Le §19.6, puis la correction de S22, avaient laissé une phrase dans
+`CARTOGRAPHIE.md` : « **Élargir le filet aux routes web à identifiant est un
+chantier à ouvrir.** » C'est ce lot. Le filet **S7** (`IsolationCoverageTest`)
+ne couvre que `/api/v10` ; le back-office n'avait pas d'équivalent, et c'est
+précisément ce qui a laissé passer S22 à S26.
+
+### La surface, mesurée
+
+Le socle n'enregistre les routes du locataire que si l'hôte de la requête figure
+dans la table `domains` — donc `php artisan route:list` ne les voit pas, et
+personne n'avait jamais lu la liste en entier. En la montant dans un test :
+
+| | |
+|---|---|
+| Routes à paramètre, toutes origines | **249** |
+| … `/api/v10` (filet S7 existant) | 31 |
+| … montées par un **paquet** | 6 |
+| … publiques ou d'authentification | 9 |
+| … **routes d'application du back-office** | **203** |
+
+Les 203 se répartissent en `admin/` 166, `merchant/` 31, `super-admin/` 6 — plus
+deux qui vivent **à la racine** (`category/edit/{id}`, `category/delete/{id}`) et
+qu'un filtre par préfixe aurait manquées.
+
+### Ce que le filet fait, et ce qu'il ne fait pas
+
+Il **ne dit pas** que le back-office est isolé : il ne l'est pas. Il pose quatre
+choses vérifiables :
+
+1. **Tout est classé.** Chaque route à paramètre est déclarée *prouvée* (avec le
+   test), *exemptée* (avec le motif pour lequel son paramètre ne désigne pas une
+   ressource d'autrui), *publique à dessein* (avec le motif), ou *héritée*. Une
+   route neuve qui n'est dans aucune liste fait échouer la suite.
+2. **L'arriéré ne peut que rétrécir.** 171 routes héritées, plafond figé. Le seul
+   mouvement autorisé est `HERITAGE` → `PROUVEES`, qui baisse le plafond.
+3. **Une route de locataire est authentifiée**, ou déclarée publique avec un
+   motif. C'est l'invariant qui aurait attrapé **S28**.
+4. **Aucun paquet ne monte de routes web en silence.** Le critère est l'espace de
+   noms de l'action, pas le préfixe d'URL : un paquet peut monter ses routes
+   n'importe où, y compris sous `admin/`. C'est l'invariant qui aurait attrapé
+   **S27**.
+
+État de départ : **7 routes prouvées** (celles de S22 à S26), **33 exemptées**,
+**6 publiques**, **171 héritées**.
+
+### Les deux failles que l'inventaire a fait tomber
+
+Ce lot n'a pas seulement posé un filet : le simple fait de lire la liste en
+entier a sorti deux expositions **non authentifiées**, toutes deux corrigées et
+documentées dans `web/CARTOGRAPHIE.md` :
+
+- **S27** — `GET /env-editor` répondait **200** à un visiteur anonyme : lecture
+  et écriture du fichier d'environnement (identifiants de base, `APP_KEY`, clés
+  FedaPay), régénération de la clé d'application, restauration de sauvegardes.
+- **S28** — `GET /deliveryMan/parcel/map/{id}/{lat}/{long}/{status}` répondait
+  **200** à un visiteur anonyme et versait dans le source de la page le **nom, le
+  téléphone et l'adresse des clients finals**, plus le montant à encaisser.
+  Déclarée hors du groupe `auth`, `User::find($id)` nu, **aucun appelant**.
+
+Les deux ont la même leçon, et c'est la leçon du lot : **une surface que
+personne ne lit en entier n'est pas une surface sûre.** Les deux invariants 3 et
+4 existent pour que la lecture soit faite par la suite de tests, à chaque commit,
+plutôt que par quelqu'un qui y penserait.
+
+### Un mécanisme débloqué au passage
+
+`BackOfficeScopingTest` affirmait que les routes du back-office étaient « hors de
+portée d'un test ». C'était faux : il suffit de semer le domaine. Le trait
+`Tests\Concerns\MountsTenantRoutes` le fait, et c'est ce qui a permis de
+**prouver S28 par un appel HTTP** (200, avec le téléphone du client dans le
+corps) au lieu de le déduire de sa déclaration. Le commentaire est corrigé ; un
+test neuf sur le back-office peut désormais appeler la route pour de vrai.
+
+Le piège, noté dans le trait : `PreventAccessFromCentralDomains` refuse par 404
+tout appel dont l'hôte est `localhost` ou `127.0.0.1`. Un 404 « route absente »
+et un 404 « hôte central » sont indistinguables — d'où un test qui vérifie que
+l'hôte utilisé sert bien les routes du locataire, sans quoi tout répondrait 404
+et les tests passeraient sans rien prouver.
+
+### Couverture
+
+- `tests/Feature/WebIsolationCoverageTest.php` — 6 tests, les quatre invariants
+  plus les deux garde-fous (pas de déclaration fantôme, F6 : un test déclaré doit
+  avoir une base migrée). **Six sabotages**, un par invariant, chacun vérifié
+  rouge. Remettre la route de S28 en fait rougir **deux** : non classée *et* non
+  authentifiée.
+- `tests/Feature/DeliverymanMapLeakTest.php` — 7 tests pour S28. **Deux
+  sabotages** : la route remise (2 rouges), la portée du contrôleur retirée
+  (2 rouges).
+
+Suite complète : **595 tests, 44 376 assertions, vert.**
+
+### Ce que le filet laisse à décider
+
+- **Les 171 routes héritées.** C'est un arriéré, pas un permis. Le filet le gèle
+  et le rend visible ; le réduire est un chantier à chiffrer, écran par écran.
+- **Les permissions**, toujours : les 6 routes du tableau de l'inventaire n'en
+  portent aucune, et en ajouter une **retire l'accès** à un rôle qui ne la porte
+  pas.
+- **`admin/profile/{id}` et `merchant/profile/{id}`** comparent bien à
+  l'utilisateur connecté, mais répondent **500** au lieu de 403 ou 404 : un refus
+  d'accès annoncé comme une panne serveur. Signalé, pas corrigé — ce lot ne
+  touche pas au socle du profil.
+- **`POST admin/income/search-account/{id}`** est une route morte : personne ne
+  l'appelle (même l'écran des revenus appelle celle des dépenses), et son
+  contrôleur passe l'objet `Request` à `find()`, qui le traite comme un tableau
+  de clés et renvoie une **collection**. Depuis S24 c'est scopé, donc sans fuite.
+  Signalée, pas retirée.
