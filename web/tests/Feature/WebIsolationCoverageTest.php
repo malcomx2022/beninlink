@@ -78,6 +78,35 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/parcel/delivered/logs/info/{id}' => BackOfficeScopingTest::class,
         // S26 — la boutique par défaut
         'PUT admin/merchant/shops/default/{merchant_id}/{id}' => BackOfficeScopingTest::class,
+        // S29 — la vitrine : la lecture etait scopee, la SUPPRESSION non (6 deportes)
+        'DELETE admin/front-web/blogs/delete/{id}' => BackOfficeWriteScopeTest::class,
+        'GET admin/front-web/blogs/edit/{id}' => BackOfficeWriteScopeTest::class,
+        'PUT admin/front-web/blogs/update/{id}' => BackOfficeWriteScopeTest::class,
+        'DELETE admin/front-web/faq/delete/{id}' => BackOfficeWriteScopeTest::class,
+        'GET admin/front-web/faq/edit/{id}' => BackOfficeWriteScopeTest::class,
+        'PUT admin/front-web/faq/update/{id}' => BackOfficeWriteScopeTest::class,
+        'DELETE admin/front-web/partner/delete/{id}' => BackOfficeWriteScopeTest::class,
+        'GET admin/front-web/partner/edit/{id}' => BackOfficeWriteScopeTest::class,
+        'PUT admin/front-web/partner/update/{id}' => BackOfficeWriteScopeTest::class,
+        'DELETE admin/front-web/service/delete/{id}' => BackOfficeWriteScopeTest::class,
+        'GET admin/front-web/service/edit/{id}' => BackOfficeWriteScopeTest::class,
+        'PUT admin/front-web/service/update/{id}' => BackOfficeWriteScopeTest::class,
+        'DELETE admin/front-web/social-link/delete/{id}' => BackOfficeWriteScopeTest::class,
+        'GET admin/front-web/social-link/edit/{id}' => BackOfficeWriteScopeTest::class,
+        'PUT admin/front-web/social-link/update/{id}' => BackOfficeWriteScopeTest::class,
+        'DELETE admin/front-web/why-courier/delete/{id}' => BackOfficeWriteScopeTest::class,
+        'GET admin/front-web/why-courier/edit/{id}' => BackOfficeWriteScopeTest::class,
+        'PUT admin/front-web/why-courier/update/{id}' => BackOfficeWriteScopeTest::class,
+        'GET admin/front-web/pages/edit/{id}' => BackOfficeWriteScopeTest::class,
+        'PUT admin/front-web/pages/update/{id}' => BackOfficeWriteScopeTest::class,
+        // S29 — le trou de S23 : les ecritures du support restaient nues
+        'DELETE admin/support/delete/{id}' => BackOfficeWriteScopeTest::class,
+        'GET admin/support/status-update/{id}' => BackOfficeWriteScopeTest::class,
+        // S29 — le trou de S26 : les ecritures des boutiques restaient nues
+        'GET admin/merchant/shops/create/{id}' => BackOfficeWriteScopeTest::class,
+        'DELETE admin/merchant/shops/delete/{id}' => BackOfficeWriteScopeTest::class,
+        'GET admin/merchant/shops/edit/{id}' => BackOfficeWriteScopeTest::class,
+        'GET admin/merchant/{id}/shops/index' => BackOfficeWriteScopeTest::class,
     ];
 
     /**
@@ -99,6 +128,12 @@ class WebIsolationCoverageTest extends TestCase
         'PUT admin/addons/{addon}' => 'un module de la plateforme',
         'PATCH admin/addons/{addon}' => 'un module de la plateforme',
         'DELETE admin/addons/{addon}' => 'un module de la plateforme',
+
+        // La section : le parametre nomme est un TYPE de section, pas un identifiant
+        // de ressource — `SectionController::edit($type)` le dit, et la lecture est
+        // `companyWise()`.
+        'GET admin/front-web/section/edit/{id}' => 'un type de section, pas un identifiant ; la lecture est scopee',
+        'PUT admin/front-web/section/update/{id}' => 'un type de section, pas un identifiant ; la lecture est scopee',
 
         // Un nom, pas un identifiant.
         'PUT admin/settings/pay-out/setup/update/{paymentmethod}' => 'un nom de passerelle, pas un identifiant de ressource',
@@ -163,12 +198,6 @@ class WebIsolationCoverageTest extends TestCase
         'DELETE admin/designation/delete/{id}',
         'DELETE admin/expense/delete/{id}',
         'DELETE admin/fraud/delete/{id}',
-        'DELETE admin/front-web/blogs/delete/{id}',
-        'DELETE admin/front-web/faq/delete/{id}',
-        'DELETE admin/front-web/partner/delete/{id}',
-        'DELETE admin/front-web/service/delete/{id}',
-        'DELETE admin/front-web/social-link/delete/{id}',
-        'DELETE admin/front-web/why-courier/delete/{id}',
         'DELETE admin/fund-transfer/delete/{id}',
         'DELETE admin/hub/cash-received-deliveryman/delete/{id}',
         'DELETE admin/hub/delete/{id}',
@@ -177,7 +206,6 @@ class WebIsolationCoverageTest extends TestCase
         'DELETE admin/income/delete/{id}',
         'DELETE admin/merchant/delete/{id}',
         'DELETE admin/merchant/paymentinfo/delete/{id}',
-        'DELETE admin/merchant/shops/delete/{id}',
         'DELETE admin/merchant/{merchant}/delivery-charge/delete/{id}',
         'DELETE admin/news-offer/delete/{id}',
         'DELETE admin/packaging/delete/{id}',
@@ -189,7 +217,6 @@ class WebIsolationCoverageTest extends TestCase
         'DELETE admin/salary/delete/{id}',
         'DELETE admin/salary/salary-generate/delete/{id}',
         'DELETE admin/sms-settings/delete/{id}',
-        'DELETE admin/support/delete/{id}',
         'DELETE admin/todo/delete/{id}',
         'DELETE admin/user/delete/{id}',
         'DELETE admin/wallet-request/delete/{id}',
@@ -214,14 +241,6 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/designations/edit/{id}',
         'GET admin/expense/edit/{id}',
         'GET admin/fraud/edit/{id}',
-        'GET admin/front-web/blogs/edit/{id}',
-        'GET admin/front-web/faq/edit/{id}',
-        'GET admin/front-web/pages/edit/{id}',
-        'GET admin/front-web/partner/edit/{id}',
-        'GET admin/front-web/section/edit/{id}',
-        'GET admin/front-web/service/edit/{id}',
-        'GET admin/front-web/social-link/edit/{id}',
-        'GET admin/front-web/why-courier/edit/{id}',
         'GET admin/fund-transfer/edit/{id}',
         'GET admin/hub-payment/cancel-process/{id}',
         'GET admin/hub-payment/cancel-reject/{id}',
@@ -238,12 +257,9 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/income/edit/{id}',
         'GET admin/merchant/edit/{id}',
         'GET admin/merchant/invoice-generate/{id}',
-        'GET admin/merchant/shops/create/{id}',
-        'GET admin/merchant/shops/edit/{id}',
         'GET admin/merchant/view/{id}',
         'GET admin/merchant/{id}/payment/add',
         'GET admin/merchant/{id}/payment/index',
-        'GET admin/merchant/{id}/shops/index',
         'GET admin/merchant/{merchant_id}/invoice',
         'GET admin/merchant/{merchant_id}/invoice/csv/{invoice_id}',
         'GET admin/merchant/{merchant_id}/invoice/journal/{invoice_id}',
@@ -273,7 +289,6 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/salary/salary-generate/edit/{id}',
         'GET admin/salarys/edit/{id}',
         'GET admin/sms-settings/edit/{id}',
-        'GET admin/support/status-update/{id}',
         'GET admin/users/edit/{id}',
         'GET admin/users/permissions/{id}',
         'GET category/edit/{id}',
@@ -300,14 +315,6 @@ class WebIsolationCoverageTest extends TestCase
         'PUT admin/customs/rules/update/{id}',
         'PUT admin/delivery-zone/countries/{id}',
         'PUT admin/expense/update/{id}',
-        'PUT admin/front-web/blogs/update/{id}',
-        'PUT admin/front-web/faq/update/{id}',
-        'PUT admin/front-web/pages/update/{id}',
-        'PUT admin/front-web/partner/update/{id}',
-        'PUT admin/front-web/section/update/{id}',
-        'PUT admin/front-web/service/update/{id}',
-        'PUT admin/front-web/social-link/update/{id}',
-        'PUT admin/front-web/why-courier/update/{id}',
         'PUT admin/fund-transfer/update/{id}',
         'PUT admin/hub/incharge/{hubID}/update/{id}',
         'PUT admin/hub/payment-request/update/{id}',
@@ -326,7 +333,7 @@ class WebIsolationCoverageTest extends TestCase
     ];
 
     /** Le compte figé de l'arriéré. Il descend, il ne monte pas. */
-    private const PLAFOND_HERITAGE = 171;
+    private const PLAFOND_HERITAGE = 143;
 
     protected function setUp(): void
     {

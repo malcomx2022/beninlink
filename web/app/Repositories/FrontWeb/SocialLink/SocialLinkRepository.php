@@ -58,6 +58,13 @@ class SocialLinkRepository implements SocialLinkInterface
 
     public function delete($id)
     {
-        return SocialLink::destroy($id);
+        // S29 — `SocialLink::destroy($id)` etait NU : le lien social d'un AUTRE transporteur se
+        // supprimait en changeant l'identifiant dans l'URL. Le depot lit pourtant
+        // bien avec `companyWise()` juste au-dessus (`getFind`) : la LECTURE etait
+        // scopee, la SUPPRESSION non. On resout d'abord, on supprime ensuite —
+        // hors perimetre, rien n'est touche et la valeur de retour le dit.
+        $ligne = SocialLink::companyWise()->find($id);
+
+        return $ligne ? $ligne->delete() : 0;
     }
 }

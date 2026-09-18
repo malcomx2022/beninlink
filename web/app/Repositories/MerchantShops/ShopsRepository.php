@@ -88,7 +88,17 @@ class ShopsRepository implements ShopsInterface{
         public function update($request){
 
             try {
-                $shop              = MerchantShops::where('id',$request->id)->first();
+                // S29 — ⚠️ TROU DE S26 : ce lot-la avait scope les QUATRE lectures du
+                // depot (`all`, `get`, `merchant_shops_get`, `defaultShop`) et laisse
+                // `update()` et `delete()` nues. Ici, la boutique d'un marchand d'une
+                // AUTRE societe se reecrivait — et la ligne `merchant_id` juste en
+                // dessous permettait en plus de la RATTACHER a un autre marchand.
+                $shop              = $this->boutiquesDeLaSociete()->where('id',$request->id)->first();
+
+                if (blank($shop)) {
+                    return false;
+                }
+
                 $shop->merchant_id = $request->merchant_id;
                 $shop->name        = $request->name;
                 $shop->contact_no  = $request->contact_no;
@@ -106,7 +116,10 @@ class ShopsRepository implements ShopsInterface{
         }
 
         public function delete($id){
-            return MerchantShops::destroy($id);
+            // S29 — meme trou que `update()` : suppression nue.
+            $shop = $this->boutiquesDeLaSociete()->where('id',$id)->first();
+
+            return $shop ? $shop->delete() : 0;
         }
 
 

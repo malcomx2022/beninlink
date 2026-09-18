@@ -1218,6 +1218,7 @@ vestige du squelette Laravel.
 | ~~S26~~ | B | ~~La boutique par défaut de n'importe quel marchand se changeait sur un GET~~ — ✅ **corrigé le 2026-09-18** : les **quatre** méthodes du dépôt back-office des boutiques passent par `boutiquesDeLaSociete()` (`whereHas('merchant', companywise())` — la table ne porte pas de `company_id`) ; l'ordre est inversé pour ne rien toucher quand la cible est hors périmètre, là où le socle basculait les anciennes **avant** de la chercher puis plantait sur `null` ; la route devient **PUT** et la vue soumet un formulaire `@csrf`. La permission reste une décision | `MerchantShops\ShopsRepository` · `MerchantShopsController` · `routes/web.php` |
 | ~~S27~~ | A | ~~L'éditeur du fichier `.env` répondait **200 sans authentification**~~ — 🔴 ✅ **corrigé le 2026-09-18** : `geo-sot/laravel-env-editor` monte onze routes sous `/env-editor` avec le seul middleware `['web']`, depuis un fournisseur **auto-découvert** qui ne teste aucun environnement. `GET /env-editor` et `GET /env-editor/files` répondaient **200 à un visiteur anonyme** : lecture et écriture des identifiants de base, d'`APP_KEY`, des clés FedaPay et de la messagerie, régénération de la clé d'application, téléchargement et restauration de sauvegardes. Le garde `BlockEnvEditorRoutes` répond **404** pour les onze routes ; la **bibliothèque** reste en place, l'installeur en a besoin (voir « ✅ S27 » plus bas). Second versant relevé au moment de commiter : les sauvegardes du paquet sont des **copies intégrales de `.env`** (`APP_KEY` en clair) et `storage/env-editor` n'était **pas ignoré par git** — corrigé aussi. Relevé en inventoriant les routes web à paramètre pour le filet d'isolation | `config/env-editor.php` · `App\Http\Middleware\BlockEnvEditorRoutes` · `web/.gitignore` |
 | ~~S28~~ | I | ~~La carte des courses du livreur répondait **200 sans authentification**~~ — 🔴 ✅ **corrigé le 2026-09-18** : `GET /deliveryMan/parcel/map/{id}/{lat}/{long}/{status}` était déclarée dans `routes/web.php` **hors du groupe `auth`** — juste après la fermeture d'un groupe, à la même indentation. Sa pile s'arrêtait à la tenancy : ni `auth`, ni `hasPermission`. Et `User::find($id)` était **nu**. La vue écrit `@json($mapParcels)` dans le source de la page : **nom, téléphone et adresse du client final**, nom, téléphone et adresse du marchand, montant à encaisser, numéro de suivi. Prouvé par appel HTTP anonyme : **200**, téléphone et adresse dans le corps. La route est retirée (aucune vue, aucun script, aucun nom de route — la retirer ne retire l'accès à personne) et le contrôleur est scopé pour que la remonter ne rouvre pas la fuite. Relevé en inventoriant les routes web à paramètre pour le filet | `routes/web.php` · `MapParcelController` |
+| ~~S29~~ | B | ~~Dans le back-office, **les écritures étaient moins scopées que les lectures**~~ — ✅ **première passe le 2026-09-18** : motif dominant de l'arriéré du filet, et il s'était glissé dans mes propres correctifs. Trois formes fermées. **La vitrine** : les six dépôts `FrontWeb` lisent en `companyWise()->findOrFail()` mais supprimaient en `Modele::destroy($id)` **nu** — la question, l'article, le service, le partenaire, le lien social ou le bloc « pourquoi nous » d'un autre transporteur se supprimait en changeant l'identifiant, et le site public de la victime perdait son contenu. **⚠️ Le trou de S23** : ce lot avait scopé les trois *lectures* du support et laissé `update()` et `delete()` nues — on réécrivait le ticket d'un autre transporteur et on s'en attribuait la paternité par le `user_id`. **⚠️ Le trou de S26** : idem pour les boutiques, et `update()` lisant `merchant_id` dans la requête permettait en plus de **rattacher** la boutique à un autre marchand. Plus cinq écrans du panneau marchand qui répondaient **500** au lieu de 404 hors périmètre | `FrontWeb/*Repository` × 6 · `SupportRepository` · `MerchantShops\ShopsRepository` · `MerchantShopsController` · `MerchantPanel\MerchantParcelController` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
 
@@ -2093,3 +2094,112 @@ vérifier, pas un test à féliciter.
 - Une route du socle déclare son action avec un **antislash de tête**
   (`\App\Http\Controllers\…`) là où toutes les autres n'en ont pas. Sans le
   `ltrim` de l'invariant 4, elle passait pour un paquet tiers.
+
+
+## ✅ S29 — les écritures du back-office, première passe sur l'arriéré (2026-09-18)
+
+L'arriéré de `WebIsolationCoverageTest` comptait **171** routes. Le dépouiller
+méthode par méthode a fait apparaître un motif unique, et il vaut pour la suite du
+chantier :
+
+> **Les écritures étaient moins scopées que les lectures.**
+
+Le socle a beau n'avoir aucun *global scope* — décision S7, et elle tient — les
+dépôts qui avaient reçu un périmètre l'avaient reçu sur leur `get()`. Leurs
+`update()` et `delete()` restaient nus. Deux de ces trous sont les miens.
+
+### Ce qui a été mesuré
+
+Aucun `addGlobalScope` dans tout `app/` : `companywise()` est un scope **local**,
+déclaré modèle par modèle. Un `find($id)` nu est donc réellement sans périmètre —
+il n'y a pas de filet Eloquent en dessous.
+
+En dépouillant les ~250 méthodes de dépôt, quatre formes apparaissent :
+
+| Forme | Ce que ça vaut |
+|---|---|
+| `Modele::companywise()->find($id)` | scopé ✅ |
+| `$m = Modele::find($id); if ($m->company_id == settings()->id):` | **gardé** — l'écriture ne part pas hors périmètre, mais un identifiant inexistant déréférence `null` |
+| `Modele::find($id)` puis `$m->company_id = settings()->id; $m->save();` | 🔴 **vol de ligne** : la ligne d'une autre société est *transférée* chez nous |
+| `Modele::destroy($id)` | 🔴 suppression sans périmètre |
+
+Les deux dernières formes sont l'essentiel du travail restant.
+
+### Les trois familles fermées dans cette passe
+
+**1. La vitrine — six suppressions sans périmètre.** `Faq`, `Blog`, `Service`,
+`Partner`, `SocialLink`, `WhyCourier` : leur `getFind()` est bien
+`companyWise()->findOrFail()` — un `edit` hors périmètre répondait déjà 404. Mais
+leur `delete()` était `Modele::destroy($id)`. Le contenu du **site public** d'un
+autre transporteur se supprimait en changeant l'identifiant dans l'URL. On résout
+d'abord, on supprime ensuite ; hors périmètre rien n'est touché et la valeur de
+retour le dit, donc le contrôleur affiche une erreur au lieu d'un faux succès.
+
+**2. ⚠️ Le trou de S23.** S23 avait scopé les *lectures* du support — `all()`,
+`get()`, `chats()` — et j'avais écrit « les **trois** lectures l'utilisent ».
+C'était exact, et incomplet : `update()` faisait `Support::find($id)` nu, donc on
+réécrivait le ticket d'un autre transporteur (sujet, description, pièce jointe) et
+on s'en attribuait la paternité par le `user_id` de la ligne suivante ; `delete()`
+était `Support::destroy($id)`. Le `catch` vide rendait l'échec muet.
+
+**3. ⚠️ Le trou de S26.** Même chose pour les boutiques : les quatre lectures
+passaient par `boutiquesDeLaSociete()`, `update()` et `delete()` non. Et
+`update()` lit `merchant_id` **dans la requête** : on pouvait donc aussi
+**rattacher** la boutique d'un concurrent à son propre marchand.
+
+### Et cinq refus d'accès annoncés comme des pannes
+
+`MerchantPanel\MerchantParcelController` (`logs`, `duplicate`, `details`, `edit`,
+`destroy`) : le périmètre est bien posé dans le dépôt (`ownedParcels()`), mais hors
+périmètre `get()` rend `null` et la ligne suivante déréférençait — **500** là où
+tout le reste du panneau répond 404. Même famille que S15. Idem pour
+`MerchantShopsController::edit()`, dont le `blank()` était posé **après** la
+déréférence, et `delete()`, qui annonçait un succès sans regarder ce que le dépôt
+avait fait.
+
+### La leçon, pour la suite de l'arriéré
+
+**Corriger la fuite que le rapport montre ne suffit pas : il faut relire les
+méthodes sœurs du même dépôt.** S23 et S26 ont tous deux fermé la porte signalée
+en laissant la fenêtre ouverte à côté. Les prochaines passes se font dépôt par
+dépôt, pas route par route.
+
+### Effet sur le cliquet
+
+| | Avant | Après |
+|---|---|---|
+| Prouvées | 7 | **33** |
+| Exemptées | 33 | **35** |
+| Publiques | 6 | 6 |
+| **Héritées (plafond)** | **171** | **143** |
+
+Les deux routes de `front-web/section` passent en *exemptées* : leur paramètre
+nommé `{id}` est en réalité un **type** de section — `SectionController::edit($type)`
+le dit — et la lecture est `companyWise()`.
+
+### Couverture
+
+`tests/Feature/BackOfficeWriteScopeTest.php` — 11 tests : les six suppressions de
+la vitrine hors périmètre ne suppriment rien ; les six légitimes suppriment
+toujours ; la lecture hors périmètre est bien un 404 (sept modèles, `Page`
+comprise, dont l'`update` délègue à `getFind`) ; le ticket d'un autre transporteur
+ne se réécrit pas, ne se supprime pas, ne change pas de statut ; le mien reste
+modifiable et supprimable ; la boutique d'un marchand d'une autre société ne se
+réécrit pas, ne se supprime pas, et ses deux écrans répondent 404.
+
+**Trois sabotages**, un par famille, chacun vérifié rouge : la suppression de la
+vitrine remise en `destroy` nu (1 rouge), les écritures du support remises nues
+(2 rouges), celles des boutiques remises nues (3 rouges — dont l'écran, ce qui
+montre que le garde du contrôleur dépend bien du dépôt).
+
+Suite complète : **606 tests, 44 429 assertions, vert.**
+
+⚠️ Deux pièges de fixtures, notés pour les passes suivantes : ces modèles du socle
+ne déclarent ni `$fillable` ni `$guarded` (un `Modele::create([...])` lève
+`MassAssignmentException` — il faut écrire les attributs un par un), et
+`supports` ne porte pas de `company_id` : son périmètre passe par l'**auteur**.
+
+Et un outil : `php artisan test` fait avaler le message d'erreur par Collision
+(« Cannot find TestCase object on call stack ») quand l'échec vient d'une
+exception dans une fixture. `./vendor/bin/phpunit --filter …` donne le vrai
+message.
