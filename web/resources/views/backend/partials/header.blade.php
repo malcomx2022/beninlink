@@ -31,6 +31,7 @@
          encore le violet du socle. Voir public/beninlink/css/theme-backoffice.css. --}}
     <link rel="stylesheet" href="{{ static_asset('beninlink/css/tokens.css') }}">
     <link rel="stylesheet" href="{{ static_asset('beninlink/css/theme-backoffice.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('beninlink/css/components.css') }}">
     <title>@yield('title')</title>
 </head>
 <body >

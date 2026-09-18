@@ -146,7 +146,7 @@ class WebBrandCharterTest extends TestCase
     {
         $source = file_get_contents(resource_path('views/backend/partials/header.blade.php'));
 
-        foreach (['tokens.css', 'theme-backoffice.css'] as $feuille) {
+        foreach (['tokens.css', 'theme-backoffice.css', 'components.css'] as $feuille) {
             $this->assertStringContainsString("beninlink/css/{$feuille}", $source, $feuille);
         }
 
@@ -289,12 +289,16 @@ class WebBrandCharterTest extends TestCase
         $this->assertGreaterThanOrEqual(4.5, $this->contraste($m[1], self::OCRE));
     }
 
-    /** Les six pastilles de statut tiennent AA — la maquette échouait sur les six. */
+    /**
+     * Les sept pastilles de statut tiennent AA — la maquette échouait sur les six
+     * qu'elle définissait, et la septième (« livraison partielle », ajoutée au
+     * lot 2) est la seule à fond plein.
+     */
     public function test_every_status_pill_meets_aa_for_small_text(): void
     {
         $jetons = $this->jetons();
 
-        foreach (['wait', 'transit', 'hub', 'assign', 'done', 'return'] as $famille) {
+        foreach (['wait', 'transit', 'hub', 'assign', 'done', 'return', 'partial'] as $famille) {
             foreach (['bg', 'fg'] as $part) {
                 $this->assertSame(
                     1,
