@@ -75,7 +75,7 @@
                             <a href="{{ route('payout.paypal.index',['merchant_id'=>$merchant_id]) }}" >
                                 <div class="card">
                                     <div class="card-body text-center">
-                                        <img src="{{ static_asset('backend/images/default/payout/paypal.png') }}" alt="stripe.png" width="150px" style="margin:-5px"/>
+                                        <img src="{{ static_asset('backend/images/default/payout/paypal.png') }}" alt="PayPal" width="150px" style="margin:-5px"/>
                                     </div>
                                 </div>
                             </a>
@@ -86,7 +86,7 @@
                             <a href="{{ route('payout.merchant.stripe',['merchant_id'=>$merchant_id]) }}" >
                                 <div class="card">
                                     <div class="card-body text-center">
-                                        <img src="{{ static_asset('backend/images/default/payout/stripe.png') }}" alt="stripe.png" width="150px"/>
+                                        <img src="{{ static_asset('backend/images/default/payout/stripe.png') }}" alt="Stripe" width="150px"/>
                                     </div>
                                 </div>
                             </a>
@@ -97,7 +97,7 @@
                             <a href="{{ route('payout.merchant.razorpay',['merchant_id'=>$merchant_id]) }}" >
                                 <div class="card">
                                     <div class="card-body text-center">
-                                        <img src="{{ static_asset('backend/images/default/payout/razorpay.png') }}" alt="razorpay.png" width="150px"/>
+                                        <img src="{{ static_asset('backend/images/default/payout/razorpay.png') }}" alt="Razorpay" width="150px"/>
                                     </div>
                                 </div>
                             </a>
@@ -108,7 +108,7 @@
                             <a href="{{ route('payout.skrill.index',['merchant_id'=>$merchant_id]) }}" >
                                 <div class="card">
                                     <div class="card-body text-center">
-                                        <img src="{{ static_asset('backend/images/default/payout/skrill.png') }}" alt="skrill.png" width="150px" style="margin:10px"/>
+                                        <img src="{{ static_asset('backend/images/default/payout/skrill.png') }}" alt="Skrill" width="150px" style="margin:10px"/>
                                     </div>
                                 </div>
                             </a>
@@ -119,7 +119,7 @@
                             <a href="{{ route('payout.sslcommerz.index',['merchant_id'=>$merchant_id]) }}" >
                                 <div class="card">
                                     <div class="card-body text-center">
-                                        <img src="{{ static_asset('backend/images/default/payout/sslecommerce.png') }}" alt="stripe.png" width="150px" style="margin:20px"/>
+                                        <img src="{{ static_asset('backend/images/default/payout/sslecommerce.png') }}" alt="SSLCommerz" width="150px" style="margin:20px"/>
                                     </div>
                                 </div>
                             </a>
@@ -130,7 +130,7 @@
                             <a href="{{ route('payout.aamarpay.index',['merchant_id'=>$merchant_id]) }}" >
                                 <div class="card">
                                     <div class="card-body text-center">
-                                        <img src="{{ static_asset('backend/images/default/payout/aamarpay.png') }}" alt="stripe.png" width="150px" style="margin:25px"/>
+                                        <img src="{{ static_asset('backend/images/default/payout/aamarpay.png') }}" alt="aamarPay" width="150px" style="margin:25px"/>
                                     </div>
                                 </div>
                             </a>
@@ -141,7 +141,7 @@
                             <a href="{{ route('payout.bkash.index',['merchant_id'=>$merchant_id]) }}" >
                                 <div class="card">
                                     <div class="card-body text-center">
-                                        <img src="{{ static_asset('backend/images/default/payout/bkash.png') }}" alt="skrill.png" width="150px" style="margin:10px"/>
+                                        <img src="{{ static_asset('backend/images/default/payout/bkash.png') }}" alt="bKash" width="150px" style="margin:10px"/>
                                     </div>
                                 </div>
                             </a>

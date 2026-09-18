@@ -22,7 +22,7 @@
                 </div>
                 <div class="card-body">
                     @if ($news_offer->upload->original != "")
-                        <img src="{{$news_offer->image}}" class="pb-3" alt="Image" width="100%" height="350">
+                        <img src="{{$news_offer->image}}" class="pb-3" alt="" width="100%" height="350">
                     @endif
                     <div>
                         {!! $news_offer->description !!}

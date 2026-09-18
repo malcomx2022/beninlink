@@ -160,7 +160,7 @@
                                             <input id="Image" type="file" name="image" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_image') }}" autocomplete="off" class="form-control">
                                         </div>
                                         <div class="col-3">
-                                            <img src="{{$user->image}}" alt="user" class="rounded"  width="75" height="75" style="object-fit: contain">
+                                            <img src="{{$user->image}}" alt="" class="rounded"  width="75" height="75" style="object-fit: contain">
                                         </div>
                                     </div>
                                     @error('image')

@@ -27,7 +27,7 @@
             <tbody>
             <tr>
                 <td class="left-col" style="height: 70px;  border-right: 3px solid">
-                    <img alt="Logo" src="{{ asset(settings()->logo_image)}}" class="logo" style="max-height: 70px;">
+                    <img alt="{{ settings()->name }}" src="{{ asset(settings()->logo_image)}}" class="logo" style="max-height: 70px;">
                 </td>
                 <td style="padding-left: 10px;line-height: 1.2;" class="right-col">
                     <span> <b style="letter-spacing: 3px;"></b> {{ settings()->name }}</span><br>

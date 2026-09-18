@@ -129,7 +129,7 @@
                                     <td>
                                         <div class="row">
                                             <div class=" col-4">
-                                                <img src=" {{$payment->merchant->user->image}}" alt="user" class="rounded" width="40" height="40">
+                                                <img src=" {{$payment->merchant->user->image}}" alt="" class="rounded" width="40" height="40">
                                             </div>
                                             <div class="col-8">
                                                 <strong> : {{$payment->merchant->user->name}}</strong>

@@ -9,7 +9,7 @@
                     <div class="card auth-boxs">
                         <div class="card-header text-center">
                             <a href="{{ url('/') }}" class="navbar-brand">
-                                <img class="logo-img" src="{{ settings()->logo_image }}" class="logo" alt="logo">
+                                <img class="logo-img" src="{{ settings()->logo_image }}" class="logo" alt="{{ settings()->name }}">
                             </a>
                             <span class="splash-description">{{ __('auth.sign_in_hint') }}</span>
                         </div>

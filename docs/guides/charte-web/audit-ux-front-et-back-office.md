@@ -19,6 +19,7 @@
 | 2026-09-18 | **Lot 3 livré.** Voir §14 — l'ocre réglable par transporteur. L'audit chiffrait le lot à « 1 migration » : l'ocre porte **quatre** jetons, dont deux sont des contrastes mesurés contre lui, qu'il fallait recalculer. Arbitrage §9.3 tranché. |
 | 2026-09-18 | **Lot SMS livré.** Voir §15 — les 24 phrases anglaises envoyées aux clients, et deux choses que l'audit ignorait : `App::setLocale()` **réécrit** `config('app.locale')` (mon premier jet est tombé dedans), et un caractère hors alphabet GSM-7 **double la facture** de chaque SMS. |
 | 2026-09-18 | **Lot 6 livré.** Voir §16 — accessibilité. Le troisième `http://`, absent des vues, faisait rendre à Laravel des URL en clair : le lien de réinitialisation de mot de passe et le `callback_url` de FedaPay. Une ligne manquait à notre configuration nginx. |
+| 2026-09-18 | **Lot 6 complété.** Voir §17 — le §16 pose l'attribut `alt` ; il restait sa **qualité** : 91 des 106 valeurs préexistantes étaient inutilisables (`alt="user"` sur le logo des réglages, `alt="stripe.png"` sur l'image de PayPal). Et son `alt="{{ settings()->name }}"` dans trois courriels **bâtis par le worker** rendait F4 visible. Plus trois défauts de sécurité dans le journal d'activité (§17.6). |
 
 ---
 
@@ -1681,3 +1682,150 @@ Cinq régressions introduites exprès, une à la fois, depuis l'arbre livré :
 - **L'installeur reste en anglais** (§12.8), et son `lang="en"` est donc **juste**
   — il n'est pas internationalisé du tout. Le corriger sans le traduire ferait
   annoncer du français à un lecteur d'écran sur une page anglaise.
+
+---
+
+## 17. Lot 6 — le complément : la **qualité** des alternatives
+
+> Ce lot a été livré deux fois, en parallèle, par deux sessions qui ne se
+> voyaient pas. La PR #90 a atterri la première et son rapport est le §16
+> ci-dessus. Cette section ne le refait pas : elle dit ce qu'il **restait**, et
+> comment on l'a constaté.
+
+### 17.1 Le §16 s'arrête à la présence de l'attribut
+
+Le §16 pose un `alt` sur les **47** images qui en manquaient, et son test le
+tient. Mais il ne regarde pas les **106 autres**. En les mesurant :
+
+| Valeur | Occurrences | Où, en particulier |
+|---|---|---|
+| `alt="user"` | 44 | avatars — **et les trois aperçus du formulaire de réglages** : le logo, le logo clair et le favicon portaient tous les trois « user » |
+| `alt="Logo"` / `alt="logo"` | 26 | en anglais, et sans dire **de qui** |
+| `alt="stripe.png"` | 8 | sur les images de **PayPal**, de **SSLCommerz** et d'**aamarPay** |
+| `alt="Image"` | 7 | vignettes, avatars de transfert de fonds |
+| `alt="skrill.png"` | 4 | dont **deux sur l'image de bKash** |
+| `alt="razorpay.png"`, `alt="User Avatar"`, `alt="delivered_image"`, `alt="signature_image"` | 4 | — |
+
+**91 valeurs sur 106.** Et un `alt` faux est **pire** qu'un `alt` absent : le
+lecteur d'écran annonce quelque chose, et ce quelque chose est faux. Sur l'écran
+de choix du moyen de paiement, un agent entendait « stripe point p n g » **quatre
+fois de suite** pour quatre passerelles différentes. Devant le formulaire de
+réglages, « user » trois fois, sans moyen de distinguer les trois champs.
+
+Le constat est structurel, pas un reproche à la PR #90 : **poser `alt="user"` sur
+les 47 images restantes aurait suffi à faire passer son test.** Un test qui
+mesure la présence d'un attribut ne peut pas mesurer son contenu ; il en faut un
+second, et c'est celui qui manquait.
+
+### 17.2 Ce que ce complément livre
+
+**93 alternatives réécrites**, et plus une seule valeur faible dans le dépôt :
+
+- **33 fois la raison sociale du transporteur** là où le socle écrivait « Logo » —
+  sur les écrans, dans les PDF, sur les étiquettes de colis et les bulletins de paie ;
+- **13 logos de passerelle** qui nomment enfin la leur ;
+- **les trois aperçus des réglages** qui nomment leur champ (`levels.logo`,
+  `levels.light_logo`, `levels.favicon`) ;
+- **les pièces légales et les justificatifs** : NID, licence commerciale, permis de
+  conduire, reçus de recette et de dépense, **photo et signature de livraison** ;
+- **40 alternatives vides** là où l'image double un texte voisin — le nom sous
+  l'avatar, le titre dans la cellule d'à côté. La norme demande là une
+  alternative **vide**, pas un libellé : sinon le lecteur d'écran lit deux fois
+  la même chose.
+
+Bilan du dépôt : **153 images, 153 alternatives, 77 vides et 76 libellés réels,
+zéro nom de fichier.**
+
+### 17.3 Un défaut que la PR #90 a rendu visible sans le savoir
+
+Pour nommer le logo des courriels, elle a écrit `alt="{{ settings()->name }}"`
+dans `contact_mail.blade.php` et dans les deux `mail/signup.blade.php`.
+
+Or ces trois gabarits sont bâtis **par le worker** : les trois mailables
+implémentent `ShouldQueue` (décision **D13**). Hors requête, `settings()` retombe
+sur la société 1 — c'est le constat **F4**, déjà fermé côté SMS et côté
+expéditeur. L'alternative annonçait donc le nom d'**un autre transporteur**.
+
+Et le défaut était plus large que l'attribut : ces gabarits lisaient `settings()`
+**cinq fois** — le titre, le logo, la raison sociale dans le corps du message, le
+courriel et le téléphone de contact, les mentions de bas de page. Le `src` du logo
+était concerné **depuis toujours**. Poser une alternative juste obligeait à le voir.
+
+Les trois mailables figent désormais la société à la construction, comme
+`ContactMail` le faisait déjà pour son expéditeur ; **les trois vues n'appellent
+plus `settings()` du tout**. Vérifié des deux côtés :
+`WebAccessibilityTest::test_no_queued_mail_view_reads_the_carrier_at_render_time`
+pour la vue, `QueuedDeliveryTest::test_the_two_signup_mails_freeze_the_whole_carrier`
+pour le comportement.
+
+### 17.4 Les trois tableaux de l'installeur, et une exemption retirée
+
+Le §16 exempte l'installeur de `table-responsive` (« il tourne une fois, chez
+l'intégrateur, sur un poste de travail »). Ses trois tableaux listent les
+**extensions PHP manquantes** et les **permissions de dossiers** : c'est
+exactement ce qu'on lit sur un téléphone, à côté du serveur, quand l'installation
+échoue. Les trois avaient déjà un `<div>` nu juste au-dessus ; la classe s'y pose
+sans toucher à la structure. **L'exemption est retirée de la liste du test** — le
+plus utile des deux changements, puisqu'il ferme la porte.
+
+### 17.5 Deux libellés anglais que le lot 4 n'avait pas vus
+
+`backend/parcel/parcel-delivered-info.blade.php` affiche « Delivered Photo » et
+« Signature » en dur. L'alternative textuelle de ces deux images en avait besoin
+de toute façon : d'où `parcel.delivered_photo` et `parcel.signature`, servant à
+la fois le libellé visible et l'alternative.
+
+### 17.6 ⚠️ Trois défauts de sécurité dans huit lignes — signalés, non corrigés
+
+En vérifiant l'enveloppe du tableau de `backend/log/view.blade.php`, le
+contrôleur qui le rend s'est révélé :
+
+```php
+public function view($id){
+    $logDetails  =  Activity::find($id);
+    return view('backend.log.view',compact('logDetails'));
+}
+```
+
+1. **Aucun périmètre société.** `index()`, juste au-dessus, scope correctement
+   (`whereHas('causer', company_id = settings()->id)`). `view()` ne scope pas : un
+   opérateur de la société A lit le détail d'une activité de la société B en
+   changeant l'identifiant dans l'URL. Famille **S7**.
+2. **Aucune permission.** La route `logs.index` porte `hasPermission:log_read` ;
+   `log-activity-view/{id}` **n'en porte aucune**.
+3. **Sortie non échappée.** La vue rend les valeurs avec `{!! $value !!}` et
+   `{!! @oldLogDetails(...) !!}`. Ce sont des attributs de modèles, donc des
+   saisies d'utilisateurs — une raison sociale, une adresse. Un marchand qui nomme
+   sa boutique avec une balise `<script>` obtient une exécution dans le navigateur
+   de l'opérateur qui consulte le journal : **XSS stocké**.
+
+Non corrigé : ce n'est pas de l'ergonomie, et les trois points se décident
+ensemble (le `{!! !!}` sert peut-être à rendre un diff en HTML). C'est un
+correctif court, et il devrait passer **avant** les lots restants.
+
+### 17.7 Autres constats, signalés et non corrigés
+
+- **`levels.nid` = « NID »** et `levels.trade_license` = « Licence commerciale » :
+  identifiants du pays d'origine du socle, là où le backend a posé **IFU, RCCM,
+  CNSS**. Ce sont eux que l'alternative annonce désormais — le défaut est
+  maintenant **lu à voix haute**.
+- **Les deux courriels d'inscription sont entièrement en anglais** (« Thank you for
+  your interest in becoming an merchant with… », la faute est dans le socle), et
+  leurs sujets sont codés en dur dans les mailables.
+- **`backend/salary/pay_slip.blade.php`** est un document autonome (`lang="en"`,
+  aucune feuille de la charte) : même famille que les trois imprimés du §11.
+
+### 17.8 Fichiers
+
+**Modifiés** : 69 vues (un attribut par balise, une classe par tableau),
+`app/Mail/{ContactMail,MerchantSignup,CompanySignup}.php`,
+`lang/{fr,en}/parcel.php`, `tests/Feature/WebAccessibilityTest.php`
+(+6 tests, dont celui qui interdit les valeurs faibles) et
+`tests/Feature/QueuedDeliveryTest.php` (+2 tests).
+
+Aucun fichier ajouté : le test du §16 est **étendu**, pas doublé.
+
+Suite complète : **543 tests, 44 136 assertions, vert**. Les tests nouveaux ont
+été vérifiés par sabotage : `alt="user"` remis sur l'aperçu du logo, PayPal
+renommé `stripe.png`, un courriel remis à `settings()` au rendu, l'enveloppe de
+l'installeur retirée — chacun échoue en nommant le fichier.

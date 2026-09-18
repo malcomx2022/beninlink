@@ -117,7 +117,7 @@
                                         @if($account->user)
                                             <div class="d-flex width300px">
                                                 <div class="width100px">
-                                                    <img src="{{@$account->user->image}}" alt="user" class="rounded" width="40" height="40">
+                                                    <img src="{{@$account->user->image}}" alt="" class="rounded" width="40" height="40">
                                                 </div>
                                                 <div >
                                                     <strong>: {{@$account->user->name}}</strong>

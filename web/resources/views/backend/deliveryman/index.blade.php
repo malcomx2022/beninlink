@@ -102,7 +102,7 @@
                                     <td>
                                         <div class="row">
                                             <div class="col-md-3">
-                                                <img src="{{$deliveryman->user->image}}" alt="user" class="rounded" width="40" height="40">
+                                                <img src="{{$deliveryman->user->image}}" alt="" class="rounded" width="40" height="40">
                                             </div>
                                             <div class="col-md-9">
                                                 <strong>{{$deliveryman->user->name}}</strong>

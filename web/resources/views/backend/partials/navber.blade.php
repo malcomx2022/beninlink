@@ -420,7 +420,7 @@
                 <div class="navbar-other w-100 d-flex justify-content-between ">
                     <div  class="d-lg-none">
                         <a href="{{ url('/') }}">
-                            <img src="{{ settings()->logo_image }}"  style="margin-top: 10px"   height="30px" style="object-fit: contain" alt="Logo">
+                            <img src="{{ settings()->logo_image }}"  style="margin-top: 10px"   height="30px" style="object-fit: contain" alt="{{ settings()->name }}">
                         </a>
                     </div>
                     <ul class="navbar-nav flex-row align-items-center ">

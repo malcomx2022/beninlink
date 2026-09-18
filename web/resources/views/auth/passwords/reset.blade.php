@@ -12,7 +12,7 @@
                     <div class="col-5">
                         <div class="card-header text-center border-bottom-none">
                             <a href="{{url('/')}}" class="navbar-brand">
-                                <img class="logo-img" src="{{ settings()->logo_image }}"  class="logo" alt="logo">
+                                <img class="logo-img" src="{{ settings()->logo_image }}"  class="logo" alt="{{ settings()->name }}">
                             </a>
                             <span class="splash-description">{{ __('auth.password_reset') }}</span>
                         </div>

@@ -91,7 +91,7 @@
                                         <td>
                                             <div class="row width300px">
                                                 <div class="col-3">
-                                                    <img src="{{@$salary->user->image}}" alt="user" class="rounded" width="40" height="40">
+                                                    <img src="{{@$salary->user->image}}" alt="" class="rounded" width="40" height="40">
                                                 </div>
                                                 <div class="col-9">
                                                     <strong> {{@$salary->user->name}}</strong>

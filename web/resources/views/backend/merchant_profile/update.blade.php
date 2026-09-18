@@ -76,7 +76,7 @@
                                             <input id="image_id" type="file" name="image_id" data-parsley-trigger="change"  autocomplete="off" class="form-control">
                                         </div>
                                         <div class="col-12 col-md-3 mt-3 mt-md-0">
-                                            <img src="{{$merchat->user->image}}" alt="user" class="rounded" width="70" height = "70">
+                                            <img src="{{$merchat->user->image}}" alt="" class="rounded" width="70" height = "70">
                                         </div>
                                     </div>
                                 </div>
@@ -87,7 +87,7 @@
                                             <input id="nid" type="file" name="nid" data-parsley-trigger="change" autocomplete="off" class="form-control">
                                         </div>
                                         <div class="col-12 col-md-3 pt-4">
-                                            <img src="{{$merchat->nid}}" alt="user" class="rounded" width="70" height = "70">
+                                            <img src="{{$merchat->nid}}" alt="{{ __('levels.nid') }}" class="rounded" width="70" height = "70">
                                         </div>
                                     </div>
                                 </div>
@@ -98,7 +98,7 @@
                                             <input id="trade_license" type="file" name="trade_license" data-parsley-trigger="change" autocomplete="off" class="form-control">
                                         </div>
                                         <div class="col-12 col-md-3 pt-4">
-                                            <img src="{{$merchat->trade}}" alt="user" class="rounded" width="70" height = "70">
+                                            <img src="{{$merchat->trade}}" alt="{{ __('levels.trade_license') }}" class="rounded" width="70" height = "70">
                                         </div>
                                     </div>
                                 </div>

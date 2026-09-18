@@ -143,6 +143,27 @@
   l'espace insécable de `formatAmount()`. 11 des 17 messages tiennent en un seul SMS.
   La langue du **destinataire** reste à trancher : aucune colonne ne la porte, la
   couture est isolée dans `SmsTemplate::locale()` (§15.5).
+  **Lot 6 livré le 2026-09-18, en deux fois** (§16 et §17) — il a été traité en
+  parallèle par deux sessions, et les deux moitiés se complètent. **§16** corrige
+  deux chiffres de l'audit : « 125 images sans `alt` sur 151 » était faux (c'était
+  **47 sur 153** — la regex qui comptait s'arrêtait au premier `>`, celui de
+  `{{ $u->image }}`, et coupait la balise avant son `alt`), et « 42 tableaux
+  débordent » était une soustraction de `grep`. Il relève aussi un **troisième
+  `http://` hors des vues** : une ligne manquait à la configuration nginx, et
+  Laravel rendait en clair le lien de réinitialisation de mot de passe et le
+  `callback_url` de FedaPay. **§17** livre ce qui restait : la **qualité** des
+  alternatives. Sur les 106 images qui en portaient déjà une, **91 étaient
+  inutilisables** — `alt="user"` sur le logo, le logo clair et le favicon du
+  formulaire de réglages, `alt="stripe.png"` sur les images de **PayPal,
+  SSLCommerz et aamarPay**. Un `alt` faux est pire qu'un `alt` absent, et poser
+  `alt="user"` sur les 47 images restantes aurait suffi à faire passer le test du
+  §16 : il en fallait un second. 93 alternatives réécrites, zéro valeur faible.
+  Au passage, l'`alt="{{ settings()->name }}"` du §16 se lisait dans trois
+  courriels **bâtis par le worker** : F4 s'y appliquait, et le `src` du logo était
+  concerné depuis toujours — les trois mailables figent désormais la société.
+  ⚠️ **§17.6 relève trois défauts de sécurité dans les huit lignes du journal
+  d'activité** : aucun périmètre société, aucune permission sur la route, et une
+  sortie non échappée (XSS stocké). Signalés, non corrigés, à passer avant la suite.
 - `../../web/CARTOGRAPHIE.md`  Relevé de l'Étape 0 sur le socle We Courier
   (blocs A-I, constats de sécurité, routes mortes). À lire en premier.
 

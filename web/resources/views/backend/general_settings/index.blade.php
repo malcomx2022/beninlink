@@ -133,7 +133,7 @@
                                             @enderror
                                         </div>
                                         <div class="col-6 text-right">
-                                            <img src="{{$settings->logo_image}}" alt="user" class="rounded mt-3" width="100%"  style="object-fit: contain">
+                                            <img src="{{$settings->logo_image}}" alt="{{ __('levels.logo') }}" class="rounded mt-3" width="100%"  style="object-fit: contain">
                                         </div>
                                     </div>
                                 </div>
@@ -149,7 +149,7 @@
                                             </div>
                                             <div class="col-6 text-right  pt-3">
                                                 <div class="bg-primary p-3"> 
-                                                    <img src="{{$settings->light_logo_image}}" alt="user" class="rounded mt-3" width="100%"  style="object-fit: contain">
+                                                    <img src="{{$settings->light_logo_image}}" alt="{{ __('levels.light_logo') }}" class="rounded mt-3" width="100%"  style="object-fit: contain">
                                                 </div>
                                             </div>
                                         </div>
@@ -166,7 +166,7 @@
                                                 @enderror
                                             </div>
                                             <div class="col-3  ">
-                                                <img src="{{$settings->favicon_image}}" alt="user" class="rounded mt-3" width="60"  style="object-fit: contain">
+                                                <img src="{{$settings->favicon_image}}" alt="{{ __('levels.favicon') }}" class="rounded mt-3" width="60"  style="object-fit: contain">
                                             </div>
                                         </div>
                                     </div>

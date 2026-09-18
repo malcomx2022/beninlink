@@ -34,11 +34,25 @@ class WebAccessibilityTest extends TestCase
      *  - **impression** : une feuille de papier ne défile pas non plus.
      *  - **courriel** : un client de messagerie retire les `div` de mise en
      *    page ou en ignore l'`overflow` ; Outlook rend le tableau en Word.
-     *  - **installeur** : il tourne une fois, chez l'intégrateur, sur un poste
-     *    de travail — et le lot 4 l'a laissé hors périmètre en bloc.
+     *
+     * L'**installeur** figurait ici (« il tourne une fois, chez l'intégrateur »).
+     * Il en est sorti : ses trois tableaux listent des extensions PHP et des
+     * permissions de dossiers, et un intégrateur qui installe depuis un
+     * téléphone est un cas réel. Ils portent l'enveloppe, comme les autres.
      */
     private const TABLEAUX_HORS_ECRAN = [
-        '_pdf', 'pdf.blade', 'print', 'pay_slip', '/mail/', '_mail', 'installer',
+        '_pdf', 'pdf.blade', 'print', 'pay_slip', '/mail/', '_mail',
+    ];
+
+    /**
+     * Alternatives qui ne renseignent rien. Une image dont l'alternative est
+     * « user » ou « stripe.png » est **pire** qu'une image sans alternative :
+     * le lecteur d'écran annonce quelque chose, et ce quelque chose est faux.
+     */
+    private const VIDES_DE_SENS = [
+        'user', 'users', 'image', 'images', 'img', 'photo', 'picture', 'avatar',
+        'user avatar', 'logo', 'icon', 'banner', 'thumbnail', 'file',
+        'delivered_image', 'signature_image', 'nid', 'trade',
     ];
 
     /**
@@ -326,5 +340,176 @@ class WebAccessibilityTest extends TestCase
             ),
             'la couleur du sidebar inactif doit venir du jeton, pas du gris du socle'
         );
+    }
+
+    // — la QUALITÉ de l'alternative, pas sa seule présence ------------------
+
+    /**
+     * Le test qui manquait, et il vaut le premier.
+     *
+     * Le lot précédent a posé un `alt` sur les 47 images qui en manquaient, et
+     * son test le vérifie. Mais il ne regardait pas les **106 autres** : 91 y
+     * portaient une valeur inutilisable, que le socle avait écrite et que
+     * personne n'avait relue.
+     *
+     *   - `alt="user"` sur 44 images — dont le logo, le logo clair et le
+     *     favicon du formulaire de réglages : un agent au lecteur d'écran
+     *     entendait « user » trois fois sans pouvoir les distinguer ;
+     *   - `alt="stripe.png"` sur 8 images — dont celles de **PayPal**, de
+     *     **SSLCommerz** et d'**aamarPay** ;
+     *   - `alt="skrill.png"` sur celle de **bKash** ;
+     *   - `alt="Logo"` sur 26 images, en anglais, sans dire de qui ;
+     *   - `alt="Image"`, `alt="delivered_image"`, `alt="signature_image"`.
+     *
+     * Autrement dit : poser `alt="user"` sur les 47 restantes aurait suffi à
+     * faire passer le test « toute image a un alt ». Celui-ci l'interdit.
+     */
+    public function test_no_alternative_is_a_filename_or_an_empty_word(): void
+    {
+        $fautives = [];
+
+        foreach ($this->vues() as $relatif => $absolu) {
+            $source = file_get_contents($absolu);
+
+            foreach ($this->balisesImg($source) as $balise) {
+                if (!preg_match('/\balt\s*=\s*"([^"]*)"/', $balise, $t)) {
+                    continue;
+                }
+                $valeur = trim($t[1]);
+
+                // Une alternative vide est un choix : image décorative.
+                if ($valeur === '') {
+                    continue;
+                }
+                // Une expression Blade est évaluée au rendu : on la croit.
+                if (str_contains($valeur, '{{') || str_contains($valeur, '{!!')) {
+                    continue;
+                }
+                if (preg_match('/\.(png|jpe?g|gif|svg|webp|ico)$/i', $valeur)
+                    || in_array(mb_strtolower($valeur), self::VIDES_DE_SENS, true)) {
+                    $fautives[] = "{$relatif} → alt=\"{$valeur}\"";
+                }
+            }
+        }
+
+        $this->assertSame([], $fautives, "alternatives sans contenu :\n" . implode("\n", $fautives));
+    }
+
+    /**
+     * Chaque logo de passerelle nomme **sa** passerelle. Le socle mettait
+     * `alt="stripe.png"` sur quatre images différentes : sur l'écran de choix du
+     * moyen de paiement, un agent entendait « stripe point p n g » quatre fois.
+     */
+    public function test_a_gateway_logo_names_its_own_gateway(): void
+    {
+        $passerelles = [
+            'paypal' => 'PayPal', 'stripe' => 'Stripe', 'skrill' => 'Skrill',
+            'bkash' => 'bKash', 'razorpay' => 'Razorpay',
+            'sslecommerce' => 'SSLCommerz', 'aamarpay' => 'aamarPay',
+        ];
+
+        $vus = 0;
+
+        foreach ($this->vues() as $relatif => $absolu) {
+            foreach ($this->balisesImg(file_get_contents($absolu)) as $balise) {
+                foreach ($passerelles as $fichier => $nom) {
+                    if (!str_contains($balise, "payout/{$fichier}.png")) {
+                        continue;
+                    }
+                    $vus++;
+                    $this->assertMatchesRegularExpression(
+                        '/\balt\s*=\s*"' . preg_quote($nom, '/') . '"/',
+                        $balise,
+                        "{$relatif} : l'image de {$nom} n'annonce pas {$nom}",
+                    );
+                }
+            }
+        }
+
+        $this->assertSame(13, $vus, 'les treize logos de passerelle doivent être vus');
+    }
+
+    /**
+     * Le logo du transporteur dit **de qui** il est.
+     *
+     * On ne vise que les images qui lisent le logo par l'aide `settings()` —
+     * le logo affiché *en tant que* logo. Les trois aperçus du formulaire de
+     * réglages lisent `$settings->logo_image`, le modèle du formulaire : là,
+     * l'alternative doit nommer le CHAMP prévisualisé. C'est le test suivant.
+     */
+    public function test_the_carrier_logo_announces_the_carrier(): void
+    {
+        $vus = 0;
+
+        foreach ($this->vues() as $relatif => $absolu) {
+            foreach ($this->balisesImg(file_get_contents($absolu)) as $balise) {
+                if (!preg_match('/src\s*=\s*"[^"]*@?settings\(\)\s*->\s*(logo_image|light_logo_image|LogoImage|rxlogo)/', $balise)) {
+                    continue;
+                }
+                $vus++;
+                $this->assertMatchesRegularExpression(
+                    '/\balt\s*=\s*"\{\{\s*@?(settings\(\)->name|\$companyName)/',
+                    $balise,
+                    "{$relatif} : le logo n'annonce pas la raison sociale",
+                );
+            }
+        }
+
+        $this->assertGreaterThanOrEqual(25, $vus, 'trop peu de logos vus');
+    }
+
+    /** Les trois aperçus des réglages nomment le champ qu'ils montrent. */
+    public function test_the_settings_previews_name_the_field_they_preview(): void
+    {
+        $vue = file_get_contents(resource_path('views/backend/general_settings/index.blade.php'));
+
+        foreach (['logo', 'light_logo', 'favicon'] as $champ) {
+            $this->assertMatchesRegularExpression(
+                '/<img[^>]*src\s*=\s*"\{\{\$settings->' . $champ . '_image\}\}"\s+alt\s*=\s*"\{\{ __\(.levels\.' . $champ . '.\) \}\}"/',
+                $vue,
+                "l'aperçu de {$champ} ne nomme pas son champ",
+            );
+        }
+    }
+
+    /**
+     * F4 — aucun de ces trois courriels n'interroge la société **au rendu**.
+     *
+     * L'alternative textuelle du logo posée par le lot précédent était
+     * `alt="{{ settings()->name }}"`. Or ces trois gabarits sont bâtis par le
+     * worker (`ShouldQueue`), où `settings()` retombe sur la société 1 : le
+     * marchand recevait le nom — et le logo — d'un autre transporteur. Les
+     * mailables figent désormais la société ; le comportement est vérifié par
+     * `QueuedDeliveryTest`.
+     */
+    public function test_no_queued_mail_view_reads_the_carrier_at_render_time(): void
+    {
+        foreach ([
+            'backend/contact/contact_mail.blade.php',
+            'backend/merchant/mail/signup.blade.php',
+            'backend/super-admin/company/mail/signup.blade.php',
+        ] as $vue) {
+            $this->assertStringNotContainsString(
+                'settings()',
+                file_get_contents(resource_path('views/' . $vue)),
+                "{$vue} lit encore settings() au rendu — F4",
+            );
+        }
+    }
+
+    /** La preuve de livraison porte deux libellés, et ils sont traduits. */
+    public function test_the_delivery_proof_labels_are_translated(): void
+    {
+        foreach (['fr', 'en'] as $langue) {
+            $table = require base_path("lang/{$langue}/parcel.php");
+            $this->assertArrayHasKey('delivered_photo', $table, $langue);
+            $this->assertArrayHasKey('signature', $table, $langue);
+        }
+
+        $this->assertSame('Photo de livraison', trans('parcel.delivered_photo', [], 'fr'));
+
+        $vue = file_get_contents(resource_path('views/backend/parcel/parcel-delivered-info.blade.php'));
+        $this->assertStringNotContainsString('>Delivered Photo<', $vue);
+        $this->assertStringContainsString("__('parcel.delivered_photo')", $vue);
     }
 }

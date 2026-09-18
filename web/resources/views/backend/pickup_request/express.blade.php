@@ -59,7 +59,7 @@
                                         <td>
                                             <div class="row">
                                                 <div class="col-lg-3 ">
-                                                    <img src="{{@$express->merchant->user->image}}" alt="user" class="rounded" width="40" height="40">
+                                                    <img src="{{@$express->merchant->user->image}}" alt="" class="rounded" width="40" height="40">
                                                 </div>
                                                 <div class="col-lg-9">
                                                     <strong> {{@$express->merchant->user->name}}</strong>

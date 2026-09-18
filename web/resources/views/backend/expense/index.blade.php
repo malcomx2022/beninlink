@@ -148,7 +148,7 @@
                                         </td>
                                         <td>{{dateFormat($expense->date)}}</td>
                                         <td>
-                                            <img src="{{$expense->image}}" alt="user" class="rounded" width="45" height="65">
+                                            <img src="{{$expense->image}}" alt="{{ __('levels.receipt') }}" class="rounded" width="45" height="65">
                                         </td>
                                         <td>{{ formatAmount($expense->amount) }}</td>
                                         @if(hasPermission('expense_update') == true || hasPermission('expense_delete') == true )

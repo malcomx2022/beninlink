@@ -101,7 +101,7 @@
                                             @enderror
                                         </div>
                                         <div class="col-3">
-                                            <img src="{{static_asset($merchant->nid)}}" alt="user" class="rounded"  width="40" height="40">
+                                            <img src="{{static_asset($merchant->nid)}}" alt="{{ __('levels.nid') }}" class="rounded"  width="40" height="40">
                                         </div>
                                     </div>
                                 </div>
@@ -115,7 +115,7 @@
                                             @enderror
                                         </div>
                                         <div class="col-3">
-                                            <img src="{{static_asset($merchant->trade)}}" alt="user" class="rounded"  width="40" height="40">
+                                            <img src="{{static_asset($merchant->trade)}}" alt="{{ __('levels.trade_license') }}" class="rounded"  width="40" height="40">
                                         </div>
                                     </div>
                                 </div>
@@ -175,7 +175,7 @@
                                             @enderror
                                         </div>
                                         <div class="col-3">
-                                            <img src="{{ $merchant->user->image }}" alt="user" class="rounded"  width="40" height="40">
+                                            <img src="{{ $merchant->user->image }}" alt="" class="rounded"  width="40" height="40">
                                         </div>
                                     </div>
                                 </div>

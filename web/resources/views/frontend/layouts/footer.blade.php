@@ -5,7 +5,7 @@
                 <div class="col-lg-3 col-sm-6 ">
                     <div class="footer-logo text-left ">
                         <a href="index.html" class="d-inline-block"> 
-                            <img class="logo" src="{{ settings()->light_logo_image }}" width="200"  alt="Logo">
+                            <img class="logo" src="{{ settings()->light_logo_image }}" width="200"  alt="{{ settings()->name }}">
                         </a>
                         <p class="text-white mt-3">{!! section(\App\Enums\SectionType::ABOUT,'about_us') !!}</p>
                     </div>

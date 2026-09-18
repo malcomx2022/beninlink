@@ -208,7 +208,7 @@
         <div class="navbar-other w-100 d-flex  justify-content-between">
             <div >
                 <a href="{{ url('/') }}">
-                    <img src="{{ settings()->logo_image }}" style="margin-top: 10px" style="object-fit: contain" height="30px" alt="Logo">
+                    <img src="{{ settings()->logo_image }}" style="margin-top: 10px" style="object-fit: contain" height="30px" alt="{{ settings()->name }}">
                 </a>
             </div>
 
