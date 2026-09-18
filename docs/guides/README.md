@@ -72,6 +72,19 @@
   production**, après la suite de tests. Les secrets `SSH_HOST`, `SSH_USER`,
   `SSH_KEY` (et `SSH_PORT`, facultatif) se renseignent dans
   *Settings → Secrets and variables → Actions*.
+- `charte-web/`  **Audit UX du web et alignement sur la charte mobile.** État des
+  lieux chiffré du front public et du back-office face à `mobile/src/theme/` et à
+  `maquettes/3_back_office_web.html` : **132 occurrences du violet We Courier**,
+  **zéro occurrence de l'ocre**, Sora et DM Sans absentes, et deux défauts qu'une
+  ligne corrige — les titres du site public tournent en `fangsong` (serif CJK, donc
+  le serif par défaut du navigateur), et le back-office est rendu **à 80 % avec le
+  zoom désactivé**. Il pose la méthode : la charte s'ajoute par une **couche de
+  jetons** chargée en dernier, jamais dans les 7 263 lignes du CSS du socle — sinon
+  chaque montée de We Courier rejoue le conflit (cf. `socle/`). Il chiffre aussi les
+  contrastes : **blanc sur ocre = 2,17:1**, l'ocre ne porte jamais de texte blanc, et
+  **six pastilles de la maquette validée échouent en AA** — valeurs corrigées
+  fournies. Cinq points restent à trancher, dont un écart de cinq jetons entre la
+  maquette et `colors.ts`.
 - `../../web/CARTOGRAPHIE.md`  Relevé de l'Étape 0 sur le socle We Courier
   (blocs A-I, constats de sécurité, routes mortes). À lire en premier.
 
