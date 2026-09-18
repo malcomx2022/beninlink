@@ -250,6 +250,7 @@ return [
     
     //new update 11-6-23
     'primary_color'   => '原色',
+    'accent_color'    => '强调色',
     'text_color'      => '文字顏色',
     'front_web'       => '前網',
     'social_link'     => '社交鏈接',

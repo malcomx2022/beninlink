@@ -32,6 +32,8 @@
     <link rel="stylesheet" href="{{ static_asset('beninlink/css/tokens.css') }}">
     <link rel="stylesheet" href="{{ static_asset('beninlink/css/theme-backoffice.css') }}">
     <link rel="stylesheet" href="{{ static_asset('beninlink/css/components.css') }}">
+    {{-- L'ocre du transporteur (lot 3). Vide tant qu'il est resté sur la charte. --}}
+    @include('beninlink.brand-accent')
     <title>@yield('title')</title>
 </head>
 <body >

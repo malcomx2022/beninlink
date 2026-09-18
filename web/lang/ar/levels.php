@@ -236,6 +236,7 @@ return [
     'closed'                    => 'مغلق', 
     //new update 11-6-23
     'primary_color'            => 'لون أصلي',
+    'accent_color'             => 'لون التمييز',
     'text_color'               => 'لون الخط',
     'front_web'                => 'الجبهة الويب',
     'social_link'              => 'الرابط الاجتماعي',

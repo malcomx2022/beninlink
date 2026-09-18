@@ -237,6 +237,7 @@ return [
  
     //new update 11-6-23
     'primary_color'   => 'प्राथमिक रंग',
+    'accent_color'    => 'एक्सेंट रंग',
     'text_color'      => 'पाठ का रंग',
     'front_web'       => 'फ्रंट वेब',
     'social_link'     => 'सामाजिक लिंक',

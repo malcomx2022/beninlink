@@ -177,7 +177,7 @@
                                                      
                                 <div class="col-md-6">
                                     <div class="row">
-                                        <div class="col-md-6">
+                                        <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="primary_color">{{ __('levels.primary_color') }}</label>
                                                 <input id="primary_color" type="color" name="primary_color"  placeholder="{{ __('placeholder.Enter_favicon') }}" autocomplete="off" class="form-control @error('primary_color') is-invalid @enderror" value="{{ old('primary_color',settings()->primary_color) }}" require>
@@ -185,8 +185,20 @@
                                                     <small class="text-danger mt-2">{{ $message }}</small>
                                                 @enderror
                                             </div>
-                                        </div> 
-                                        <div class="col-md-6">
+                                        </div>
+                                        {{-- Lot 3 de la charte web : l'ocre des actions clés, réglable par
+                                             transporteur. Le défaut est celui de la charte ; les contrastes
+                                             qui en dépendent sont recalculés par App\Services\Brand\AccentColor. --}}
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="accent_color">{{ __('levels.accent_color') }}</label>
+                                                <input id="accent_color" type="color" name="accent_color" autocomplete="off" class="form-control @error('accent_color') is-invalid @enderror" value="{{ old('accent_color', settings()->accent_color ?: \App\Services\Brand\AccentColor::CHARTE) }}">
+                                                @error('accent_color')
+                                                    <small class="text-danger mt-2">{{ $message }}</small>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="text_color">{{ __('levels.text_color') }}</label>
                                                 <input id="text_color" type="color" name="text_color"  placeholder="{{ __('placeholder.Enter_favicon') }}" autocomplete="off" class="form-control @error('text_color') is-invalid @enderror" value="{{ old('text_color',settings()->text_color) }}" require>
