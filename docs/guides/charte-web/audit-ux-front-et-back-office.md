@@ -603,7 +603,7 @@ libellé 12 px gris) se pose dans un second temps — et **par des classes
 | **5** ✅ | Sidebar groupé · « Retrait » conditionné + état vide · sélecteur de langue réduit à FR/EN · filtre du tableau de bord | **fait** — voir §13. Le sélecteur n'était que la partie visible : `LocalizationController` acceptait **n'importe quelle** chaîne |
 | **6** ✅ | `focus-visible` · `alt` par lot · 42 `table-responsive` · les 2 `http://` | **fait** — voir §16. Trois des quatre items étaient déjà livrés par le lot 1. Les deux comptes étaient faux : **47** images sans `alt` et non 127 (le compte naïf coupe les balises Blade), **5** tableaux d'écran et non 42. Et le `http://` le plus coûteux n'était pas dans une vue |
 | **7** ✅ | Forme fine de la maquette (KPI, topbar, timeline de suivi) | **fait** — voir §17. La chronologie n'était pas une question de forme : c'était la **quatrième** copie de la table des statuts, sur la page du client final, et elle montrait une livraison partielle comme une réussite. La topbar est **délibérément écartée** (§9.4) |
-| **hors lot** | Migration Bootstrap 4 → 5 (217 `data-toggle`) | *chantier propre, jamais emboîté ici* |
+| **hors lot** | Migration Bootstrap 4 → 5 (217 `data-toggle`) | *chantier propre, jamais emboîté ici* — **mesuré et découpé** le 2026-09-19 : `docs/guides/bootstrap/migration-4-vers-5.md`. Ses deux étapes sans effet visuel sont jouées ; les trois autres attendent un regard humain sur les écrans |
 
 Après chaque lot : **`php artisan test`** (`.github/workflows/deploy.yml` déploie
 sur un push `main`, rien ne part sans la suite) et une vérification visuelle sur
