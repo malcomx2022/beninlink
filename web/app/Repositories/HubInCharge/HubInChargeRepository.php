@@ -14,16 +14,50 @@ use App\Repositories\HubInCharge\HubInChargeInterface;
 
 class HubInChargeRepository implements HubInChargeInterface {
 
+    /**
+     * Les responsables d'entrepot de la SOCIETE connectee.
+     *
+     * S31 — `hub_incharges` ne porte pas de `company_id` : le perimetre passe par
+     * l'entrepot, exactement comme `merchant_shops` passe par le marchand (S26).
+     * Sans ce filtre, `where('hub_id', $hubID)` acceptait l'entrepot de n'importe
+     * quelle societe.
+     */
+    private function responsablesDeLaSociete()
+    {
+        return HubInCharge::whereHas('hub', function ($query) {
+            $query->companywise();
+        });
+    }
+
+    /** L'entrepot vise appartient-il a la societe connectee ? */
+    private function entrepotDeLaSociete($hubID)
+    {
+        return Hub::companywise()->find($hubID);
+    }
+
+    /** L'agent vise appartient-il a la societe connectee ? */
+    private function agentDeLaSociete($userID)
+    {
+        return User::companywise()->find($userID);
+    }
+
     public function all($hubID){
-        return HubInCharge::where('hub_id',$hubID)->with('user','hub')->orderByDesc('id')->get();
+        return $this->responsablesDeLaSociete()->where('hub_id',$hubID)->with('user','hub')->orderByDesc('id')->get();
 
     }
     public function get($hubID,$id) {
-        return HubInCharge::where(['id'=>$id,'hub_id'=>$hubID])->first();
+        return $this->responsablesDeLaSociete()->where(['id'=>$id,'hub_id'=>$hubID])->first();
     }
 
     public function store($hubID,$request) {
        try {
+           // S31 — ni l'entrepot ni l'agent n'etaient verifies : on pouvait nommer un
+           // responsable sur l'entrepot d'une AUTRE societe, et `assignedHub()` juste
+           // en dessous DESACTIVAIT alors ses responsables en place puis reecrivait le
+           // `hub_id` de l'agent choisi.
+           if (blank($this->entrepotDeLaSociete($hubID)) || blank($this->agentDeLaSociete($request->user_id))) {
+               return false;
+           }
 
            $inCharge                             = new HubInCharge();
            $inCharge->user_id                    = $request->user_id;
@@ -41,7 +75,18 @@ class HubInChargeRepository implements HubInChargeInterface {
 
     public function update($hubID,$id, $request) {
         try {
-            $inCharge                             = HubInCharge::where(['id'=>$id,'hub_id'=>$hubID])->first();
+            // S31 — meme portee que `store()`, et la ligne visee doit etre la notre.
+            if (blank($this->entrepotDeLaSociete($hubID)) || blank($this->agentDeLaSociete($request->user_id))) {
+                return false;
+            }
+
+            $inCharge                             = $this->responsablesDeLaSociete()
+                ->where(['id'=>$id,'hub_id'=>$hubID])->first();
+
+            if (blank($inCharge)) {
+                return false;
+            }
+
             $inCharge->status                     = $request->status;
             $inCharge->user_id                    = $request->user_id;
             $inCharge->hub_id                     = $hubID;
@@ -57,8 +102,11 @@ class HubInChargeRepository implements HubInChargeInterface {
     }
 
     public function delete($id) {
+        // S31 — `HubInCharge::destroy($id)` etait NU, sans meme le `hub_id` : le
+        // responsable d'entrepot de n'importe quelle societe se supprimait.
+        $inCharge = $this->responsablesDeLaSociete()->whereKey($id)->first();
 
-        return HubInCharge::destroy($id);
+        return $inCharge ? $inCharge->delete() : 0;
     }
 
     public function user_image($image_id = '', $image)
@@ -93,7 +141,14 @@ class HubInChargeRepository implements HubInChargeInterface {
     {
 
         try {
-            $inChargesStatus = HubInCharge::whereNotIn('user_id',[$inCharge->user->id])->whereNotIn('id',[$inCharge->id])->where(['hub_id'=>$hubID,'status'=>Status::ACTIVE])->get();
+            // S31 — cette rafle passe TOUS les autres responsables actifs de l'entrepot
+            // a inactif. Non scopee, elle desactivait ceux d'une autre societe : une
+            // interruption de service chez elle, sans trace exploitable.
+            if (blank($this->entrepotDeLaSociete($hubID))) {
+                return false;
+            }
+
+            $inChargesStatus = $this->responsablesDeLaSociete()->whereNotIn('user_id',[$inCharge->user->id])->whereNotIn('id',[$inCharge->id])->where(['hub_id'=>$hubID,'status'=>Status::ACTIVE])->get();
             if(!blank($inChargesStatus)){
                 foreach ($inChargesStatus as $incChargeStatus){
                     $incChargeStatus->status = Status::INACTIVE;
@@ -104,7 +159,15 @@ class HubInChargeRepository implements HubInChargeInterface {
             $inCharge->status = Status::ACTIVE;
             $inCharge->save();
 
-            $user                                 = User::find($inCharge->user_id);
+            // S31 — et ici on reecrivait le `hub_id` d'un utilisateur sans verifier qu'il
+            // est a nous : un agent d'une autre societe se retrouvait rattache a notre
+            // entrepot, ou le notre au leur.
+            $user                                 = $this->agentDeLaSociete($inCharge->user_id);
+
+            if (blank($user)) {
+                return false;
+            }
+
             $user->hub_id                         = $hubID;
             $user->save();
 
@@ -116,12 +179,15 @@ class HubInChargeRepository implements HubInChargeInterface {
     }
     // get all rows in User model
     public function users(){
-        return User::where('user_type',UserType::ADMIN)->orderBy('id')->get();
+        // S31 — cette liste alimente le menu deroulant de l'ecran : sans filtre, elle
+        // nommait les administrateurs de TOUS les transporteurs.
+        return User::companywise()->where('user_type',UserType::ADMIN)->orderBy('id')->get();
     }
 
     // get all rows in Hub model
     public function hub($hubID){
-        return Hub::findOrFail($hubID);
+        // S31 — `findOrFail` nu : la fiche de l'entrepot d'une autre societe.
+        return Hub::companywise()->findOrFail($hubID);
     }
 
 }

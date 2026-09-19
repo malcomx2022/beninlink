@@ -78,6 +78,8 @@ class HubInChargeController extends Controller
         $hub        = $this->repo->hub($hubID);
         $users      = $this->repo->users();
         $inCharge   = $this->repo->get($hubID,$id);
+        abort_if(blank($inCharge), 404); // S31
+
         return view('backend.hubincharge.edit',compact('inCharge','hub','users'));
     }
 
@@ -111,7 +113,9 @@ class HubInChargeController extends Controller
     {
 
 
-        $this->repo->delete($id);
+        // S31 — hors perimetre le depot ne supprime rien : on repond 404 plutot que
+        // de feliciter l'agent d'une suppression qui n'a pas eu lieu.
+        abort_unless($this->repo->delete($id), 404);
 
         Toastr::success(__('incharge.delete_msg'),__('message.success'));
         return back();
@@ -119,7 +123,11 @@ class HubInChargeController extends Controller
 
     public function assigned($hubID,$id)
     {
+        // S31 — hors perimetre `get()` rend `null` et la ligne suivante dereferencait :
+        // 500 au lieu de 404 (famille S15).
         $inCharge                   = $this->repo->get($hubID,$id);
+        abort_if(blank($inCharge), 404);
+
         $queryArray['user_id']      = $inCharge->user_id;
         $queryArray['status']       = Status::ACTIVE;
         $hubInCharge                = HubInCharge::where($queryArray)->where('id', '!=', $id)->first();
