@@ -8,7 +8,13 @@
     <link rel="shortcut icon" href="{{ settings()->favicon_image }}" type="image/x-icon">
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{{static_asset('backend')}}/vendor/bootstrap-five/bootstrap.min.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css">
+    {{-- Bootstrap 4, servi par le dépôt — étape A de la migration vers 5.
+         Le socle le prenait sur `maxcdn.bootstrapcdn.com` en **4.1.1**, alors que
+         `footer.blade.php` sert le JS de la copie LOCALE, en **4.1.0** : la feuille
+         et le script n'étaient donc même pas de la même version. La copie locale
+         les réaligne, et retire un CDN tiers de chaque page du back-office.
+         Voir docs/guides/bootstrap/migration-4-vers-5.md --}}
+    <link rel="stylesheet" href="{{static_asset('backend')}}/vendor/bootstrap/css/bootstrap.min.css">
     {{-- `Circular Std` est sous licence PROPRIÉTAIRE et embarquée dans le socle.
          La charte l'a remplacée par DM Sans / Sora dès le lot 1 : la charger
          revenait à télécharger 348 Ko de fontes que rien ne peint, et à

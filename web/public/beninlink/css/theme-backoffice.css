@@ -444,3 +444,88 @@ textarea:focus-visible,
    navigateur le jour où le fichier n'est plus chargé.
    =========================================================================== */
 .table th, table th { font-family: var(--bl-font-body); }
+
+/* ===========================================================================
+   14. MIGRATION BOOTSTRAP 4 → 5 — étape B : le chevron du sidebar
+   Voir docs/guides/bootstrap/migration-4-vers-5.md
+
+   ┌─ LE PIÈGE QUE CETTE SECTION DÉSAMORCE ─────────────────────────────────────┐
+   │ Le socle dessine la flèche des entrées de menu dépliables avec NEUF règles │
+   │ qui sélectionnent sur `[data-toggle="collapse"]` — l'attribut de           │
+   │ Bootstrap **4**. Renommer les attributs des vues en `data-bs-toggle`       │
+   │ (ce que Bootstrap 5 exige) les rend donc toutes inopérantes d'un coup :    │
+   │ chaque sous-menu perd sa flèche, et sa rotation à l'ouverture.             │
+   │                                                                            │
+   │ Sans erreur. Sans avertissement. Juste des flèches disparues.              │
+   └────────────────────────────────────────────────────────────────────────────┘
+
+   Les neuf règles sont DOUBLÉES ici en `[data-bs-toggle]`. Tant que les vues
+   portent l'ancien attribut, ces sélecteurs ne correspondent à rien et la page
+   est inchangée — c'est ce qui rend cette étape réversible et invisible. Le jour
+   où une vue passe à `data-bs-toggle`, sa flèche suit sans qu'on y pense.
+
+   Elles sont recopiées à l'identique depuis `style.css` (l. 1532, 1659, 7026),
+   volontairement : c'est la seule façon de ne pas éditer les 7 263 lignes du
+   socle. `BootstrapMigrationTest` compare les deux familles propriété par
+   propriété — si l'éditeur retouche les siennes, la suite le dira.
+   =========================================================================== */
+
+/* — sidebar vertical ------------------------------------------------------- */
+.nav-left-sidebar .nav-link[data-bs-toggle="collapse"] {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.nav-left-sidebar .nav-link[data-bs-toggle="collapse"]::after {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  position: absolute;
+  right: 20px;
+  vertical-align: 0.255em;
+  content: "";
+  border-top: 0.3em solid;
+  border-right: 0.3em solid transparent;
+  border-bottom: 0;
+  border-left: 0.3em solid transparent;
+}
+.nav-left-sidebar .nav-link[data-bs-toggle="collapse"][aria-expanded="false"]:after {
+  transform: rotate(-90deg);
+}
+.nav-left-sidebar .nav-link[data-bs-toggle="collapse"]:after {
+  transition: transform .35s ease, opacity .35s ease;
+  opacity: .5;
+}
+
+/* — barre horizontale ------------------------------------------------------ */
+.navigation-horizontal .nav-link[data-bs-toggle="collapse"] {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.navigation-horizontal .nav-link[data-bs-toggle="collapse"]::after {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  position: absolute;
+  right: 8px;
+  vertical-align: 0.255em;
+  content: "";
+  border-top: 0.3em solid;
+  border-right: 0.3em solid transparent;
+  border-bottom: 0;
+  border-left: 0.3em solid transparent;
+}
+.navigation-horizontal .nav-link[data-bs-toggle="collapse"][aria-expanded="false"]:after {
+  transform: rotate(-90deg);
+}
+.navigation-horizontal .nav-link[data-bs-toggle="collapse"]:after {
+  transition: transform .35s ease, opacity .35s ease;
+  opacity: .5;
+}
+
+/* — écriture de droite à gauche (l'arabe reste dans le socle) -------------- */
+html[dir="rtl"] .nav-left-sidebar .nav-link[data-bs-toggle="collapse"]::after {
+  left: 20px !important;
+  right: unset !important;
+}
