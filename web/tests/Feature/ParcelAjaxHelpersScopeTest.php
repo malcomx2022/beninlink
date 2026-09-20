@@ -19,7 +19,7 @@ use Tests\Concerns\SeedsTenant;
 use Tests\TestCase;
 
 /**
- * S39 — les aides AJAX des colis, première passe sur l'arriéré de S38.
+ * S40 — les aides AJAX des colis, première passe sur l'arriéré de S38.
  *
  * L'arriéré ouvert par le filet des identifiants de corps compte 90 routes,
  * dont **27 sous `POST admin/parcel/`**. Elles ne se valent pas : les

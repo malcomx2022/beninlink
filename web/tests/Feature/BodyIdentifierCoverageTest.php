@@ -75,7 +75,7 @@ class BodyIdentifierCoverageTest extends TestCase
         'POST admin/parcel/delivery-re-scheule/cancel' => ParcelBulkScopeTest::class,
         'POST admin/parcel/return-to-qourier-cancel' => ParcelBulkScopeTest::class,
         'POST admin/parcel/return-assign-re-schedule-to-merchant/cancel' => ParcelBulkScopeTest::class,
-        // S39 — les aides AJAX des colis (1re passe sur l'arriere de S38)
+        // S40 — les aides AJAX des colis (1re passe sur l'arriere de S38)
         'POST admin/parcel/merchant/shops' => ParcelAjaxHelpersScopeTest::class,
         'POST merchant/parcel/merchant/shops' => ParcelAjaxHelpersScopeTest::class,
         'POST admin/parcel/priority/update' => ParcelAjaxHelpersScopeTest::class,

@@ -2757,6 +2757,15 @@ décaissements des passes 5 et 6. Elle n'est pas une série de cas isolés : **c
 classe**, et le filet ne la couvrira jamais par construction. Ce qui la couvre est de
 lire le fichier entier quand on en corrige une méthode, pas la route.
 
+> ⚠️ **Cette dernière phrase a été démentie — et c'est une bonne nouvelle.** « Le filet
+> ne la couvrira jamais par construction » était vrai de `WebIsolationCoverageTest`,
+> qui énumère `$route->parameterNames()`. **S38** a construit l'autre filet, celui qui
+> énumère la **source des contrôleurs et des dépôts** plutôt que les routes
+> (`BodyIdentifierCoverageTest`). La classe est donc mécanisable ; elle ne l'était pas
+> par le filet que j'avais sous la main. Je laisse la phrase d'origine et ce démenti
+> côte à côte : c'est le genre d'affirmation qu'il vaut mieux voir tomber que voir
+> disparaître.
+
 ⚠️ Conséquence de ces deux-là, plus grave qu'une lecture : le colis se créait avec
 `company_id = settings()->id` — la **mienne** — et `merchant_id` d'ailleurs. L'écriture
 n'était pas seulement hors périmètre, elle était **incohérente** : une ligne appartenant
@@ -2990,17 +2999,22 @@ Les cinq points passent par une seule méthode privée, `utilisateurDeLaSociete(
 reprend **exactement** le périmètre de `get()` — pour qu'un écart entre la lecture et
 l'écriture ne puisse plus réapparaître.
 
-### Cinquième et dernière occurrence de la tache aveugle
+### Cinquième occurrence de la tache aveugle (annoncée « dernière », à tort)
 
 Cinq des écritures corrigées ici n'ont **pas d'identifiant dans leur URL** :
 `users/update`, `users/permissions/update`, `deliveryman/update`,
 `delivery-category/update` et `fraud/update` le portent dans le **corps**. Le filet ne
 les voit pas, et ne les verra jamais.
 
-Compte final de cette classe sur l'ensemble du chantier : **trois décaissements**
+Compte de cette classe sur les dix passes d'arriéré : **trois décaissements**
 (passes 5 et 6), **deux créations de colis** (S33), **quatre écritures de compte de
 versement** (S34), **l'AJAX de la grille** (S34), **cinq écritures de paramétrage**
-(S35). Quinze points, aucun visible du filet. Ce qui les a tous trouvés est la même
+(S35). Quinze points, aucun visible du filet **des routes à paramètre**.
+
+⚠️ « Dernière » était faux : **S38** a énuméré cette surface pour de bon — **122 routes
+d'écriture** lisant un identifiant dans le corps — et y a trouvé bien davantage, dont
+les chemins **en lot**. Ce que cette passe-ci pouvait honnêtement dire, c'est que
+c'était la dernière de *l'arriéré des routes à paramètre*. Ce qui les a tous trouvés est la même
 chose : **lire le fichier entier quand on corrige une de ses méthodes**, jamais la seule
 route.
 
@@ -3096,11 +3110,8 @@ pas :
   modifiables ;
 - les six catégories de livraison du jeu d'amorçage, créées **sans société** : aucune
   société ne peut donc les modifier par son écran, sauf la n° 1 en lecture ;
-- la **destination du refus** de `PermissionCheckMiddleware` pour une navigation de
-  page : toujours `redirect('/')`, donc un refus d'accès qui ressemble à une
-  navigation réussie. S36 a corrigé le cas AJAX (403) et laissé la navigation
-  inchangée, parce que la changer toucherait les 197 autres déclarations. C'est la
-  même famille que les deux écrans de profil ci-dessus, et ce serait un lot à part ;
+- ✅ la **destination du refus** de `PermissionCheckMiddleware` pour une navigation
+  de page — **corrigée le 2026-09-20 (S38)** ;
 - `IncomeController::searchAccount()` est une **méthode morte** : sa route a disparu
   et l'écran des revenus appelle celle des dépenses. Elle passe de plus l'objet
   `Request` là où un identifiant est attendu.
@@ -3324,13 +3335,14 @@ marchand, et deux tests qui inscrivent le constat d'origine sur le **code** (plu
 **Dix-sept sabotages, dix-sept morsures.** Suite complète : **752 tests, 45 039
 assertions, vert** (mesuré après rebasage sur le `main` qui a reçu la PR #106).
 
-### Ce qui reste, de la même famille
+### Ce qui restait, de la même famille
 
 La **destination du refus** de `PermissionCheckMiddleware` pour une navigation de
-page : toujours `redirect('/')`, donc un refus qui ressemble à une navigation réussie.
-S36 a corrigé le cas AJAX (403) et laissé la navigation, parce que la changer toucherait
-les 197 déclarations existantes. C'est le dernier membre connu de cette famille, et il
-demande de regarder chaque écran, pas seulement le middleware.
+page — ✅ **traitée dans S39**, plus bas. C'était le dernier membre connu de la
+famille « un refus qui ne se dit pas ».
+
+---
+
 ## ✅ S38 — la tache aveugle du filet : l'identifiant qui vit dans le corps (2026-09-20)
 
 ### Ce qui a déclenché ce lot
@@ -3439,7 +3451,100 @@ son message ; une ligne retirée de l'arriéré → la route redevient non class
 
 Suite complète : **750 tests, 45 105 assertions**.
 
-## ✅ S39 — les aides AJAX des colis (2026-09-20, 1ʳᵉ passe sur l'arriéré de S38)
+---
+
+> ⚠️ **Collision de numéro, et comment elle est tranchée.** Deux lots menés en
+> parallèle ont pris le numéro **S38** : celui ci-dessus (la tache aveugle du filet)
+> et celui ci-dessous (la destination d'un refus de droit). Le premier est **déjà
+> fusionné dans `main`** ; il garde donc son numéro, et le second devient **S39**.
+> Les messages de commit du second disent encore « S38 » — c'est la trace d'un lot
+> qui ignorait l'autre, laissée telle quelle plutôt que réécrite.
+
+## ✅ S39 — la destination d'un refus de droit (2026-09-20)
+
+Dernier membre de la famille ouverte depuis S28 : **un refus qui ne se dit pas**.
+
+S36 avait corrigé le cas AJAX — un refus rendu en `redirect('/')` arrivait en **200
+avec du HTML** dans le gestionnaire de succès d'un `$.ajax` — et laissé la navigation
+de page inchangée, en notant que la changer demandait de regarder plus loin que le
+middleware. Voici ce que cette mesure a donné.
+
+### Ce que `redirect('/')` faisait réellement
+
+`/` n'est **pas** le tableau de bord. Sur un domaine de locataire, il est déclaré dans
+le groupe `frontend` de `routes/web.php`, **hors de `auth`** : c'est la **page publique
+du site**.
+
+Un opérateur refusé était donc **éjecté du back-office vers la vitrine commerciale**,
+sans un mot. Il n'apprenait ni qu'il avait été refusé, ni pourquoi, et devait revenir
+au tableau de bord à la main. Le cas n'est pas théorique : depuis S36, un chef de hub
+qui clique une notification de ticket de support est refusé — et c'est exactement ce
+qui lui arrivait.
+
+### Les trois gestes
+
+| | |
+|---|---|
+| il **reste dans le back-office** | retour sur la page précédente, et à défaut le **tableau de bord**, qui n'exige aucune permission (vérifié par un test : y renvoyer un refus alors qu'il serait gardé ferait boucler) |
+| il **sait pourquoi** | un message, dans l'idiome du socle (`Toastr`), avec sa clé de traduction en FR et EN |
+| la page précédente vient de la **session** | et non de l'en-tête `Referer` — voir ci-dessous |
+
+### ⚠️ Le piège évité : `url()->previous()` lit d'abord le `Referer`
+
+Contrairement à ce que son nom suggère, `UrlGenerator::previous()` lit **l'en-tête
+`Referer`** et ne retombe sur la session qu'à défaut :
+
+```php
+$referrer = $this->request->headers->get('referer');
+$url = $referrer ? $this->to($referrer) : $this->getPreviousUrlFromSession();
+```
+
+S'en servir aurait fait de cette garde une **redirection ouverte** : une page tierce
+pointant vers une route refusée aurait renvoyé le navigateur chez elle. La page
+précédente est donc lue dans la session — écrite par le socle à partir des navigations
+réellement servies — et l'hôte est vérifié malgré tout.
+
+C'est le seul endroit du chantier où le piège a été vu **avant** d'être écrit, et
+uniquement parce que la question « d'où vient cette donnée ? » a été posée au
+framework plutôt qu'au nom de la méthode.
+
+### Le code HTTP : 302, et c'est un choix
+
+`resources/views/errors/403.blade.php` existe : répondre 403 à une navigation était
+possible. Ce n'est pas ce qui est fait, et la raison est inscrite dans le test : une
+page d'erreur ferait perdre à l'opérateur son contexte de travail, alors qu'un refus
+de droit dans un back-office n'est pas une impasse — c'est « pas ici ». **La machine
+reçoit 403** (cas AJAX, S36), **l'humain reçoit son écran et un message**.
+
+### La leçon : trois sabotages verts, trois gardes inatteignables
+
+Onze sabotages, trois verts au premier tour — et les trois interrogeaient le test.
+
+1. **Retirer la clé de traduction** laissait tout au vert : `__()` replie sur la
+   **clé elle-même**, et les deux côtés de ma comparaison repliaient de la même
+   façon. L'opérateur aurait lu « message.permission_denied » à l'écran. Le test
+   exige maintenant une phrase, et la présence de la clé dans les deux langues.
+2. **Le contrôle d'hôte** et **le garde anti-boucle** n'étaient atteignables par
+   aucun chemin normal : la page précédente de la session est toujours du bon hôte
+   et jamais l'URL refusée, puisque c'est le socle qui l'écrit. Les exercer demande
+   de **semer la session à la main** — ce qui est légitime, une valeur périmée ou
+   empoisonnée étant exactement ce contre quoi ces gardes existent.
+
+Quatrième fois du chantier qu'un garde inatteignable fait passer un sabotage (après
+S31, S34 et S36). La règle tient : **un sabotage vert interroge le test, il ne
+disculpe pas le code.**
+
+### Couverture
+
+`WebPermissionGuardTest` passe de 23 à **29 tests, 63 assertions** : les acquis de S36
+plus la destination du refus (jamais la page publique, retour sur la page précédente,
+repli sur un tableau de bord non gardé), le message et ses deux traductions, le refus
+de suivre un `Referer` étranger, et les deux valeurs de session aberrantes.
+
+**Onze sabotages, onze morsures** après correction des trois tests.
+
+Suite complète : **758 tests, 45 052 assertions, vert.**
+## ✅ S40 — les aides AJAX des colis (2026-09-20, 1ʳᵉ passe sur l'arriéré de S38)
 
 ### Où l'arriéré se creuse
 

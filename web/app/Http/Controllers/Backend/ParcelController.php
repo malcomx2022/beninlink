@@ -481,7 +481,7 @@ class ParcelController extends Controller
     }
 
     /**
-     * S39 — le perimetre des boutiques passe par le MARCHAND.
+     * S40 — le perimetre des boutiques passe par le MARCHAND.
      *
      * `merchant_shops` ne porte aucune colonne `company_id` : c'est le marchand
      * qui rattache la boutique a une societe. Un `companywise()` sur ce modele
@@ -495,7 +495,7 @@ class ParcelController extends Controller
     }
 
     /**
-     * S39 — un evenement de colis, a condition que le COLIS soit chez nous.
+     * S40 — un evenement de colis, a condition que le COLIS soit chez nous.
      *
      * `parcel_events` n'a pas non plus de `company_id` : le perimetre vient du
      * colis. C'est la forme deja retenue en S25 pour la chronologie.
@@ -515,7 +515,7 @@ class ParcelController extends Controller
             if ($request->id && $request->shop == 'true') {
                 $merchantShops          = [];
                 $merchantShop           = $this->boutiquesDeLaSociete()->where(['merchant_id'=>$request->id,'default_shop'=>Status::ACTIVE])->first();
-                // S39 — le socle empilait ce resultat SANS le verifier, et
+                // S40 — le socle empilait ce resultat SANS le verifier, et
                 // `shops.blade.php` dereference `$shop->id`. Un marchand sans
                 // boutique par defaut rendait donc un 500 ; avec le perimetre,
                 // c'etait le cas de tout identifiant etranger — un refus
@@ -569,7 +569,7 @@ class ParcelController extends Controller
     public function transferHub(Request $request){
 
 
-        // S39 — double fuite : l'evenement etait lu sans perimetre (celui du
+        // S40 — double fuite : l'evenement etait lu sans perimetre (celui du
         // colis d'un autre transporteur donc), et `Hub::orderByDesc('id')`
         // rendait les entrepots de tout le monde. Sur un colis inconnu,
         // `$parcelEvent->hub_id` sur `null` rendait en plus un 500.
@@ -587,7 +587,7 @@ class ParcelController extends Controller
 
         $search = $request->search;
         if($request->single){
-            // S39 — evenement lu sans perimetre : cette aide rendait le NOM du
+            // S40 — evenement lu sans perimetre : cette aide rendait le NOM du
             // livreur ou du ramasseur affecte au colis d'un autre transporteur.
             // Et sur un colis sans evenement, les deux branches dereferencaient
             // `null` — un 500 la ou un vide suffit.
@@ -652,7 +652,7 @@ class ParcelController extends Controller
     }
 
     public function transfertohubSelectedHub(Request $request){
-        // S39 — `Parcel::find()` nu : on rendait le nom de l'entrepot auquel
+        // S40 — `Parcel::find()` nu : on rendait le nom de l'entrepot auquel
         // est rattache le colis d'un autre transporteur.
         $parcel          = Parcel::companywise()->find($request->parcel_id);
         if($parcel){
@@ -1474,7 +1474,7 @@ class ParcelController extends Controller
         $hubs_list  = "";
         $hubs_list .= "<option>".__("menus.select")." ". __("hub.title") ."</option>";
 
-        // S39 — `Hub::all()` rendait la liste des entrepots de TOUS les
+        // S40 — `Hub::all()` rendait la liste des entrepots de TOUS les
         // transporteurs : leurs noms, dans une liste deroulante du back-office.
         if($request->hub_id):
             $hubs=Hub::companywise()->get();
@@ -1523,7 +1523,7 @@ class ParcelController extends Controller
 
     public function priorityUpdate(Request $request){
 
-        // S39 — `Parcel::where(['id'=>…])->first()` NU, suivi d'un `save()` : on
+        // S40 — `Parcel::where(['id'=>…])->first()` NU, suivi d'un `save()` : on
         // changeait la priorite du colis d'un AUTRE transporteur. Et sur un
         // identifiant inconnu, le dereferencement de `null` rendait un 500.
         $parcel = Parcel::companywise()->find($request->id);

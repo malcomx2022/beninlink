@@ -325,7 +325,7 @@ class MerchantParcelController extends Controller
     }
 
     /**
-     * S39 — dans le panneau marchand, le perimetre n'est pas la societe mais le
+     * S40 — dans le panneau marchand, le perimetre n'est pas la societe mais le
      * MARCHAND CONNECTE.
      *
      * Le jumeau de cette aide au back-office se contente de la societe ; ici,
@@ -347,7 +347,7 @@ class MerchantParcelController extends Controller
             if ($request->id && $request->shop == 'true') {
                 $merchantShops = [];
                 $merchantShop = $this->boutiquesDuMarchandConnecte()->where(['default_shop'=>Status::ACTIVE])->first();
-                // S39 — meme forme qu'au back-office : un `null` empile que la
+                // S40 — meme forme qu'au back-office : un `null` empile que la
                 // vue dereference. Voir `ParcelController::merchantShops()`.
                 if(!blank($merchantShop)){
                     $merchantShops[]= $merchantShop;
