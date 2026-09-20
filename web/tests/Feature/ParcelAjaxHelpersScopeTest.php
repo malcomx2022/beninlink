@@ -206,14 +206,25 @@ class ParcelAjaxHelpersScopeTest extends TestCase
 
     public function test_the_transfer_hub_helper_leaks_neither_the_event_nor_the_other_hubs(): void
     {
+        // ⚠️ Le SECOND entrepôt du voisin est ce qui donne sa valeur au test.
+        // Avec le défaut présent, l'aide lisait bien l'évènement du colis d'en
+        // face — et excluait donc `sonEntrepot` de la liste, par son
+        // `whereNotIn`. Une assertion portant sur ce seul entrepôt passait au
+        // vert **sans rien prouver** : c'est le sabotage qui l'a montré. Celui
+        // ci-dessous n'est exclu par rien.
+        $sonAutreEntrepot = Hub::forceCreate([
+            'company_id' => self::AUTRE, 'name' => 'Second entrepot du voisin', 'status' => 1,
+        ]);
+
         $this->evenementSur($this->sonColis, ParcelStatus::RECEIVED_WAREHOUSE, $this->sonEntrepot->id);
         $this->evenementSur($this->monColis, ParcelStatus::RECEIVED_WAREHOUSE, $this->monEntrepot->id);
 
         $reponse = $this->post(self::HOTE . '/admin/parcel/transfer-hub', ['parcel_id' => $this->sonColis->id]);
 
         $reponse->assertOk();
-        $this->assertStringNotContainsString('Entrepot du voisin', $reponse->getContent(),
+        $this->assertStringNotContainsString('Second entrepot du voisin', $reponse->getContent(),
             'les entrepôts d\'un autre transporteur sont rendus');
+        $this->assertNotNull($sonAutreEntrepot->fresh());
 
         // Contrôle négatif : sur mon colis, l'aide fait son travail — elle
         // propose mes entrepôts, sauf celui où le colis se trouve déjà.

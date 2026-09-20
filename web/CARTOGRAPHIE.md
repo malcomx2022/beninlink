@@ -3438,3 +3438,88 @@ Filet saboté à son tour, deux fois : second niveau coupé → le témoin mord,
 son message ; une ligne retirée de l'arriéré → la route redevient non classée.
 
 Suite complète : **750 tests, 45 105 assertions**.
+
+## ✅ S39 — les aides AJAX des colis (2026-09-20, 1ʳᵉ passe sur l'arriéré de S38)
+
+### Où l'arriéré se creuse
+
+Le filet de S38 a ouvert avec **90 routes** à l'arriéré. Elles ne sont pas
+réparties au hasard : **27** sont sous `POST admin/parcel/`, et elles ne se
+valent pas. Les transitions de statut ont été gardées au fil des dix passes
+précédentes ; les **aides AJAX** — listes déroulantes, recherches, bascules —
+n'ont jamais été touchées par aucune passe. C'est là que la lecture nue a
+survécu, et c'est ce sous-groupe que celle-ci prouve.
+
+### Sept points, dont un dans le panneau marchand
+
+| Route | Ce qu'un identifiant étranger obtenait |
+|---|---|
+| `POST admin/parcel/merchant/shops` | nom, téléphone, adresse des boutiques de n'importe quel marchand |
+| `POST merchant/parcel/merchant/shops` | idem, entre marchands du **même** transporteur |
+| `POST admin/parcel/priority/update` | une **écriture** : la priorité du colis d'en face |
+| `POST admin/parcel/received-warehouse-hub-selected` | les entrepôts de **tous** les transporteurs |
+| `POST admin/parcel/transfer-hub` | l'évènement du colis d'en face **et** tous les entrepôts |
+| `POST admin/transertohub-selected-hub` | le nom de l'entrepôt d'un colis étranger |
+| `POST admin/parcel/deliveryman/search` | le **nom** du livreur affecté au colis d'en face |
+
+### Deux modèles qui ne peuvent pas porter `companywise()`
+
+`merchant_shops` n'a **aucune colonne `company_id`** — c'est le marchand qui
+rattache la boutique à une société. `parcel_events` non plus — c'est le colis.
+Un `companywise()` sur ces modèles n'existe pas et *ne peut pas* exister : le
+périmètre passe par une jointure.
+
+C'est ce qui rendait ces points faciles à manquer. Chercher l'absence d'un
+`companywise()` — le réflexe des dix passes précédentes — ne les désigne pas.
+
+### Le périmètre du jumeau n'est pas celui de l'original
+
+Au back-office, l'agent voit les boutiques de sa société. Dans le panneau
+marchand, s'arrêter à la société laisserait un marchand lire celles de son
+**voisin chez le même transporteur**. L'identifiant envoyé par le formulaire
+n'y décide donc de rien : c'est la session — la règle que
+`ShopsRepository::ownedShops()` pose déjà depuis S17.
+
+C'est précisément l'écart qu'une correction mécanique — le même `companywise()`
+partout — aurait introduit, et le test l'inscrit dans les deux sens.
+
+### Un défaut du socle que la garde a mis au jour
+
+`merchantShops` empilait le résultat de `first()` **sans le vérifier**, et
+`shops.blade.php` déréférence `$shop->id`. Un marchand sans boutique par défaut
+rendait donc **déjà** un 500 ; avec le périmètre, c'était le cas de *tout*
+identifiant étranger — un refus annoncé comme une panne, la famille que S37
+vient de documenter. Corrigé dans les deux contrôleurs.
+
+### La leçon de ce lot : un test vert qui ne prouvait rien
+
+`test_the_transfer_hub_helper_leaks_neither_the_event_nor_the_other_hubs` est
+resté **vert au sabotage**. La raison est instructive : avec le défaut présent,
+l'aide lisait bien l'évènement du colis d'en face — et excluait donc l'entrepôt
+du voisin de sa liste, par son propre `whereNotIn`. Mon assertion portait
+exactement sur l'entrepôt que le défaut écartait par coïncidence.
+
+Le test porte maintenant sur un **second** entrepôt du voisin, que rien
+n'exclut. Sans le sabotage, cette passe aurait livré une preuve creuse — et
+c'est la deuxième fois du chantier qu'un vert au sabotage révèle non pas un
+correctif inutile, mais une **assertion mal visée**.
+
+### Une garde d'accès manquante, signalée et non corrigée
+
+Cinq de ces routes ne portent **aucun `hasPermission`** — dont
+`parcel/priority/update`, qui **écrit**. Un agent sans aucun droit sur les colis
+peut en changer la priorité. Ce n'est pas l'axe de ce lot (l'isolation entre
+sociétés, désormais fermée sur ces routes) mais celui de **S36**, dont la règle
+est de **mesurer qui perd l'accès, rôle par rôle, avant de poser une garde**.
+C'est une passe à part entière, et elle n'est pas faite.
+
+### Couverture
+
+`tests/Feature/ParcelAjaxHelpersScopeTest.php` — 12 cas, 31 assertions, **par
+appel HTTP** : ces aides vivent en AJAX, et c'est la pile complète — hôte de
+locataire, authentification, abonnement, permissions — qui doit laisser passer
+la requête jusqu'à elles. Chaque cas porte son contrôle négatif.
+
+**Sabotage : 12 rouges sur 12** après correction de l'assertion mal visée.
+
+Filet de S38 : arriéré **90 → 83**.
