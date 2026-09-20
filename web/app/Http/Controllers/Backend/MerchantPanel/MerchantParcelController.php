@@ -324,14 +324,31 @@ class MerchantParcelController extends Controller
         return redirect()->route('merchant-panel.parcel.index');
     }
 
+    /**
+     * S39 — dans le panneau marchand, le perimetre n'est pas la societe mais le
+     * MARCHAND CONNECTE.
+     *
+     * Le jumeau de cette aide au back-office se contente de la societe ; ici,
+     * s'en contenter laisserait un marchand lire les boutiques de son voisin
+     * chez le meme transporteur — nom, telephone, adresse. L'identifiant envoye
+     * par le formulaire ne decide donc de rien : c'est la session qui decide.
+     * C'est la regle que `ShopsRepository::ownedShops()` pose deja (S17).
+     */
+    private function boutiquesDuMarchandConnecte()
+    {
+        $marchand = Auth::user() ? Auth::user()->merchant : null;
+
+        return MerchantShops::where('merchant_id', $marchand ? $marchand->id : 0);
+    }
+
     public function merchantShops(Request $request)
     {
         if (request()->ajax()) {
             if ($request->id && $request->shop == 'true') {
                 $merchantShops = [];
-                $merchantShop = MerchantShops::where(['merchant_id'=>$request->id,'default_shop'=>Status::ACTIVE])->first();
+                $merchantShop = $this->boutiquesDuMarchandConnecte()->where(['default_shop'=>Status::ACTIVE])->first();
                 $merchantShops[]= $merchantShop;
-                $merchantShopArray = MerchantShops::where(['merchant_id'=>$request->id,'default_shop'=>Status::INACTIVE])->get();
+                $merchantShopArray = $this->boutiquesDuMarchandConnecte()->where(['default_shop'=>Status::INACTIVE])->get();
                 if(!blank($merchantShopArray)){
                     foreach ($merchantShopArray as $shop){
                         $merchantShops[] = $shop;
@@ -342,7 +359,7 @@ class MerchantParcelController extends Controller
                 }
                 return '';
             }else {
-                $merchantShop = MerchantShops::find($request->id);
+                $merchantShop = $this->boutiquesDuMarchandConnecte()->find($request->id);
                 if (!blank($merchantShop)) {
                     return $merchantShop;
                 }
