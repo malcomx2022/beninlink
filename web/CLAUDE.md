@@ -164,6 +164,10 @@ avant les apps.
   monte pas de routes web sans être déclaré — invariant de **S27**.
   Pour appeler une route de locataire dans un test : `Tests\Concerns\MountsTenantRoutes`
   (semer le domaine ne suffit pas — l'appel doit viser un hôte **non central**, sinon 404).
+  ⚠️ Et il faut un **abonnement en cours** : sans lui, `subscriptionCheckMiddleware`
+  renvoie **302 vers `/subscription`** avant le contrôleur. Un test qui attend un refus
+  lirait ce 302 comme une preuve et passerait sans exécuter la ligne qu'il couvre — d'où
+  la règle : le contrôle négatif attend **200**, pas « autre chose qu'un 404 ».
   ⚠️ Le filet n'énumère que les routes **à paramètre d'URL**. Un identifiant porté par le
   **corps** de la requête lui est invisible : quinze points de ce type ont été trouvés au
   fil du chantier (décaissements, création de colis, comptes de versement, permissions).

@@ -277,7 +277,11 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/deliveryman/edit/{id}' => UserAndSettingsScopeTest::class,
         'GET admin/fraud/edit/{id}' => UserAndSettingsScopeTest::class,
         'GET admin/users/edit/{id}' => UserAndSettingsScopeTest::class,
-        'GET admin/users/permissions/{id}' => UserAndSettingsScopeTest::class,
+        // ⚠️ Cette route est la seule de la liste prouvée **par un appel HTTP** :
+        // `UserPermissionsScreenTest` touche l'écran, là où les autres prouvent le
+        // dépôt. C'est la leçon F6 appliquée — une déclaration qui pointe un test
+        // incapable d'atteindre la route ne prouve pas la route.
+        'GET admin/users/permissions/{id}' => UserPermissionsScreenTest::class,
         'PUT admin/customs/alerts/{id}/resolve' => UserAndSettingsScopeTest::class,
         'PUT admin/customs/rules/update/{id}' => UserAndSettingsScopeTest::class,
         'PUT admin/delivery-zone/countries/{id}' => UserAndSettingsScopeTest::class,
