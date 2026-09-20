@@ -515,7 +515,14 @@ class ParcelController extends Controller
             if ($request->id && $request->shop == 'true') {
                 $merchantShops          = [];
                 $merchantShop           = $this->boutiquesDeLaSociete()->where(['merchant_id'=>$request->id,'default_shop'=>Status::ACTIVE])->first();
-                $merchantShops[]        = $merchantShop;
+                // S39 — le socle empilait ce resultat SANS le verifier, et
+                // `shops.blade.php` dereference `$shop->id`. Un marchand sans
+                // boutique par defaut rendait donc un 500 ; avec le perimetre,
+                // c'etait le cas de tout identifiant etranger — un refus
+                // annonce comme une panne.
+                if(!blank($merchantShop)){
+                    $merchantShops[]    = $merchantShop;
+                }
                 $merchantShopArray      = $this->boutiquesDeLaSociete()->where(['merchant_id'=>$request->id,'default_shop'=>Status::INACTIVE])->get();
                 if(!blank($merchantShopArray)){
                     foreach ($merchantShopArray as $shop){

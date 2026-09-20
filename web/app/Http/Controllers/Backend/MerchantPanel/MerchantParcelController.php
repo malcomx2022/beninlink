@@ -347,7 +347,11 @@ class MerchantParcelController extends Controller
             if ($request->id && $request->shop == 'true') {
                 $merchantShops = [];
                 $merchantShop = $this->boutiquesDuMarchandConnecte()->where(['default_shop'=>Status::ACTIVE])->first();
-                $merchantShops[]= $merchantShop;
+                // S39 — meme forme qu'au back-office : un `null` empile que la
+                // vue dereference. Voir `ParcelController::merchantShops()`.
+                if(!blank($merchantShop)){
+                    $merchantShops[]= $merchantShop;
+                }
                 $merchantShopArray = $this->boutiquesDuMarchandConnecte()->where(['default_shop'=>Status::INACTIVE])->get();
                 if(!blank($merchantShopArray)){
                     foreach ($merchantShopArray as $shop){
