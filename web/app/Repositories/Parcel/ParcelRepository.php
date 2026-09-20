@@ -1123,6 +1123,16 @@ class ParcelRepository implements ParcelInterface {
         try {
 
             foreach($request->parcel_ids as $id){
+                // S38 — le colis venait d'une LISTE portee par le corps de la requete.
+                // Aucune route a parametre ne porte ces identifiants : le filet ne
+                // voyait pas ce chemin. On changeait le statut des colis d'un AUTRE
+                // transporteur, on leur posait un evenement, et le SMS partait a SON
+                // client. Un identifiant hors perimetre est simplement ignore : le
+                // reste du lot, lui, passe.
+                $parcel = Parcel::companywise()->find($id);
+                if(blank($parcel)){
+                    continue;
+                }
                 $transfertohub                           = new ParcelEvent();
                 $transfertohub->parcel_id                = $id;
                 $transfertohub->hub_id                   = $request->hub_id;
@@ -1131,7 +1141,6 @@ class ParcelRepository implements ParcelInterface {
                 $transfertohub->parcel_status            = ParcelStatus::TRANSFER_TO_HUB;
                 $transfertohub->created_by               = Auth::user()->id;
                 $transfertohub->save();
-                $parcel                                  = Parcel::find($id);
                 $parcel->transfer_hub_id                  = $request->hub_id;
                 $parcel->status                          = ParcelStatus::TRANSFER_TO_HUB;
                 $parcel->save();
@@ -1147,6 +1156,16 @@ class ParcelRepository implements ParcelInterface {
         try {
             $deliveryUser  = DeliveryMan::find($request->delivery_man_id);
             foreach($request->parcel_ids_ as $id){
+                // S38 — le colis venait d'une LISTE portee par le corps de la requete.
+                // Aucune route a parametre ne porte ces identifiants : le filet ne
+                // voyait pas ce chemin. On changeait le statut des colis d'un AUTRE
+                // transporteur, on leur posait un evenement, et le SMS partait a SON
+                // client. Un identifiant hors perimetre est simplement ignore : le
+                // reste du lot, lui, passe.
+                $parcel = Parcel::companywise()->find($id);
+                if(blank($parcel)){
+                    continue;
+                }
                 $deliveryMan                           = new ParcelEvent();
                 $deliveryMan->parcel_id                = $id;
                 $deliveryMan->delivery_man_id          = $request->delivery_man_id;
@@ -1156,7 +1175,6 @@ class ParcelRepository implements ParcelInterface {
                 $deliveryMan->parcel_status            = ParcelStatus::DELIVERY_MAN_ASSIGN;
                 $deliveryMan->created_by               = Auth::user()->id;
                 $deliveryMan->save();
-                $parcel                                    = Parcel::find($id);
                 $parcel->status                            = ParcelStatus::DELIVERY_MAN_ASSIGN;
                 $parcel->save();
 
@@ -1593,7 +1611,14 @@ class ParcelRepository implements ParcelInterface {
 
     public function returntoQourierCancel($id,$request){
         try {
-            $parcel = Parcel::find($id);
+            // S38 — lecture NUE. L'identifiant vient du CORPS de la requete, donc
+            // aucune route a parametre ne le porte : le filet d'isolation ne voyait
+            // pas ce chemin. On reculait le statut du colis d'un AUTRE transporteur
+            // et on SUPPRIMAIT ses evenements — la chronologie que lit son client.
+            $parcel = Parcel::companywise()->find($id);
+            if(blank($parcel)){
+                return false;
+            }
             if($parcel->status == ParcelStatus::RETURN_TO_COURIER){
                 $pickupAsisgn          = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=>$parcel->status])->delete();
                 $deliverymanReschedule = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=> ParcelStatus::DELIVERY_RE_SCHEDULE])->get();
@@ -1618,6 +1643,17 @@ class ParcelRepository implements ParcelInterface {
     public function returnAssignToMerchant($id,$request){
         try {
             DB::beginTransaction();
+
+            // S38 — lecture NUE. L'identifiant vient du CORPS de la requete, donc
+            // aucune route a parametre ne le porte : le filet ne voyait pas ce
+            // chemin. On passait le colis d'un AUTRE transporteur en retour au
+            // marchand, on debitait SON livreur du frais de retour, et le SMS de
+            // retour partait a SON marchand.
+            $parcel = Parcel::companywise()->find($id);
+            if(blank($parcel)){
+                DB::rollBack();
+                return false;
+            }
 
             $returnassigntomerchant                  = new ParcelEvent();
             $returnassigntomerchant->parcel_id       = $id;
@@ -1651,7 +1687,6 @@ class ParcelRepository implements ParcelInterface {
             $courierStatement->note                     = __('statementNote.returned_to_merchant_expense');
             $courierStatement->save();
             // End
-            $parcel                = Parcel::find($id);
             $parcel->delivery_date = $request->date;
             $parcel->status        = ParcelStatus::RETURN_ASSIGN_TO_MERCHANT;
             $parcel->save();
@@ -1783,7 +1818,14 @@ class ParcelRepository implements ParcelInterface {
 
     public function returnAssignToMerchantRescheduleCancel($id,$request){
         try {
-            $parcel = Parcel::find($id);
+            // S38 — lecture NUE. L'identifiant vient du CORPS de la requete, donc
+            // aucune route a parametre ne le porte : le filet d'isolation ne voyait
+            // pas ce chemin. On reculait le statut du colis d'un AUTRE transporteur
+            // et on SUPPRIMAIT ses evenements — la chronologie que lit son client.
+            $parcel = Parcel::companywise()->find($id);
+            if(blank($parcel)){
+                return false;
+            }
             if($parcel->status == ParcelStatus::RETURN_MERCHANT_RE_SCHEDULE){
                 $merchantReschedule = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=>$parcel->status])->delete();
             }
@@ -3137,7 +3179,14 @@ class ParcelRepository implements ParcelInterface {
 
     public function pickupdatemanAssignedCancel($id,$request){
         try {
-            $parcel = Parcel::find($id);
+            // S38 — lecture NUE. L'identifiant vient du CORPS de la requete, donc
+            // aucune route a parametre ne le porte : le filet d'isolation ne voyait
+            // pas ce chemin. On reculait le statut du colis d'un AUTRE transporteur
+            // et on SUPPRIMAIT ses evenements — la chronologie que lit son client.
+            $parcel = Parcel::companywise()->find($id);
+            if(blank($parcel)){
+                return false;
+            }
             if($parcel->status == ParcelStatus::PICKUP_ASSIGN){
                 $pickupAsisgn = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=>$parcel->status])->first();
                 ParcelEvent::destroy($pickupAsisgn->id);
@@ -3153,7 +3202,14 @@ class ParcelRepository implements ParcelInterface {
 
     public function PickupReScheduleCancel($id,$request){
         try {
-            $parcel = Parcel::find($id);
+            // S38 — lecture NUE. L'identifiant vient du CORPS de la requete, donc
+            // aucune route a parametre ne le porte : le filet d'isolation ne voyait
+            // pas ce chemin. On reculait le statut du colis d'un AUTRE transporteur
+            // et on SUPPRIMAIT ses evenements — la chronologie que lit son client.
+            $parcel = Parcel::companywise()->find($id);
+            if(blank($parcel)){
+                return false;
+            }
             if($parcel->status == ParcelStatus::PICKUP_RE_SCHEDULE){
                 $pickupReschedule = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=>$parcel->status])->delete();
             }
@@ -3168,7 +3224,14 @@ class ParcelRepository implements ParcelInterface {
 
     public function receivedBypickupmanCancel($id,$request){
         try {
-            $parcel = Parcel::find($id);
+            // S38 — lecture NUE. L'identifiant vient du CORPS de la requete, donc
+            // aucune route a parametre ne le porte : le filet d'isolation ne voyait
+            // pas ce chemin. On reculait le statut du colis d'un AUTRE transporteur
+            // et on SUPPRIMAIT ses evenements — la chronologie que lit son client.
+            $parcel = Parcel::companywise()->find($id);
+            if(blank($parcel)){
+                return false;
+            }
             if($parcel->status == ParcelStatus::RECEIVED_BY_PICKUP_MAN ){
                 $pickupAsisgn = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=>$parcel->status])->first();
                 ParcelEvent::destroy($pickupAsisgn->id);
@@ -3184,7 +3247,14 @@ class ParcelRepository implements ParcelInterface {
 
     public function deliverymanAssignCancel($id,$request){
         try {
-            $parcel = Parcel::find($id);
+            // S38 — lecture NUE. L'identifiant vient du CORPS de la requete, donc
+            // aucune route a parametre ne le porte : le filet d'isolation ne voyait
+            // pas ce chemin. On reculait le statut du colis d'un AUTRE transporteur
+            // et on SUPPRIMAIT ses evenements — la chronologie que lit son client.
+            $parcel = Parcel::companywise()->find($id);
+            if(blank($parcel)){
+                return false;
+            }
             if($parcel->status == ParcelStatus::DELIVERY_MAN_ASSIGN ){
                 $pickupAsisgn         = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=>$parcel->status])->delete();
                 $receivedByhub        = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=>ParcelStatus::RECEIVED_BY_HUB])->delete();
@@ -3203,8 +3273,14 @@ class ParcelRepository implements ParcelInterface {
     }
     public function deliveryReScheduleCancel($id,$request){
         try {
-
-            $parcel = Parcel::find($id);
+            // S38 — lecture NUE. L'identifiant vient du CORPS de la requete, donc
+            // aucune route a parametre ne le porte : le filet d'isolation ne voyait
+            // pas ce chemin. On reculait le statut du colis d'un AUTRE transporteur
+            // et on SUPPRIMAIT ses evenements — la chronologie que lit son client.
+            $parcel = Parcel::companywise()->find($id);
+            if(blank($parcel)){
+                return false;
+            }
             if($parcel->status == ParcelStatus::DELIVERY_RE_SCHEDULE ){
                 $deliverymanReschedule = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=>$parcel->status])->delete();
             }
@@ -3222,8 +3298,14 @@ class ParcelRepository implements ParcelInterface {
 
     public function transfertoHubCancel($id,$request){
         try {
-
-            $parcel = Parcel::find($id);
+            // S38 — lecture NUE. L'identifiant vient du CORPS de la requete, donc
+            // aucune route a parametre ne le porte : le filet d'isolation ne voyait
+            // pas ce chemin. On reculait le statut du colis d'un AUTRE transporteur
+            // et on SUPPRIMAIT ses evenements — la chronologie que lit son client.
+            $parcel = Parcel::companywise()->find($id);
+            if(blank($parcel)){
+                return false;
+            }
             if($parcel->status == ParcelStatus::TRANSFER_TO_HUB ){
                 $transfertohub = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=>$parcel->status])->delete();
             }
@@ -3239,8 +3321,14 @@ class ParcelRepository implements ParcelInterface {
 
     public function receivedByHubCancel($id,$request){
         try {
-
-            $parcel = Parcel::find($id);
+            // S38 — lecture NUE. L'identifiant vient du CORPS de la requete, donc
+            // aucune route a parametre ne le porte : le filet d'isolation ne voyait
+            // pas ce chemin. On reculait le statut du colis d'un AUTRE transporteur
+            // et on SUPPRIMAIT ses evenements — la chronologie que lit son client.
+            $parcel = Parcel::companywise()->find($id);
+            if(blank($parcel)){
+                return false;
+            }
             if($parcel->status == ParcelStatus::RECEIVED_BY_HUB ){
                 $receivedByhub = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=>$parcel->status])->delete();
             }
@@ -3300,7 +3388,10 @@ class ParcelRepository implements ParcelInterface {
 
     public function parcelReceivedByMultipleHub($id,$request){
         try {
-            $parcels  = Parcel::whereIn('id',$request->parcel_id)->get();
+            // S38 — la LISTE etait lue sans perimetre : les identifiants viennent
+            // du corps de la requete. On rapatriait dans NOTRE entrepot les colis
+            // d'un autre transporteur — `hub_id` reecrit, statut recule.
+            $parcels  = Parcel::companywise()->whereIn('id',$request->parcel_id)->get();
             foreach ($parcels as $key => $parcel) {
                 $receivedByhub                = new ParcelEvent();
                 $receivedByhub->parcel_id     = $parcel->id;
@@ -3309,7 +3400,6 @@ class ParcelRepository implements ParcelInterface {
                 $receivedByhub->created_by    = Auth::user()->id;
                 $receivedByhub->save();
 
-                $parcel                       = Parcel::find($parcel->id);
                 $parcel->hub_id               = $parcel->transfer_hub_id;
                 $parcel->status               = ParcelStatus::RECEIVED_BY_HUB;
                 $parcel->save();
@@ -3325,6 +3415,16 @@ class ParcelRepository implements ParcelInterface {
 
         try {
             foreach ($request->parcel_id as  $id) {
+                // S38 — le colis venait d'une LISTE portee par le corps de la requete.
+                // Aucune route a parametre ne porte ces identifiants : le filet ne
+                // voyait pas ce chemin. On changeait le statut des colis d'un AUTRE
+                // transporteur, on leur posait un evenement, et le SMS partait a SON
+                // client. Un identifiant hors perimetre est simplement ignore : le
+                // reste du lot, lui, passe.
+                $parcel = Parcel::companywise()->find($id);
+                if(blank($parcel)){
+                    continue;
+                }
                 $pickupAsisgn                = new ParcelEvent();
                 $pickupAsisgn->parcel_id     = $id;
                 $pickupAsisgn->pickup_man_id = $request->delivery_man_id;
@@ -3332,7 +3432,6 @@ class ParcelRepository implements ParcelInterface {
                 $pickupAsisgn->parcel_status = ParcelStatus::PICKUP_ASSIGN;
                 $pickupAsisgn->created_by    = Auth::user()->id;
                 $pickupAsisgn->save();
-                $parcel                      = Parcel::find($id);
                 $parcel->status              = ParcelStatus::PICKUP_ASSIGN;
                 $parcel->save();
                 if($request->send_sms_pickuman == 'on'){
@@ -3374,6 +3473,16 @@ class ParcelRepository implements ParcelInterface {
     public function AssignReturnToMerchantBulk($request){
         try {
             foreach ($request->parcel_id as $id) {
+                // S38 — le colis venait d'une LISTE portee par le corps de la requete.
+                // Aucune route a parametre ne porte ces identifiants : le filet ne
+                // voyait pas ce chemin. On changeait le statut des colis d'un AUTRE
+                // transporteur, on leur posait un evenement, et le SMS partait a SON
+                // client. Un identifiant hors perimetre est simplement ignore : le
+                // reste du lot, lui, passe.
+                $parcel = Parcel::companywise()->find($id);
+                if(blank($parcel)){
+                    continue;
+                }
 
                 DB::beginTransaction();
 
@@ -3409,7 +3518,6 @@ class ParcelRepository implements ParcelInterface {
                 $courierStatement->note                     = __('statementNote.returned_to_merchant_expense');
                 $courierStatement->save();
                 // End
-                $parcel                = Parcel::find($id);
                 $parcel->delivery_date = $request->date;
                 $parcel->status        = ParcelStatus::RETURN_ASSIGN_TO_MERCHANT;
                 $parcel->save();
@@ -3433,7 +3541,10 @@ class ParcelRepository implements ParcelInterface {
         }
     }
     public function bulkParcels($ids){
-        return Parcel::whereIn('id',$ids)->get();
+        // S38 — liste d'identifiants venue du corps, lue sans perimetre. Les vues
+        // d'impression et les SMS de masse s'alimentent ici : on rendait les
+        // coordonnees client des colis d'un autre transporteur.
+        return Parcel::companywise()->whereIn('id',$ids)->get();
     }
     //app dashboard
     public function deliverymanStatusParcel($status){
@@ -3468,7 +3579,9 @@ class ParcelRepository implements ParcelInterface {
 
 
     public function parcelMultiplePrintLabel($request){
-        return Parcel::whereIn('id',$request->parcels)->with('merchant', 'merchant.user','merchantShop','deliveryCategory','packaging')->get();
+        // S38 — meme forme : les etiquettes imprimaient nom, telephone et adresse
+        // du client de n'importe quel transporteur.
+        return Parcel::companywise()->whereIn('id',$request->parcels)->with('merchant', 'merchant.user','merchantShop','deliveryCategory','packaging')->get();
     }
 
 }

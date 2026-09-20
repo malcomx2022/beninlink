@@ -3331,3 +3331,110 @@ page : toujours `redirect('/')`, donc un refus qui ressemble à une navigation r
 S36 a corrigé le cas AJAX (403) et laissé la navigation, parce que la changer toucherait
 les 197 déclarations existantes. C'est le dernier membre connu de cette famille, et il
 demande de regarder chaque écran, pas seulement le middleware.
+## ✅ S38 — la tache aveugle du filet : l'identifiant qui vit dans le corps (2026-09-20)
+
+### Ce qui a déclenché ce lot
+
+Dix passes d'arriéré ont fermé les 171 routes **à paramètre d'URL**. En les
+fermant, j'ai buté **cinq fois** sur une forme que le filet ne cherchait pas :
+une écriture dont l'identifiant voyage dans le **corps** de la requête.
+`UserRepository::update`, `permissionUpdate`, `DeliveryManRepository::update`,
+la création d'un compte avec le rôle d'un autre, la reprise d'un bulletin de
+paie — chaque fois trouvée **par hasard**, en suivant un appel depuis une autre
+piste.
+
+`WebIsolationCoverageTest` construit sa liste de travail à partir de
+`$route->parameterNames()`. Une route comme `POST
+admin/parcel/delivery-man/assign/cancel` n'en a aucun : l'identifiant du colis
+arrive dans `$request->parcel_id`. Elle n'apparaît dans aucune des quatre listes
+du filet, et n'y apparaîtrait jamais. La note d'avertissement était déjà dans
+`web/CLAUDE.md` ; elle disait que ce qui couvrait ce cas était « de lire le
+fichier entier ». C'est-à-dire : rien de mécanique.
+
+### L'énumération : les contrôleurs, pas les routes
+
+**122 routes d'écriture sans paramètre d'URL** lisent un identifiant dans la
+requête. Le relevé ne pouvait pas se faire sur les routes — c'est exactement ce
+qui échoue — mais sur la **source** des méthodes de contrôleur, et sur celle des
+méthodes de dépôt qu'elles appellent.
+
+⚠️ **Le second niveau n'est pas un raffinement.** Sans lui, `POST
+admin/assign-pickup/bulk` sort de l'énumération : son contrôleur ne lit aucun
+identifiant, il passe `$request` tel quel au dépôt. C'est précisément une des
+méthodes en lot corrigées ci-dessous. Un filet qui n'aurait regardé que le
+contrôleur aurait reconduit l'angle mort qu'il prétend fermer. Et la résolution
+doit être **exacte** : chercher `store()` dans tous les dépôts injectés d'un
+contrôleur rapproche n'importe quoi de n'importe quoi — 126 routes au lieu de
+122, avec des listes de champs illisibles. Le filet résout donc
+`$this->prop->methode()` sur la **propriété réelle** de l'instance.
+
+### Ce que le relevé a trouvé dans le dépôt des colis
+
+Un balayage par réflexion sur `ParcelRepository` : **27 méthodes** portent une
+lecture nue de `Parcel`. Dix-huit d'entre elles sont précédées d'une garde posée
+aux passes précédentes, une (`delete`) décide correctement par comparaison de
+`company_id`. Restaient **huit méthodes sans aucun périmètre**, plus **neuf
+annulations** dont la garde manquait.
+
+| Méthode | Ce qu'un identifiant étranger obtenait |
+|---|---|
+| `transferToHubMultipleParcel` | statut `TRANSFER_TO_HUB` + `transfer_hub_id` vers NOTRE entrepôt |
+| `deliveryManAssignMultipleParcel` | colis d'autrui confiés à NOTRE livreur, SMS à SON client |
+| `pickupdatemanAssignedBulk` | idem côté ramassage |
+| `AssignReturnToMerchantBulk` | retour au marchand + écritures comptables |
+| `parcelReceivedByMultipleHub` | `hub_id` réécrit : le colis change d'entrepôt |
+| `returnAssignToMerchant` | frais de retour débité au livreur d'en face |
+| `bulkParcels` | nom, téléphone, adresse du client |
+| `parcelMultiplePrintLabel` | les mêmes données, **sur une étiquette imprimée** |
+| 9 annulations de statut | statut reculé **et évènements SUPPRIMÉS** |
+
+**Sept des huit sont des chemins en lot**, et c'est ce qui les avait gardées
+invisibles : leur identifiant n'est pas un identifiant, c'est une **liste**.
+Rien dans la signature d'une route ne la porte.
+
+Ce que supprimaient les annulations mérite d'être nommé : les `ParcelEvent` sont
+la **chronologie que le client d'en face consulte** en suivant son colis.
+L'effacement ne laissait aucune trace, chez personne.
+
+### La forme du correctif
+
+Elle suit la logique du socle plutôt que de la corriger. Dans un lot, un
+identifiant hors périmètre est **ignoré** et la boucle continue : c'est ce que
+fait déjà le socle quand une ligne manque, et cela évite qu'un identifiant
+glissé par erreur dans une sélection fasse échouer tout le lot d'un agent
+légitime. Sur un chemin à identifiant unique, on **refuse**.
+
+### Le filet
+
+`tests/Feature/BodyIdentifierCoverageTest.php` — même doctrine que son aîné, sur
+la moitié de surface qui lui échappait : tout est classé, l'arriéré ne peut que
+rétrécir, et une déclaration qui pointe un test incapable d'atteindre la
+ressource d'en face ne compte pas (F6).
+
+À son ouverture : **21 prouvées, 11 exemptées, 90 à l'arriéré**. L'arriéré n'est
+pas une liste de failles — c'est la liste des routes dont personne n'a encore
+écrit ce qu'il advient d'un identifiant étranger. Certaines sont sûrement
+correctes ; le point est qu'on ne le sait pas, et que jusqu'ici rien ne le
+demandait.
+
+Il porte un test de plus que son aîné : un **témoin du second niveau**. Si la
+résolution des dépôts casse — contrôleur que le conteneur ne monte plus,
+propriété renommée — `POST admin/assign-pickup/bulk` disparaîtrait
+silencieusement de l'énumération et le filet se remettrait à ne voir que ce que
+voyait déjà l'autre. Le témoin le dit à voix haute.
+
+### Couverture et sabotage
+
+`tests/Feature/ParcelBulkScopeTest.php` — 17 cas, 76 assertions, un par chemin
+corrigé, chacun avec son **contrôle négatif**. Sur les annulations, l'assertion
+ne porte pas seulement sur le statut mais sur le **nombre d'évènements** du
+colis d'en face : un statut remis en place ne dirait rien de l'effacement.
+
+Dépôt remis dans son état d'avant : **17 rouges sur 17**, chacun sur son
+assertion — et les statuts affichés par les échecs (6, 7, 2, 26, 19) sont
+exactement ceux que le défaut écrivait sur le colis d'autrui.
+
+Filet saboté à son tour, deux fois : second niveau coupé → le témoin mord, avec
+son message ; une ligne retirée de l'arriéré → la route redevient non classée.
+
+Suite complète : **750 tests, 45 105 assertions**.
