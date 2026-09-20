@@ -55,6 +55,13 @@ use Tests\TestCase;
  * propre identifiant, puis la vue déréférence `null`. Ce panneau ne porte aucune
  * garde de type d'utilisateur ; il répond 404.
  *
+ * ⚠️ **Rectifié par S41, et laissé ici tel quel.** « Ce panneau ne porte aucune garde
+ * de type d'utilisateur » était vrai en écrivant S37, et c'est ce qui justifiait le
+ * 404. S41 a posé cette garde : un non-marchand est maintenant arrêté à la frontière
+ * du panneau et lit **403**. Le 404 du contrôleur reste — il garde le compte de type
+ * marchand dont la ligne `merchants` manque — et les deux cas sont désormais prouvés
+ * séparément.
+ *
  * ⚠️ **403 et non 404**, à l'écart de la convention du reste du chantier (S23 à
  * S35 répondent 404 hors périmètre). La raison : là, cacher l'**existence** de la
  * ressource d'une autre société fait partie du cloisonnement. Ici l'identifiant est
@@ -181,17 +188,42 @@ class ProfileAccessTest extends TestCase
 
     /**
      * `MerchantProfileRepository::get()` cherche le marchand par son `user_id` : un
-     * agent franchit le garde sur son propre identifiant, puis la vue déréférence
-     * `null`. Le panneau marchand ne porte aucune garde de type d'utilisateur.
+     * agent franchissait le garde sur son propre identifiant, puis la vue
+     * déréférençait `null` — d'où le 404 posé ici en S37.
+     *
+     * ⚠️ **Mis à jour par S41.** La phrase qui justifiait ce 404 était « le panneau
+     * marchand ne porte aucune garde de type d'utilisateur » — et S41 la lui a
+     * donnée. Un agent est désormais arrêté à la **frontière du panneau**, avant le
+     * contrôleur, et lit **403** : « pas ton panneau » est plus exact que
+     * « marchand introuvable », puisque le marchand, lui, existe peut-être très
+     * bien. Le 404 du contrôleur n'est pas retiré pour autant — il garde le cas
+     * suivant, qui reste atteignable.
      */
-    public function test_a_non_merchant_account_gets_not_found_instead_of_a_crash(): void
+    public function test_a_non_merchant_account_is_refused_at_the_panel_boundary(): void
     {
         $this->actingAs($this->moi);
 
         $reponse = $this->call('GET', self::HOTE . '/merchant/profile/' . $this->moi->id);
 
+        $this->assertSame(403, $reponse->getStatusCode(),
+            'un agent doit être arrêté à la frontière du panneau marchand (S41)');
+    }
+
+    /**
+     * Ce que le 404 de S37 garde ENCORE, une fois la frontière posée : un compte
+     * **de type marchand** dont la ligne `merchants` manque — une incohérence de
+     * données, pas un intrus. Il franchit la garde de panneau, et c'est bien le
+     * contrôleur qui doit répondre « introuvable » plutôt que déréférencer `null`.
+     */
+    public function test_a_merchant_typed_account_without_a_merchant_row_gets_not_found(): void
+    {
+        $orphelin = $this->compteDe(UserType::MERCHANT, 'orphelin');
+        $this->actingAs($orphelin);
+
+        $reponse = $this->call('GET', self::HOTE . '/merchant/profile/' . $orphelin->id);
+
         $this->assertSame(404, $reponse->getStatusCode(),
-            'un compte sans profil marchand doit lire « introuvable », pas une panne');
+            'un compte marchand sans ligne `merchants` doit lire « introuvable », pas une panne');
     }
 
     /* ═══════════ le constat inscrit : plus aucun abort(500) ici ════════════ */

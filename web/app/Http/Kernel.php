@@ -77,6 +77,8 @@ class Kernel extends HttpKernel
         'IsNotInstalled'    =>\App\Http\Middleware\IsNotInstalledMiddleware::class,
         'subscriptionCheck'    =>\App\Http\Middleware\subscriptionCheckMiddleware::class,
         'userType'          => \App\Http\Middleware\UserTypeMiddleware::class,
+        // S41 — le pendant WEB de `userType` : cloisonne les trois panneaux par type de compte.
+        'panel'             => \App\Http\Middleware\PanelAccessMiddleware::class,
 
     ];
 }
