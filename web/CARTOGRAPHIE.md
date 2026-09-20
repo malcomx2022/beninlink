@@ -3628,3 +3628,157 @@ la requête jusqu'à elles. Chaque cas porte son contrôle négatif.
 **Sabotage : 12 rouges sur 12** après correction de l'assertion mal visée.
 
 Filet de S38 : arriéré **90 → 83**.
+
+## ✅ S41 — la séparation des trois panneaux : un type de compte, pas une permission (2026-09-20)
+
+### Le constat
+
+`routes/web.php` place `admin/*` et `merchant/*` dans le **même** groupe
+`auth` + `subscriptionCheck`. Aucune garde sur `user_type`, ni sur l'un ni sur
+l'autre : le **seul** séparateur entre le back-office et le panneau marchand
+était le `hasPermission` posé route par route.
+
+Là où il manque, la porte était donc ouverte à **tout compte authentifié**.
+Mesuré sur 576 routes sous `auth` : **408 gardées, 168 nues, dont 38 écritures**
+dans `admin/`.
+
+### Ce que ça donnait, par appel HTTP, avant correctif
+
+| Compte | `POST admin/parcel/priority/update` | `GET admin/payout` | `POST admin/merchant/search` |
+|---|---|---|---|
+| agent **sans aucun droit** | 200 | 200 | 200 |
+| **marchand** | **200** — une écriture | **200** | **200** |
+| **livreur** | **200** | 500 | **200** |
+
+`admin/payout` est la page de **paiement aux marchands** : un marchand la lisait.
+`parcel/priority/update` **écrit** : un marchand changeait la priorité d'un colis.
+Et dans l'autre sens, un agent ou un livreur atteignait le panneau marchand, où
+il récoltait un **500** — un refus annoncé comme une panne, la famille de S37,
+fermée ici par la même garde.
+
+### ⚠️ Le même trou était déjà fermé sur l'API, en S5
+
+`UserTypeMiddleware` existe depuis S5, et son docbloc décrit **ce symptôme
+exact** : « le socle plaçait `deliveryman/*` et les routes marchand dans le même
+groupe `auth:sanctum`, sans garde sur `user_type` […] le contrôleur marchand
+répondait alors 500, pas un refus ». Le web est resté ouvert pendant tout le
+chantier.
+
+C'est la leçon la plus coûteuse de la campagne : **huit passes d'isolation sont
+passées à côté**, parce qu'elles cherchaient un `company_id` manquant, pas un
+`user_type` manquant. Le cloisonnement entre sociétés et le cloisonnement entre
+panneaux sont deux axes différents, et fermer le premier ne dit rien du second.
+
+### Pourquoi une classe à part et non `userType` réutilisé
+
+`UserTypeMiddleware` vérifie en second l'**ability du jeton** (`tokenCan`) et
+répond dans l'enveloppe JSON de l'API. Une session web n'a pas de jeton, et un
+humain n'attend pas une enveloppe. Surtout, ses méthodes `scopeOf()` et
+`abilitiesFor()` servent à **émettre** les abilities à la connexion : y ajouter un
+type « back-office » changerait les jetons émis aux administrateurs. Le concept
+est partagé, l'implémentation ne peut pas l'être — et c'est écrit dans les deux
+classes.
+
+### Le préfixe d'URI dit le panneau, pas le nom de route
+
+Une cinquantaine de routes **nommées** `merchant.*` vivent sous `admin/` : ce
+sont les écrans du back-office *à propos* des marchands
+(`merchant.shops.index` = `admin/merchant/{id}/shops/index`). Le nom trompe, le
+préfixe dit vrai — d'où une garde posée sur le **groupe**.
+
+### Qui perd l'accès : personne, et c'est mesuré
+
+La règle de S36 appliquée avant de poser la garde :
+
+- les comptes du back-office sont **ADMIN et SUPER_ADMIN**, et rien d'autre —
+  `UserType::HUB` et `UserType::INCHARGE` ne sont pas des types de compte mais
+  des **marqueurs** posés sur des lignes de relevé et sur `created_by` ; un chef
+  de hub est un ADMIN avec `hub_id` ;
+- le **livreur n'a aucun écran web** : aucun préfixe `deliveryman` dans
+  `routes/web.php` — il passe par l'API ;
+- **aucune vue marchande n'appelle une URL `admin/`**, et aucune vue du
+  back-office n'appelle une URL `merchant/` ; les routes nommées qu'utilisent les
+  vues marchandes résolvent toutes sous `merchant/`, sauf `dashboard.index` et
+  `logout` ;
+- **aucun rôle de locataire ne porte `plans_*` ni `company_*`** : réserver le
+  panneau plateforme au super-administrateur ne retire rien ;
+- il n'existe **aucune usurpation d'identité** dans le dépôt (`loginAs`,
+  `impersonate`, `Auth::loginUsingId` : zéro occurrence).
+
+### `GET /dashboard` est partagé, et doit le rester
+
+Il est déclaré **hors** des deux préfixes, et c'est voulu :
+`DashbordController::index()` branche sur `user_type` et rend
+`backend.merchant_panel.dashboard` à un marchand. Une garde de panneau posée
+dessus casserait le panneau marchand. Un test inscrit ce partage pour que
+personne ne le « corrige ».
+
+### Ce que le filet a trouvé que je n'avais pas vu
+
+`GET admin/subscription/history` est déclarée **hors** du groupe `admin`
+(`routes/web.php`), parce qu'elle est aussi hors de `subscriptionCheck` — pour
+rester consultable sans abonnement en cours. Le filet l'a désignée au premier
+passage ; la garde est posée sur la route, sans la déplacer.
+
+### ⚠️ La limite du filet, mesurée
+
+`routes/superadmin.php` déclare lui aussi un groupe `admin/` (**61 URI**) et le
+panneau `super-admin/`. Ses 61 URI sont **toutes** redéclarées dans
+`routes/web.php` — vérifié une par une — et `MountsTenantRoutes` réenregistre
+`web.php` **après** le chargement de `superadmin.php`. La collection étant
+indexée par méthode + URI, les versions de `web.php` écrasent les autres : le
+filet est **structurellement aveugle** à ce fichier, et un sabotage l'a prouvé en
+restant vert. Le contrôle s'y fait donc sur la **déclaration**, ce qui est plus
+faible qu'un appel HTTP. Même limite que celle déjà documentée en S36.
+
+### La leçon : deux sabotages verts, deux lignes qui ne prouvaient rien
+
+1. **Un `abort_if(blank($autorises), 403)` explicite était REDONDANT.** Le
+   retirer ne changeait aucun verdict : avec une liste d'autorisés vide,
+   `in_array` est déjà toujours faux. Une ligne qu'aucun test ne peut distinguer
+   n'a pas sa place — elle est retirée, et le sabotage a été **remplacé** par
+   celui qui vise le vrai risque : rendre le middleware **ouvert** par défaut sur
+   un panneau inconnu. Il mord.
+2. **Le `true` de `in_array` n'est pas prouvable.** `user_type` est une colonne
+   entière ; la comparaison relâchée rend le même verdict sur tous les cas
+   exercés. Le drapeau reste par hygiène, contre un changement de cast futur, et
+   c'est dit — pas présenté comme prouvé.
+
+### Une affirmation de S37, rectifiée
+
+Le docbloc de `ProfileAccessTest` justifiait son 404 par « ce panneau ne porte
+aucune garde de type d'utilisateur ». S41 la lui a donnée : un non-marchand est
+maintenant arrêté à la **frontière** et lit **403**. Le 404 du contrôleur reste —
+il garde le compte **de type marchand** dont la ligne `merchants` manque — et les
+deux cas sont désormais prouvés séparément. La rectification est posée **à côté**
+de la phrase d'origine, pas à sa place.
+
+### Couverture
+
+`tests/Feature/WebPanelSeparationTest.php` — **15 cas, 29 assertions**, dont le
+filet d'énumération (toute route montée sous un panneau porte sa garde : **552**
+routes comptées, avec un **plancher** et non un compte exact — la leçon de S33),
+les preuves HTTP dans les deux sens, les contrôles négatifs, le partage de
+`/dashboard`, et le test qui inscrit la mesure des trois panneaux.
+
+**Sabotage : 11 morsures sur 12**, le vert étant documenté ci-dessus.
+
+Suite complète : **808 tests, 45 237 assertions**, vert.
+
+### Ce que ce lot ne fait pas
+
+- **Quel rôle** parmi les administrateurs peut appeler les 38 écritures nues de
+  `admin/` reste ouvert : c'est l'axe de S36, signalé par S40, et il demande de
+  mesurer rôle par rôle. Ce lot ferme la porte du **bâtiment**, pas celle du
+  bureau.
+- **8 routes de démo du thème** répondent 500 pour tous les types :
+  `dashboard-finance`, `dashboard-influencer`, `dashboard-sales`,
+  `ecommerce-product`, `ecommerce-product-checkout`, `ecommerce-product-single`,
+  `influencer-finder`, `influencer-profile`. Mêmes symptômes que les 5 routes
+  mortes `sms-settings` de S35.
+- `POST search-charts` répond 200 à tout compte ; `POST store-token` répond 410 ;
+  `GET subscription` répond 500 pour les trois types.
+- Les vues marchandes référencent `route('aamarpay.payment')` et
+  `route('bkash.redirect')`, **introuvables** dans la table des routes.
+- `GET /dashboard` répond **500 à un livreur** — inchangé par ce lot, et de la
+  famille de S37.

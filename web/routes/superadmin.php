@@ -69,7 +69,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
             Route::get('/subscription',                [PlanController::class, 'subscription'])->name('subscription.index');
             Route::get('/admin/subscription/history',  [PlanController::class, 'subscriptionHistory'])->name('admin.subscription.history');
 
-            Route::prefix('super-admin')->group(function () {
+            Route::prefix('super-admin')->middleware('panel:super-admin')->group(function () {
                 Route::prefix('plan')
                     ->controller(PlanController::class)
                     ->name('plan.')
@@ -101,7 +101,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
             });
 
 
-            Route::group(['prefix' => 'admin'], function () {
+            Route::group(['prefix' => 'admin', 'middleware' => 'panel:back-office'], function () {
 
                 Route::get('subscribe',                            [SalaryGenerateController::class, 'subscribe'])->name('subscribe.index');
 

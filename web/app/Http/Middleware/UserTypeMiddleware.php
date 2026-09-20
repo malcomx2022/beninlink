@@ -23,6 +23,16 @@ use Illuminate\Http\Request;
  *     type entre-temps. Les jetons antérieurs (`['*']`) passent ce second
  *     verrou : le premier suffit à les cloisonner.
  *
+ * ⚠️ **Le pendant WEB est `PanelAccessMiddleware` (S41), et c'est une autre classe.**
+ * Le meme trou existait sur `routes/web.php` — `admin/*` et `merchant/*` dans le meme
+ * groupe `auth`, sans garde de type — et il y est reste ouvert jusqu'a S41. La forme ne
+ * pouvait pas etre partagee : une session web n'a pas de jeton a interroger, un humain
+ * n'attend pas l'enveloppe JSON de `responseWithError`, et `scopeOf()` / `abilitiesFor()`
+ * ci-dessous servent a EMETTRE les abilities a la connexion — y ajouter un type
+ * « back-office » changerait les jetons emis aux administrateurs. Toucher aux portees de
+ * ce middleware oblige donc a relire le pendant web : un test le rappelle
+ * (`WebPanelSeparationTest::test_the_measurement_behind_each_panel_still_holds`).
+ *
  * Usage : `userType:merchant`, `userType:deliveryman`, `userType:merchant,deliveryman`.
  */
 class UserTypeMiddleware

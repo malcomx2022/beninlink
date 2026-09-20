@@ -187,6 +187,18 @@ avant les apps.
   Et une annulation de statut ne recule pas qu'un statut : elle **supprime les
   `ParcelEvent`**, c'est-à-dire la chronologie que lit le client. L'assertion porte donc
   sur le **nombre d'évènements**, pas seulement sur le statut.
+- Le **panneau** d'une route se garde par **type de compte**, avant toute permission
+  (**S41**) : `panel:back-office` (ADMIN + SUPER_ADMIN), `panel:merchant` (MERCHANT),
+  `panel:super-admin`. La garde se pose sur le **groupe**, et c'est le **préfixe d'URI**
+  qui dit le panneau — **pas le nom de route** : une cinquantaine de routes nommées
+  `merchant.*` vivent sous `admin/` (ce sont les écrans du back-office *à propos* des
+  marchands). ⚠️ Sans elle, le seul séparateur entre les deux panneaux était le
+  `hasPermission` route par route : là où il manquait, **tout compte authentifié**
+  passait — un marchand écrivait par `POST admin/parcel/priority/update`. Le pendant
+  **API** de cette garde est `userType` (**S5**) : même concept, implémentation distincte
+  (jeton et enveloppe JSON), et les deux docblocs se renvoient l'un à l'autre.
+  ⚠️ `GET /dashboard` est **partagé** par les trois types (`DashbordController::index()`
+  branche sur `user_type`) : il est hors des deux préfixes à dessein, un test l'inscrit.
 - La **garde d'accès** d'une route du back-office se pose avec `hasPermission:x`, et
   `hasPermission:a|b|c` quand plusieurs écrans aux droits différents appellent la même
   aide AJAX (**S36**). Deux règles tirées de ce lot : les **paires sœurs** portent le

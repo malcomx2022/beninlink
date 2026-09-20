@@ -194,7 +194,10 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                 Route::any('/subscription/success',  [PlanController::class, 'StripePaymentSuccess'])->name('subscription.success');
                 Route::any('/subscription/cancel',   [PlanController::class, 'StripePaymentCancel'])->name('subscription.cancel');
 
-                Route::get('/admin/subscription/history',  [PlanController::class, 'subscriptionHistory'])->name('admin.subscription.history');
+                // S41 — declaree hors du groupe `admin` A DESSEIN : elle est aussi hors de
+                // `subscriptionCheck`, pour rester consultable sans abonnement en cours. La
+                // garde se pose donc sur la route, plutot qu'en la deplacant.
+                Route::get('/admin/subscription/history',  [PlanController::class, 'subscriptionHistory'])->name('admin.subscription.history')->middleware('panel:back-office');
                 Route::group(['middleware' => ['subscriptionCheck', 'XSS']], function () {
                     // Route::get('/home',[HomeController::class, 'index'])->name('home');
                     //Admin Dashbord Controller
@@ -207,7 +210,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                     Route::put('category/update',        [CategoryController::class, 'update'])->name('category.update')->middleware('hasPermission:category_update');
                     Route::delete('category/delete/{id}', [CategoryController::class, 'destroy'])->name('category.delete')->middleware('hasPermission:category_delete');
                     // Admin Routes
-                    Route::group(['prefix' => 'admin'], function () {
+                    Route::group(['prefix' => 'admin', 'middleware' => 'panel:back-office'], function () {
 
                         Route::resource('addons', AddonController::class);
                         Route::post('/addons/activation', [AddonController::class, 'activation'])->name('addons.activation');
@@ -868,7 +871,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
 
 
                     // Merchant panel Routes
-                    Route::group(['prefix' => 'merchant'], function () {
+                    Route::group(['prefix' => 'merchant', 'middleware' => 'panel:merchant'], function () {
                         Route::post('/dashboard/filter',                     [DashbordController::class, 'merchantDashboardFilter'])->name('merchant-panel.dashboard.filter');
                         //accounts
                         Route::get('/accounts/payment-accounts',              [PaymentAccountController::class, 'index'])->name('merchant.accounts.payment-account.index');
