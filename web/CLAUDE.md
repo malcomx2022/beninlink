@@ -196,6 +196,12 @@ avant les apps.
   Avant d'en poser une : **mesurer qui perd l'accès**, rôle par rôle, y compris le jeu
   **fixe** du chef de hub (`UserRepository::hubPermissions()`), que `RoleSeeder` ne
   montre pas.
+  Un **refus** se dit (**S39**) : la machine reçoit **403** (appel AJAX ou JSON),
+  l'humain reste dans le back-office — page précédente, à défaut le tableau de bord,
+  **jamais `/`** qui est la page publique du site — avec un message
+  (`message.permission_denied`). ⚠️ Ne pas lire la page précédente par
+  `url()->previous()` : elle lit **d'abord l'en-tête `Referer`**, donc une donnée du
+  client, ce qui ouvrirait une redirection vers n'importe quelle adresse.
 - Jamais de clés en dur : `FEDAPAY_*` dans `web/.env`.
 
 ## Étape 0 — cartographie (à lire AVANT de coder ici)
