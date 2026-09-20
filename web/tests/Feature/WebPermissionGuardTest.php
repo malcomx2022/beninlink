@@ -142,19 +142,37 @@ class WebPermissionGuardTest extends TestCase
      *
      * ⚠️ Et comparer la destination à `/` ne suffisait pas non plus : sans en-tête
      * `Referer`, `redirect()->back()` retombe **aussi** sur `/`. Les deux refus
-     * devenaient indistinguables. D'où le référent : la garde vise toujours `/`,
-     * `back()` vise le référent. C'est la troisième forme du même piège dans ce
-     * seul test — un refus qui ressemble à un autre refus.
+     * devenaient indistinguables. D'où le référent : `back()` vise le référent,
+     * tandis que la garde visait `/`.
+     *
+     * ⚠️ **S39 a changé la destination de la garde** : elle ne renvoie plus sur `/`
+     * — la page publique du site — mais dans le back-office, avec un message. Le
+     * discriminateur est donc maintenant le **message flashé**, que seule la garde
+     * pose : ni une validation échouée ni un `back()` ne l'écrivent.
      */
     private const REFERENT = self::HOTE . '/admin/parcel/index';
 
     private function refusePourDroit(string $methode, string $uri): bool
     {
+        $this->flush();
+
         $reponse = $this->call($methode, self::HOTE . '/' . $this->concret($uri),
             [], [], [], ['HTTP_REFERER' => self::REFERENT]);
 
-        return $reponse->getStatusCode() === 302
-            && $reponse->headers->get('Location') === url('/');
+        if ($reponse->getStatusCode() !== 302) {
+            return false;
+        }
+
+        // Le message de la garde, et jamais la page publique.
+        return session('toastr::messages') !== null
+            && collect(session('toastr::messages'))
+                ->contains(fn ($note) => ($note['message'] ?? null) === __('message.permission_denied'));
+    }
+
+    /** Vide les messages d'une requête précédente, pour ne pas lire les siens. */
+    private function flush(): void
+    {
+        session()->forget('toastr::messages');
     }
 
     /* ═══════════ le contournement de `parcel_create`, nommé ════════════════ */
@@ -318,16 +336,137 @@ class WebPermissionGuardTest extends TestCase
             'un refus AJAX rendu en 302 vers / arrive dans le callback de succès');
     }
 
-    /** La navigation de page, elle, garde la redirection du socle. */
-    public function test_a_page_navigation_keeps_the_socles_redirect(): void
+    /**
+     * 🔴 **S39.** Le socle renvoyait un opérateur refusé vers `/`. Mesuré : sur un
+     * domaine de locataire, `/` n'est pas le tableau de bord mais la **page publique
+     * du site** (groupe `frontend`, hors de `auth`). Il était donc **éjecté du
+     * back-office vers la vitrine commerciale**, sans un mot.
+     */
+    public function test_a_refused_navigation_never_lands_on_the_public_site(): void
     {
         $this->actingAs($this->agentAvec(['parcel_read']));
 
         $reponse = $this->call('GET', self::HOTE . '/admin/parcel/clone/' . $this->colis->id);
 
         $this->assertSame(302, $reponse->getStatusCode());
-        $this->assertSame(url('/'), $reponse->headers->get('Location'),
-            'changer la destination toucherait les 197 autres déclarations : non fait');
+        $this->assertNotSame(url('/'), $reponse->headers->get('Location'),
+            'un refus renvoie encore sur la page publique du site');
+        $this->assertSame(route('dashboard.index'), $reponse->headers->get('Location'),
+            'sans page précédente, le repli doit être le tableau de bord');
+    }
+
+    /** Et il sait pourquoi : le refus porte un message. */
+    public function test_a_refused_navigation_carries_an_explicit_message(): void
+    {
+        $this->flush();
+        $this->actingAs($this->agentAvec(['parcel_read']));
+
+        $this->call('GET', self::HOTE . '/admin/parcel/clone/' . $this->colis->id);
+
+        $this->assertNotNull(session('toastr::messages'),
+            'un refus silencieux ne se distingue pas d\'une navigation réussie');
+        $this->assertTrue(
+            collect(session('toastr::messages'))
+                ->contains(fn ($note) => ($note['message'] ?? null) === __('message.permission_denied')),
+            'le message du refus doit être celui de `message.permission_denied`',
+        );
+
+        // ⚠️ Un sabotage l'a montré : retirer la clé de traduction laissait ce test
+        // au vert, parce que `__()` replie sur la CLÉ elle-même et que les deux
+        // côtés de la comparaison repliaient de la même façon. L'opérateur aurait
+        // lu « message.permission_denied » à l'écran. On exige donc une phrase.
+        $this->assertNotSame('message.permission_denied', __('message.permission_denied'),
+            'la clé de traduction du refus est absente : l\'écran afficherait la clé brute');
+
+        foreach (['fr', 'en'] as $langue) {
+            $this->assertArrayHasKey('permission_denied', require base_path("lang/{$langue}/message.php"),
+                "la traduction du refus manque en « {$langue} »");
+        }
+    }
+
+    /** Le repli est atteignable : le tableau de bord n'exige aucune permission. */
+    public function test_the_fallback_screen_needs_no_permission_of_its_own(): void
+    {
+        $route = Router::getRoutes()->getByName('dashboard.index');
+
+        $this->assertNotNull($route, 'le repli du refus a disparu');
+        $this->assertSame([], array_values(array_filter(
+            $route->gatherMiddleware(),
+            fn ($m) => is_string($m) && str_starts_with($m, 'hasPermission:'),
+        )), 'renvoyer vers un écran lui-même gardé ferait boucler le refus');
+    }
+
+    /**
+     * ⚠️ Le piège de ce lot, relevé **avant** de l'écrire. `url()->previous()` lit
+     * **d'abord l'en-tête `Referer`** et ne retombe sur la session qu'à défaut
+     * (`UrlGenerator::previous()`). S'en servir aurait fait de cette garde une
+     * **redirection ouverte** : une page tierce pointant vers une route refusée
+     * aurait renvoyé le navigateur chez elle.
+     *
+     * La page précédente est donc lue dans la session, et l'hôte vérifié malgré
+     * tout. Ce test envoie un `Referer` étranger : il ne doit pas être suivi.
+     */
+    public function test_a_foreign_referer_is_never_followed(): void
+    {
+        $this->actingAs($this->agentAvec(['parcel_read']));
+
+        $reponse = $this->call('GET', self::HOTE . '/admin/parcel/clone/' . $this->colis->id,
+            [], [], [], ['HTTP_REFERER' => 'https://ailleurs.example/piege']);
+
+        $this->assertSame(route('dashboard.index'), $reponse->headers->get('Location'),
+            'l\'en-tête `Referer` d\'un tiers a été suivi : redirection ouverte');
+    }
+
+    /**
+     * ⚠️ Deux gardes du repli qu'aucun de mes tests n'atteignait, et deux sabotages
+     * verts l'ont dit : par le chemin normal, la page précédente de la session est
+     * **toujours** du bon hôte et **jamais** l'URL refusée — le socle l'écrit
+     * lui-même. Les exercer demande de semer la session à la main, ce qui est
+     * légitime : une valeur périmée ou empoisonnée est exactement ce contre quoi
+     * ces gardes existent.
+     *
+     * @dataProvider sessionsAberrantes
+     */
+    public function test_an_aberrant_previous_url_falls_back_to_the_dashboard(string $precedente, string $motif): void
+    {
+        $this->actingAs($this->agentAvec(['parcel_read']));
+
+        $refusee = self::HOTE . '/admin/parcel/clone/' . $this->colis->id;
+
+        session()->setPreviousUrl($precedente === '{refusee}' ? $refusee : $precedente);
+
+        $reponse = $this->call('GET', $refusee);
+
+        $this->assertSame(route('dashboard.index'), $reponse->headers->get('Location'), $motif);
+    }
+
+    public static function sessionsAberrantes(): array
+    {
+        return [
+            'un autre hôte' => ['https://ailleurs.example/piege',
+                'une page précédente d\'un autre hôte a été suivie : redirection ouverte'],
+            'la page refusée elle-même' => ['{refusee}',
+                'se renvoyer sur la page qui vient d\'être refusée fait boucler le refus'],
+        ];
+    }
+
+    /**
+     * Le contrôle négatif du repli : quand la session **porte** une page précédente
+     * du back-office, c'est là qu'il revient — l'opérateur ne perd pas son contexte.
+     */
+    public function test_a_refused_navigation_returns_to_the_previous_back_office_page(): void
+    {
+        $this->actingAs($this->agentAvec(['parcel_read']));
+
+        // Une navigation servie d'abord : c'est elle que la session retient.
+        $liste = self::HOTE . '/admin/parcel/index';
+        $this->assertSame(200, $this->get($liste)->getStatusCode(),
+            'la fixture doit partir d\'une page que cet agent peut voir');
+
+        $reponse = $this->call('GET', self::HOTE . '/admin/parcel/clone/' . $this->colis->id);
+
+        $this->assertSame($liste, $reponse->headers->get('Location'),
+            'le refus doit ramener sur la page précédente, pas sur le repli');
     }
 
     /* ═══════════ la mesure qui a permis de décider ═════════════════════════ */
