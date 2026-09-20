@@ -180,11 +180,20 @@ class BackOfficeScopingTest extends TestCase
 
         $this->assertCount(1, $evenements, 'la méthode elle-même ne filtre pas : le suivi public en dépend');
 
+        // L'invariant est que **aucun** appel de l'écran ne parte de l'identifiant
+        // brut : tous passent le colis déjà vérifié. Il s'écrivait « exactement deux
+        // appels en `$parcel->id` », ce qui comptait les deux écrans de S25 — et
+        // tombait dès qu'un troisième était corrigé (S33 a réparé `details()`).
+        // Un compte exact fait échouer le test sur un progrès ; la forme interdite,
+        // non.
         $source = file_get_contents(app_path('Http/Controllers/Backend/ParcelController.php'));
+        preg_match_all('/->parcelEvents\(([^)]*)\)/', $source, $appels);
+
+        $this->assertNotEmpty($appels[1], 'plus aucun écran n appelle parcelEvents() : ce test n a plus d objet');
         $this->assertSame(
-            2,
-            substr_count($source, 'parcelEvents($parcel->id)'),
-            'les deux écrans doivent passer le colis DÉJÀ vérifié, pas l identifiant brut',
+            [],
+            array_values(array_diff(array_unique($appels[1]), ['$parcel->id'])),
+            'chaque écran doit passer le colis DÉJÀ vérifié, jamais l identifiant brut',
         );
     }
 

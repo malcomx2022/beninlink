@@ -234,6 +234,10 @@ class ParcelController extends Controller
     public function duplicate($id)
     {
         $parcel                  = $this->repo->get($id);
+        // S33 — hors perimetre le depot rend `null` et la ligne suivante
+        // dereferencait : 500 la ou le reste du module repond 404 (famille S15).
+        abort_if(blank($parcel), 404);
+
         $merchant                = $this->merchant->get($parcel->merchant_id);
         $shops                   = $this->shop->all($parcel->merchant_id);
         $deliveryCharges         = DeliveryCharge::companywise()->where('category_id',$parcel->category_id)->get();
@@ -249,7 +253,17 @@ class ParcelController extends Controller
     {
         // return $this->repo->details($id);
         $parcel         = $this->repo->details($id);
-        $parcelevents   = ParcelEvent::where('parcel_id',$id)->orderBy('created_at','desc')->get();
+        // S33 — sans ce garde, la vue rendait une page VIDE avec un 200 : elle
+        // dereference `$parcel` partout avec l'operateur `@`, qui supprime l'erreur.
+        // Un refus d'acces devenait donc une page blanche, sans message.
+        abort_if(blank($parcel), 404);
+
+        // ⚠️ `$parcelevents` etait construit avec l'identifiant BRUT, sans perimetre.
+        // Verifie : `details.blade.php` ne l'utilise pas — il n'y avait donc pas de
+        // fuite de chronologie par cet ecran, contrairement a ce que sa forme suggere.
+        // On passe malgre tout le colis DEJA verifie, comme `logs()` et
+        // `deliveredInfo()` depuis S25, pour que la forme ne redevienne pas un piege.
+        $parcelevents   = $this->repo->parcelEvents($parcel->id);
         return view('backend.parcel.details',compact('parcel','parcelevents'));
     }
 
@@ -264,6 +278,10 @@ class ParcelController extends Controller
     public function edit($id)
     {
         $parcel          = $this->repo->get($id);
+        // S33 — hors perimetre le depot rend `null` et la ligne suivante
+        // dereferencait : 500 la ou le reste du module repond 404 (famille S15).
+        abort_if(blank($parcel), 404);
+
         $merchant        = $this->merchant->get($parcel->merchant_id);
         $shops           = $this->shop->all($parcel->merchant_id);
         $deliveryCharges = DeliveryCharge::companywise()->where('category_id',$parcel->category_id)->get();
@@ -315,7 +333,10 @@ class ParcelController extends Controller
      */
     public function destroy($id)
     {
-        $this->repo->delete($id);
+        // S33 — le depot refuse un colis d'une autre societe ; l'ecran annoncait
+        // quand meme un succes. On repond 404.
+        abort_unless($this->repo->delete($id), 404);
+
         Toastr::success(__('parcel.delete_msg'),__('message.success'));
         return back();
     }
@@ -1244,6 +1265,7 @@ class ParcelController extends Controller
     {
 
         $parcel = $this->repo->get($id);
+        abort_if(blank($parcel), 404); // S33
         $merchant = $this->merchant->get($parcel->merchant_id);
         $shops = $this->shop->all($parcel->merchant_id);
         return view('backend.parcel.print',compact('parcel','merchant','shops'));
@@ -1252,6 +1274,7 @@ class ParcelController extends Controller
     public function parcelPrintLabel($id)
     {
         $parcel = $this->repo->get($id);
+        abort_if(blank($parcel), 404); // S33
         $merchant = $this->merchant->get($parcel->merchant_id);
         $shops = $this->shop->all($parcel->merchant_id);
         return view('backend.parcel.print-label',compact('parcel','merchant','shops'));

@@ -370,7 +370,16 @@ class ParcelRepository implements ParcelInterface {
         try {
          
             DB::beginTransaction();
-            $merchant                       = Merchant::with('user')->find($request->merchant_id);
+            $merchant                       = Merchant::companywise()->with('user')->find($request->merchant_id);
+            // S33 — le marchand facture vient du formulaire et n'etait pas scope :
+            // le colis se creait dans MA societe (`company_id = settings()->id`) mais
+            // au nom du marchand d'une AUTRE, dont il recopiait l'entrepot et a qui il
+            // debitait frais, TVA et net a reverser. Le formulaire ne propose que mes
+            // marchands ; rien n'obligeait le navigateur a s'y tenir.
+            if (blank($merchant)) {
+                DB::rollBack();
+                return false;
+            }
             $parcel                         = new Parcel();
             $parcel->company_id             = settings()->id;
             $parcel->merchant_id            = $request->merchant_id;
@@ -454,7 +463,7 @@ class ParcelRepository implements ParcelInterface {
             // json_decode(chargeDetails), c'est-a-dire des frais, une TVA et un net
             // a reverser fabriques par le navigateur : le client choisissait sa facture.
             $charges = app(\App\Services\Parcel\ChargeCalculator::class)->calculate(
-                \App\Models\Backend\Merchant::find($request->merchant_id),
+                $merchant,
                 $request->category_id ? (int) $request->category_id : null,
                 $request->weight,
                 (float) $request->cash_collection,
@@ -550,7 +559,16 @@ class ParcelRepository implements ParcelInterface {
         try {
            
             DB::beginTransaction();
-            $merchant                       = Merchant::with('user')->find($request->merchant_id);
+            $merchant                       = Merchant::companywise()->with('user')->find($request->merchant_id);
+            // S33 — le marchand facture vient du formulaire et n'etait pas scope :
+            // le colis se creait dans MA societe (`company_id = settings()->id`) mais
+            // au nom du marchand d'une AUTRE, dont il recopiait l'entrepot et a qui il
+            // debitait frais, TVA et net a reverser. Le formulaire ne propose que mes
+            // marchands ; rien n'obligeait le navigateur a s'y tenir.
+            if (blank($merchant)) {
+                DB::rollBack();
+                return false;
+            }
             $duplicate_parcel               = $this->get($request->parcel_id);
             $parcel                         = new Parcel();
             $parcel->company_id             = settings()->id;
@@ -637,7 +655,7 @@ class ParcelRepository implements ParcelInterface {
             // json_decode(chargeDetails), c'est-a-dire des frais, une TVA et un net
             // a reverser fabriques par le navigateur : le client choisissait sa facture.
             $charges = app(\App\Services\Parcel\ChargeCalculator::class)->calculate(
-                \App\Models\Backend\Merchant::find($request->merchant_id),
+                $merchant,
                 $request->category_id ? (int) $request->category_id : null,
                 $request->weight,
                 (float) $request->cash_collection,
@@ -713,9 +731,23 @@ class ParcelRepository implements ParcelInterface {
 
         try {
             DB::beginTransaction();
-            $merchant                       = Merchant::with('user')->find($request->merchant_id);
+            // S33 — DEUX lectures nues ici, et la seconde etait la plus grave :
+            //  · `Parcel::find($id)` acceptait le colis d'une AUTRE societe, alors que
+            //    `get()` et `details()` juste au-dessus sont `companywise()` ;
+            //  · `Merchant::find($request->merchant_id)` acceptait le marchand de
+            //    n'importe quelle societe, et la ligne `$parcel->merchant_id = ...`
+            //    REAFFECTAIT donc le colis a un marchand d'ailleurs — en recopiant au
+            //    passage son `hub_id` dans `first_hub_id` et `hub_id`.
+            // Le meme identifiant etait relu une TROISIEME fois, sans perimetre, pour
+            // le calcul des montants : les trois lectures passent desormais par ce
+            // seul marchand verifie.
+            $merchant                       = Merchant::companywise()->with('user')->find($request->merchant_id);
+            $parcel                         = Parcel::companywise()->find($id);
 
-            $parcel                         = Parcel::find($id);
+            if (blank($parcel) || blank($merchant)) {
+                DB::rollBack();
+                return false;
+            }
             // $parcel->company_id             = settings()->id;
             $parcel->merchant_id            = $request->merchant_id;
             $parcel->first_hub_id           = $merchant->user->hub_id;//merchant hub_id
@@ -798,7 +830,7 @@ class ParcelRepository implements ParcelInterface {
             // json_decode(chargeDetails), c'est-a-dire des frais, une TVA et un net
             // a reverser fabriques par le navigateur : le client choisissait sa facture.
             $charges = app(\App\Services\Parcel\ChargeCalculator::class)->calculate(
-                \App\Models\Backend\Merchant::find($request->merchant_id),
+                $merchant,
                 $request->category_id ? (int) $request->category_id : null,
                 $request->weight,
                 (float) $request->cash_collection,
