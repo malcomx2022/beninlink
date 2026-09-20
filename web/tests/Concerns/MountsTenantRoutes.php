@@ -63,4 +63,39 @@ trait MountsTenantRoutes
         Router::middleware('web')->group(base_path('routes/web.php'));
         Router::getRoutes()->refreshNameLookups();
     }
+
+    /**
+     * La **troisième** barrière, relevée en écrivant S36 — et de la même famille
+     * que les deux ci-dessus : elle rend un refus indistinguable d'un autre.
+     *
+     * `subscriptionCheckMiddleware` redirige vers `/subscription` **toute** requête
+     * d'un compte non super-administrateur dont la société n'a pas d'abonnement en
+     * cours. Sans abonnement semé, chaque appel HTTP au back-office répond donc
+     * `302`, quelles que soient les permissions du compte — et un test de garde
+     * d'accès qui compare à `302` passe au vert sans rien avoir prouvé.
+     *
+     * ⚠️ `Auth::user()->subscription` n'est pas une relation mais l'accesseur
+     * `getSubscriptionAttribute()`, qui lit le **dernier** abonnement de la
+     * société. C'est donc la société qu'il faut abonner, pas l'utilisateur.
+     *
+     * Méthode distincte plutôt qu'ajout à `mountTenantRoutes()` : les tests
+     * existants qui montent les routes sans appeler de page n'en ont pas besoin,
+     * et un test qui franchit cette barrière doit le dire.
+     */
+    protected function souscrireLeLocataire(int $jours = 30): void
+    {
+        DB::table('subscriptions')->insert([
+            'company_id' => settings()->id,
+            'user_id' => null,
+            'plan_id' => DB::table('plans')->value('id'),
+            'price' => 0,
+            'parcel_count' => 100000,
+            'deliveryman_count' => 1000,
+            'days_count' => $jours,
+            'start_date' => now(),
+            'expired_date' => now()->addDays($jours),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
 }
