@@ -3090,8 +3090,7 @@ pas :
 
 - ✅ **les permissions** des routes de l'inventaire — **posées le 2026-09-20 (S36)**,
   après mesure rôle par rôle. Voir la section ci-dessous ;
-- `admin/profile/{id}` et `merchant/profile/{id}` répondent **`abort(500)`** au lieu de
-  403/404 — un refus d'accès annoncé comme une panne ;
+- ✅ `admin/profile/{id}` et `merchant/profile/{id}` — **corrigés le 2026-09-20 (S37)** ;
 - le **doublon mort** `InvoiceRepository::InvoicePdf()` (S32) ;
 - les **catalogues communs** `currencies` (S32) et `categorys` (S35), partagés et
   modifiables ;
@@ -3234,3 +3233,101 @@ sœurs, les trois comportements du middleware, et un test qui inscrit la **mesur
 elle-même — si un jeu de rôles change, la décision doit être relue.
 
 **Treize sabotages, treize morsures** après correction du test du jumeau.
+
+---
+
+## ✅ S37 — les écrans de profil : un refus annoncé comme une panne (2026-09-20)
+
+Constat relevé en inventoriant la surface web (S28) et laissé ouvert depuis :
+`admin/profile/{id}` et `merchant/profile/{id}` **comparaient** bien l'identifiant de
+l'URL à l'utilisateur connecté, puis répondaient **`abort(500)`**.
+
+Aucune fuite — c'est pourquoi ce n'était pas urgent. Mais trois conséquences réelles :
+l'opérateur voit une page de panne là où il devrait lire « interdit », la supervision
+compte une erreur applicative à chaque tentative, et **un test ne peut pas distinguer
+un refus d'un bug** — exactement ce que la 5ᵉ passe a payé ailleurs.
+
+### En le corrigeant, deux défauts de plus dans les mêmes fichiers
+
+**1. Quatre méthodes sur cinq ne vérifiaient rien.**
+
+| Méthode | Ce que faisait le socle |
+|---|---|
+| `view($id)` | comparait, puis `abort(500)` |
+| `create($id)` | **ignorait** `$id` et servait mon propre formulaire |
+| `changePassword($id)` | idem |
+| `update($id)` | écrivait mon profil, puis redirigeait vers `$id` |
+| `updatePassword($id)` | idem |
+
+Pas de fuite là non plus — l'écriture porte toujours sur `auth()->user()->id` — mais
+l'URL mentait, et c'est pour cette raison que le filet avait dû classer ces huit
+routes « identifiant décoratif ».
+
+**2. Une écriture réussie qui finissait sur la page de panne.** `update()` et
+`updatePassword()` redirigeaient vers `profile.index` avec l'identifiant **de l'URL**.
+Modifier son profil depuis `/admin/profile/update/42` enregistrait bien, puis affichait
+un 500. C'est le seul défaut du lot qu'un utilisateur rencontrait pour de vrai.
+
+**3. Un troisième 500, côté marchand seulement.**
+`MerchantProfileRepository::get()` cherche le marchand **par son `user_id`**. Un compte
+qui n'est pas marchand — un agent, un livreur — franchit le garde sur son propre
+identifiant, puis la vue déréférence `null`. Ce panneau ne porte aucune garde de type
+d'utilisateur ; il répond 404.
+
+### ⚠️ 403 et non 404 — un écart assumé avec la convention du chantier
+
+S23 à S35 répondent **404** hors périmètre, et c'était juste : là, cacher
+l'**existence** de la ressource d'une autre société fait partie du cloisonnement.
+
+Ici l'identifiant est celui d'un compte de la **même société**, que tout porteur de
+`user_read` voit déjà dans la liste. Il n'y a pas d'existence à cacher, et
+« interdit » est la réponse exacte. La convention n'est pas contredite, elle est
+appliquée à un cas différent.
+
+### Le filet : d'exemptées à prouvées
+
+Les dix routes de profil étaient **exemptées**, motif « identifiant décoratif : la
+méthode lit `auth()->user()->id` ». Le motif était exact et reposait sur la seule
+lecture du code. Le paramètre est maintenant **vérifié**, et prouvé par appel HTTP :
+elles passent en **prouvées**.
+
+| | avant S37 | après |
+|---|---|---|
+| Prouvées | 166 | **176** |
+| Exemptées | 34 | **24** |
+| Publiques à dessein | 6 | 6 |
+| Héritées | 0 | 0 |
+
+C'est le premier mouvement `EXEMPTEES → PROUVEES` du chantier — l'arriéré, lui, était
+fermé depuis S35. Un motif d'exemption n'est pas une dette, mais quand il devient
+vérifiable, il vaut mieux le vérifier.
+
+### La leçon de ce lot : un test qui lisait sa propre documentation
+
+`test_neither_profile_controller_aborts_with_a_server_error` a échoué au premier
+passage — en trouvant `abort(500)` dans le **tableau de mon propre docbloc**, celui qui
+décrit ce que faisait le socle. Le test lisait le fichier, pas son code.
+
+Corrigé en retirant commentaires et docblocs par `token_get_all()` avant de chercher.
+C'est la même famille que les leçons précédentes du chantier — un test qui observe
+autre chose que ce qu'il croit observer — sous une forme nouvelle : ici l'obstacle
+était **la documentation du correctif lui-même**.
+
+### Couverture
+
+`tests/Feature/ProfileAccessTest.php` — 25 tests, 51 assertions. Les dix routes sont
+exercées **par appel HTTP** dans les deux sens : 403 sur l'identifiant d'un autre, et
+servies sur le sien. Plus la destination d'après-écriture, le 404 du compte non
+marchand, et deux tests qui inscrivent le constat d'origine sur le **code** (plus aucun
+`abort(500)`, plus aucune destination construite depuis l'URL).
+
+**Dix-sept sabotages, dix-sept morsures.** Suite complète : **752 tests, 45 039
+assertions, vert** (mesuré après rebasage sur le `main` qui a reçu la PR #106).
+
+### Ce qui reste, de la même famille
+
+La **destination du refus** de `PermissionCheckMiddleware` pour une navigation de
+page : toujours `redirect('/')`, donc un refus qui ressemble à une navigation réussie.
+S36 a corrigé le cas AJAX (403) et laissé la navigation, parce que la changer toucherait
+les 197 déclarations existantes. C'est le dernier membre connu de cette famille, et il
+demande de regarder chaque écran, pas seulement le middleware.

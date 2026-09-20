@@ -285,6 +285,20 @@ class WebIsolationCoverageTest extends TestCase
         'PUT admin/customs/alerts/{id}/resolve' => UserAndSettingsScopeTest::class,
         'PUT admin/customs/rules/update/{id}' => UserAndSettingsScopeTest::class,
         'PUT admin/delivery-zone/countries/{id}' => UserAndSettingsScopeTest::class,
+        // S37 — les ecrans de profil. Ils etaient EXEMPTES (« identifiant decoratif :
+        // la methode lit `auth()->user()->id` »), et le motif etait exact. Depuis S37 le
+        // parametre est VERIFIE : un identifiant qui n'est pas le sien repond 403. Le motif
+        // constate devient une garde prouvee, donc ils passent en PROUVEES.
+        'GET admin/profile/{id}' => ProfileAccessTest::class,
+        'GET admin/profile/update/{id}' => ProfileAccessTest::class,
+        'GET admin/profile/change-password/{id}' => ProfileAccessTest::class,
+        'PUT admin/profile/update/{id}' => ProfileAccessTest::class,
+        'PUT admin/profile/update-password/{id}' => ProfileAccessTest::class,
+        'GET merchant/profile/{id}' => ProfileAccessTest::class,
+        'GET merchant/profile/update/{id}' => ProfileAccessTest::class,
+        'GET merchant/profile/change-password/{id}' => ProfileAccessTest::class,
+        'PUT merchant/profile/update/{id}' => ProfileAccessTest::class,
+        'PUT merchant/profile/update-password/{id}' => ProfileAccessTest::class,
     ];
 
     /**
@@ -334,19 +348,9 @@ class WebIsolationCoverageTest extends TestCase
         'GET merchant/parcel-reports-print-page/{array}' => 'des filtres sérialisés ; la liste rendue est scopée par marchand',
 
         // Le profil : l'identifiant est DÉCORATIF, la méthode lit auth()->user()->id.
-        'GET admin/profile/update/{id}' => 'identifiant décoratif : la méthode lit `auth()->user()->id`',
-        'GET admin/profile/change-password/{id}' => 'identifiant décoratif : la méthode lit `auth()->user()->id`',
-        'PUT admin/profile/update/{id}' => 'identifiant décoratif : la méthode lit `auth()->user()->id`',
-        'PUT admin/profile/update-password/{id}' => 'identifiant décoratif : la méthode lit `auth()->user()->id`',
-        'GET merchant/profile/update/{id}' => 'identifiant décoratif : la méthode lit `auth()->user()->id`',
-        'GET merchant/profile/change-password/{id}' => 'identifiant décoratif : la méthode lit `auth()->user()->id`',
-        'PUT merchant/profile/update/{id}' => 'identifiant décoratif : la méthode lit `auth()->user()->id`',
-        'PUT merchant/profile/update-password/{id}' => 'identifiant décoratif : la méthode lit `auth()->user()->id`',
         // ⚠️ Celles-ci COMPARENT à l'utilisateur connecté — mais répondent 500,
         // pas 403 ni 404. Un refus d'accès annoncé comme une panne serveur :
         // signalé, pas corrigé ici (ce lot ne touche pas au socle du profil).
-        'GET admin/profile/{id}' => 'compare à `Auth::user()->id` — mais `abort(500)` au lieu de 403/404 : signalé',
-        'GET merchant/profile/{id}' => 'compare à `Auth::user()->id` — mais `abort(500)` au lieu de 403/404 : signalé',
         // S35 — les trois derniers cas qui ne designent pas la ressource d'autrui
         'GET category/edit/{id}' => 'catalogue de plateforme : `categorys` ne porte AUCUN `company_id` et rien ne la consomme hors de son propre CRUD (même cas que `currencies`, S32). Réserve : catalogue partagé et modifiable',
         'DELETE category/delete/{id}' => 'catalogue de plateforme : `categorys` ne porte AUCUN `company_id` (même cas que `currencies`, S32). Réserve : catalogue partagé et modifiable',
