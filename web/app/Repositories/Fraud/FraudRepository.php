@@ -9,8 +9,13 @@ class FraudRepository implements FraudInterface{
         return Fraud::companywise()->orderByDesc('id')->paginate(10);
     }
 
+    /**
+     * S35 — lecture nue : le signalement de fraude d'un autre transporteur
+     * s'ouvrait en changeant l'identifiant de l'URL. Il porte le nom, le
+     * telephone et le motif d'un client mis en cause par une autre societe.
+     */
     public function get($id){
-        return Fraud::find($id);
+        return Fraud::companywise()->find($id);
     }
 
     public function store($request){
@@ -33,7 +38,13 @@ class FraudRepository implements FraudInterface{
     public function update($id, $request)
     {
         try {
-            $fraud                = Fraud::find($id);
+            // S35 — le meme identifiant, en ecriture : on reecrivait le
+            // signalement d'une autre societe. Il vient du CORPS
+            // (`PUT admin/fraud/update`), donc hors du champ du filet.
+            $fraud                = Fraud::companywise()->find($id);
+            if(blank($fraud)){
+                return false;
+            }
             $fraud->created_by    = Auth::user()->id;
             $fraud->phone         = $request->phone;
             $fraud->name          = $request->name;
@@ -48,10 +59,8 @@ class FraudRepository implements FraudInterface{
     }
 
     public function delete($id){
-        $fraud =  Fraud::find($id);
-        if($fraud->company_id == settings()->id):
-            return Fraud::destroy($id);
-        endif;
-        return false;
+        // S35 — forme gardee correcte, mais `->company_id` sur `null` levait :
+        // 500 la ou le module repond 404.
+        return (bool) Fraud::companywise()->whereKey($id)->delete();
     }
 }

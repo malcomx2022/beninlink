@@ -45,8 +45,18 @@ class DeliveryCategoryRepository implements DeliveryCategoryInterface{
         ]);
 
         try {
-            $Deliverycategory                   = Deliverycategory::find($request->id);
-            $Deliverycategory->company_id       = settings()->id;
+            // S35 — `find($request->id)` nu suivi de `company_id = settings()->id` :
+            // reprise de ligne. L'identifiant vient du CORPS
+            // (`PUT admin/delivery-category/update`), donc hors du champ du filet.
+            //
+            // ⚠️ Volontairement PLUS strict que `get()` : celui-ci laisse lire la
+            // categorie 1, partagee par toutes les societes. La laisser REECRIRE
+            // reviendrait a laisser n'importe quel transporteur renommer la
+            // categorie de tous les autres.
+            $Deliverycategory                   = Deliverycategory::companywise()->find($request->id);
+            if(blank($Deliverycategory)){
+                return false;
+            }
             $Deliverycategory->title            = $request->title;
             $Deliverycategory->status           = $request->status;
             $Deliverycategory->position         = $request->position;
@@ -59,10 +69,7 @@ class DeliveryCategoryRepository implements DeliveryCategoryInterface{
     }
 
     public function delete($id){
-        $cateogry   = Deliverycategory::find($id);
-        if($cateogry->company_id == settings()->id):
-            return Deliverycategory::destroy($id);
-        endif;
-        return false;
+        // S35 — forme gardee correcte, mais 500 sur `null` hors perimetre.
+        return (bool) Deliverycategory::companywise()->whereKey($id)->delete();
     }
 }

@@ -263,6 +263,24 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/merchant/{merchant}/delivery-charge/index' => MerchantFamilyScopeTest::class,
         'POST admin/merchant/{merchant}/delivery-charge/store' => MerchantFamilyScopeTest::class,
         'PUT admin/merchant/{merchant}/delivery-charge/update/{id}' => MerchantFamilyScopeTest::class,
+        // S35 — les comptes et le parametrage : la DERNIERE passe de l'arriere.
+        // Le pire du lot etait `users/permissions`, qui ECRIVAIT les droits sur une
+        // lecture sans societe ni type. Les quatre routes `customs` et
+        // `delivery-zone/countries` etaient deja correctes : elles n'attendaient qu'un test.
+        'DELETE admin/delivery-category/delete/{id}' => UserAndSettingsScopeTest::class,
+        'DELETE admin/deliveryman/delete/{id}' => UserAndSettingsScopeTest::class,
+        'DELETE admin/fraud/delete/{id}' => UserAndSettingsScopeTest::class,
+        'DELETE admin/push-notification/delete/{id}' => UserAndSettingsScopeTest::class,
+        'DELETE admin/user/delete/{id}' => UserAndSettingsScopeTest::class,
+        'GET admin/customs/rules/edit/{id}' => UserAndSettingsScopeTest::class,
+        'GET admin/delivery-category/edit/{id}' => UserAndSettingsScopeTest::class,
+        'GET admin/deliveryman/edit/{id}' => UserAndSettingsScopeTest::class,
+        'GET admin/fraud/edit/{id}' => UserAndSettingsScopeTest::class,
+        'GET admin/users/edit/{id}' => UserAndSettingsScopeTest::class,
+        'GET admin/users/permissions/{id}' => UserAndSettingsScopeTest::class,
+        'PUT admin/customs/alerts/{id}/resolve' => UserAndSettingsScopeTest::class,
+        'PUT admin/customs/rules/update/{id}' => UserAndSettingsScopeTest::class,
+        'PUT admin/delivery-zone/countries/{id}' => UserAndSettingsScopeTest::class,
     ];
 
     /**
@@ -325,6 +343,10 @@ class WebIsolationCoverageTest extends TestCase
         // signalé, pas corrigé ici (ce lot ne touche pas au socle du profil).
         'GET admin/profile/{id}' => 'compare à `Auth::user()->id` — mais `abort(500)` au lieu de 403/404 : signalé',
         'GET merchant/profile/{id}' => 'compare à `Auth::user()->id` — mais `abort(500)` au lieu de 403/404 : signalé',
+        // S35 — les trois derniers cas qui ne designent pas la ressource d'autrui
+        'GET category/edit/{id}' => 'catalogue de plateforme : `categorys` ne porte AUCUN `company_id` et rien ne la consomme hors de son propre CRUD (même cas que `currencies`, S32). Réserve : catalogue partagé et modifiable',
+        'DELETE category/delete/{id}' => 'catalogue de plateforme : `categorys` ne porte AUCUN `company_id` (même cas que `currencies`, S32). Réserve : catalogue partagé et modifiable',
+        'PUT admin/sms-settings/update/{id}' => 'le `{id}` est le NOM DE LA PASSERELLE (reve, twilio, nexmo), pas une ressource ; l\'écriture est `companywise()` clé par clé',
     ];
 
     /**
@@ -349,33 +371,24 @@ class WebIsolationCoverageTest extends TestCase
      * scopée, détail en `find($id)`. Certaines sont sûrement sans danger,
      * d'autres sûrement pas ; personne ne l'a vérifié, et c'est le point.
      *
-     * ⚠️ `PLAFOND_HERITAGE` ne monte jamais. Une route retirée d'ici va dans
-     * `PROUVEES` avec son test, et le plafond descend d'autant. C'est le cliquet.
+     * ⚠️ `PLAFOND_HERITAGE` ne monte jamais. Une route retirée d'ici allait dans
+     * `PROUVEES` avec son test, et le plafond descendait d'autant. C'était le
+     * cliquet — et il a fait son travail : **cette liste est vide depuis S35.**
      */
     private const HERITAGE = [
-        'DELETE admin/delivery-category/delete/{id}',
-        'DELETE admin/deliveryman/delete/{id}',
-        'DELETE admin/fraud/delete/{id}',
-        'DELETE admin/push-notification/delete/{id}',
-        'DELETE admin/sms-settings/delete/{id}',
-        'DELETE admin/user/delete/{id}',
-        'DELETE category/delete/{id}',
-        'GET admin/customs/rules/edit/{id}',
-        'GET admin/delivery-category/edit/{id}',
-        'GET admin/deliveryman/edit/{id}',
-        'GET admin/fraud/edit/{id}',
-        'GET admin/sms-settings/edit/{id}',
-        'GET admin/users/edit/{id}',
-        'GET admin/users/permissions/{id}',
-        'GET category/edit/{id}',
-        'PUT admin/customs/alerts/{id}/resolve',
-        'PUT admin/customs/rules/update/{id}',
-        'PUT admin/delivery-zone/countries/{id}',
-        'PUT admin/sms-settings/update/{id}',
     ];
 
-    /** Le compte figé de l'arriéré. Il descend, il ne monte pas. */
-    private const PLAFOND_HERITAGE = 19;
+    /**
+     * Le compte figé de l'arriéré. Il descend, il ne monte pas — et **depuis S35 il
+     * est à zéro** : l'arriéré des 171 routes héritées est fermé, en dix passes.
+     *
+     * Ce zéro est désormais la règle de travail : toute route web à paramètre
+     * ajoutée au dépôt doit être **prouvée** (un test dans `PROUVEES`), **exemptée**
+     * (le motif pour lequel son paramètre ne désigne pas la ressource d'autrui) ou
+     * **publique à dessein**. `HERITAGE` n'est plus une liste d'attente ; c'est une
+     * liste qui doit rester vide.
+     */
+    private const PLAFOND_HERITAGE = 0;
 
     protected function setUp(): void
     {
@@ -464,8 +477,9 @@ class WebIsolationCoverageTest extends TestCase
         $this->assertLessThanOrEqual(
             self::PLAFOND_HERITAGE,
             count(self::HERITAGE),
-            "L'arriéré a grossi. Une route nouvelle ne se range pas dans HERITAGE : "
-            . 'elle se prouve (PROUVEES) ou se motive (EXEMPTEES / PUBLIQUES).',
+            "L'arriéré est fermé depuis S35 et doit rester vide. Une route nouvelle ne "
+            . 'se range pas dans HERITAGE : elle se prouve (PROUVEES) ou se motive '
+            . '(EXEMPTEES / PUBLIQUES).',
         );
 
         $this->assertSame([], array_intersect(self::HERITAGE, array_keys(self::PROUVEES)),

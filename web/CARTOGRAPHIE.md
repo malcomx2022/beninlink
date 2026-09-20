@@ -2937,3 +2937,157 @@ Le reste est du **paramétrage** — libellés, catégories, règles, modèles d
 `User` : `admin/users/permissions/{id}` attribue des rôles, et un `update()` nu y
 serait de la même nature que la reprise de compte marchand de cette passe. Ce serait
 la prochaine.
+
+---
+
+## ✅ S35 — les comptes et le paramétrage : **l'arriéré est fermé** (2026-09-20, 10ᵉ passe)
+
+**171 → 0 en dix passes.** `PLAFOND_HERITAGE` vaut désormais zéro, et ce zéro devient la
+règle de travail : toute route web à paramètre ajoutée au dépôt doit être **prouvée**,
+**exemptée** avec son motif, ou **publique à dessein**. `HERITAGE` n'est plus une liste
+d'attente, c'est une liste qui doit rester vide.
+
+### Les 19 dernières se répartissaient en cinq états
+
+Il valait la peine de les nommer plutôt que de les traiter en bloc : « 19 routes non
+prouvées » ne veut pas dire « 19 failles ».
+
+| État | Routes | Suite donnée |
+|---|---|---|
+| **déjà correctes** | 4 — `customs` ×3 (chantier 5), `delivery-zone/countries` (D4) | un test, rien d'autre |
+| **lecture nue** | 2 — `fraud/edit`, `users/permissions` | scopées |
+| **reprise de ligne** | 3 écritures — `users`, `deliveryman`, `delivery-category` | scopées |
+| **500 au lieu de 404** | 6 suppressions | forme gardée réparée |
+| **ni l'un ni l'autre** | 2 exemptées (`category`), 5 **mortes** (`sms-settings`) | motivées / retirées |
+
+### 🔴 Le pire du lot : l'attribution des droits
+
+`UserController::permission()` lisait `User::where('id', $id)->first()` — **ni société,
+ni type d'utilisateur** — et `UserRepository::permissionUpdate()` **écrivait** le jeu de
+permissions sur la même lecture nue, avec un identifiant venu du **corps** de la requête
+(`PUT admin/users/permissions/update`). On réécrivait donc les droits de n'importe quel
+compte de n'importe quelle société.
+
+Le filtre sur `user_type` compte autant que celui sur la société : sans lui, l'écran
+atteignait aussi les **marchands** et les **livreurs** de sa propre société, dont le jeu
+de permissions n'a rien à voir avec celui d'un agent.
+
+`UserRepository::update()` s'y ajoutait — `User::find($id)` nu suivi de
+`company_id = settings()->id`, sur un écran qui réécrit l'e-mail, le **mot de passe**, le
+rôle et les permissions. C'est la reprise de compte de S34, cette fois sur
+l'administrateur d'un autre transporteur. Et `Role::where('id', $request->role_id)`
+était nu dans `store()` **et** `update()` : le rôle, donc le jeu de droits, pouvait venir
+d'ailleurs.
+
+Les cinq points passent par une seule méthode privée, `utilisateurDeLaSociete()`, qui
+reprend **exactement** le périmètre de `get()` — pour qu'un écart entre la lecture et
+l'écriture ne puisse plus réapparaître.
+
+### Cinquième et dernière occurrence de la tache aveugle
+
+Cinq des écritures corrigées ici n'ont **pas d'identifiant dans leur URL** :
+`users/update`, `users/permissions/update`, `deliveryman/update`,
+`delivery-category/update` et `fraud/update` le portent dans le **corps**. Le filet ne
+les voit pas, et ne les verra jamais.
+
+Compte final de cette classe sur l'ensemble du chantier : **trois décaissements**
+(passes 5 et 6), **deux créations de colis** (S33), **quatre écritures de compte de
+versement** (S34), **l'AJAX de la grille** (S34), **cinq écritures de paramétrage**
+(S35). Quinze points, aucun visible du filet. Ce qui les a tous trouvés est la même
+chose : **lire le fichier entier quand on corrige une de ses méthodes**, jamais la seule
+route.
+
+### Cinq routes mortes, pas deux
+
+`sms-settings/edit/{id}` et `delete/{id}` figuraient dans l'arriéré. En les retirant,
+trois autres sont apparues dans le même bloc : `create`, `store` et `status`.
+`SmsSettingsController` ne déclare que **`index` et `update`** — les cinq autres
+désignaient des méthodes inexistantes, et les atteindre rendait 500. Aucune vue ne les
+nommait. Deux d'entre elles étaient de plus **déclarées deux fois**, côté locataire et
+côté super-administrateur.
+
+Les réglages SMS n'ont pas de CRUD : ce sont des clés dans `sms_settings`, écrites par
+`update()`, qui est déjà `companywise()` clé par clé. Son `{id}` est le **nom de la
+passerelle** (`reve`, `twilio`, `nexmo`), pas l'identifiant d'une ressource — d'où son
+exemption. Un test inscrit l'invariant : aucune route `sms-settings.*` au-delà de ces
+deux méthodes.
+
+### Une décision : plus strict que la lecture
+
+`DeliverycategoryRepository::get()` laisse lire la **catégorie 1**, partagée par toutes
+les sociétés (le jeu d'amorçage crée ses six catégories **sans** `company_id`). Son
+`update()` ne le permet plus : laisser réécrire cette ligne laisserait n'importe quel
+transporteur renommer la catégorie de tous les autres — et le socle y ajoutait
+`company_id = settings()->id`, donc se l'appropriait. L'écriture est volontairement plus
+étroite que la lecture, et le test le dit.
+
+### Le catalogue partagé, pour la deuxième fois
+
+Les deux routes `category/*` sont **exemptées** : la table `categorys` ne porte **aucun**
+`company_id` — c'est un catalogue de plateforme, et rien ne la consomme en dehors de son
+propre CRUD. Même cas que `currencies` au constat S32, même réserve inscrite : le
+catalogue reste **partagé et modifiable**. Ce n'est pas un défaut de cloisonnement, c'est
+un problème de catalogue commun.
+
+### La leçon de cette passe : un refus venu d'un accident
+
+Un sabotage sur 22 est revenu vert : retirer le garde du rôle dans `store()`.
+
+La cause est instructive. Sans `hub_id`, le socle traversait
+`if($role->permissions !== null)`. Lire une propriété sur `null` est un simple *warning*
+PHP — que Laravel promeut en `ErrorException`. Le `catch` l'avalait et rendait `false` :
+la création était refusée **par accident**, par le gestionnaire d'erreurs, et non par une
+règle.
+
+Avec `hub_id`, cette branche est sautée (les permissions viennent de `hubPermissions()`),
+`$role` n'est jamais déréférencé, rien ne lève — **et le compte se créait avec le
+`role_id` d'une autre société**. C'est le chemin réellement atteignable ; le test
+l'exerce, et le sabotage mord.
+
+Troisième fois qu'un garde inatteignable fait passer un sabotage (après S31 et S34), et
+la première où la barrière accidentelle venait du **gestionnaire d'erreurs du
+framework**. Un refus que l'on ne sait pas expliquer n'est pas une protection.
+
+### Une bricole du socle réparée au passage
+
+`UserController::destroy()` appelait `$this->repo->delete($id)` une **seconde fois** dans
+son `elseif` : une suppression qui échouait au premier tour était donc retentée, image du
+disque comprise. On appelle une fois et on lit le résultat.
+
+### Couverture
+
+`tests/Feature/UserAndSettingsScopeTest.php` — 18 tests, 62 assertions, dont **sept
+contrôles négatifs**, plus deux tests qui n'inscrivent pas un périmètre mais un **motif**
+(le catalogue sans société, les deux seules méthodes de `SmsSettingsController`).
+
+**Vingt-deux sabotages, vingt-deux morsures** après correction du test du rôle.
+
+### Le cliquet, fermé
+
+| | Départ | 1re | 2e | 3e | 4e | 5e | 6e | 7e | 8e | 9e | 10ᵉ |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Prouvées | 7 | 33 | 57 | 85 | 90 | 113 | 120 | 129 | 137 | 152 | **166** |
+| Exemptées | 33 | 35 | 35 | 35 | 35 | 35 | 35 | 37 | 37 | 37 | **40** |
+| **Héritées (plafond)** | **171** | 143 | 119 | 89 | 84 | 60 | 53 | 42 | 34 | 19 | **0** |
+
+La ligne « Exemptées » agrège, depuis la première passe, les routes **exemptées** et
+celles déclarées **publiques à dessein** — au 10ᵉ jalon, 34 + 6. Les trois listes du
+filet plus l'arriéré vide totalisent **206** routes classées ; les cinq écarts avec le
+relevé d'origine sont les routes mortes retirées en cours de route (trois en 3ᵉ passe,
+cinq ici, moins celles ajoutées depuis par les chantiers).
+
+### Ce qui n'est pas fermé, et reste à décider
+
+Le chantier d'isolation est terminé ; ces points-là ne le sont pas, et ils n'en relèvent
+pas :
+
+- **les permissions** des 6 routes relevées à l'inventaire : en ajouter une retire
+  l'accès aux rôles qui ne l'ont pas. Le cas délicat reste `parcel_create` sur
+  `admin/parcel/clone/{id}` ;
+- `admin/profile/{id}` et `merchant/profile/{id}` répondent **`abort(500)`** au lieu de
+  403/404 — un refus d'accès annoncé comme une panne ;
+- le **doublon mort** `InvoiceRepository::InvoicePdf()` (S32) ;
+- les **catalogues communs** `currencies` (S32) et `categorys` (S35), partagés et
+  modifiables ;
+- les six catégories de livraison du jeu d'amorçage, créées **sans société** : aucune
+  société ne peut donc les modifier par son écran, sauf la n° 1 en lecture.

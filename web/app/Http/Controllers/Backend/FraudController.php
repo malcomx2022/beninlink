@@ -41,6 +41,9 @@ class FraudController extends Controller
     public function edit($id)
     {
         $fraud = $this->repo->get($id);
+        // S35 — hors perimetre le depot rend `null` et la vue dereferencait.
+        abort_if(blank($fraud), 404);
+
         return view('backend.fraud.edit',compact('fraud'));
     }
 
@@ -57,7 +60,9 @@ class FraudController extends Controller
 
     public function destroy($id)
     {
-        $this->repo->delete($id);
+        // S35 — succes annonce sans regarder ce que le depot avait fait.
+        abort_unless($this->repo->delete($id), 404);
+
         Toastr::success(__('fraud.delete_msg'),__('message.success'));
         return back();
     }

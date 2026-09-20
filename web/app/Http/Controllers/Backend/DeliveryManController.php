@@ -64,6 +64,9 @@ class DeliveryManController extends Controller
     {
         $hubs         = $this->repo->hubs();
         $deliveryman = $this->repo->get($id);
+        // S35 — le depot etait scope, mais rien ne lisait son resultat.
+        abort_if(blank($deliveryman), 404);
+
         return view('backend.deliveryman.edit',compact('deliveryman','hubs'));
     }
 
@@ -80,7 +83,10 @@ class DeliveryManController extends Controller
 
     public function destroy($id)
     {
-        $this->repo->delete($id);
+        // S35 — le depot refuse le livreur d'une autre societe ; l'ecran annoncait
+        // quand meme la suppression.
+        abort_unless($this->repo->delete($id), 404);
+
         Toastr::success(__('deliveryman.delete_msg'),__('message.success'));
         return back();
     }
