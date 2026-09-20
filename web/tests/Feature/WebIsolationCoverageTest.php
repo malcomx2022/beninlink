@@ -220,6 +220,21 @@ class WebIsolationCoverageTest extends TestCase
         'PUT admin/hub/incharge/{hubID}/update/{id}' => HubInChargeScopeTest::class,
         'GET admin/hub/incharge/{hubID}/assigned/{id}' => HubInChargeScopeTest::class,
         'DELETE admin/hub/incharge/{hubID}/delete/{id}' => HubInChargeScopeTest::class,
+        // S32, 7e passe — LES RELEVES DE REGLEMENT. Passe de VERIFICATION : les six
+        // methodes du depot que ces routes atteignent etaient deja `companywise()`
+        // (S14, S20, chantier 4). L'arriere les tenait faute de test, pas faute de
+        // perimetre. Trois couches se superposent : `companywise()` contre un
+        // administrateur d'ailleurs, `ownsOrAbort()` contre un marchand qui forge le
+        // `merchant_id` de l'URL (S20), et le lien signe pour l'app mobile.
+        'GET admin/merchant/{merchant_id}/invoice' => MerchantInvoiceScopeTest::class,
+        'GET admin/merchant/{merchant_id}/invoice/{invoice_id}' => MerchantInvoiceScopeTest::class,
+        'GET admin/merchant/{merchant_id}/invoice/csv/{invoice_id}' => MerchantInvoiceScopeTest::class,
+        'GET admin/merchant/{merchant_id}/invoice/journal/{invoice_id}' => MerchantInvoiceScopeTest::class,
+        'GET admin/merchant/{merchant_id}/invoice/pdf/{invoice_id}' => MerchantInvoiceScopeTest::class,
+        'GET admin/merchant/{merchant_id}/invoice/status/update' => MerchantInvoiceScopeTest::class,
+        'GET merchant/invoice/csv/{merchant_id}/{invoice_id}' => MerchantInvoiceScopeTest::class,
+        'GET merchant/invoice/journal/{merchant_id}/{invoice_id}' => MerchantInvoiceScopeTest::class,
+        'GET merchant/invoice/pdf/{merchant_id}/{invoice_id}' => MerchantInvoiceScopeTest::class,
     ];
 
     /**
@@ -247,6 +262,16 @@ class WebIsolationCoverageTest extends TestCase
         // `companyWise()`.
         'GET admin/front-web/section/edit/{id}' => 'un type de section, pas un identifiant ; la lecture est scopee',
         'PUT admin/front-web/section/update/{id}' => 'un type de section, pas un identifiant ; la lecture est scopee',
+
+        // La devise : `currencies` ne porte PAS de `company_id` — c'est une liste de
+        // reference de la PLATEFORME (pays, symbole, code, taux), et `general_settings.currency`
+        // stocke le SYMBOLE, une chaine, pas une cle etrangere. Supprimer une devise ne
+        // casse donc pas l'affichage d'une autre societe. ⚠️ Le catalogue reste partage et
+        // modifiable par tout administrateur : une societe peut retirer une entree qu'une
+        // autre voudrait choisir plus tard. C'est un probleme de catalogue commun, pas de
+        // cloisonnement — signale, pas corrige ici.
+        'GET admin/currency/edit/{id}' => 'liste de reference de la plateforme : `currencies` n a pas de `company_id`',
+        'DELETE admin/currency/delete/{id}' => 'liste de reference de la plateforme ; le catalogue partage est signale',
 
         // Un nom, pas un identifiant.
         'PUT admin/settings/pay-out/setup/update/{paymentmethod}' => 'un nom de passerelle, pas un identifiant de ressource',
@@ -300,7 +325,6 @@ class WebIsolationCoverageTest extends TestCase
      * `PROUVEES` avec son test, et le plafond descend d'autant. C'est le cliquet.
      */
     private const HERITAGE = [
-        'DELETE admin/currency/delete/{id}',
         'DELETE admin/delivery-category/delete/{id}',
         'DELETE admin/deliveryman/delete/{id}',
         'DELETE admin/fraud/delete/{id}',
@@ -312,7 +336,6 @@ class WebIsolationCoverageTest extends TestCase
         'DELETE admin/sms-settings/delete/{id}',
         'DELETE admin/user/delete/{id}',
         'DELETE category/delete/{id}',
-        'GET admin/currency/edit/{id}',
         'GET admin/customs/rules/edit/{id}',
         'GET admin/delivery-category/edit/{id}',
         'GET admin/deliveryman/edit/{id}',
@@ -322,12 +345,6 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/merchant/view/{id}',
         'GET admin/merchant/{id}/payment/add',
         'GET admin/merchant/{id}/payment/index',
-        'GET admin/merchant/{merchant_id}/invoice',
-        'GET admin/merchant/{merchant_id}/invoice/csv/{invoice_id}',
-        'GET admin/merchant/{merchant_id}/invoice/journal/{invoice_id}',
-        'GET admin/merchant/{merchant_id}/invoice/pdf/{invoice_id}',
-        'GET admin/merchant/{merchant_id}/invoice/status/update',
-        'GET admin/merchant/{merchant_id}/invoice/{invoice_id}',
         'GET admin/merchant/{merchant}/delivery-charge/create',
         'GET admin/merchant/{merchant}/delivery-charge/edit/{id}',
         'GET admin/merchant/{merchant}/delivery-charge/index',
@@ -342,9 +359,6 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/users/edit/{id}',
         'GET admin/users/permissions/{id}',
         'GET category/edit/{id}',
-        'GET merchant/invoice/csv/{merchant_id}/{invoice_id}',
-        'GET merchant/invoice/journal/{merchant_id}/{invoice_id}',
-        'GET merchant/invoice/pdf/{merchant_id}/{invoice_id}',
         'POST admin/merchant/{merchant}/delivery-charge/store',
         'PUT admin/customs/alerts/{id}/resolve',
         'PUT admin/customs/rules/update/{id}',
@@ -356,7 +370,7 @@ class WebIsolationCoverageTest extends TestCase
     ];
 
     /** Le compte figé de l'arriéré. Il descend, il ne monte pas. */
-    private const PLAFOND_HERITAGE = 53;
+    private const PLAFOND_HERITAGE = 42;
 
     protected function setUp(): void
     {
