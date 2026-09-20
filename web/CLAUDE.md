@@ -168,10 +168,25 @@ avant les apps.
   renvoie **302 vers `/subscription`** avant le contrôleur. Un test qui attend un refus
   lirait ce 302 comme une preuve et passerait sans exécuter la ligne qu'il couvre — d'où
   la règle : le contrôle négatif attend **200**, pas « autre chose qu'un 404 ».
-  ⚠️ Le filet n'énumère que les routes **à paramètre d'URL**. Un identifiant porté par le
-  **corps** de la requête lui est invisible : quinze points de ce type ont été trouvés au
-  fil du chantier (décaissements, création de colis, comptes de versement, permissions).
-  Ce qui les couvre est de **lire le fichier entier** quand on corrige une de ses méthodes.
+  ⚠️ Ce filet n'énumère que les routes **à paramètre d'URL**. Un identifiant porté par le
+  **corps** de la requête lui est invisible — c'était l'angle mort du chantier, fermé par
+  **S37**.
+- Toute route d'**écriture sans paramètre d'URL** qui lit un identifiant dans le **corps**
+  de la requête est inscrite dans `tests/Feature/BodyIdentifierCoverageTest` (**S37**) :
+  prouvée (avec son test), ou exemptée (avec le motif pour lequel l'identifiant ne désigne
+  pas une ressource de locataire). L'arriéré ouvre à **90** et ne peut que baisser.
+  Ce filet énumère les **contrôleurs**, pas les routes : il lit la source de la méthode de
+  contrôleur **et celle de la méthode de dépôt qu'elle appelle**. ⚠️ Le second niveau est
+  indispensable — un contrôleur qui passe `$request` tel quel au dépôt ne lit aucun
+  identifiant lui-même (`POST admin/assign-pickup/bulk`), et sort de l'énumération sans lui.
+  Un test-témoin garde ce point.
+- Les chemins **en lot** sont le cas le plus dangereux de cette famille : leur identifiant
+  est une **liste**, et rien dans la signature d'une route ne la porte. Règle de forme
+  (**S37**) : dans un lot, un identifiant hors périmètre est **ignoré** et la boucle
+  continue — le reste du lot passe ; sur un chemin à identifiant unique, on **refuse**.
+  Et une annulation de statut ne recule pas qu'un statut : elle **supprime les
+  `ParcelEvent`**, c'est-à-dire la chronologie que lit le client. L'assertion porte donc
+  sur le **nombre d'évènements**, pas seulement sur le statut.
 - La **garde d'accès** d'une route du back-office se pose avec `hasPermission:x`, et
   `hasPermission:a|b|c` quand plusieurs écrans aux droits différents appellent la même
   aide AJAX (**S36**). Deux règles tirées de ce lot : les **paires sœurs** portent le
