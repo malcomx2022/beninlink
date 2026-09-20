@@ -1221,6 +1221,7 @@ vestige du squelette Laravel.
 | ~~S29~~ | B | ~~Dans le back-office, **les écritures étaient moins scopées que les lectures**~~ — ✅ **première passe le 2026-09-18** : motif dominant de l'arriéré du filet, et il s'était glissé dans mes propres correctifs. Trois formes fermées. **La vitrine** : les six dépôts `FrontWeb` lisent en `companyWise()->findOrFail()` mais supprimaient en `Modele::destroy($id)` **nu** — la question, l'article, le service, le partenaire, le lien social ou le bloc « pourquoi nous » d'un autre transporteur se supprimait en changeant l'identifiant, et le site public de la victime perdait son contenu. **⚠️ Le trou de S23** : ce lot avait scopé les trois *lectures* du support et laissé `update()` et `delete()` nues — on réécrivait le ticket d'un autre transporteur et on s'en attribuait la paternité par le `user_id`. **⚠️ Le trou de S26** : idem pour les boutiques, et `update()` lisant `merchant_id` dans la requête permettait en plus de **rattacher** la boutique à un autre marchand. Plus cinq écrans du panneau marchand qui répondaient **500** au lieu de 404 hors périmètre | `FrontWeb/*Repository` × 6 · `SupportRepository` · `MerchantShops\ShopsRepository` · `MerchantShopsController` · `MerchantPanel\MerchantParcelController` |
 | ~~S30~~ | C | ~~L'argent du back-office : sept dépôts touchant à des comptes bancaires lisaient **nu**~~ — ✅ **corrigé le 2026-09-18** (5ᵉ passe sur l'arriéré). Pour six d'entre eux la lecture nue précédait un **mouvement d'argent** : `Income::update` touche le compte bancaire **et** le relevé du marchand rattachés à la recette lue ; `Expense::update` **rend le solde** au compte de la dépense lue ; `FundTransfer::update` rejoue un **virement** entre ses deux comptes ; `MerchantManage\Payment::update` réécrit la demande de versement et la **réaffecte** à un autre marchand ; `cancelReject` remet le versement rejeté **en attente de paiement** ; `Account::update` réécrit le compte bancaire ; `HubPaymentRequest::update` **rattache** la demande à l'entrepôt de l'agent connecté. Plus le **décaissement** d'un versement marchand, lu nu dans le contrôleur avec l'identifiant dans le corps — 3ᵉ occurrence de l'angle mort du filet | `Income` · `Expense` · `FundTransfer` · `MerchantManage\Payment` · `Account` · `HubPaymentRequest` · `ReceivedRepository` · `MerchantmanagePaymentController` |
 | ~~S31~~ | B | ~~Les responsables d'entrepôt : périmètre par `hub_id` **et par rien d'autre**~~ — ✅ **corrigé le 2026-09-18** (6ᵉ passe). `hub_incharges` ne porte pas de `company_id`, donc `where('hub_id', $hubID)` acceptait l'entrepôt de n'importe quelle société. **Neuf points dans un seul dépôt**, et le plus grave n'est pas une lecture : la rafle d'`assignedHub()` passe tous les autres responsables actifs de l'entrepôt à inactif — chez l'autre société, une **interruption de service**. Elle réécrivait aussi le `hub_id` d'un utilisateur sans vérifier qu'il est à nous, `delete()` était `destroy($id)` **sans même le `hub_id`**, et `users()` nommait les **administrateurs de tous les transporteurs** dans le menu déroulant | `HubInChargeRepository` · `HubInChargeController` |
+| ~~S32~~ | G | ~~Les relevés de règlement : neuf routes non prouvées~~ — ✅ **inscrites le 2026-09-20** (7ᵉ passe). **Passe de vérification, pas de correction** : les six méthodes du dépôt que ces routes atteignent étaient **déjà** `companywise()` (S14, S20, chantier 4). L'arriéré les tenait faute de test, pas faute de périmètre. Un seul défaut trouvé : `InvoiceDetails()` déréférençait un `null` hors périmètre — 500 au lieu de 404. Et un piège signalé : `InvoiceRepository::InvoicePdf()` est un **doublon mort** d'`invoiceGet()`, corps pour corps — il a avalé un de mes sabotages | `MerchantInvoiceController` · `InvoiceRepository` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
 
@@ -2615,3 +2616,104 @@ Suite complète : **643 tests, 44 668 assertions, vert.**
 | `User` (3), `SmsSettings` (3), `Customs` (3), `Category` (2), `DeliveryCategory` (2), `DeliveryMan` (2), `Fraud` (2), `Currency` (2), `PushNotification` (1), `DeliveryZone` (1) | 21 | divers |
 
 `Currency` reste à **exempter** : une devise est un objet de plateforme.
+
+
+## ✅ S32 — les relevés de règlement (2026-09-20, 7ᵉ passe)
+
+**Une passe de vérification.** Les six méthodes de `InvoiceRepository` que ces neuf
+routes atteignent — `merchantInvoiceGet`, `merchantInvoiceDetails`, `invoiceGet`,
+`statusUpdate`, et les listes par statut — sont **déjà** `companywise()`, posées par
+S14, S20 et le chantier 4. L'arriéré les tenait faute de **test**, pas faute de
+périmètre. C'est le premier lot du chantier où il n'y avait presque rien à corriger,
+et c'est une bonne nouvelle : la surface non prouvée n'est pas entièrement une
+surface non protégée.
+
+### Trois couches de périmètre, qui ne protègent pas des mêmes choses
+
+Ce module est le seul de l'arriéré à en superposer trois, et il valait la peine de
+les nommer :
+
+| Couche | Contre qui | Où |
+|---|---|---|
+| `companywise()` | un **administrateur d'une autre société** | le dépôt |
+| `ownsOrAbort()` | un **marchand** qui forge le `merchant_id` de l'URL depuis son propre panneau (S20) | le contrôleur — et seulement pour les comptes marchands |
+| le **lien signé** | personne : la signature *est* l'authentification | `signedPdf()`, déjà déclaré *publique à dessein* dans le filet |
+
+La deuxième est celle qui compte pour le cas que la décision S7 nomme comme le plus
+fréquent : **deux marchands de la même société**. `companywise()` ne les sépare pas ;
+`ownsOrAbort()` si. Son garde existait depuis S20 et n'avait jamais été exercé par un
+test — il l'est maintenant.
+
+### Le seul défaut, et une décision de ne pas toucher
+
+`InvoiceDetails()` déréférençait un `null` hors périmètre : **500** au lieu de 404,
+la famille S15 pour la septième fois.
+
+⚠️ `index()` est laissé **tel quel**, et c'est un choix : sa liste est
+`companywise()`, donc pour le marchand d'une autre société elle rend une liste
+**vide**, pas un 404. Rien ne fuit. Je ne change pas un comportement pour la seule
+symétrie avec les écrans voisins ; le test l'inscrit tel qu'il est.
+
+### ⚠️ Un doublon mort qui a avalé un sabotage
+
+`InvoiceRepository::InvoicePdf($merchant_id, $invoice_id)` et
+`InvoiceRepository::invoiceGet($merchant_id, $invoice_id)` ont un corps **identique,
+ligne pour ligne**. Seule `invoiceGet()` est appelée ; `InvoicePdf()` est du code mort
+— déclaré dans l'interface, appelé par personne (l'action `InvoicePdf` du contrôleur
+passe par `invoiceGet`).
+
+Mon sabotage, ancré sur la **requête** et non sur la méthode, a touché le jumeau mort.
+Le fichier avait bien changé — l'empreinte MD5 le confirmait — et le test est resté
+vert. Refait avec la signature de la méthode comme ancre, il rougit.
+
+Le doublon est **laissé en place** : il est scopé de la même façon, et retirer une
+méthode d'interface dépasse le cadre d'une passe d'isolation. Mais il est signalé,
+dans le docblock du test comme ici, parce qu'un **correctif** appliqué au mauvais
+jumeau serait tout aussi silencieux qu'un sabotage.
+
+C'est la deuxième fois qu'une ancre trop courte fait passer un sabotage à côté
+(après `SalaryRepository::get()`, 4ᵉ passe). La règle se durcit : **ancrer un
+sabotage sur la signature de la méthode, jamais sur une ligne qui peut se répéter.**
+
+### La devise : exemptée, avec une réserve
+
+`currencies` ne porte **pas** de `company_id` : c'est une liste de référence de la
+plateforme (pays, symbole, code, taux de change). Et `general_settings.currency`
+stocke le **symbole**, une chaîne — pas une clé étrangère. Supprimer une devise ne
+casse donc pas l'affichage d'une autre société.
+
+⚠️ Réserve inscrite dans l'exemption : le catalogue reste **partagé et modifiable**
+par tout administrateur. Une société peut retirer une entrée qu'une autre voudrait
+choisir plus tard. C'est un problème de **catalogue commun**, pas de cloisonnement —
+signalé, hors du cadre de ce chantier.
+
+### Couverture
+
+`tests/Feature/MerchantInvoiceScopeTest.php` — 7 tests, couvrant les trois couches,
+plus deux contrôles négatifs (mes relevés restent lisibles et modifiables ; un
+marchand télécharge bien le sien).
+
+**Six sabotages, six morsures** après correction de l'ancre.
+
+Suite complète : **654 tests, 44 727 assertions, vert.**
+
+### Le cliquet après sept passes
+
+| | Départ | 1re | 2e | 3e | 4e | 5e | 6e | 7e |
+|---|---|---|---|---|---|---|---|---|
+| Prouvées | 7 | 33 | 57 | 85 | 90 | 113 | 120 | **129** |
+| Exemptées | 33 | 35 | 35 | 35 | 35 | 35 | 35 | **37** |
+| **Héritées (plafond)** | **171** | 143 | 119 | 89 | 84 | 60 | 53 | **42** |
+
+### Ce qui reste : 42 routes
+
+| Famille | Routes | État |
+|---|---|---|
+| `ParcelController` (back-office) | 8 | `get()` scopé société **et hub**, `update()` nu |
+| `Merchant` (5), `MerchantPaymentAccount` (4), `MerchantDeliveryCharge` (6) | 15 | `get()` scopé, `update()` nu |
+| `User` (3), `SmsSettings` (3), `Customs` (3), `Category` (2), `DeliveryCategory` (2), `DeliveryMan` (2), `Fraud` (2), `PushNotification` (1), `DeliveryZone` (1) | 19 | divers |
+
+Les colis du back-office seraient la prochaine : `ParcelRepository::get()` est scopé
+société **et hub de l'agent**, ce qui est plus strict que partout ailleurs — il faut
+vérifier que ce n'est pas trop strict au point de casser un écran légitime — tandis
+que son `update()` est nu.

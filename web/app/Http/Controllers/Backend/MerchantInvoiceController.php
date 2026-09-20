@@ -31,7 +31,12 @@ class MerchantInvoiceController extends Controller
     }
 
     public function InvoiceDetails($merchantId,$invoiceId){
+        // S32 — `merchantInvoiceDetails()` est bien `companywise()`, mais hors
+        // perimetre il rend `null` et la ligne suivante dereferencait : 500 la ou
+        // tout le reste du module repond 404 (famille S15).
         $invoice = $this->repo->merchantInvoiceDetails($merchantId,$invoiceId);
+        abort_if(blank($invoice), 404, __('statement.not_found'));
+
         $invoiceParcels = InvoiceParcel::where('invoice_id',$invoice->id)->paginate(10);
         return view('backend.merchant.invoice.invoice_details', compact('invoice','invoiceParcels'));
     }
