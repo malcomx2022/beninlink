@@ -575,12 +575,13 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         //account heads
                         Route::get('/account-heads', [AccountHeadsController::class, 'index'])->name('account.heads.index')->middleware('hasPermission:account_heads_read');
                         Route::get('sms-settings/index',            [SmsSettingsController::class, 'index'])->name('sms-settings.index')->middleware('hasPermission:sms_settings_read');
-                        Route::get('sms-settings/create',           [SmsSettingsController::class, 'create'])->name('sms-settings.create')->middleware('hasPermission:sms_settings_create');
-                        Route::post('sms-settings/store',           [SmsSettingsController::class, 'store'])->name('sms-settings.store')->middleware('hasPermission:sms_settings_create');
-                        Route::get('sms-settings/edit/{id}',        [SmsSettingsController::class, 'edit'])->name('sms-settings.edit')->middleware('hasPermission:sms_settings_update');
+                        // S35 — cinq routes MORTES retirees ici : `create`, `store`, `edit/{id}`,
+                        // `delete/{id}` et `status` designaient des methodes qui n'existent pas sur
+                        // `SmsSettingsController` (il n'a que `index` et `update`). Aucune vue ne
+                        // les nommait ; les atteindre rendait 500. Les reglages SMS n'ont pas de
+                        // CRUD : ce sont des cles dans `sms_settings`, ecrites par `update`.
+                        // Le `{id}` d'`update` est le NOM DE LA PASSERELLE (reve, twilio, nexmo).
                         Route::put('sms-settings/update/{id}',      [SmsSettingsController::class, 'update'])->name('sms-settings.update')->middleware('hasPermission:sms_settings_update');
-                        Route::delete('sms-settings/delete/{id}',   [SmsSettingsController::class, 'delete'])->name('sms-settings.delete')->middleware('hasPermission:sms_settings_delete');
-                        Route::post('sms-settings/status',          [SmsSettingsController::class, 'status'])->name('sms-settings.status')->middleware('hasPermission:sms_settings_status_change');
                         Route::get('sms-send-settings/index',       [SmsSendSettingsController::class, 'index'])->name('sms-send-settings.index')->middleware('hasPermission:sms_send_settings_read');
                         Route::post('sms-send-settings/status',     [SmsSendSettingsController::class, 'status'])->name('sms-send-settings.status')->middleware('hasPermission:sms_send_settings_status_change');
                         // General settings

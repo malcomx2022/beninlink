@@ -62,6 +62,34 @@ class UserRepository implements UserInterface{
         return Designation::where('company_id',settings()->id)->active()->orderBy('title')->get();
     }
 
+    /**
+     * S35 — le perimetre des comptes, exactement celui de `get()`.
+     *
+     * `get()` etait scope ; `update()`, `delete()` et `permissionUpdate()` ne
+     * l'etaient pas. Ils passent desormais tous par ici, pour qu'un ecart entre
+     * la lecture et l'ecriture ne puisse plus reapparaitre.
+     *
+     * La regle du socle est double : un super-administrateur ne voit que les
+     * super-administrateurs ; un administrateur ne voit que les ADMIN de SA
+     * societe. Un marchand ou un livreur n'est donc pas joignable par ces
+     * ecrans — ce qui compte, parce que `permission()` les atteignait.
+     */
+    private function utilisateurDeLaSociete($id){
+        return User::where(function($query){
+            if(Auth::user()->user_type == UserType::SUPER_ADMIN):
+                $query->where('user_type', UserType::SUPER_ADMIN);
+            else:
+                $query->where('company_id',settings()->id);
+                $query->where('user_type', UserType::ADMIN);
+            endif;
+        })->find($id);
+    }
+
+    /** Le role designe, s'il est bien de la societe. */
+    private function roleDeLaSociete($roleId){
+        return blank($roleId) ? null : Role::companywise()->find($roleId);
+    }
+
     // get single row in User model with Upload model row same as foreign key.
     public function get($id){
         return User::where(function($query){
@@ -79,7 +107,13 @@ class UserRepository implements UserInterface{
     {
 
         try {
-            $role                   = Role::where('id',$request->role_id)->first();
+            // S35 — `Role::where('id', …)` nu : le nouveau compte recevait le jeu de
+            // permissions d'un role d'une AUTRE societe. L'identifiant vient du
+            // formulaire, donc cette route est hors du champ du filet.
+            $role                   = $this->roleDeLaSociete($request->role_id);
+            if(blank($role)){
+                return false;
+            }
             $user                   = new User();
             $user->name             = $request->name;
             $user->email            = $request->email;
@@ -122,9 +156,18 @@ class UserRepository implements UserInterface{
     public function update($id, $request)
     {
         try {
-            $role=Role::where('id',$request->role_id)->first();
+            // S35 — `User::find($id)` NU, suivi de `company_id = settings()->id` :
+            // la forme de REPRISE DE LIGNE, appliquee a un compte utilisateur. Cet
+            // ecran reecrit l'e-mail, le MOT DE PASSE, le role et les permissions :
+            // c'etait une reprise de compte complete sur l'administrateur d'un
+            // autre transporteur. Son identifiant voyage dans le CORPS
+            // (`PUT admin/users/update`), donc hors du champ du filet.
+            $role = $this->roleDeLaSociete($request->role_id);
+            $user = $this->utilisateurDeLaSociete($id);
 
-            $user                       = User::find($id);
+            if(blank($user) || blank($role)){
+                return false;
+            }
             $user->name                 = $request->name;
             $user->email                = $request->email;
             $user->mobile               = $request->mobile; 
@@ -185,8 +228,15 @@ class UserRepository implements UserInterface{
     public function delete($id){
         try {
             if($id != 1){
-                $user = User::with('upload')->find($id); 
-              
+                // S35 — `find($id)` nu : on supprimait le compte de n'importe quelle
+                // societe, et son image du disque avec. Le `$id != 1` du socle ne
+                // protegeait que le compte numero 1.
+                $user = $this->utilisateurDeLaSociete($id);
+
+                if(blank($user)){
+                    return false;
+                }
+                $user->load('upload');
                 
                 if($user->upload && !empty($user->upload->original) && file_exists(public_path($user->upload->original))):
                     unlink(public_path($user->upload->original));
@@ -236,7 +286,15 @@ class UserRepository implements UserInterface{
     public function permissionUpdate($id,$request){
 
         try {
-            $user=User::where('id',$id)->first();
+            // S35 — la lecture la plus nue du lot : ni societe, ni type. Cet ecran
+            // ECRIT le jeu de permissions, et son identifiant vient du corps
+            // (`PUT admin/users/permissions/update`) : on reecrivait les droits de
+            // n'importe quel compte de n'importe quelle societe.
+            $user = $this->utilisateurDeLaSociete($id);
+
+            if(blank($user)){
+                return false;
+            }
             if($request->permissions !==null){
                 $user->permissions =$request->permissions;
             }else{

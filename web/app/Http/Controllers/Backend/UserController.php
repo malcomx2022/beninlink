@@ -53,6 +53,10 @@ class UserController extends Controller
     public function edit($id)
     {
         $user         = $this->repo->get($id);
+        // S35 — le depot etait scope, mais rien ne verifiait son resultat : la vue
+        // dereferencait `null` hors perimetre (famille S15).
+        abort_if(blank($user), 404);
+
         $hubs         = $this->repo->hubs();
         $departments  = $this->repo->departments();
         $designations = $this->repo->designations();
@@ -74,12 +78,16 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-       
-        if($this->repo->delete($id) == 'delete'){
+        // S35 — le socle appelait `delete()` une SECONDE fois dans le `elseif` :
+        // une suppression qui echouait au premier tour etait donc retentee, image
+        // du disque comprise. On appelle une fois et on lit le resultat.
+        $resultat = $this->repo->delete($id);
+
+        if($resultat === 'delete'){
             Toastr::success('User successfully deleted.',__('message.success'));
             return back();
         }
-        elseif($this->repo->delete($id) == 0){
+        elseif($resultat === 0){
             Toastr::warning('Super admin cannot be deleted!',__('message.warning'));
             return back();
         }
@@ -90,9 +98,15 @@ class UserController extends Controller
     }
     //user permissions
     public function permission($id){
-        $user        = User::where('id',$id)->first();
+        // S35 — `User::where('id',$id)->first()` : ni societe, ni type. Cet ecran
+        // montrait le jeu de permissions de l'administrateur d'un autre
+        // transporteur — et meme d'un marchand ou d'un livreur, que le depot scope
+        // ecarte par son filtre sur `user_type`.
+        $user        = $this->repo->get($id);
+        abort_if(blank($user) || blank($user->role), 404);
+
         $permissions = $this->role->permissions($user->role->slug);
-       
+
         return view('backend.user.permissions',compact('user','permissions'));
     }
     public function permissionsUpdate(Request $request){

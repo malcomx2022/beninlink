@@ -109,8 +109,15 @@ class DeliveryManRepository implements DeliveryManInterface {
     public function update($id, $request) {
         try {
             DB::beginTransaction();
-            $deliveryMan                                 = DeliveryMan::findOrFail($id);
-            $deliveryMan->company_id                    = settings()->id;
+            // S35 — `findOrFail($id)` sans perimetre, suivi de
+            // `company_id = settings()->id` : reprise de ligne sur un livreur d'une
+            // autre societe, avec ses tarifs de course. L'identifiant vient du CORPS
+            // (`PUT admin/deliveryman/update`), donc hors du champ du filet.
+            $deliveryMan                                 = DeliveryMan::where('company_id',settings()->id)->find($id);
+            if(blank($deliveryMan)){
+                DB::rollBack();
+                return false;
+            }
             $deliveryMan->delivery_lat                   = $request->lat;
             $deliveryMan->delivery_long                  = $request->long;
             if($request->delivery_charge !==""):
@@ -161,11 +168,13 @@ class DeliveryManRepository implements DeliveryManInterface {
     }
 
     public function delete($id) {
-        $deliveryman = DeliveryMan::find($id);
-        if($deliveryman->company_id == settings()->id):
-           return  User::destroy($deliveryman->user_id);
-        endif;
-        return false;
+        // S35 — forme gardee correcte, mais 500 sur `null`. Et ce qu'elle supprime
+        // est le COMPTE UTILISATEUR du livreur, pas seulement sa fiche.
+        $deliveryman = DeliveryMan::where('company_id',settings()->id)->find($id);
+        if(blank($deliveryman)){
+            return false;
+        }
+        return (bool) User::destroy($deliveryman->user_id);
     }
 
     public function user_image($image_id = '', $image)

@@ -61,7 +61,9 @@ class DeliverycategoryController extends Controller
 
     public function destroy($id)
     {
-        $this->repo->delete($id);
+        // S35 — succes annonce sans regarder ce que le depot avait fait.
+        abort_unless($this->repo->delete($id), 404);
+
         Toastr::success('Deliverycategory successfully deleted.',__('message.success'));
         return back();
     }

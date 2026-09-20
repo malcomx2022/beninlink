@@ -110,15 +110,20 @@ class PushNotificationRepository implements PushNotificationInterface{
     // Delete single row in PushNotification Model
     public function delete($id){
         try {
-            $pushNotification = PushNotification::with('upload')->find($id);
-            if($pushNotification->company_id == settings()->id):
-                if(file_exists($pushNotification->upload->original))
+            // S35 — `find($id)` nu : 500 sur `null` hors perimetre. Et le fichier
+            // etait dereference sans verifier qu'il y en ait un.
+            $pushNotification = PushNotification::companywise()->with('upload')->find($id);
+            if(blank($pushNotification)){
+                return false;
+            }
+            if($pushNotification->upload):
+                if(file_exists($pushNotification->upload->original)):
                     unlink($pushNotification->upload->original);
-                    Upload::destroy($pushNotification->upload->id);
-                $pushNotification->delete();
-                return true;
+                endif;
+                Upload::destroy($pushNotification->upload->id);
             endif;
-            return false;
+            $pushNotification->delete();
+            return true;
         }
         catch (\Exception $e) {
             return false;
