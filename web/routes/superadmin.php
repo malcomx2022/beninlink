@@ -112,7 +112,9 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                 Route::get('support/edit/{id}',     [SupportController::class, 'edit'])->name('support.edit')->middleware('hasPermission:support_update');
                 Route::put('support/update',        [SupportController::class, 'update'])->name('support.update')->middleware('hasPermission:support_update');
                 Route::delete('support/delete/{id}', [SupportController::class, 'destroy'])->name('support.delete')->middleware('hasPermission:support_delete');
-                Route::get('support/view/{id}',     [SupportController::class, 'view'])->name('support.view');
+                // S36 — meme droit que son index, comme cote locataire. `support_read` figure bien
+                // dans le jeu du super-administrateur : personne ne perd l'acces.
+                Route::get('support/view/{id}',     [SupportController::class, 'view'])->name('support.view')->middleware('hasPermission:support_read');
                 Route::post('support/reply',        [SupportController::class, 'supportReply'])->name('support.reply')->middleware('hasPermission:support_reply');
                 Route::get('support/status-update/{id}',  [SupportController::class, 'statusUpdate'])->name('support.status.update')->middleware('hasPermission:support_status_update');
 

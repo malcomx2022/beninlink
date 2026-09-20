@@ -281,7 +281,13 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('expense',                      [ExpenseController::class, 'index'])->name('expense.index')->middleware('hasPermission:expense_read');
                         Route::get('expense/filter',               [ExpenseController::class, 'filter'])->name('expense.filter')->middleware('hasPermission:expense_read');
                         Route::get('expense/create',               [ExpenseController::class, 'create'])->name('expense.create')->middleware('hasPermission:expense_create');
-                        Route::post('expense/search-account/{id}', [ExpenseController::class, 'searchAccount'])->name('expense.search-account');
+                        // S36 — QUATRE ecrans appellent cette aide AJAX, avec quatre droits differents :
+                        // depenses, revenus, salaires et le panneau du chef de hub (voir les quatre
+                        // fichiers `public/backend/js/**` qui la nomment). `expense_create` seul aurait
+                        // ferme l'encaissement livreur a TOUS les chefs de hub, dont le jeu fixe
+                        // (`UserRepository::hubPermissions()`) ne le porte pas. D'ou la liste : il faut
+                        // l'un de ces droits, et un role qui n'en a aucun n'a rien a faire ici.
+                        Route::post('expense/search-account/{id}', [ExpenseController::class, 'searchAccount'])->name('expense.search-account')->middleware('hasPermission:expense_create|income_create|salary_create|salary_update|cash_received_from_delivery_man_create');
                         Route::post('expense/store',               [ExpenseController::class, 'store'])->name('expense.store')->middleware('hasPermission:expense_create');
                         Route::get('expense/edit/{id}',            [ExpenseController::class, 'edit'])->name('expense.edit')->middleware('hasPermission:expense_update');
                         Route::put('expense/update/{id}',          [ExpenseController::class, 'update'])->name('expense.update')->middleware('hasPermission:expense_update');
@@ -339,7 +345,10 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('merchant/shops/edit/{id}',      [MerchantShopsController::class, 'edit'])->name('merchant.shops.edit')->middleware('hasPermission:merchant_shop_update');
                         Route::put('merchant/shops/update',         [MerchantShopsController::class, 'update'])->name('merchant.shops.update')->middleware('hasPermission:merchant_shop_update');
                         Route::delete('merchant/shops/delete/{id}', [MerchantShopsController::class, 'delete'])->name('merchant.shops.delete')->middleware('hasPermission:merchant_shop_delete');
-                        Route::put('merchant/shops/default/{merchant_id}/{id}', [MerchantShopsController::class, 'defaultShop'])->name('merchant.shops.default');
+                        // S36 — basculer la boutique par defaut EST une mise a jour de boutique : ses trois
+                        // soeurs (`store`, `update`, `delete`) exigent deja leur droit. Le role User le
+                        // perd, et c'est voulu — il ne peut pas modifier une boutique par ailleurs.
+                        Route::put('merchant/shops/default/{merchant_id}/{id}', [MerchantShopsController::class, 'defaultShop'])->name('merchant.shops.default')->middleware('hasPermission:merchant_shop_update');
                         //merchant payment account
                         Route::get('merchant/{id}/payment/index',       [MerchantPaymentAccountController::class, 'index'])->name('merchant.paymentaccount.index')->middleware('hasPermission:merchant_payment_read');
                         Route::get('merchant/{id}/payment/add',         [MerchantPaymentAccountController::class, 'paymentAdd'])->name('merchant.payment.add')->middleware('hasPermission:merchant_payment_create');
@@ -387,17 +396,26 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('parcel/index',                          [ParcelController::class, 'index'])->name('parcel.index')->middleware('hasPermission:parcel_read');
                         Route::get('parcel/details/{id}',                   [ParcelController::class, 'details'])->name('parcel.details')->middleware('hasPermission:parcel_read');
                         Route::get('parcel/logs/{id}',                      [ParcelController::class, 'logs'])->name('parcel.logs')->middleware('hasPermission:parcel_read');
-                        Route::get('parcel/clone/{id}',                     [ParcelController::class, 'duplicate'])->name('parcel.clone');
+                        // S36 — le clone etait un CONTOURNEMENT COMPLET de `parcel_create` : `parcel/create`
+                        // et `parcel/store` l'exigent, `clone` et `clone-store` ne l'exigeaient pas. Un
+                        // role sans droit de creation creait donc des colis — et debitait le
+                        // portefeuille du marchand (`duplicateStore` appelle `WalletDebit`). Le role
+                        // User perd ici une capacite qu'il n'aurait jamais du avoir.
+                        Route::get('parcel/clone/{id}',                     [ParcelController::class, 'duplicate'])->name('parcel.clone')->middleware('hasPermission:parcel_create');
                         Route::get('parcel/create',                         [ParcelController::class, 'create'])->name('parcel.create')->middleware('hasPermission:parcel_create');
                         Route::post('parcel/store',                         [ParcelController::class, 'store'])->name('parcel.store')->middleware('hasPermission:parcel_create');
-                        Route::post('parcel/clone-store',                   [ParcelController::class, 'duplicateStore'])->name('parcel.clone-store');
+                        // S36 — l'autre moitie du contournement. Garder le GET sans garder le POST
+                        // n'aurait rien ferme : c'est celui-ci qui enregistre.
+                        Route::post('parcel/clone-store',                   [ParcelController::class, 'duplicateStore'])->name('parcel.clone-store')->middleware('hasPermission:parcel_create');
                         Route::get('parcel/edit/{id}',                      [ParcelController::class, 'edit'])->name('parcel.edit')->middleware('hasPermission:parcel_update');
                         Route::put('parcel/update/{id}',                    [ParcelController::class, 'update'])->name('parcel.update')->middleware('hasPermission:parcel_update');
                         Route::get('parcel/status-update/{id}/{status_id}', [ParcelController::class, 'statusUpdate'])->name('parcel.status-update')->middleware('hasPermission:parcel_status_update');
                         Route::delete('parcel/delete/{id}',                 [ParcelController::class, 'destroy'])->name('parcel.delete')->middleware('hasPermission:parcel_delete');
                         Route::get('parcel/print/{id}',                     [ParcelController::class, 'parcelPrint'])->name('parcel.print')->middleware('hasPermission:parcel_read');
                         Route::get('parcel/print/{id}/label',               [ParcelController::class, 'parcelPrintLabel'])->name('parcel.print-label')->middleware('hasPermission:parcel_read');
-                        Route::get('parcel/multiple/print/label',           [ParcelController::class, 'parcelMultiplePrintLabel'])->name('parcel.multiple.print-label');
+                        // S36 — `parcel/print/{id}/label` porte `parcel_read` ; l'impression en lot rend les
+                        // memes etiquettes. Ses identifiants voyagent dans le corps de la requete.
+                        Route::get('parcel/multiple/print/label',           [ParcelController::class, 'parcelMultiplePrintLabel'])->name('parcel.multiple.print-label')->middleware('hasPermission:parcel_read');
 
                         //parcel status
                         Route::post('parcel/deliveryman/search',            [ParcelController::class, 'deliverymanSearch'])->name('parcel.deliveryman.search');
@@ -449,7 +467,9 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         // new route add
                         Route::post('parcel/priority/update',                   [ParcelController::class, 'priorityUpdate'])->name('parcel.priority.status');
                         Route::get('parcel/deliveryMan/show',                   [ParcelController::class, 'parcelDeliveryMan'])->name('parcel.parcelDeliveryMan');
-                        Route::get('parcel/delivered/logs/info/{id}',           [ParcelController::class, 'deliveredInfo'])->name('parcel.deliveredInfo');
+                        // S36 — `parcel/logs/{id}` juste au-dessus porte deja `parcel_read` : c'est la meme
+                        // chronologie. Mesure : ni le role User ni le chef de hub ne perdent l'acces.
+                        Route::get('parcel/delivered/logs/info/{id}',           [ParcelController::class, 'deliveredInfo'])->name('parcel.deliveredInfo')->middleware('hasPermission:parcel_read');
 
                         //end parcel status
                         Route::post('parcel/merchant',                          [ParcelController::class, 'getMerchant'])->name('parcel.merchant.get');
@@ -568,7 +588,9 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('support/edit/{id}',     [SupportController::class, 'edit'])->name('support.edit')->middleware('hasPermission:support_update');
                         Route::put('support/update',        [SupportController::class, 'update'])->name('support.update')->middleware('hasPermission:support_update');
                         Route::delete('support/delete/{id}', [SupportController::class, 'destroy'])->name('support.delete')->middleware('hasPermission:support_delete');
-                        Route::get('support/view/{id}',     [SupportController::class, 'view'])->name('support.view');
+                        // S36 — voir la liste et voir un detail sont le meme droit. C'etait l'asymetrie
+                        // exacte de S22 (`logs` garde, `log-activity-view` nu).
+                        Route::get('support/view/{id}',     [SupportController::class, 'view'])->name('support.view')->middleware('hasPermission:support_read');
                         Route::post('support/reply',        [SupportController::class, 'supportReply'])->name('support.reply')->middleware('hasPermission:support_reply');
                         Route::get('support/status-update/{id}',  [SupportController::class, 'statusUpdate'])->name('support.status.update')->middleware('hasPermission:support_status_update');
 

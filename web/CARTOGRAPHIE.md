@@ -1725,6 +1725,13 @@ du back-office et la carte du livreur, il faut vérifier, rôle par rôle, qui p
 quoi — en particulier `parcel_create` sur `admin/parcel/clone/{id}`, que des
 agents utilisent peut-être sans porter la permission de création.
 
+> ✅ **Fait le 2026-09-20 — S36.** La vérification a renversé cette note : le clone
+> n'était pas un usage légitime sans permission, c'était un **contournement** de
+> `parcel_create` (ni `clone` ni `clone-store` ne l'exigeaient, alors que `create` et
+> `store` l'exigent). Et la permission « évidente » de
+> `expense/search-account/{id}` était **fausse** : `expense_create` aurait fermé
+> l'encaissement livreur à tous les chefs de hub. Voir « ✅ S36 » en fin de document.
+
 **Le filet.** `IsolationCoverageTest` n'oblige à prouver l'isolation que des
 routes `/api/v10`. C'est cette absence d'équivalent côté web qui a laissé passer
 S22 puis ces quatre-là. Un filet web demanderait d'exercer des routes qui ne sont
@@ -3081,13 +3088,149 @@ cinq ici, moins celles ajoutées depuis par les chantiers).
 Le chantier d'isolation est terminé ; ces points-là ne le sont pas, et ils n'en relèvent
 pas :
 
-- **les permissions** des 6 routes relevées à l'inventaire : en ajouter une retire
-  l'accès aux rôles qui ne l'ont pas. Le cas délicat reste `parcel_create` sur
-  `admin/parcel/clone/{id}` ;
+- ✅ **les permissions** des routes de l'inventaire — **posées le 2026-09-20 (S36)**,
+  après mesure rôle par rôle. Voir la section ci-dessous ;
 - `admin/profile/{id}` et `merchant/profile/{id}` répondent **`abort(500)`** au lieu de
   403/404 — un refus d'accès annoncé comme une panne ;
 - le **doublon mort** `InvoiceRepository::InvoicePdf()` (S32) ;
 - les **catalogues communs** `currencies` (S32) et `categorys` (S35), partagés et
   modifiables ;
 - les six catégories de livraison du jeu d'amorçage, créées **sans société** : aucune
-  société ne peut donc les modifier par son écran, sauf la n° 1 en lecture.
+  société ne peut donc les modifier par son écran, sauf la n° 1 en lecture ;
+- la **destination du refus** de `PermissionCheckMiddleware` pour une navigation de
+  page : toujours `redirect('/')`, donc un refus d'accès qui ressemble à une
+  navigation réussie. S36 a corrigé le cas AJAX (403) et laissé la navigation
+  inchangée, parce que la changer toucherait les 197 autres déclarations. C'est la
+  même famille que les deux écrans de profil ci-dessus, et ce serait un lot à part ;
+- `IncomeController::searchAccount()` est une **méthode morte** : sa route a disparu
+  et l'écran des revenus appelle celle des dépenses. Elle passe de plus l'objet
+  `Request` là où un identifiant est attendu.
+
+---
+
+## ✅ S36 — la garde d'accès des routes nues (2026-09-20)
+
+La dernière décision ouverte du chantier de sécurité. Elle était ouverte pour une
+bonne raison : poser `hasPermission:x` **retire l'accès** à tout rôle qui ne porte
+pas `x`. Il fallait donc mesurer avant, et la mesure a changé une conclusion.
+
+### La mesure, rôle par rôle
+
+Sur les jeux réellement semés (`RoleSeeder`, plus le jeu **fixe** du chef de hub dans
+`UserRepository::hubPermissions()`) :
+
+| Permission | Admin | User | Chef de hub | Super-admin |
+|---|---|---|---|---|
+| `support_read` | ✅ | ✅ | ❌ | ✅ |
+| `parcel_read` | ✅ | ✅ | ✅ | — |
+| `merchant_shop_update` | ✅ | ❌ | ❌ | — |
+| `parcel_create` | ✅ | ❌ | ❌ | — |
+| `expense_create` | ✅ | ❌ | ❌ | — |
+| `cash_received_from_delivery_man_create` | ✅ | ✅ | ✅ | — |
+
+### Ce qui a été posé
+
+| Route | Permission | Qui perd l'accès |
+|---|---|---|
+| `GET admin/support/view/{id}` **et son jumeau super-admin** | `support_read` | le chef de hub, par la cloche de notifications |
+| `GET admin/parcel/delivered/logs/info/{id}` | `parcel_read` | **personne** |
+| `GET admin/parcel/multiple/print/label` | `parcel_read` | **personne** |
+| `PUT admin/merchant/shops/default/{merchant_id}/{id}` | `merchant_shop_update` | le rôle `User` — **voulu** |
+| `GET admin/parcel/clone/{id}` **+** `POST admin/parcel/clone-store` | `parcel_create` | le rôle `User` — **voulu** |
+| `POST admin/expense/search-account/{id}` | **liste de cinq droits** | un rôle qui n'en a aucun |
+
+### 🔴 Le cas annoncé comme « délicat » était un trou, pas un arbitrage
+
+La note de l'inventaire disait : « en particulier `parcel_create` sur
+`admin/parcel/clone/{id}`, que des agents utilisent peut-être sans porter la
+permission de création ». La vérification a montré autre chose :
+
+```
+parcel/create       → hasPermission:parcel_create
+parcel/store        → hasPermission:parcel_create
+parcel/clone/{id}   → (rien)      ← ouvre le formulaire pré-rempli
+parcel/clone-store  → (rien)      ← ENREGISTRE le colis
+```
+
+Le clone était un **contournement complet** du droit de création. Et
+`duplicateStore()` ne fait pas que créer : il **débite le portefeuille du marchand**
+(`WalletDebit`, depuis W5). Ce que le rôle `User` perd ici, il n'aurait jamais dû
+l'avoir. Les **quatre** portes exigent maintenant le même droit, et un test l'inscrit
+comme invariant.
+
+⚠️ Garder le `GET` sans garder le `POST` n'aurait rien fermé : c'est le second qui
+enregistre. C'est la même leçon que les identifiants portés par le corps de la
+requête — une garde posée sur l'écran et pas sur l'écriture ne garde rien.
+
+### ⚠️ Le cas qui ne se ferme pas par une permission unique
+
+`expense/search-account/{id}` est appelée par **quatre** écrans, avec quatre droits
+différents — et les quatre fichiers qui la nomment sont dans `public/backend/js/` :
+
+| Écran appelant | Droit de son écran |
+|---|---|
+| dépenses (`expense/custom.js`) | `expense_create` |
+| revenus (`income/custom.js`) | `income_create` |
+| salaires (`expense/salary.js`) | `salary_create` / `salary_update` |
+| **panneau du chef de hub** (`hub_panel/received_from_delivery_man/custom.js`) | `cash_received_from_delivery_man_create` |
+
+`expense_create` — la permission « évidente », celle que suggérait l'inventaire —
+aurait fermé **l'encaissement livreur à tous les chefs de hub**, dont le jeu fixe ne
+le porte pas. C'est le seul cas du lot où la permission suggérée était fausse.
+
+D'où l'extension du middleware : `hasPermission:a|b|c` passe si l'utilisateur porte
+**l'une** des permissions. La route est donc fermée à un rôle qui n'a aucun des cinq
+droits financiers, sans casser aucun de ses quatre appelants.
+
+### Trois défauts du middleware, corrigés en l'étendant
+
+`PermissionCheckMiddleware` faisait huit lignes, et trois choses l'y attendaient :
+
+1. **`in_array($p, null)` lève une `TypeError` en PHP 8.** Un compte dont le jeu de
+   permissions est nul — et rien dans le socle n'exige que la colonne soit remplie —
+   recevait une **erreur 500** sur chaque route gardée, au lieu d'un refus.
+2. **Un refus AJAX rendu en `redirect('/')`**, donc **200 avec le HTML du tableau de
+   bord** dans le gestionnaire de succès d'un `$.ajax`. Les appels AJAX et JSON
+   reçoivent maintenant **403**. La navigation de page garde la redirection : la
+   changer toucherait les 197 autres déclarations, et c'est un lot à part.
+3. **`abort('403')` après `return redirect('/')`** : du code mort, jamais atteint.
+   Retiré, et le 403 posé là où il sert.
+
+### La leçon de ce lot : trois refus indistinguables, dans un seul test
+
+Ce test a été faux **trois fois**, et toujours pour la même raison — un refus qui
+ressemblait à un autre refus.
+
+1. **`subscriptionCheckMiddleware`** redirige vers `/subscription` toute requête d'un
+   compte dont la société n'a pas d'abonnement en cours. Sans abonnement semé, mes
+   22 appels répondaient `302` **quelles que soient les permissions**. Un test qui
+   comparait à `302` était vert et ne prouvait rien. C'est la **troisième barrière**
+   de cette famille après les deux déjà documentées dans `MountsTenantRoutes`
+   (l'enregistrement conditionnel des routes, l'hôte central) — elle y est
+   maintenant, avec `souscrireLeLocataire()`.
+2. Corrigé cela, comparer la **destination** à `/` ne suffisait pas non plus : sans
+   en-tête `Referer`, `redirect()->back()` retombe **aussi** sur `/`. Une validation
+   échouée sur `clone-store` et un retour en arrière sur l'impression en lot
+   devenaient indistinguables d'un refus de la garde.
+3. Le discriminateur final est donc : `302` **et** destination `/`, avec un référent
+   fourni. La garde vise toujours `/` ; `back()` vise le référent.
+
+### Une limite assumée
+
+Le jumeau super-administrateur de `support/view/{id}` est vérifié **sur la
+déclaration**, pas par un appel HTTP : `MountsTenantRoutes` monte `routes/web.php`
+sur un hôte de **locataire**, et les routes du super-administrateur ne
+s'enregistrent que sur un domaine **central** — l'exact opposé. Un sabotage l'a
+montré, en restant vert. Le test le dit, et vérifie au passage que le jeu du
+super-administrateur porte bien `support_read`.
+
+### Couverture
+
+`tests/Feature/WebPermissionGuardTest.php` — 23 tests, 50 assertions. Chaque route
+est exercée **par appel HTTP** sur un hôte de locataire, donc à travers le routage
+complet et sa pile de middlewares, dans les deux sens : refusée sans le droit,
+servie avec. Plus l'invariant des quatre portes de la création, celui des paires
+sœurs, les trois comportements du middleware, et un test qui inscrit la **mesure**
+elle-même — si un jeu de rôles change, la décision doit être relue.
+
+**Treize sabotages, treize morsures** après correction du test du jumeau.

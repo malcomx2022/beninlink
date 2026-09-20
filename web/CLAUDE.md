@@ -168,6 +168,15 @@ avant les apps.
   **corps** de la requête lui est invisible : quinze points de ce type ont été trouvés au
   fil du chantier (décaissements, création de colis, comptes de versement, permissions).
   Ce qui les couvre est de **lire le fichier entier** quand on corrige une de ses méthodes.
+- La **garde d'accès** d'une route du back-office se pose avec `hasPermission:x`, et
+  `hasPermission:a|b|c` quand plusieurs écrans aux droits différents appellent la même
+  aide AJAX (**S36**). Deux règles tirées de ce lot : les **paires sœurs** portent le
+  même droit — la liste et le détail, l'impression unitaire et l'impression en lot —
+  et une garde posée sur l'écran **sans** l'être sur l'écriture ne garde rien (le
+  clone de colis contournait ainsi `parcel_create` par son `clone-store`).
+  Avant d'en poser une : **mesurer qui perd l'accès**, rôle par rôle, y compris le jeu
+  **fixe** du chef de hub (`UserRepository::hubPermissions()`), que `RoleSeeder` ne
+  montre pas.
 - Jamais de clés en dur : `FEDAPAY_*` dans `web/.env`.
 
 ## Étape 0 — cartographie (à lire AVANT de coder ici)
