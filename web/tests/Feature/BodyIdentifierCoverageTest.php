@@ -75,6 +75,14 @@ class BodyIdentifierCoverageTest extends TestCase
         'POST admin/parcel/delivery-re-scheule/cancel' => ParcelBulkScopeTest::class,
         'POST admin/parcel/return-to-qourier-cancel' => ParcelBulkScopeTest::class,
         'POST admin/parcel/return-assign-re-schedule-to-merchant/cancel' => ParcelBulkScopeTest::class,
+        // S40 — les aides AJAX des colis (1re passe sur l'arriere de S38)
+        'POST admin/parcel/merchant/shops' => ParcelAjaxHelpersScopeTest::class,
+        'POST merchant/parcel/merchant/shops' => ParcelAjaxHelpersScopeTest::class,
+        'POST admin/parcel/priority/update' => ParcelAjaxHelpersScopeTest::class,
+        'POST admin/parcel/received-warehouse-hub-selected' => ParcelAjaxHelpersScopeTest::class,
+        'POST admin/parcel/transfer-hub' => ParcelAjaxHelpersScopeTest::class,
+        'POST admin/transertohub-selected-hub' => ParcelAjaxHelpersScopeTest::class,
+        'POST admin/parcel/deliveryman/search' => ParcelAjaxHelpersScopeTest::class,
         // S35 — les comptes, le livreur, la fraude
         'POST admin/users/store' => UserAndSettingsScopeTest::class,
         'PUT admin/users/update' => UserAndSettingsScopeTest::class,
@@ -140,17 +148,13 @@ class BodyIdentifierCoverageTest extends TestCase
             'POST admin/parcel/delivery-category',
             'POST admin/parcel/delivery-man-assign',
             'POST admin/parcel/delivery-reschedule',
-            'POST admin/parcel/deliveryman/search',
-            'POST admin/parcel/merchant/shops',
             'POST admin/parcel/partial-delivered',
             'POST admin/parcel/partial-delivered/cancel',
             'POST admin/parcel/pickup-man/assigned',
             'POST admin/parcel/pickup/re-schedule',
             'POST admin/parcel/pickup/received',
-            'POST admin/parcel/priority/update',
             'POST admin/parcel/received-by-hub',
             'POST admin/parcel/received-warehouse',
-            'POST admin/parcel/received-warehouse-hub-selected',
             'POST admin/parcel/received-warehouse/cancel',
             'POST admin/parcel/recived-by-hub/search',
             'POST admin/parcel/return-assign-to-merchant-reschedule',
@@ -159,7 +163,6 @@ class BodyIdentifierCoverageTest extends TestCase
             'POST admin/parcel/return-received-by-merchant/cancel',
             'POST admin/parcel/return-to-qourier',
             'POST admin/parcel/store',
-            'POST admin/parcel/transfer-hub',
             'POST admin/parcel/transfer-to-hub',
             'POST admin/payment/store',
             'POST admin/push-notification/store',
@@ -173,13 +176,11 @@ class BodyIdentifierCoverageTest extends TestCase
             'POST admin/todo/completed',
             'POST admin/todo/processing',
             'POST admin/todo/todo_add',
-            'POST admin/transertohub-selected-hub',
             'POST admin/wallet-request/recharge',
             'POST merchant/accounts/statements-filter',
             'POST merchant/fraud/store',
             'POST merchant/parcel/clone-store',
             'POST merchant/parcel/delivery-category',
-            'POST merchant/parcel/merchant/shops',
             'POST merchant/parcel/store',
             'POST merchant/sign-up-store',
             'POST merchant/support/reply',
@@ -210,7 +211,7 @@ class BodyIdentifierCoverageTest extends TestCase
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 90;
+    private const PLAFOND_HERITAGE = 83;
 
     protected function setUp(): void
     {
