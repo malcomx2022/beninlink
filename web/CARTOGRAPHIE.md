@@ -2821,3 +2821,119 @@ marchand.
 La famille **marchand** serait la prochaine, et c'est la plus sensible qui reste : le
 `update()` nu d'un `MerchantPaymentAccount` ou d'un `MerchantDeliveryCharge` ne réécrit
 pas un colis, il réécrit **où l'argent est versé** et **à quel tarif il est facturé**.
+
+---
+
+## ✅ S34 — la famille marchand (2026-09-20, 9ᵉ passe)
+
+L'annonce de la 8ᵉ passe était juste, et en dessous de la réalité. Trois
+sous-familles, trois natures de dégât, et **le dépôt le plus ouvert rencontré depuis
+le début du chantier**.
+
+| Sous-famille | Ce qui était atteignable chez un autre transporteur |
+|---|---|
+| **fiche marchand** | `update()` lisait `Merchant::find($id)` **nu** puis réécrivait l'e-mail **et le mot de passe** du compte marchand — changer les deux suffit à s'y connecter : **reprise de compte complète** |
+| **comptes de versement** | 🔴 **tout** le dépôt était nu : lecture de la banque, du titulaire, du **numéro de compte** et du numéro Mobile Money ; suppression de n'importe quelle ligne ; et remplacement du compte du voisin par le sien |
+| **barèmes négociés** | `update()` lisait la ligne sans `companywise()` puis écrivait `company_id = settings()->id` — **reprise de ligne** ; `store()` acceptait n'importe quel `merchant_id` d'URL ; l'AJAX de la grille rendait le **montant** d'un autre transporteur |
+
+### Le pire du lot : là où l'argent est versé
+
+`PaymentRepository` n'avait **aucun** périmètre, sur aucune de ses neuf méthodes. Et
+le mécanisme d'écriture rend la chose immédiatement exploitable : `bankstore()`,
+`mobilestore()`, `bankUpdate()` et `mobileUpdate()` **détruisent** la ligne désignée
+par `editid` avant d'en créer une neuve avec le `merchant_id` du formulaire. L'écran
+« ajouter un compte de versement » était donc, littéralement, « retirer le compte du
+marchand d'un autre transporteur et le remplacer par le mien ».
+
+⚠️ **Ces quatre écritures n'ont pas d'identifiant dans leur URL.** `merchant_id` et
+`editid` voyagent dans le **corps** de la requête. Le filet ne les voit pas — il
+n'énumère que les routes à paramètre — et elles ne figuraient dans aucune de ses trois
+listes. **Quatrième occurrence** de cette tache aveugle après les trois décaissements
+et les deux créations de colis, et la plus coûteuse des quatre.
+
+### ⚠️ Un scope qui mentait
+
+`MerchantPayment::scopeCompanywise()` faisait `where('company_id', settings()->id)`.
+La table `merchant_payments` **n'a pas de colonne `company_id`** : sa migration de 2022
+ne porte que `merchant_id`. Le scope aurait donc levé une erreur SQL — personne ne
+l'appelait, donc personne ne l'avait constaté.
+
+C'est un piège d'une nature nouvelle dans ce chantier : jusqu'ici le danger était
+l'absence de périmètre. Ici, sa **présence apparente**. Quiconque venait « scoper » ce
+modèle voyait un `companywise()` déjà écrit et pouvait raisonnablement le croire bon.
+
+Le scope dit maintenant la vérité — le rattachement passe par le marchand, seul
+porteur du `company_id` :
+
+```php
+return $query->whereHas('merchant', function($query){ $query->companywise(); });
+```
+
+Un test inscrit les deux moitiés : la colonne est absente, et le scope sépare.
+
+### Deux constats **D4** relevés au passage, distincts du périmètre
+
+Ils ne sont pas des failles d'isolation, mais ils cassaient la tarification, et ils
+vivent dans les méthodes que cette passe corrigeait.
+
+1. **`MerchantDeliveryChargeRepository` ne posait pas `zone_id`.** Depuis l'étape 6,
+   `DeliveryChargeResolver::trancheDeZone()` cherche la ligne négociée **par zone** :
+   une ligne sans zone n'est jamais trouvée. Le tarif négocié à la main ne facturait
+   donc **rien** — le marchand négociait un prix qui ne s'appliquait pas. Et
+   `beninlink:tarification-prete` compte ces lignes comme un **blocage de
+   déploiement** : une société ayant utilisé cet écran depuis l'étape 6 faisait échouer
+   sa propre mise en production. `MerchantRepository::store()` portait déjà la zone ;
+   c'est cet écran qui avait été oublié.
+
+2. **`company_id` n'était posé sur aucun des trois chemins de création d'un
+   marchand.** Les barèmes négociés créés avec le marchand naissaient avec
+   `company_id = null`, et `MerchantDeliveryCharge::companywise()` — donc son écran —
+   ne les voyait **jamais**. Un marchand tout juste créé avait un barème invisible, et
+   non modifiable par l'interface.
+
+### La leçon de cette passe : deux sabotages verts, deux trous dans le test
+
+Les 22 sabotages ont donné deux verts au premier tour, et aucun des deux ne
+disculpait le code.
+
+- **`pay/marchand`** (retirer le périmètre du marchand désigné) restait vert parce que
+  **tous** mes tests d'écriture passaient un `editid`, dont le garde refusait d'abord :
+  le périmètre du marchand n'était jamais atteint. Il manquait le cas de la **création
+  pure** — un `merchant_id` d'ailleurs, sans `editid`, rien à détruire, juste un compte
+  de versement ajouté chez le voisin. Test ajouté, sabotage mordu.
+- **`cmdc/ajax`** restait vert parce que `deliveryChargeInfo()` teste
+  `request()->ajax()` — la requête **globale**, pas celle qu'on lui passe en argument.
+  Ma requête AJAX construite à la main ne franchissait donc pas la condition : la
+  méthode rendait `''` sans rien lire. Il faut lier la requête au conteneur
+  (`app()->instance('request', …)`). C'est la deuxième fois qu'un garde inatteignable
+  fait passer un sabotage (après S31) : un sabotage vert ne disculpe pas le code, il
+  interroge le test.
+
+### Couverture
+
+`tests/Feature/MerchantFamilyScopeTest.php` — 20 tests, 71 assertions, dont **six
+contrôles négatifs** : mes écrans de versement s'ouvrent, mes quatre écritures de
+versement fonctionnent, ma ligne de barème se supprime, ma fiche se modifie et se
+supprime, et l'AJAX répond pour ma propre grille.
+
+**Vingt-deux sabotages, vingt-deux morsures** après correction des deux tests.
+
+### Le cliquet après neuf passes
+
+| | Départ | 1re | 2e | 3e | 4e | 5e | 6e | 7e | 8e | 9e |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Prouvées | 7 | 33 | 57 | 85 | 90 | 113 | 120 | 129 | 137 | **152** |
+| Exemptées | 33 | 35 | 35 | 35 | 35 | 35 | 35 | 37 | 37 | **37** |
+| **Héritées (plafond)** | **171** | 143 | 119 | 89 | 84 | 60 | 53 | 42 | 34 | **19** |
+
+### Ce qui reste : 19 routes
+
+| Famille | Routes |
+|---|---|
+| `User` (3 : édition, permissions, suppression) | 3 |
+| `SmsSettings` (3), `Customs` (3), `Category` (2), `DeliveryCategory` (2), `DeliveryMan` (2), `Fraud` (2), `PushNotification` (1), `DeliveryZone` (1) | 16 |
+
+Le reste est du **paramétrage** — libellés, catégories, règles, modèles de SMS — sauf
+`User` : `admin/users/permissions/{id}` attribue des rôles, et un `update()` nu y
+serait de la même nature que la reprise de compte marchand de cette passe. Ce serait
+la prochaine.

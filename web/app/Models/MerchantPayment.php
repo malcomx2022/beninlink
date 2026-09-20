@@ -53,8 +53,21 @@ class MerchantPayment extends Model
     {
         return $this->belongsTo(Merchant::class);
     }
+    /**
+     * S34 — ce scope **mentait**. La table `merchant_payments` ne porte pas de
+     * colonne `company_id` (voir sa migration de 2022) : `where('company_id', …)`
+     * y lève une erreur SQL. Personne ne l'appelait, donc personne ne l'avait
+     * constaté — et il restait tendu comme un piège pour quiconque viendrait
+     * « scoper » ce modèle en croyant qu'un scope existant est correct.
+     *
+     * Le rattachement d'un compte de versement à une société passe par son
+     * **marchand**, seul porteur du `company_id`. Le scope le dit maintenant, et
+     * `PaymentRepository` s'en sert.
+     */
     public function scopeCompanywise($query){
-        return $query->where('company_id',settings()->id);
+        return $query->whereHas('merchant', function($query){
+            $query->companywise();
+        });
     }
 
 

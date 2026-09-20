@@ -245,6 +245,24 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/parcel/print/{id}/label' => BackOfficeParcelScopeTest::class,
         'GET admin/parcel/status-update/{id}/{status_id}' => BackOfficeParcelScopeTest::class,
         'PUT admin/parcel/update/{id}' => BackOfficeParcelScopeTest::class,
+        // S34 — la famille marchand : la fiche (reprise de compte par le mot de
+        // passe), les comptes de VERSEMENT (tout le depot etait nu) et les baremes
+        // negocies (reprise de ligne)
+        'DELETE admin/merchant/delete/{id}' => MerchantFamilyScopeTest::class,
+        'GET admin/merchant/edit/{id}' => MerchantFamilyScopeTest::class,
+        'GET admin/merchant/invoice-generate/{id}' => MerchantFamilyScopeTest::class,
+        'GET admin/merchant/view/{id}' => MerchantFamilyScopeTest::class,
+        'PUT admin/merchant/update/{id}' => MerchantFamilyScopeTest::class,
+        'DELETE admin/merchant/paymentinfo/delete/{id}' => MerchantFamilyScopeTest::class,
+        'GET admin/merchant/{id}/payment/add' => MerchantFamilyScopeTest::class,
+        'GET admin/merchant/{id}/payment/index' => MerchantFamilyScopeTest::class,
+        'GET admin/merchant/{mid}/payment/edit/{id}' => MerchantFamilyScopeTest::class,
+        'DELETE admin/merchant/{merchant}/delivery-charge/delete/{id}' => MerchantFamilyScopeTest::class,
+        'GET admin/merchant/{merchant}/delivery-charge/create' => MerchantFamilyScopeTest::class,
+        'GET admin/merchant/{merchant}/delivery-charge/edit/{id}' => MerchantFamilyScopeTest::class,
+        'GET admin/merchant/{merchant}/delivery-charge/index' => MerchantFamilyScopeTest::class,
+        'POST admin/merchant/{merchant}/delivery-charge/store' => MerchantFamilyScopeTest::class,
+        'PUT admin/merchant/{merchant}/delivery-charge/update/{id}' => MerchantFamilyScopeTest::class,
     ];
 
     /**
@@ -338,9 +356,6 @@ class WebIsolationCoverageTest extends TestCase
         'DELETE admin/delivery-category/delete/{id}',
         'DELETE admin/deliveryman/delete/{id}',
         'DELETE admin/fraud/delete/{id}',
-        'DELETE admin/merchant/delete/{id}',
-        'DELETE admin/merchant/paymentinfo/delete/{id}',
-        'DELETE admin/merchant/{merchant}/delivery-charge/delete/{id}',
         'DELETE admin/push-notification/delete/{id}',
         'DELETE admin/sms-settings/delete/{id}',
         'DELETE admin/user/delete/{id}',
@@ -349,30 +364,18 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/delivery-category/edit/{id}',
         'GET admin/deliveryman/edit/{id}',
         'GET admin/fraud/edit/{id}',
-        'GET admin/merchant/edit/{id}',
-        'GET admin/merchant/invoice-generate/{id}',
-        'GET admin/merchant/view/{id}',
-        'GET admin/merchant/{id}/payment/add',
-        'GET admin/merchant/{id}/payment/index',
-        'GET admin/merchant/{merchant}/delivery-charge/create',
-        'GET admin/merchant/{merchant}/delivery-charge/edit/{id}',
-        'GET admin/merchant/{merchant}/delivery-charge/index',
-        'GET admin/merchant/{mid}/payment/edit/{id}',
         'GET admin/sms-settings/edit/{id}',
         'GET admin/users/edit/{id}',
         'GET admin/users/permissions/{id}',
         'GET category/edit/{id}',
-        'POST admin/merchant/{merchant}/delivery-charge/store',
         'PUT admin/customs/alerts/{id}/resolve',
         'PUT admin/customs/rules/update/{id}',
         'PUT admin/delivery-zone/countries/{id}',
-        'PUT admin/merchant/update/{id}',
-        'PUT admin/merchant/{merchant}/delivery-charge/update/{id}',
         'PUT admin/sms-settings/update/{id}',
     ];
 
     /** Le compte figé de l'arriéré. Il descend, il ne monte pas. */
-    private const PLAFOND_HERITAGE = 34;
+    private const PLAFOND_HERITAGE = 19;
 
     protected function setUp(): void
     {

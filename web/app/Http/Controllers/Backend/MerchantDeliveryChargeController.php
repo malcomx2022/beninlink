@@ -72,7 +72,10 @@ class MerchantDeliveryChargeController extends Controller
         }
     }
     public function delete($merchant,$id){
-        $this->repo->delete($id,$merchant);
+        // S34 — le depot refuse la ligne d'une autre societe (et celle d'un autre
+        // marchand) ; l'ecran annoncait quand meme la suppression.
+        abort_unless($this->repo->delete($id,$merchant), 404);
+
         Toastr::success(__('merchant.delivery_charge_delete_msg'),__('message.success'));
         return back();
     }
@@ -81,7 +84,11 @@ class MerchantDeliveryChargeController extends Controller
     {
         if (request()->ajax()) {
             if ($request->delivery_charge_id) {
-                $deliveryCharge = DeliveryCharge::find($request->delivery_charge_id);
+                // S34 — lecture nue : cet AJAX rendait la categorie, la tranche et
+                // le MONTANT d'une ligne de grille de n'importe quel transporteur.
+                // L'identifiant vient du corps de la requete, donc le filet ne voit
+                // pas cette route.
+                $deliveryCharge = DeliveryCharge::companywise()->find($request->delivery_charge_id);
                 if (!blank($deliveryCharge)) {
                     return view('backend.merchant.delivery-charge.deliveryChargeInfo', compact('deliveryCharge'));
                 }

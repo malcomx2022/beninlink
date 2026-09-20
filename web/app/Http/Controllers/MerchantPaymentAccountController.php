@@ -20,25 +20,41 @@ class MerchantPaymentAccountController extends Controller
     }
     public function index($id){
         $singleMerchant = $this->repo->get($id);
+        // S34 — aucun garde ici : hors perimetre l'ecran s'affichait avec un
+        // marchand `null` et, avant le correctif du depot, la fiche de versement
+        // d'un autre transporteur dans le tableau.
+        abort_if(blank($singleMerchant), 404);
+
         $payments       = $this->payRepo->get($id);
 
         return view('backend.merchant.payment.index',compact('singleMerchant','payments'));
     }
     public function paymentAdd($id){
         $singleMerchant = $this->repo->get($id);
+        // S34 — sans garde, le formulaire s'ouvrait avec le `merchant_id` d'une
+        // autre societe pre-rempli dans son champ cache.
+        abort_if(blank($singleMerchant), 404);
+
         $merchant_id    = $id;
         return view('backend.merchant.payment.add_payment',compact('singleMerchant','merchant_id' ));
     }
     public function paymentEdit($mid,$id){
         $singleMerchant = $this->repo->get($mid);
         $paymentInfo    = $this->payRepo->edit($id);
+        // S34 — les DEUX doivent etre a nous : le marchand de l'URL et la ligne
+        // de versement. Le socle n'en verifiait aucun.
+        abort_if(blank($singleMerchant) || blank($paymentInfo), 404);
+
         $merchant_id    = $mid;
         return view('backend.merchant.payment.edit_payment',compact('singleMerchant','merchant_id','paymentInfo'));
     }
 
     public function paymentChange(Request $request){
         $payment_method = $request->payment_method;
-        $merchant_id    = $this->repo->get($request->merchant_id)->id;
+        // S34 — `->id` sur `null` rendait 500 hors perimetre.
+        $merchant       = $this->repo->get($request->merchant_id);
+        abort_if(blank($merchant), 404);
+        $merchant_id    = $merchant->id;
         $editid         = $request->editid;
         if($request->payment_method == 'bank'){
             return view('backend.merchant.payment.bank',compact('payment_method','merchant_id' ,'editid'));
@@ -103,7 +119,10 @@ class MerchantPaymentAccountController extends Controller
         }
     }
     public function destroy($id){
-        $this->payRepo->delete($id);
+        // S34 — le depot refuse la ligne d'une autre societe ; l'ecran annoncait
+        // quand meme la suppression. On repond 404.
+        abort_unless($this->payRepo->delete($id), 404);
+
         Toastr::success(__('merchant.payment_account_delete_msg'),__('message.success'));
         return back();
     }

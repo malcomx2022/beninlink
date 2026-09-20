@@ -130,6 +130,12 @@ class MerchantRepository implements MerchantInterface{
             if(!blank($deliveryCharges)){
                 foreach ($deliveryCharges as $delivery){
                     $deliveryCharge                      = new MerchantDeliveryCharge();
+                    // S34 — `company_id` n'etait pose sur AUCUN des trois chemins de
+                    // creation d'un marchand. Ces lignes naissaient avec `null`, et
+                    // `MerchantDeliveryCharge::companywise()` — donc l'ecran des baremes
+                    // negocies — ne les voyait jamais : un marchand tout juste cree avait
+                    // un bareme negocie invisible, et non modifiable par l'interface.
+                    $deliveryCharge->company_id          = settings()->id;
                     $deliveryCharge->merchant_id         = $merchant->id;
                     $deliveryCharge->delivery_charge_id  = $delivery->id;
                     $deliveryCharge->weight              = $delivery->weight;
@@ -221,6 +227,8 @@ class MerchantRepository implements MerchantInterface{
             if(!blank($deliveryCharges)){
                 foreach ($deliveryCharges as $delivery){
                     $deliveryCharge                      = new MerchantDeliveryCharge();
+                    // S34 — meme oubli : voir la note de `store()`.
+                    $deliveryCharge->company_id          = settings()->id;
                     $deliveryCharge->merchant_id         = $merchant->id;
                     $deliveryCharge->delivery_charge_id  = $delivery->id;
                     $deliveryCharge->weight              = $delivery->weight;
@@ -289,7 +297,16 @@ class MerchantRepository implements MerchantInterface{
     //update merchant data
     public function update($id,$request) {
 
-        $merchant = Merchant::find($id);
+        // S34 — `Merchant::find($id)` NU, alors que `get()` juste au-dessus est
+        // scope. La suite reecrit le compte utilisateur du marchand : nom, mobile,
+        // e-mail et **mot de passe**. Avec l'identifiant d'un marchand d'un autre
+        // transporteur, cet ecran etait donc une reprise de compte complete —
+        // changer l'e-mail et le mot de passe suffit a s'y connecter.
+        $merchant = Merchant::companywise()->find($id);
+
+        if (blank($merchant)) {
+            return false;
+        }
 
         try {
             DB::beginTransaction();
@@ -486,10 +503,13 @@ class MerchantRepository implements MerchantInterface{
 
     public function delete($id) {
         try {
-            // Find merchant row
-            $merchant = Merchant::find($id);
+            // S34 — la forme gardee du socle (`find` puis comparaison) : correcte
+            // sur le fond, mais `->company_id` sur `null` levait une erreur. Hors
+            // perimetre l'ecran rendait 500 la ou le module repond 404, et le
+            // contrôleur ne pouvait pas faire la difference avec un echec metier.
+            $merchant = Merchant::companywise()->find($id);
 
-            if($merchant->company_id == settings()->id):
+            if(!blank($merchant)):
 
                 // Find user row
                 $user     = User::find($merchant->user_id);
@@ -584,6 +604,8 @@ class MerchantRepository implements MerchantInterface{
                 if(!blank($deliveryCharges)){
                     foreach ($deliveryCharges as $delivery){
                         $deliveryCharge                      = new MerchantDeliveryCharge();
+                        // S34 — meme oubli : voir la note de `store()`.
+                        $deliveryCharge->company_id          = settings()->id;
                         $deliveryCharge->merchant_id         = $merchant->id;
                         $deliveryCharge->delivery_charge_id  = $delivery->id;
                         $deliveryCharge->weight              = $delivery->weight;
