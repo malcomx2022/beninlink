@@ -2705,15 +2705,119 @@ Suite complète : **654 tests, 44 727 assertions, vert.**
 | Exemptées | 33 | 35 | 35 | 35 | 35 | 35 | 35 | **37** |
 | **Héritées (plafond)** | **171** | 143 | 119 | 89 | 84 | 60 | 53 | **42** |
 
-### Ce qui reste : 42 routes
+---
+
+## ✅ S33 — les colis du back-office (2026-09-20, 8ᵉ passe)
+
+Le module le plus central du socle, et la passe où l'arriéré a rendu le plus : **huit
+routes prouvées, cinq lectures nues fermées** — dont deux sur des chemins que le filet
+ne voit pas.
+
+### Le périmètre de lecture était correct, et pas trop strict
+
+La 7ᵉ passe annonçait un risque : `ParcelRepository::get()` filtre par société **et par
+l'entrepôt de l'agent**, ce qui est plus strict que partout ailleurs, et j'avais noté
+qu'il fallait vérifier que ce n'était pas trop strict au point de casser un écran
+légitime. **Vérifié : il ne l'est pas.** Le filtre par entrepôt ne s'applique que si
+l'agent a un `hub_id` ; un administrateur sans entrepôt voit tous les colis de sa
+société. Le test l'inscrit **dans les deux sens** — l'administrateur sans entrepôt voit
+tout, le chef de hub ne voit que le sien — pour que personne ne « relâche » ce filtre en
+croyant corriger une gêne.
+
+### Ce qui restait
+
+| Point | Ce qu'il faisait |
+|---|---|
+| `update()` — le colis | 🔴 `Parcel::find($id)` **nu** — le colis d'une autre société se réécrivait entièrement |
+| `update()` — le marchand | 🔴 `Merchant::find($request->merchant_id)` **nu**, et la ligne suivante **réaffectait** le colis à ce marchand d'ailleurs, en recopiant son `hub_id` dans `first_hub_id` et `hub_id` |
+| `update()` — le tarif | 🔴 le **même identifiant relu une troisième fois**, sans périmètre, pour le calcul : taux COD et TVA négociée d'un marchand d'une autre société |
+| `store()` | 🔴 même lecture nue : le colis naissait dans **ma** société mais **au nom** du marchand d'une autre, à qui il débitait frais, TVA et net à reverser |
+| `duplicateStore()` | 🔴 identique à `store()` |
+| `duplicate`, `edit`, `parcelPrint`, `parcelPrintLabel` | déréférençaient `null` → **500** au lieu de 404 (famille S15, 8ᵉ fois) |
+| `details` | rendait une page **vide avec un 200** : la vue déréférence `$parcel` partout avec l'opérateur `@`, qui supprime l'erreur — un refus d'accès devenait une page blanche sans message |
+| `destroy` | annonçait un succès sans regarder ce que le dépôt avait fait |
+
+### Les deux chemins de création : la tache aveugle du filet, troisième famille
+
+`store()` et `duplicateStore()` n'ont **aucun identifiant dans leur URL** — c'est le
+formulaire qui porte `merchant_id`. Ils sont donc **invisibles au filet**, qui n'énumère
+que les routes à paramètre, et ils ne figuraient dans aucune de ses trois listes. Je ne
+les ai trouvés qu'en corrigeant `update()` : la même lecture nue, dans le même fichier,
+trois méthodes plus haut.
+
+C'est la troisième fois que la tache aveugle rend quelque chose — après les trois
+décaissements des passes 5 et 6. Elle n'est pas une série de cas isolés : **c'est une
+classe**, et le filet ne la couvrira jamais par construction. Ce qui la couvre est de
+lire le fichier entier quand on en corrige une méthode, pas la route.
+
+⚠️ Conséquence de ces deux-là, plus grave qu'une lecture : le colis se créait avec
+`company_id = settings()->id` — la **mienne** — et `merchant_id` d'ailleurs. L'écriture
+n'était pas seulement hors périmètre, elle était **incohérente** : une ligne appartenant
+à deux sociétés à la fois, dont le débit de portefeuille et le relevé partaient chez le
+voisin.
+
+### ⚠️ Un constat que j'ai cru trouver et qui n'en était pas un
+
+`details()` construisait `ParcelEvent::where('parcel_id', $id)` avec l'identifiant
+**brut** — la forme exacte de S25. J'ai d'abord cru à une troisième fuite de
+chronologie que S25 avait manquée.
+
+Vérification faite : **`details.blade.php` n'utilise pas `$parcelevents`.** La requête
+était calculée à chaque affichage et jamais rendue. Aucune fuite. Elle passe désormais
+par le colis déjà vérifié, comme `logs()` et `deliveredInfo()`, pour que la forme ne
+redevienne pas un piège — mais ce n'est **pas** une faille fermée, et je ne la compte
+pas comme telle.
+
+### La leçon de la tarification : un test de refus doit d'abord pouvoir réussir
+
+Les huit premiers sabotages ont donné **deux verts** — les deux du dépôt. Diagnostic :
+`ChargeCalculator` s'exécute **avant** le `save()`, et depuis **D4 étape 6** il refuse un
+colis sans zone tarifée (`UnpricedDeliveryException::sansZone()`). Le jeu d'amorçage ne
+tarife que la société 2 ; mes requêtes de test ne portaient pas de zone. Le test
+observait donc un refus venu de la **tarification**, pas du périmètre — et concluait que
+le périmètre tenait.
+
+C'est la **troisième occurrence de la même leçon** (après `cancelProcess` sans
+`from_account` et `Account::update` sur une colonne NOT NULL). La fixture installe
+maintenant une zone tarifée pour ma société, par `ZoneCatalog` — le chemin de
+production — et les dix sabotages mordent.
+
+### Un test existant a rougi, et il avait raison de le faire
+
+`BackOfficeScopingTest::test_the_timeline_method_stays_unscoped_on_purpose` affirmait
+« exactement **deux** appels `parcelEvents($parcel->id)` dans le contrôleur » — les deux
+écrans que S25 avait corrigés. En réparant `details()`, il y en a trois, et le test est
+tombé **sur un progrès**.
+
+L'assertion est réécrite pour dire l'invariant au lieu de le compter : **aucun** appel ne
+part de l'identifiant brut, tous passent le colis déjà vérifié. Vérifié à son tour par
+sabotage. Un compte exact fait échouer un test quand le code s'améliore ; une forme
+interdite, non.
+
+### Couverture
+
+`tests/Feature/BackOfficeParcelScopeTest.php` — 10 tests, 34 assertions, dont **trois
+contrôles négatifs** : mes propres écrans rendent bien leur vue, l'administrateur sans
+entrepôt voit bien ses colis, et les deux chemins de création fonctionnent bien avec mon
+marchand.
+
+**Dix sabotages, dix morsures.**
+
+### Le cliquet après huit passes
+
+| | Départ | 1re | 2e | 3e | 4e | 5e | 6e | 7e | 8e |
+|---|---|---|---|---|---|---|---|---|---|
+| Prouvées | 7 | 33 | 57 | 85 | 90 | 113 | 120 | 129 | **137** |
+| Exemptées | 33 | 35 | 35 | 35 | 35 | 35 | 35 | 37 | **37** |
+| **Héritées (plafond)** | **171** | 143 | 119 | 89 | 84 | 60 | 53 | 42 | **34** |
+
+### Ce qui reste : 34 routes
 
 | Famille | Routes | État |
 |---|---|---|
-| `ParcelController` (back-office) | 8 | `get()` scopé société **et hub**, `update()` nu |
 | `Merchant` (5), `MerchantPaymentAccount` (4), `MerchantDeliveryCharge` (6) | 15 | `get()` scopé, `update()` nu |
 | `User` (3), `SmsSettings` (3), `Customs` (3), `Category` (2), `DeliveryCategory` (2), `DeliveryMan` (2), `Fraud` (2), `PushNotification` (1), `DeliveryZone` (1) | 19 | divers |
 
-Les colis du back-office seraient la prochaine : `ParcelRepository::get()` est scopé
-société **et hub de l'agent**, ce qui est plus strict que partout ailleurs — il faut
-vérifier que ce n'est pas trop strict au point de casser un écran légitime — tandis
-que son `update()` est nu.
+La famille **marchand** serait la prochaine, et c'est la plus sensible qui reste : le
+`update()` nu d'un `MerchantPaymentAccount` ou d'un `MerchantDeliveryCharge` ne réécrit
+pas un colis, il réécrit **où l'argent est versé** et **à quel tarif il est facturé**.

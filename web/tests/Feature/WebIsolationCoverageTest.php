@@ -235,6 +235,16 @@ class WebIsolationCoverageTest extends TestCase
         'GET merchant/invoice/csv/{merchant_id}/{invoice_id}' => MerchantInvoiceScopeTest::class,
         'GET merchant/invoice/journal/{merchant_id}/{invoice_id}' => MerchantInvoiceScopeTest::class,
         'GET merchant/invoice/pdf/{merchant_id}/{invoice_id}' => MerchantInvoiceScopeTest::class,
+        // S33 — les colis du back-office : deux lectures nues dans `update()`,
+        // et quatre ecrans qui rendaient 500 (ou une page vide en 200) hors perimetre
+        'DELETE admin/parcel/delete/{id}' => BackOfficeParcelScopeTest::class,
+        'GET admin/parcel/clone/{id}' => BackOfficeParcelScopeTest::class,
+        'GET admin/parcel/details/{id}' => BackOfficeParcelScopeTest::class,
+        'GET admin/parcel/edit/{id}' => BackOfficeParcelScopeTest::class,
+        'GET admin/parcel/print/{id}' => BackOfficeParcelScopeTest::class,
+        'GET admin/parcel/print/{id}/label' => BackOfficeParcelScopeTest::class,
+        'GET admin/parcel/status-update/{id}/{status_id}' => BackOfficeParcelScopeTest::class,
+        'PUT admin/parcel/update/{id}' => BackOfficeParcelScopeTest::class,
     ];
 
     /**
@@ -331,7 +341,6 @@ class WebIsolationCoverageTest extends TestCase
         'DELETE admin/merchant/delete/{id}',
         'DELETE admin/merchant/paymentinfo/delete/{id}',
         'DELETE admin/merchant/{merchant}/delivery-charge/delete/{id}',
-        'DELETE admin/parcel/delete/{id}',
         'DELETE admin/push-notification/delete/{id}',
         'DELETE admin/sms-settings/delete/{id}',
         'DELETE admin/user/delete/{id}',
@@ -349,12 +358,6 @@ class WebIsolationCoverageTest extends TestCase
         'GET admin/merchant/{merchant}/delivery-charge/edit/{id}',
         'GET admin/merchant/{merchant}/delivery-charge/index',
         'GET admin/merchant/{mid}/payment/edit/{id}',
-        'GET admin/parcel/clone/{id}',
-        'GET admin/parcel/details/{id}',
-        'GET admin/parcel/edit/{id}',
-        'GET admin/parcel/print/{id}',
-        'GET admin/parcel/print/{id}/label',
-        'GET admin/parcel/status-update/{id}/{status_id}',
         'GET admin/sms-settings/edit/{id}',
         'GET admin/users/edit/{id}',
         'GET admin/users/permissions/{id}',
@@ -365,12 +368,11 @@ class WebIsolationCoverageTest extends TestCase
         'PUT admin/delivery-zone/countries/{id}',
         'PUT admin/merchant/update/{id}',
         'PUT admin/merchant/{merchant}/delivery-charge/update/{id}',
-        'PUT admin/parcel/update/{id}',
         'PUT admin/sms-settings/update/{id}',
     ];
 
     /** Le compte figé de l'arriéré. Il descend, il ne monte pas. */
-    private const PLAFOND_HERITAGE = 42;
+    private const PLAFOND_HERITAGE = 34;
 
     protected function setUp(): void
     {
