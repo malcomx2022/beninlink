@@ -18,7 +18,7 @@ use Tests\Concerns\SeedsTenant;
 use Tests\TestCase;
 
 /**
- * S37 — la tache aveugle du filet : l'identifiant qui vit dans le CORPS.
+ * S38 — la tache aveugle du filet : l'identifiant qui vit dans le CORPS.
  *
  * `WebIsolationCoverageTest` enumere les routes **a parametre d'URL**. C'est ce
  * qui lui donne sa liste de travail, et c'est aussi sa limite : une ecriture
@@ -79,7 +79,7 @@ class ParcelBulkScopeTest extends TestCase
 
         $this->monLivreur = $this->livreurDe(settings()->id);
         $this->monEntrepot = Hub::forceCreate([
-            'company_id' => settings()->id, 'name' => 'Entrepot S37', 'status' => 1,
+            'company_id' => settings()->id, 'name' => 'Entrepot S38', 'status' => 1,
         ]);
 
         $this->actingAs($this->agentDe(settings()->id));

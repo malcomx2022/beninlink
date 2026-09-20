@@ -11,7 +11,7 @@ use Tests\Concerns\SeedsTenant;
 use Tests\TestCase;
 
 /**
- * S37 — le filet des écritures dont l'identifiant vit dans le CORPS.
+ * S38 — le filet des écritures dont l'identifiant vit dans le CORPS.
  *
  * `WebIsolationCoverageTest` énumère les routes **à paramètre d'URL**. C'est ce
  * qui lui donne sa liste de travail, et c'est aussi sa limite : une route comme
@@ -39,7 +39,7 @@ use Tests\TestCase;
  * **Le second niveau n'est pas un raffinement.** Sans lui, `POST
  * admin/assign-pickup/bulk` sort de l'énumération : son contrôleur passe
  * `$request` tel quel au dépôt sans jamais lire d'identifiant lui-même. C'est
- * précisément une des sept méthodes en lot corrigées par S37 — celle qui
+ * précisément une des sept méthodes en lot corrigées par S38 — celle qui
  * acceptait une liste d'identifiants arbitraires. Un filet qui ne regarderait
  * que le contrôleur aurait reconduit l'angle mort qu'il prétend fermer.
  *
@@ -59,7 +59,7 @@ class BodyIdentifierCoverageTest extends TestCase
 
     /** Routes dont la portée est PROUVÉE par un test qui atteint la ressource d'en face. */
     private const PROUVEES = [
-        // S37 — les sept chemins en lot et les neuf annulations de statut
+        // S38 — les sept chemins en lot et les neuf annulations de statut
         'POST admin/assign-pickup/bulk' => ParcelBulkScopeTest::class,
         'POST admin/parcel/assign-return-to-merchant-bulk' => ParcelBulkScopeTest::class,
         'POST admin/parcel/transfer-to-hub-multiple-parcel' => ParcelBulkScopeTest::class,

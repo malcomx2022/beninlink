@@ -170,9 +170,9 @@ avant les apps.
   la règle : le contrôle négatif attend **200**, pas « autre chose qu'un 404 ».
   ⚠️ Ce filet n'énumère que les routes **à paramètre d'URL**. Un identifiant porté par le
   **corps** de la requête lui est invisible — c'était l'angle mort du chantier, fermé par
-  **S37**.
+  **S38**.
 - Toute route d'**écriture sans paramètre d'URL** qui lit un identifiant dans le **corps**
-  de la requête est inscrite dans `tests/Feature/BodyIdentifierCoverageTest` (**S37**) :
+  de la requête est inscrite dans `tests/Feature/BodyIdentifierCoverageTest` (**S38**) :
   prouvée (avec son test), ou exemptée (avec le motif pour lequel l'identifiant ne désigne
   pas une ressource de locataire). L'arriéré ouvre à **90** et ne peut que baisser.
   Ce filet énumère les **contrôleurs**, pas les routes : il lit la source de la méthode de
@@ -182,7 +182,7 @@ avant les apps.
   Un test-témoin garde ce point.
 - Les chemins **en lot** sont le cas le plus dangereux de cette famille : leur identifiant
   est une **liste**, et rien dans la signature d'une route ne la porte. Règle de forme
-  (**S37**) : dans un lot, un identifiant hors périmètre est **ignoré** et la boucle
+  (**S38**) : dans un lot, un identifiant hors périmètre est **ignoré** et la boucle
   continue — le reste du lot passe ; sur un chemin à identifiant unique, on **refuse**.
   Et une annulation de statut ne recule pas qu'un statut : elle **supprime les
   `ParcelEvent`**, c'est-à-dire la chronologie que lit le client. L'assertion porte donc
