@@ -442,7 +442,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::post('parcel/transfer-to-hub/cancel',         [ParcelController::class, 'transfertoHubCancel'])->name('parcel.transfer-to-hub-cancel')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/received-by-hub',                [ParcelController::class, 'receivedByHub'])->name('parcel.received-by.hub')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/received-by-hub/cancel',         [ParcelController::class, 'receivedByHubCancel'])->name('parcel.received-by-hub-cancel')->middleware('hasPermission:parcel_status_update');
-                        Route::post('parcel/received-warehouse-hub-selected', [ParcelController::class, 'warehouseHubSelected'])->name('parcel.received.warehouse.hub.select');
+                        Route::post('parcel/received-warehouse-hub-selected', [ParcelController::class, 'warehouseHubSelected'])->name('parcel.received.warehouse.hub.select')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/delivery-man-assign',            [ParcelController::class, 'deliverymanAssign'])->name('parcel.delivery-man-assign')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/delivery-man/assign/cancel',     [ParcelController::class, 'deliverymanAssignCancel'])->name('parcel.delivery-man-assign-cancel')->middleware('hasPermission:parcel_status_update');
                         Route::get('parcel/bulkassign/print',                 [ParcelController::class, 'ParcelBulkAssignPrint'])->name('parcel.parcel-bulkassign-print');
@@ -460,15 +460,15 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::post('parcel/delivered/cancel',                  [ParcelController::class, 'parcelDeliveredCancel'])->name('parcel.delivered-cancel')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/partial-delivered',                 [ParcelController::class, 'parcelPartialDelivered'])->name('parcel.partial-delivered')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/partial-delivered/cancel',          [ParcelController::class, 'parcelPartialDeliveredCancel'])->name('parcel.partial-delivered-cancel')->middleware('hasPermission:parcel_status_update');
-                        Route::post('/transertohub-selected-hub',               [ParcelController::class, 'transfertohubSelectedHub'])->name('transertohub.selected.hub');
+                        Route::post('/transertohub-selected-hub',               [ParcelController::class, 'transfertohubSelectedHub'])->name('transertohub.selected.hub')->middleware('hasPermission:parcel_status_update');
                         Route::post('/parcel/received-by-multiple-hub',         [ParcelController::class, 'parcelReceivedByMultipleHub'])->name('parcel.received-by-mulbiple-hub')->middleware('hasPermission:parcel_status_update');
-                        Route::post('parcel/recived-by-hub/search',             [ParcelController::class, 'parcelRecivedByHubSearch'])->name('parcel.received-by-hub-search'); //ajax
+                        Route::post('parcel/recived-by-hub/search',             [ParcelController::class, 'parcelRecivedByHubSearch'])->name('parcel.received-by-hub-search')->middleware('hasPermission:parcel_status_update'); //ajax
                         Route::post('assign-pickup/parcel/search',              [ParcelController::class, 'AssignPickupParcelSearch'])->name('assign-pickup.parcel.search'); //ajax
                         Route::post('assign-pickup/bulk',                       [ParcelController::class, 'AssignPickupBulk'])->name('parcel.assign-pickup-bulk')->middleware('hasPermission:parcel_status_update');
                         Route::post('assign-return-to-merchant/parcel/search',  [ParcelController::class, 'AssignReturnToMerchantParcelSearch'])->name('assign-return-to-merchant.parcel.search'); //ajax
                         Route::post('parcel/assign-return-to-merchant-bulk',    [ParcelController::class, 'AssignReturnToMerchantBulk'])->name('parcel.assign-return-to-merchant-bulk')->middleware('hasPermission:parcel_status_update');
                         // new route add
-                        Route::post('parcel/priority/update',                   [ParcelController::class, 'priorityUpdate'])->name('parcel.priority.status');
+                        Route::post('parcel/priority/update',                   [ParcelController::class, 'priorityUpdate'])->name('parcel.priority.status')->middleware('hasPermission:parcel_update');
                         Route::get('parcel/deliveryMan/show',                   [ParcelController::class, 'parcelDeliveryMan'])->name('parcel.parcelDeliveryMan');
                         // S36 — `parcel/logs/{id}` juste au-dessus porte deja `parcel_read` : c'est la meme
                         // chronologie. Mesure : ni le role User ni le chef de hub ne perdent l'acces.
@@ -478,8 +478,8 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::post('parcel/merchant',                          [ParcelController::class, 'getMerchant'])->name('parcel.merchant.get');
                         Route::post('parcel/hub',                               [ParcelController::class, 'getHub'])->name('parcel.hub.get');
                         Route::post('parcel/merchant/shops',                    [ParcelController::class, 'merchantShops'])->name('parcel.merchant.shops');
-                        Route::post('parcel/delivery-category',                 [ParcelController::class, 'deliveryWeight'])->name('parcel.deliveryCategory.deliveryWeight');
-                        Route::post('parcel/quote',                             ParcelQuoteController::class)->name('parcel.quote');
+                        Route::post('parcel/delivery-category',                 [ParcelController::class, 'deliveryWeight'])->name('parcel.deliveryCategory.deliveryWeight')->middleware('hasPermission:parcel_create|parcel_update');
+                        Route::post('parcel/quote',                             ParcelQuoteController::class)->middleware('hasPermission:parcel_create|parcel_update')->name('parcel.quote');
                         // Chantier 5 — douane. Les ecrans empruntent les permissions
                         // parcel_* : PermissionSeeder n'est pas rejouable, voir le controleur.
                         Route::get('customs/alerts',              [CustomsController::class, 'alerts'])->name('customs.alerts')->middleware('hasPermission:parcel_read');
