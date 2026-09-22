@@ -158,6 +158,63 @@ class SharedPickerGuardTest extends TestCase
     }
 
     /**
+     * ⚠️ **L'angle mort de l'instrument, et il est réel.**
+     *
+     * Le relevé ci-dessus ne lit que les `.blade.php`. Or une partie des aides
+     * AJAX du socle sont appelées depuis `public/backend/js/**\/custom.js`, avec
+     * l'**URI écrite en dur** — `transertohub-selected-hub` en est un exemple
+     * vérifié. Pour une telle aide, un relevé limité aux vues rendrait « aucun
+     * appelant » et laisserait croire à une route morte.
+     *
+     * Les deux sélecteurs de ce test n'ont, eux, **aucun appelant JavaScript** —
+     * vérifié, et c'est ce que ce test inscrit. Il ne suffit pas de le vérifier
+     * une fois : le jour où un `custom.js` se mettrait à appeler l'un d'eux, sa
+     * liste de droits ne serait plus dérivable des seules vues, et le relevé
+     * mentirait sans rien casser de visible.
+     */
+    public function test_no_javascript_file_calls_a_shared_picker_behind_the_views_back(): void
+    {
+        $fautifs = [];
+
+        foreach ($this->fichiersJavascript() as $fichier) {
+            $contenu = file_get_contents($fichier);
+
+            foreach (array_keys(self::SELECTEURS) as $selecteur) {
+                $uri = Router::getRoutes()->getByName($selecteur)?->uri();
+
+                if ($uri && str_contains($contenu, $uri)) {
+                    $fautifs[] = basename($fichier) . ' → ' . $selecteur;
+                }
+            }
+        }
+
+        $this->assertSame([], $fautifs, "Un fichier JavaScript appelle un sélecteur partagé avec son URI écrite "
+            . "en dur. Le relevé de ce test ne lit que les vues : la liste de droits du sélecteur n'est donc plus "
+            . "dérivable, et elle se périmera sans que rien ne casse visiblement. Faire passer cet appel par une "
+            . "vue, ou étendre le relevé :\n - " . implode("\n - ", $fautifs));
+    }
+
+    private function fichiersJavascript(): array
+    {
+        $racine = public_path('backend');
+
+        if (!is_dir($racine)) {
+            return [];
+        }
+
+        $fichiers = [];
+        $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($racine));
+
+        foreach ($it as $f) {
+            if ($f->isFile() && str_ends_with($f->getFilename(), '.js')) {
+                $fichiers[] = $f->getPathname();
+            }
+        }
+
+        return $fichiers;
+    }
+
+    /**
      * Les droits des routes qui rendent cette vue.
      *
      * Une vue qui n'est rendue par aucune route est une **partie incluse** (une
