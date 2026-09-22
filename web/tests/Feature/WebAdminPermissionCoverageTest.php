@@ -82,16 +82,24 @@ class WebAdminPermissionCoverageTest extends TestCase
         'POST admin/addons/activation',
         // Réglages Google Maps : aucun droit déduit de l'écran.
         'GET admin/googlemap-settings/index', 'PUT admin/googlemap-settings/update',
-        // Abonnement et versements : à départager entre droit et type de compte.
+        // Abonnement : à départager entre droit et type de compte.
+        // ⚠️ `payout` et `payout/merchant/payout` sont SORTIES de cette liste : S43
+        // (PR #115) les a gardées par `payout_read` — un droit qui existait déjà au
+        // catalogue sans être utilisé — parce qu'elles bloquaient la garde des deux
+        // sélecteurs partagés. Troisième cliquet, deuxième fois qu'il sert.
         'GET admin/subscription/history', 'GET admin/paid/invoice',
-        'GET admin/payout', 'GET admin/payout/merchant/payout',
         // NON RELIÉES : aucune vue, aucun JS ne les nomme (leurs méthodes existent).
         'GET admin/parcel/file-export', 'GET admin/reports/mhd-pdf',
         // Aides AJAX à jeu de droits LARGE : de 6 à 19 droits déduits, sur des
         // listes d'écrans polluées par le motif court. À lire une par une.
-        'GET admin/parcel/filter', 'POST admin/parcel/search',
-        'POST admin/parcel/merchant', 'POST admin/parcel/merchant/shops',
-        'POST admin/parcel/deliveryman/search', 'POST admin/parcel/hub',
+        // ⚠️ `parcel/filter`, `parcel/merchant/shops` et `parcel/deliveryman/search`
+        // sont SORTIES de cette liste, gardées par S43. Les deux sélecteurs partagés
+        // l'ont été par une liste DÉRIVÉE de leurs écrans appelants (8 et 10 droits),
+        // ce que ce lot-ci ne pouvait pas faire : leurs écrans n'étaient pas tous
+        // gardés. C'est exactement la lecture « une par une » que cette ligne
+        // annonçait, faite par l'autre bout de la chaîne.
+        'POST admin/parcel/search',
+        'POST admin/parcel/merchant', 'POST admin/parcel/hub',
         'POST admin/merchant/account', 'POST admin/merchant/search',
         // Écrans en lot : aucun droit déduit de la vue appelante.
         // ⚠️ `parcel/recived-by-hub/search` est SORTIE de cette liste : le lot voisin
@@ -106,7 +114,7 @@ class WebAdminPermissionCoverageTest extends TestCase
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 27;
+    private const PLAFOND_HERITAGE = 22;
 
     /**
      * Les gardes posées par ce lot, et le droit mesuré pour chacune.

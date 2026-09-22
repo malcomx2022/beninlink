@@ -3881,30 +3881,150 @@ tests propres à ce lot : la bascule masquée, et l'invariant des vues marchande
 
 Suite complète : **809 tests, 45 237 assertions**.
 
+## ✅ S43 — la chaîne des écrans nus, et les deux sélecteurs enfin gardés (2026-09-22)
+
+### La dépendance que S42 avait nommée
+
+S42 a laissé `parcel/deliveryman/search` et `parcel/merchant/shops` sans garde,
+avec sa raison : ils sont appelés depuis 19 et 12 vues, et **plusieurs de leurs
+écrans appelants n'avaient eux-mêmes aucune garde**. On ne dérive pas un droit
+d'un écran qui n'en a pas — la liste aurait été incomplète, et une liste
+incomplète **refuse un compte légitime**.
+
+Ce lot remonte la chaîne, la ferme, puis garde les sélecteurs.
+
+### Le relevé : quatre écrans, pas quarante
+
+Le chantier annoncé était « 169 routes nues, dont 87 écritures ». En résolvant
+chaque vue appelante vers la route qui la rend, le blocage se réduit à **quatre
+routes** — tout le reste était déjà gardé :
+
+| Écran nu | Droit posé | Pourquoi celui-là |
+|---|---|---|
+| `GET parcel/filter` | `parcel_read` | rend **la même vue** que `parcel/index`, qui le porte déjà |
+| `GET parcel/specific/search` | `parcel_read` | idem — sœurs au sens de S36 |
+| `GET payout/` | `payout_read` | le droit existait déjà au catalogue, inutilisé |
+| `GET payout/merchant/payout` | `payout_read` | idem |
+
+### Qui perd l'accès, mesuré
+
+| Droit | Admin | User | Chef de hub |
+|---|---|---|---|
+| `parcel_read` | oui | oui | **oui** |
+| `payout_read` | oui | oui | **—** |
+
+Les deux sœurs de la liste des colis ne coûtent donc **rien** : les trois rôles
+portent `parcel_read`. Le chef de hub perd l'écran des versements aux marchands,
+et c'est l'intention — il n'y a pas affaire.
+
+⚠️ Et un fait contre-intuitif, relevé au passage :
+`cash_received_from_delivery_man_*` appartient au rôle **User et au chef de hub,
+mais PAS au rôle Admin**. C'est ce qui rendait la régression de S42 possible, et
+c'est ce que l'invariant ci-dessous protège.
+
+### Un second défaut sur le même écran, trouvé en le gardant
+
+`PayoutController` lisait ses deux écrans **sans périmètre de société** — alors
+que `MerchantOnlinePaymentReceived` **porte** `scopeCompanywise()` et que la
+table a sa colonne `company_id`. Le périmètre existait ; le contrôleur ne s'en
+servait pas.
+
+On rendait la liste des encaissements en ligne de **tous les transporteurs** —
+montants, comptes bancaires et marchands compris. Le second écran est pire dans
+sa forme : il filtre sur un `merchant_id` venu de l'URL, donc changer ce numéro
+suffisait à lire les versements du marchand d'en face.
+
+⚠️ **La garde de droit et le périmètre de société sont deux axes**, et fermer
+l'un ne dit rien de l'autre. S41 l'avait tiré dans un sens ; ce lot le vérifie
+dans l'autre — c'est en venant poser une garde d'accès qu'une fuite d'isolation
+est apparue.
+
+### Les deux sélecteurs, et pourquoi une liste longue est tenable
+
+La chaîne fermée, les listes se dérivent :
+
+- `parcel/deliveryman/search` → **8 droits**
+- `parcel/merchant/shops` → **10 droits**
+
+Le danger d'une telle liste n'est pas sa longueur, c'est qu'elle se **périme en
+silence**. Un écran ajouté demain qui appelle le sélecteur sans que son droit y
+figure ne produira aucune erreur visible : la requête AJAX répondra 403 et la
+liste déroulante restera **vide**. Personne ne le remarquera avant qu'un
+opérateur ne se plaigne.
+
+D'où `SharedPickerGuardTest`, qui ne relit pas une liste écrite à la main mais la
+**recalcule depuis les vues** : il relève les vues appelantes, remonte à la route
+qui rend chacune, et exige que son droit figure dans la garde du sélecteur.
+
+### ⚠️ Un test qui vérifie son propre instrument
+
+En écrivant S42 j'ai cherché `route('parcel.merchant')` quand le nom réel était
+`parcel.merchant.get`. Le relevé a rendu **zéro appelant**, et j'ai failli
+conclure à une route morte — donc à la supprimer.
+
+L'invariant porte donc un **témoin d'instrument** : le nombre de vues appelantes
+relevé au moment de la garde (19 et 12). S'il s'effondre, le test échoue
+bruyamment au lieu de passer au vert. Un relevé qui ne trouve rien n'est pas une
+bonne nouvelle.
+
+### Un contrôle négatif d'un autre lot, adapté
+
+`WebPanelSeparationTest::test_the_back_office_still_serves_its_own_agent`
+(S41) affirmait que `/admin/payout` répond 200 à un agent **sans aucun droit**.
+C'était vrai — précisément parce que la route était nue. La garde change cette
+prémisse ; le test reçoit maintenant `payout_read` et continue de dire ce qu'il
+a toujours voulu dire : la garde de **panneau** ne refuse pas l'agent du
+back-office.
+
+### Couverture
+
+- Les six nouvelles gardes rejoignent le fournisseur de `WebPermissionGuardTest`
+  (**55 tests**), exercées dans les deux sens.
+- `SharedPickerGuardTest` — 3 tests, l'invariant et son témoin d'instrument.
+- `PayoutScreenScopeTest` — 2 tests, chacun avec son contrôle négatif.
+
+**Sabotage** : un droit retiré de la garde d'un sélecteur → l'invariant mord et
+**nomme les deux écrans du chef de hub**, exactement la régression que S42 avait
+évitée. Périmètre des versements retiré → deux rouges ciblés.
+
+Suite complète : **840 tests, 45 287 assertions**.
+
 ---
 
-> ⚠️ **Troisième collision de numéro, et la première avec un recoupement RÉEL.** Le lot
-> ci-dessous s'appelait lui aussi **S42** : les deux ont été menés en parallèle sur le
-> **même axe** — la garde de droit du back-office. Celui juste au-dessus étant arrivé le
-> premier sur `main` ([#114](https://github.com/malcomx2022/beninlink/pull/114)), il garde
-> son numéro, et celui-ci devient **S43**. La règle est désormais posée trois fois : **le
-> lot fusionné le premier garde le numéro.**
+> ⚠️ **Quatrième collision de numéro — et une DOUBLE collision sur le même numéro.**
+> Ce lot-ci s'est d'abord appelé **S42**, en même temps que « la garde des aides colis »
+> ([#114](https://github.com/malcomx2022/beninlink/pull/114)). Celui-là étant arrivé le
+> premier sur `main`, ce lot est devenu **S43** — et pendant ce temps « la chaîne des
+> écrans nus » ([#115](https://github.com/malcomx2022/beninlink/pull/115)) prenait
+> **aussi** S43 et arrivait sur `main` avant lui. Il devient donc **S44**.
 >
-> ⚠️ **Ce qui distingue cette collision des deux précédentes** : les numéros n'étaient pas
-> le seul chevauchement. **Six routes** étaient gardées par les deux lots. Trois portaient
-> le **même** droit ; deux divergeaient, et c'est la mesure du lot ci-dessus qui a été
-> retenue — `parcel_status_update` plutôt que mon `parcel_read` sur
-> `received-warehouse-hub-selected` et `transertohub-selected-hub`, parce qu’il a identifié
-> l'écran appelant exact (le menu de statut, déjà gardé par ce droit) là où je m'étais
-> arrêté au droit le plus large de la famille. **Le correctif le plus serré gagne, même
-> quand il n'est pas le sien.**
+> La règle ne change pas, elle a simplement servi deux fois de suite : **le lot fusionné
+> le premier garde le numéro.** Ce qu'elle ne suffit plus à faire, c'est prévenir la
+> collision : quatre fois en cinq lots, deux sessions ont choisi le même numéro parce
+> qu'aucune ne voit la cartographie de l'autre avant de commiter. Le numéro se choisit
+> **au moment de la fusion**, pas au moment d'écrire.
 >
-> Et `parcel/recived-by-hub/search`, que j'avais laissée à l'arriéré, est **sortie de ma
-> liste d'attente** parce qu'il l'a gardée : c'est le **troisième cliquet** du filet
-> (`test_the_backlog_holds_no_route_that_is_already_guarded`) qui l’a exigé, et la première
-> fois qu’il sert. Arriéré **28 → 27**, gardes prouvées **26 → 27**.
+> ⚠️ **Ce qui distingue ces collisions des deux premières** : les numéros n'étaient pas le
+> seul chevauchement. Avec **S42**, six routes étaient gardées par les deux lots — trois
+> du même droit, deux divergentes, et c'est la mesure la plus serrée qui a été retenue
+> (`parcel_status_update` plutôt que `parcel_read` sur `received-warehouse-hub-selected`
+> et `transertohub-selected-hub`, parce qu'elle avait identifié l'écran appelant exact).
+> **Le correctif le plus serré gagne, même quand il n'est pas le sien.**
+>
+> Avec **S43**, le recoupement a porté sur l'**arriéré** : **cinq** routes que ce lot-ci
+> laissait en attente — `parcel/filter`, `payout`, `payout/merchant/payout`,
+> `parcel/deliveryman/search`, `parcel/merchant/shops` — y ont été gardées. C'est le
+> troisième cliquet de ce filet (`test_the_backlog_holds_no_route_that_is_already_guarded`)
+> qui l'a exigé, et la deuxième fois qu'il sert : l'arriéré de ce lot passe de **27 à 22**.
+>
+> Ses propres gardes, elles, restent **27** — celles de S43 ne sont pas les siennes. Et le
+> détail mérite d'être noté, parce qu'il valide les deux lots à la fois : ce lot-ci laissait
+> les deux sélecteurs partagés à l'arriéré en disant qu'il fallait « lire leurs appelants un
+> par un » ; S43 l'a fait par l'autre bout, en gardant d'abord les écrans appelants qui
+> n'avaient aucune garde, ce qui a rendu leur liste de droits **dérivable** (8 et 10
+> droits). Aucun des deux n'aurait pu le faire seul.
 
-## ✅ S43 — la porte du bureau : les 60 routes du back-office sans garde de droit (2026-09-20)
+## ✅ S44 — la porte du bureau : les 60 routes du back-office sans garde de droit (2026-09-20)
 
 ### Le constat
 

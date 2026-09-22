@@ -139,6 +139,25 @@ class WebPermissionGuardTest extends TestCase
             'parcel/received-warehouse-hub-selected' => ['POST', 'admin/parcel/received-warehouse-hub-selected', 'parcel_status_update'],
             'transertohub-selected-hub' => ['POST', 'admin/transertohub-selected-hub', 'parcel_status_update'],
             'parcel/recived-by-hub/search' => ['POST', 'admin/parcel/recived-by-hub/search', 'parcel_status_update'],
+
+            // S43 — les quatre écrans qui BLOQUAIENT la garde des deux sélecteurs
+            // partagés : on ne dérive pas un droit d'un écran qui n'en a pas.
+            'parcel/filter' => ['GET', 'admin/parcel/filter', 'parcel_read'],
+            'parcel/specific/search' => ['GET', 'admin/parcel/specific/search', 'parcel_read'],
+            'payout' => ['GET', 'admin/payout', 'payout_read'],
+            'payout/merchant/payout' => ['GET', 'admin/payout/merchant/payout', 'payout_read'],
+
+            // Et les deux sélecteurs eux-mêmes, désormais dérivables. Leur liste
+            // complète est tenue par `SharedPickerGuardTest`, qui la recalcule
+            // depuis les vues ; ici on prouve seulement qu'elle refuse et admet.
+            'parcel/deliveryman/search' => ['POST', 'admin/parcel/deliveryman/search',
+                'parcel_read|income_create|income_update|expense_create|expense_update'
+                . '|cash_received_from_delivery_man_create|cash_received_from_delivery_man_update'
+                . '|merchant_hub_deliveryman'],
+            'parcel/merchant/shops' => ['POST', 'admin/parcel/merchant/shops',
+                'parcel_read|parcel_create|parcel_update|income_create|income_update'
+                . '|parcel_wise_profit|parcel_status_reports|parcel_total_summery'
+                . '|merchant_hub_deliveryman|payout_read'],
         ];
     }
 

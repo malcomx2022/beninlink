@@ -33,15 +33,28 @@ class PayoutController extends Controller
     }
 
     //start stripe payment gateway
+    /**
+     * S43 — l'ecran des versements aux marchands, lu SANS perimetre.
+     *
+     * `MerchantOnlinePaymentReceived` PORTE pourtant `scopeCompanywise()` : le
+     * perimetre existait, le controleur ne s'en servait pas. On rendait la liste
+     * des encaissements en ligne de TOUS les transporteurs — montants, comptes
+     * bancaires et marchands compris.
+     */
     public function index(){
-        $oPayments        = $this->MOPRModel->orderByDesc('id')->paginate(10);
+        $oPayments        = $this->MOPRModel->companywise()->orderByDesc('id')->paginate(10);
 
         return view('backend.payout.payment_list',compact('oPayments'));
     }
 
+    /**
+     * Meme ecran, filtre sur un marchand dont l'identifiant vient de l'URL. Sans
+     * perimetre, il suffisait de changer ce numero pour lire les versements du
+     * marchand d'un autre transporteur — la forme que le filet S38 cherche.
+     */
     public function merchantPayout(Request $request){
         $merchant_id = $request->get('merchant_id');
-        $oPayments   = $this->MOPRModel->where('merchant_id',$merchant_id)->orderByDesc('id')->paginate(10);
+        $oPayments   = $this->MOPRModel->companywise()->where('merchant_id',$merchant_id)->orderByDesc('id')->paginate(10);
       return view('backend.payout.payment_list',compact('merchant_id','oPayments'));
     }
     public function stripe(Request $request){
