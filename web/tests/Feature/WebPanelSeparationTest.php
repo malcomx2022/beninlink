@@ -261,6 +261,13 @@ class WebPanelSeparationTest extends TestCase
         $this->actingAs($this->agent([]));
 
         $this->post(self::HOTE . '/admin/merchant/search', ['search' => 'PME'])->assertOk();
+
+        // ⚠️ S43 a posé `payout_read` sur cet écran : il n'était joignable par un
+        // agent SANS droit que parce qu'il était nu. Ce contrôle négatif mesure la
+        // garde de PANNEAU, pas celle du droit — on lui donne donc le droit, et il
+        // continue de dire ce qu'il a toujours dit : le back-office sert son agent.
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($this->agent(['payout_read'], 'versements'));
         $this->get(self::HOTE . '/admin/payout')->assertOk();
     }
 
@@ -349,13 +356,13 @@ class WebPanelSeparationTest extends TestCase
 
     /* ─────────────────────────── outillage ──────────────────────────────── */
 
-    private function agent(array $droits): User
+    private function agent(array $droits, string $suffixe = 'principal'): User
     {
         $u = new User();
         $u->company_id = settings()->id;
-        $u->name = 'Agent panneau';
-        $u->email = 'agent.panneau@example.test';
-        $u->mobile = '0022997910001';
+        $u->name = 'Agent panneau ' . $suffixe;
+        $u->email = 'agent.panneau.' . $suffixe . '@example.test';
+        $u->mobile = '00229979100' . str_pad((string) strlen($suffixe), 2, '0', STR_PAD_LEFT);
         $u->password = bcrypt('secret');
         $u->user_type = UserType::ADMIN;
         $u->role_id = Role::where('company_id', settings()->id)->value('id');

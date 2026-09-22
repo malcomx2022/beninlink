@@ -3880,3 +3880,111 @@ tests propres à ce lot : la bascule masquée, et l'invariant des vues marchande
 **Sabotage : six gardes retirées, six rouges ciblés**, plus le contrôle de vue.
 
 Suite complète : **809 tests, 45 237 assertions**.
+
+## ✅ S43 — la chaîne des écrans nus, et les deux sélecteurs enfin gardés (2026-09-22)
+
+### La dépendance que S42 avait nommée
+
+S42 a laissé `parcel/deliveryman/search` et `parcel/merchant/shops` sans garde,
+avec sa raison : ils sont appelés depuis 19 et 12 vues, et **plusieurs de leurs
+écrans appelants n'avaient eux-mêmes aucune garde**. On ne dérive pas un droit
+d'un écran qui n'en a pas — la liste aurait été incomplète, et une liste
+incomplète **refuse un compte légitime**.
+
+Ce lot remonte la chaîne, la ferme, puis garde les sélecteurs.
+
+### Le relevé : quatre écrans, pas quarante
+
+Le chantier annoncé était « 169 routes nues, dont 87 écritures ». En résolvant
+chaque vue appelante vers la route qui la rend, le blocage se réduit à **quatre
+routes** — tout le reste était déjà gardé :
+
+| Écran nu | Droit posé | Pourquoi celui-là |
+|---|---|---|
+| `GET parcel/filter` | `parcel_read` | rend **la même vue** que `parcel/index`, qui le porte déjà |
+| `GET parcel/specific/search` | `parcel_read` | idem — sœurs au sens de S36 |
+| `GET payout/` | `payout_read` | le droit existait déjà au catalogue, inutilisé |
+| `GET payout/merchant/payout` | `payout_read` | idem |
+
+### Qui perd l'accès, mesuré
+
+| Droit | Admin | User | Chef de hub |
+|---|---|---|---|
+| `parcel_read` | oui | oui | **oui** |
+| `payout_read` | oui | oui | **—** |
+
+Les deux sœurs de la liste des colis ne coûtent donc **rien** : les trois rôles
+portent `parcel_read`. Le chef de hub perd l'écran des versements aux marchands,
+et c'est l'intention — il n'y a pas affaire.
+
+⚠️ Et un fait contre-intuitif, relevé au passage :
+`cash_received_from_delivery_man_*` appartient au rôle **User et au chef de hub,
+mais PAS au rôle Admin**. C'est ce qui rendait la régression de S42 possible, et
+c'est ce que l'invariant ci-dessous protège.
+
+### Un second défaut sur le même écran, trouvé en le gardant
+
+`PayoutController` lisait ses deux écrans **sans périmètre de société** — alors
+que `MerchantOnlinePaymentReceived` **porte** `scopeCompanywise()` et que la
+table a sa colonne `company_id`. Le périmètre existait ; le contrôleur ne s'en
+servait pas.
+
+On rendait la liste des encaissements en ligne de **tous les transporteurs** —
+montants, comptes bancaires et marchands compris. Le second écran est pire dans
+sa forme : il filtre sur un `merchant_id` venu de l'URL, donc changer ce numéro
+suffisait à lire les versements du marchand d'en face.
+
+⚠️ **La garde de droit et le périmètre de société sont deux axes**, et fermer
+l'un ne dit rien de l'autre. S41 l'avait tiré dans un sens ; ce lot le vérifie
+dans l'autre — c'est en venant poser une garde d'accès qu'une fuite d'isolation
+est apparue.
+
+### Les deux sélecteurs, et pourquoi une liste longue est tenable
+
+La chaîne fermée, les listes se dérivent :
+
+- `parcel/deliveryman/search` → **8 droits**
+- `parcel/merchant/shops` → **10 droits**
+
+Le danger d'une telle liste n'est pas sa longueur, c'est qu'elle se **périme en
+silence**. Un écran ajouté demain qui appelle le sélecteur sans que son droit y
+figure ne produira aucune erreur visible : la requête AJAX répondra 403 et la
+liste déroulante restera **vide**. Personne ne le remarquera avant qu'un
+opérateur ne se plaigne.
+
+D'où `SharedPickerGuardTest`, qui ne relit pas une liste écrite à la main mais la
+**recalcule depuis les vues** : il relève les vues appelantes, remonte à la route
+qui rend chacune, et exige que son droit figure dans la garde du sélecteur.
+
+### ⚠️ Un test qui vérifie son propre instrument
+
+En écrivant S42 j'ai cherché `route('parcel.merchant')` quand le nom réel était
+`parcel.merchant.get`. Le relevé a rendu **zéro appelant**, et j'ai failli
+conclure à une route morte — donc à la supprimer.
+
+L'invariant porte donc un **témoin d'instrument** : le nombre de vues appelantes
+relevé au moment de la garde (19 et 12). S'il s'effondre, le test échoue
+bruyamment au lieu de passer au vert. Un relevé qui ne trouve rien n'est pas une
+bonne nouvelle.
+
+### Un contrôle négatif d'un autre lot, adapté
+
+`WebPanelSeparationTest::test_the_back_office_still_serves_its_own_agent`
+(S41) affirmait que `/admin/payout` répond 200 à un agent **sans aucun droit**.
+C'était vrai — précisément parce que la route était nue. La garde change cette
+prémisse ; le test reçoit maintenant `payout_read` et continue de dire ce qu'il
+a toujours voulu dire : la garde de **panneau** ne refuse pas l'agent du
+back-office.
+
+### Couverture
+
+- Les six nouvelles gardes rejoignent le fournisseur de `WebPermissionGuardTest`
+  (**55 tests**), exercées dans les deux sens.
+- `SharedPickerGuardTest` — 3 tests, l'invariant et son témoin d'instrument.
+- `PayoutScreenScopeTest` — 2 tests, chacun avec son contrôle négatif.
+
+**Sabotage** : un droit retiré de la garde d'un sélecteur → l'invariant mord et
+**nomme les deux écrans du chef de hub**, exactement la régression que S42 avait
+évitée. Périmètre des versements retiré → deux rouges ciblés.
+
+Suite complète : **840 tests, 45 287 assertions**.

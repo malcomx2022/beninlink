@@ -421,7 +421,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('parcel/multiple/print/label',           [ParcelController::class, 'parcelMultiplePrintLabel'])->name('parcel.multiple.print-label')->middleware('hasPermission:parcel_read');
 
                         //parcel status
-                        Route::post('parcel/deliveryman/search',            [ParcelController::class, 'deliverymanSearch'])->name('parcel.deliveryman.search');
+                        Route::post('parcel/deliveryman/search',            [ParcelController::class, 'deliverymanSearch'])->name('parcel.deliveryman.search')->middleware('hasPermission:parcel_read|income_create|income_update|expense_create|expense_update|cash_received_from_delivery_man_create|cash_received_from_delivery_man_update|merchant_hub_deliveryman');
                         Route::post('parcel/pickup-man/assigned',           [ParcelController::class, 'PickupManAssigned'])->name('parcel.pickup.man-assigned')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/pickup-man/assigned/cancel',    [ParcelController::class, 'PickupManAssignedCancel'])->name('parcel.pickup.man-assigned-cancel')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/pickup/re-schedule',            [ParcelController::class, 'PickupReSchedule'])->name('parcel.pickup.re.schedule')->middleware('hasPermission:parcel_status_update');
@@ -430,7 +430,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::post('parcel/pickup/received/cancel',        [ParcelController::class, 'receivedBypickupmanCancel'])->name('parcel.pickup.man-received-cancel')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/received-warehouse',            [ParcelController::class, 'receivedWarehouse'])->name('parcel.received.warehouse')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/received-warehouse/cancel',     [ParcelController::class, 'receivedWarehouseCancel'])->name('parcel.received-warehouse-cancel')->middleware('hasPermission:parcel_status_update');
-                        Route::get('parcel/filter',                         [ParcelController::class, 'filter'])->name('parcel.filter');
+                        Route::get('parcel/filter',                         [ParcelController::class, 'filter'])->name('parcel.filter')->middleware('hasPermission:parcel_read');
                         Route::post('parcel/search',                        [ParcelController::class, 'search'])->name('parcel.search');
                         Route::post('parcel/search-delivery-man-assing-multiple-parcel', [ParcelController::class, 'searchDeliveryManAssingMultipleParcel'])->name('parcel.search-delivery-man-assing-multiple-parcel');
                         Route::post('parcel/search-expense',                [ParcelController::class, 'searchExpense'])->name('parcel.search-expense');
@@ -477,7 +477,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         //end parcel status
                         Route::post('parcel/merchant',                          [ParcelController::class, 'getMerchant'])->name('parcel.merchant.get');
                         Route::post('parcel/hub',                               [ParcelController::class, 'getHub'])->name('parcel.hub.get');
-                        Route::post('parcel/merchant/shops',                    [ParcelController::class, 'merchantShops'])->name('parcel.merchant.shops');
+                        Route::post('parcel/merchant/shops',                    [ParcelController::class, 'merchantShops'])->name('parcel.merchant.shops')->middleware('hasPermission:parcel_read|parcel_create|parcel_update|income_create|income_update|parcel_wise_profit|parcel_status_reports|parcel_total_summery|merchant_hub_deliveryman|payout_read');
                         Route::post('parcel/delivery-category',                 [ParcelController::class, 'deliveryWeight'])->name('parcel.deliveryCategory.deliveryWeight')->middleware('hasPermission:parcel_create|parcel_update');
                         Route::post('parcel/quote',                             ParcelQuoteController::class)->middleware('hasPermission:parcel_create|parcel_update')->name('parcel.quote');
                         // Chantier 5 — douane. Les ecrans empruntent les permissions
@@ -679,7 +679,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                             Route::get('express',                      [PickupRequestController::class, 'express'])->name('express')->middleware('hasPermission:pickup_request_express');
                         });
                         //parcel search
-                        Route::get('parcel/specific/search',                    [ParcelController::class, 'ParcelSearchs'])->name('parcel.specific.search');
+                        Route::get('parcel/specific/search',                    [ParcelController::class, 'ParcelSearchs'])->name('parcel.specific.search')->middleware('hasPermission:parcel_read');
                         // GoogleMap settings
                         Route::get('googlemap-settings/index',        [GoogleMapSettingsController::class, 'index'])->name('googlemap-settings.index');
                         Route::put('googlemap-settings/update',       [GoogleMapSettingsController::class, 'update'])->name('googlemap-settings.update');
@@ -699,8 +699,8 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::put('social-login-settings/update/{social}',     [SocialLoginController::class, 'socialLoginSettingsUpdate'])->name('social.login.settings.update')->middleware('hasPermission:social_login_settings_update');
                         //Payout
                         Route::prefix('payout')->name('payout.')->group(function () {
-                            Route::get('/',                                     [PayoutController::class, 'index'])->name('index');
-                            Route::get('/merchant/payout',                      [PayoutController::class, 'merchantPayout'])->name('merchant.payout');
+                            Route::get('/',                                     [PayoutController::class, 'index'])->name('index')->middleware('hasPermission:payout_read');
+                            Route::get('/merchant/payout',                      [PayoutController::class, 'merchantPayout'])->name('merchant.payout')->middleware('hasPermission:payout_read');
                             // D10 — module « payout / paiement en ligne » coupé
                             // (config/payments.php) : il déplace le solde sans écrire au
                             // relevé, facture en BDT, ne scope pas la société, et pour
