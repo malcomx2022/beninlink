@@ -309,13 +309,19 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <div class="form-check form-switch">
-                                                    <input class="form-check-input switch-id" type="checkbox"
-                                                        data-url="{{ route('parcel.priority.status') }}"
-                                                        data-id="{{ $parcel->id }}" role="switch"
-                                                        value="{{ $parcel->priority_type_id }}"
-                                                        @if ($parcel->priority_type_id == 1) checked @else @endif>
-                                                </div>
+                                                {{-- S42 — paire sœur : la bascule porte le droit de sa route.
+                                                     Elle était le SEUL contrôle de cette liste rendu sans condition,
+                                                     alors que modifier et supprimer sont gardés juste au-dessus. Un
+                                                     compte en lecture seule la voyait, la basculait, et écrivait. --}}
+                                                @if (hasPermission('parcel_update'))
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input switch-id" type="checkbox"
+                                                            data-url="{{ route('parcel.priority.status') }}"
+                                                            data-id="{{ $parcel->id }}" role="switch"
+                                                            value="{{ $parcel->priority_type_id }}"
+                                                            @if ($parcel->priority_type_id == 1) checked @else @endif>
+                                                    </div>
+                                                @endif
                                             </td>
                                             <td>{!! $parcel->parcel_status !!} <br>
                                                 {{-- Marqueur « ce colis a connu une livraison partielle », en plus du

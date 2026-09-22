@@ -127,7 +127,7 @@
                                         class="text-danger">*</span>
                                     <select style="width: 100%" id="category_id" class="form-control select2"
                                         name="category_id" class="form-control @error('category_id') is-invalid @enderror"
-                                        data-url="{{ route('parcel.deliveryCategory.deliveryWeight') }}" required="">
+                                        data-url="{{ route('merchant-panel.parcel.deliveryCategory.deliveryWeight') }}" required="">
                                         <option value=""> {{ __('menus.select') }} {{ __('parcel.category') }}
                                         </option>
                                         @foreach ($deliveryCategoryCharges as $deliveryCategoryCharge)

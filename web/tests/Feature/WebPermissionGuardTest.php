@@ -128,6 +128,17 @@ class WebPermissionGuardTest extends TestCase
             'merchant/shops/default' => ['PUT', 'admin/merchant/shops/default/{merchant}/{shop}', 'merchant_shop_update'],
             'expense/search-account' => ['POST', 'admin/expense/search-account/1',
                 'expense_create|income_create|salary_create|salary_update|cash_received_from_delivery_man_create'],
+
+            // S42 — les aides AJAX des colis, dont S40 avait fermé l'isolation en
+            // signalant qu'elles ne portaient aucune garde de droit. Chacune prend
+            // le droit de l'écran qui l'appelle, et l'ensemble des appelants de
+            // chacune a été résolu avant de poser la garde (règle de S36).
+            'parcel/priority/update' => ['POST', 'admin/parcel/priority/update', 'parcel_update'],
+            'parcel/quote' => ['POST', 'admin/parcel/quote', 'parcel_create|parcel_update'],
+            'parcel/delivery-category' => ['POST', 'admin/parcel/delivery-category', 'parcel_create|parcel_update'],
+            'parcel/received-warehouse-hub-selected' => ['POST', 'admin/parcel/received-warehouse-hub-selected', 'parcel_status_update'],
+            'transertohub-selected-hub' => ['POST', 'admin/transertohub-selected-hub', 'parcel_status_update'],
+            'parcel/recived-by-hub/search' => ['POST', 'admin/parcel/recived-by-hub/search', 'parcel_status_update'],
         ];
     }
 
@@ -173,6 +184,81 @@ class WebPermissionGuardTest extends TestCase
     private function flush(): void
     {
         session()->forget('toastr::messages');
+    }
+
+    /**
+     * S42 — la **paire sœur**, poussée jusqu'à la vue.
+     *
+     * La bascule de priorité était le seul contrôle de la liste des colis rendu
+     * **sans condition**, alors que modifier et supprimer sont gardés deux lignes
+     * plus haut dans le même tableau. Un compte en lecture seule la voyait, la
+     * basculait, et écrivait.
+     *
+     * Garder la route sans masquer le contrôle aurait seulement transformé
+     * l'écriture en erreur visible : le bouton reste, et il tombe. La règle des
+     * paires sœurs vaut donc aussi entre une route et le contrôle qui l'appelle.
+     */
+    public function test_the_priority_toggle_is_hidden_from_a_read_only_account(): void
+    {
+        // ⚠️ Il faut un colis qui apparaisse vraiment dans la liste : sur une liste
+        // vide, l'assertion « la bascule est absente » passe au vert sans rien
+        // prouver. C'est le contrôle négatif ci-dessous qui l'a montré — il
+        // échouait, et c'était lui qui avait raison.
+        $visible = Parcel::forceCreate([
+            'company_id' => settings()->id,
+            'merchant_id' => $this->marchandId,
+            'tracking_id' => 'BL-S42-' . uniqid(),
+            'customer_name' => 'Client priorite',
+            'customer_phone' => '0022997123456',
+            'customer_address' => 'Cotonou',
+            'cash_collection' => 10000,
+            'current_payable' => 9000,
+            'status' => \App\Enums\ParcelStatus::PENDING,
+            'priority_type_id' => 1,
+        ]);
+
+        $this->actingAs($this->agentAvec(['parcel_read']));
+
+        $liste = $this->get(self::HOTE . '/admin/parcel/index');
+        $liste->assertOk();
+        $this->assertStringContainsString($visible->tracking_id, $liste->getContent(),
+            'la liste ne contient aucun colis : le test ne mesure rien');
+
+        $this->assertStringNotContainsString(route('parcel.priority.status'), $liste->getContent(),
+            'un compte en lecture seule voit encore la bascule de priorité');
+
+        // Contrôle négatif : avec le droit d'écriture, la bascule est bien là.
+        $this->actingAs($this->agentAvec(['parcel_read', 'parcel_update'], 'ecrivain'));
+
+        $avecDroit = $this->get(self::HOTE . '/admin/parcel/index');
+        $avecDroit->assertOk();
+
+        $this->assertStringContainsString(route('parcel.priority.status'), $avecDroit->getContent(),
+            'la bascule a disparu pour un compte qui a pourtant le droit de l\'actionner');
+    }
+
+    /**
+     * S42 — deux écrans du panneau marchand appelaient la route **du
+     * back-office** pour leur sélecteur de poids, là où l'écran de création
+     * appelle sa jumelle marchand. Depuis la garde de panneau de S41, ces deux
+     * écrans avaient donc un sélecteur cassé : un marchand y recevait un 403.
+     *
+     * L'invariant, et non la correction : aucune vue du panneau marchand ne
+     * référence une route du back-office pour cette aide.
+     */
+    public function test_no_merchant_panel_view_calls_the_back_office_weight_helper(): void
+    {
+        $fautives = [];
+
+        foreach (glob(resource_path('views/backend/merchant_panel/parcel/*.blade.php')) as $vue) {
+            if (str_contains(file_get_contents($vue), "route('parcel.deliveryCategory.deliveryWeight')")) {
+                $fautives[] = basename($vue);
+            }
+        }
+
+        $this->assertSame([], $fautives, "Des vues du panneau marchand appellent la route du back-office pour le "
+            . "sélecteur de poids. Depuis la garde de panneau, un marchand y reçoit 403 et le sélecteur ne se "
+            . "remplit plus :\n - " . implode("\n - ", $fautives));
     }
 
     /* ═══════════ le contournement de `parcel_create`, nommé ════════════════ */

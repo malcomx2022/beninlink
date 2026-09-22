@@ -3782,3 +3782,101 @@ Suite complète : **808 tests, 45 237 assertions**, vert.
   `route('bkash.redirect')`, **introuvables** dans la table des routes.
 - `GET /dashboard` répond **500 à un livreur** — inchangé par ce lot, et de la
   famille de S37.
+
+## ✅ S42 — la garde des aides colis, et la mesure qui a corrigé le lot (2026-09-22)
+
+### D'où vient ce lot
+
+S40 a fermé l'isolation des aides AJAX des colis entre sociétés, et **signalé**
+qu'aucune ne portait de garde de droit. S41 a depuis fermé l'accès des marchands
+et des livreurs, **par type de compte**. Restait le cas que ni l'un ni l'autre ne
+couvre : l'**agent du back-office sans droit sur les colis**. Un `user_type` ne
+le filtre pas, et l'isolation entre sociétés ne dit rien de lui.
+
+### La mesure, avant de poser quoi que ce soit
+
+La règle de S36, appliquée. Droits colis par rôle, mesurés sur la base semée :
+
+| Rôle | read | create | update | delete | status_update |
+|---|---|---|---|---|---|
+| Admin | oui | oui | oui | oui | oui |
+| User | oui | — | — | — | — |
+| **Chef de hub** (jeu **fixe** de `hubPermissions()`) | oui | — | — | — | — |
+
+### Six gardes posées
+
+| Route | Droit | Qui perd l'accès |
+|---|---|---|
+| `parcel/priority/update` | `parcel_update` | `User` et chef de hub — une **écriture** qu'ils n'auraient jamais dû avoir |
+| `parcel/quote` | `parcel_create\|parcel_update` | personne : les 3 vues appelantes sont déjà gardées ainsi |
+| `parcel/delivery-category` | `parcel_create\|parcel_update` | idem |
+| `parcel/received-warehouse-hub-selected` | `parcel_status_update` | **personne** — appelée depuis le menu de statut, déjà masqué derrière ce droit |
+| `transertohub-selected-hub` | `parcel_status_update` | personne, même raison |
+| `parcel/recived-by-hub/search` | `parcel_status_update` | `User` et chef de hub perdent une recherche dans un écran de masse dont **l'action** leur était déjà refusée |
+
+### ⚠️ Deux gardes retirées du lot **par la mesure**
+
+`parcel/merchant` et `parcel/hub` ressemblent à des sélecteurs du formulaire
+colis. Ils ne le sont pas : ils sont appelés depuis **26 et 5 vues** — salaires,
+paie, panneau de hub, revenus, dépenses, rapports, versements, portefeuille.
+
+Un droit « colis » y aurait cassé, entre autres, l'écran d'**encaissement du chef
+de hub** — un écran dont il détient le droit. C'est exactement le genre de
+régression que la règle de S36 existe pour empêcher, et c'est la première fois du
+chantier qu'elle en empêche une.
+
+Le détour instructif : ma première résolution des appelants cherchait
+`route('parcel.merchant')` alors que le nom réel est `parcel.merchant.get`. Elle
+a rendu **zéro appelant**, et j'ai failli conclure à des routes mortes. C'est en
+vérifiant le nom exact dans `routes/web.php` que les 26 vues sont apparues. Une
+mesure qui rend « rien » mérite qu'on vérifie d'abord l'instrument.
+
+### Les deux sélecteurs partagés restent nus, et pourquoi
+
+`parcel/deliveryman/search` (19 vues) et `parcel/merchant/shops` (12 vues)
+traversent **huit droits distincts** chacun. La liste `a|b|c` de S36 saurait les
+porter — mais plusieurs de leurs écrans appelants n'ont **eux-mêmes aucune
+garde** (`parcel/filter`, `parcel/specific/search`, `payout/merchant/payout`…).
+
+On ne peut pas dériver un droit d'un écran qui n'en a pas : la liste serait
+incomplète, et une liste incomplète **refuse** un compte légitime. Ces deux
+aides ne peuvent donc être gardées qu'**après** les écrans qui les appellent.
+C'est une dépendance, pas un oubli.
+
+### La paire sœur, poussée jusqu'à la vue
+
+La bascule de priorité était le **seul** contrôle de la liste des colis rendu
+sans condition, alors que modifier et supprimer sont gardés deux lignes plus haut
+dans le même tableau. Garder la route sans masquer le contrôle aurait seulement
+transformé l'écriture en erreur visible. La règle des paires sœurs vaut donc
+aussi **entre une route et le contrôle qui l'appelle**.
+
+### Un écran marchand déjà cassé, trouvé en chemin
+
+`merchant_panel/parcel/edit` et `duplicate` appelaient la route **du
+back-office** pour leur sélecteur de poids, là où `create` appelle sa jumelle
+marchand. Depuis la garde de panneau de S41, un marchand y recevait **403** et le
+sélecteur ne se remplissait plus. Corrigé, et un invariant l'inscrit : aucune vue
+du panneau marchand ne référence cette route du back-office.
+
+### La leçon de ce lot : un contrôle négatif qui avait raison
+
+`test_the_priority_toggle_is_hidden_from_a_read_only_account` a échoué sur sa
+**seconde** moitié : le compte qui *a* le droit ne voyait pas la bascule non
+plus. La liste des colis était vide — la fixture ne produisait aucune ligne. La
+première assertion passait donc au vert **sans rien mesurer**.
+
+C'est la troisième fois du chantier qu'une preuve creuse est rattrapée, et la
+première par un contrôle négatif plutôt que par un sabotage. Le test crée
+maintenant son colis et **vérifie qu'il apparaît** avant de conclure.
+
+### Couverture
+
+Les six routes rejoignent le fournisseur de `WebPermissionGuardTest`, qui les
+exerce dans les deux sens avec son discriminateur éprouvé — le **message flashé**
+de la garde, que ni une validation échouée ni un `back()` n'écrivent. Plus deux
+tests propres à ce lot : la bascule masquée, et l'invariant des vues marchandes.
+
+**Sabotage : six gardes retirées, six rouges ciblés**, plus le contrôle de vue.
+
+Suite complète : **809 tests, 45 237 assertions**.
