@@ -215,7 +215,7 @@ avant les apps.
   `url()->previous()` : elle lit **d'abord l'en-tête `Referer`**, donc une donnée du
   client, ce qui ouvrirait une redirection vers n'importe quelle adresse.
 - Toute route `admin/*` est inscrite dans `tests/Feature/WebAdminPermissionCoverageTest`
-  (**S42**) : **gardée** (`hasPermission`), **exemptée** (avec le motif) ou **à l'arriéré**
+  (**S43**) : **gardée** (`hasPermission`), **exemptée** (avec le motif) ou **à l'arriéré**
   (sous un plafond qui ne peut que baisser). Le droit d'une **aide AJAX** est celui des
   **écrans qui l'appellent**, et ⚠️ ces appelants vivent dans
   `public/backend/js/**/custom.js`, **pas dans les vues** — c'est ce qui avait fait
@@ -225,7 +225,7 @@ avant les apps.
   (`SuperAdminPermission`) : il est déjà refusé sur les routes gardées du back-office
   locataire, donc une route liée depuis **son** menu ne se garde pas par un droit de
   locataire mais par le **type de compte** (S41).
-- Un **sabotage vert** interroge le test — **et d'abord son propre ancrage** (**S42**) :
+- Un **sabotage vert** interroge le test — **et d'abord son propre ancrage** (**S43**) :
   vérifier que le fichier a changé ne suffit pas, il faut vérifier qu'il a changé **là**.
   Un ancrage non unique (`hasPermission:parcel_update`) frappe une autre ligne et rend le
   vert crédible.

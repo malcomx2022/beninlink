@@ -12,7 +12,7 @@ use Tests\Concerns\SeedsTenant;
 use Tests\TestCase;
 
 /**
- * S42 — la porte du bureau : les routes du back-office sans garde de droit.
+ * S43 — la porte du bureau : les routes du back-office sans garde de droit.
  *
  * S41 a fermé la porte du **bâtiment** — `admin/*` exige désormais un compte de
  * type back-office. Reste celle du **bureau** : parmi les 447 routes `admin/*`,
@@ -94,15 +94,19 @@ class WebAdminPermissionCoverageTest extends TestCase
         'POST admin/parcel/deliveryman/search', 'POST admin/parcel/hub',
         'POST admin/merchant/account', 'POST admin/merchant/search',
         // Écrans en lot : aucun droit déduit de la vue appelante.
+        // ⚠️ `parcel/recived-by-hub/search` est SORTIE de cette liste : le lot voisin
+        // (S42, PR #114) l'a gardée par `parcel_status_update` en mesurant son écran de
+        // masse. C'est le troisième cliquet de ce filet qui l'a exigé — une ligne
+        // d'arriéré dont la route est gardée doit être retirée, sinon le plafond ne
+        // veut plus rien dire.
         'POST admin/assign-pickup/parcel/search',
         'POST admin/assign-return-to-merchant/parcel/search',
-        'POST admin/parcel/recived-by-hub/search',
         // La barre de navigation.
         'POST admin/todo/momal',
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 28;
+    private const PLAFOND_HERITAGE = 27;
 
     /**
      * Les gardes posées par ce lot, et le droit mesuré pour chacune.
@@ -125,9 +129,10 @@ class WebAdminPermissionCoverageTest extends TestCase
             ['POST', 'admin/parcel/search-delivery-man-assing-multiple-parcel', 'parcel_read'],
             ['POST', 'admin/parcel/search-expense', 'expense_create|expense_update|salary_create|salary_update'],
             ['POST', 'admin/parcel/search-income', 'income_create|income_update|cash_received_from_delivery_man_create|cash_received_from_delivery_man_update'],
-            ['POST', 'admin/parcel/received-warehouse-hub-selected', 'parcel_read'],
+            ['POST', 'admin/parcel/received-warehouse-hub-selected', 'parcel_status_update'],
             ['GET', 'admin/parcel/bulkassign/print', 'parcel_read'],
-            ['POST', 'admin/transertohub-selected-hub', 'parcel_read'],
+            ['POST', 'admin/transertohub-selected-hub', 'parcel_status_update'],
+            ['POST', 'admin/parcel/recived-by-hub/search', 'parcel_status_update'],
             ['POST', 'admin/parcel/priority/update', 'parcel_update'],
             ['GET', 'admin/parcel/deliveryMan/show', 'parcel_read'],
             ['POST', 'admin/parcel/delivery-category', 'parcel_create|parcel_update'],
