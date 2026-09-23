@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Enums\Status;
+use App\Enums\UserType;
+use App\Models\Backend\Support;
 use App\Models\Backend\Department;
 use App\Models\Backend\Designation;
 use App\Models\User;
@@ -139,7 +141,89 @@ class CompanyCatalogScopeTest extends TestCase
         }
     }
 
+    /**
+     * ⚠️ Fermer le selecteur ne ferme pas l'ecriture. La liste deroulante ne
+     * propose plus que nos services ; rien n'oblige le navigateur a s'y tenir —
+     * c'est la phrase de S33, et elle vaut ici mot pour mot.
+     *
+     * Meme lecon que S43, prise par l'autre bout : la-bas un ecran nu rendait
+     * une garde de selecteur impossible ; ici un selecteur garde donnait
+     * l'illusion que l'ecriture l'etait aussi.
+     */
+    public function test_a_ticket_cannot_carry_another_companys_department(): void
+    {
+        $sien = Department::forceCreate([
+            'company_id' => self::AUTRE, 'title' => 'Service du voisin', 'status' => Status::ACTIVE,
+        ]);
+        $mien = Department::forceCreate([
+            'company_id' => settings()->id, 'title' => 'Service maison', 'status' => Status::ACTIVE,
+        ]);
+
+        $this->actingAs($this->agentDe(settings()->id));
+
+        foreach ([
+            'back-office' => app(SupportInterface::class),
+            'panneau marchand' => app(SupportMarchandInterface::class),
+        ] as $ou => $depot) {
+            $this->assertFalse(
+                (bool) $depot->store(new Request([
+                    'department_id' => $sien->id,
+                    'service' => 'Colis', 'priority' => 1,
+                    'subject' => 'Sujet', 'description' => 'Details', 'date' => date('Y-m-d'),
+                ])),
+                "{$ou} : un ticket a ete ouvert sur le service d'une autre societe",
+            );
+
+            // Controle negatif : avec NOTRE service, le ticket s'ouvre.
+            $this->assertTrue(
+                (bool) $depot->store(new Request([
+                    'department_id' => $mien->id,
+                    'service' => 'Colis', 'priority' => 1,
+                    'subject' => 'Sujet', 'description' => 'Details', 'date' => date('Y-m-d'),
+                ])),
+                "{$ou} : notre propre service a ete refuse",
+            );
+        }
+
+        $this->assertSame(0, Support::where('department_id', $sien->id)->count());
+        $this->assertSame(2, Support::where('department_id', $mien->id)->count());
+
+        // ⚠️ Et la MODIFICATION ferme la meme porte : le sabotage l'a reclame,
+        // `update()` restait vert des deux cotes. Une garde posee dans deux
+        // methodes n'est pas une garde prouvee dans les deux.
+        foreach ([
+            'back-office' => app(SupportInterface::class),
+            'panneau marchand' => app(SupportMarchandInterface::class),
+        ] as $ou => $depot) {
+            $ticket = Support::where('department_id', $mien->id)->orderBy('id')->get()->last();
+
+            $this->assertFalse(
+                (bool) $depot->update($ticket->id, new Request([
+                    'department_id' => $sien->id,
+                    'service' => 'Colis', 'priority' => 1,
+                    'subject' => 'Modifie', 'description' => 'Details', 'date' => date('Y-m-d'),
+                ])),
+                "{$ou} : un ticket a ete bascule vers le service d'une autre societe",
+            );
+            $this->assertSame($mien->id, (int) $ticket->fresh()->department_id);
+        }
+    }
+
     /* ───────────────────────────── fixtures ─────────────────────────────── */
+
+    private function agentDe(int $societe): User
+    {
+        $agent = new User();
+        $agent->company_id = $societe;
+        $agent->name = 'Agent catalogue';
+        $agent->email = 'agent.s47.' . $societe . '@example.test';
+        $agent->mobile = '00229975100' . $societe;
+        $agent->password = bcrypt('secret');
+        $agent->user_type = UserType::ADMIN;
+        $agent->save();
+
+        return $agent;
+    }
 
     private function inscrireUneSociete(string $domaine, string $courriel): void
     {

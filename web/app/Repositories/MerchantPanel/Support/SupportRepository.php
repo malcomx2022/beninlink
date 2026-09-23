@@ -42,6 +42,15 @@ class SupportRepository implements SupportInterface {
 
     public function store($request){
         try {
+            // S47 — fermer le SELECTEUR ne ferme pas l'ECRITURE. La liste
+            // deroulante ne propose plus que nos services ; rien n'oblige le
+            // navigateur a s'y tenir. Meme lecon que S43, prise par l'autre
+            // bout : la garde d'un ecran ne vaut pas garde de ce qu'il ecrit.
+            if (filled($request->department_id)
+                && blank(Department::companywise()->find($request->department_id))) {
+                return false;
+            }
+
 
             $support                    = new Support();
             $support->user_id           = Auth::User()->id;
@@ -66,6 +75,15 @@ class SupportRepository implements SupportInterface {
     public function update($id,$request)
     {
         try {
+            // S47 — fermer le SELECTEUR ne ferme pas l'ECRITURE. La liste
+            // deroulante ne propose plus que nos services ; rien n'oblige le
+            // navigateur a s'y tenir. Meme lecon que S43, prise par l'autre
+            // bout : la garde d'un ecran ne vaut pas garde de ce qu'il ecrit.
+            if (filled($request->department_id)
+                && blank(Department::companywise()->find($request->department_id))) {
+                return false;
+            }
+
             $support                    =  $this->ownedSupports()->find($id);
             if (blank($support)) {
                 return false;
