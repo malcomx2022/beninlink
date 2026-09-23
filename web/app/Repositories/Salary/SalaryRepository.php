@@ -14,6 +14,8 @@ use Carbon\Carbon;
 
 class SalaryRepository  implements SalaryInterface
 {
+    use \App\Traits\GuardsAccountingCounterparties;
+
     public function salaries(){
         return SalaryGenerate::companywise()->orderBy('id','desc')->paginate(10);
     }
@@ -57,6 +59,11 @@ class SalaryRepository  implements SalaryInterface
 
     public function salaryGenerateStore($request){
         try {
+            // S48 — la contrepartie doit etre des notres AVANT tout mouvement.
+            if ($this->contrepartieHorsPerimetre($request)) {
+                return false;
+            }
+
             $user  = User::find($request->user_id);
             $salaryGenerated            = SalaryGenerate::companywise()->where('user_id',$request->user_id)->where('month',$request->month)->first();
             if(!$salaryGenerated):
@@ -82,9 +89,22 @@ class SalaryRepository  implements SalaryInterface
 
 
     public function salaryGenerateUpdate($request){
+            // S48 — la contrepartie doit etre des notres AVANT tout mouvement.
+            if ($this->contrepartieHorsPerimetre($request)) {
+                return false;
+            }
+
         try{
             $user  = User::find($request->user_id);
-            $salaryGenerate             = SalaryGenerate::find($request->id);
+            // ⚠️ S48 — lecture NUE de la RESSOURCE elle-meme, trouvee en gardant ses
+            // contreparties. Toutes les autres lectures de ce depot sont
+            // `companywise()` depuis S30 ; celle-ci avait ete oubliee, et elle
+            // sert une MODIFICATION : le bulletin de paie d'une autre societe
+            // etait modifiable en changeant l'identifiant du corps.
+            $salaryGenerate             = SalaryGenerate::companywise()->find($request->id);
+            if (blank($salaryGenerate)) {
+                return false;
+            }
             $salaryGenerate->user_id    = $request->user_id;
             $salaryGenerate->month      = $request->month;
             $salaryGenerate->amount     = $request->amount;
@@ -124,6 +144,11 @@ class SalaryRepository  implements SalaryInterface
     }
     public function store($request){
         try {
+            // S48 — la contrepartie doit etre des notres AVANT tout mouvement.
+            if ($this->contrepartieHorsPerimetre($request)) {
+                return false;
+            }
+
             $salary  = new Salary();
             $salary->company_id      = settings()->id;
             $salary->user_id      = $request->user_id;
@@ -155,6 +180,11 @@ class SalaryRepository  implements SalaryInterface
     }
     public function update($id,$request){
         try {
+            // S48 — la contrepartie doit etre des notres AVANT tout mouvement.
+            if ($this->contrepartieHorsPerimetre($request)) {
+                return false;
+            }
+
             // S29 — lecture NUE avant des mouvements d'argent. Sur le bulletin d'une
             // AUTRE societe, cette methode CREDITAIT son compte bancaire du montant
             // lu, reecrivait sa ligne de paie (beneficiaire, compte, montant), puis

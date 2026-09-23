@@ -16,6 +16,8 @@ use App\Models\Backend\Merchant;
 use App\Models\Backend\CourierStatement;
 
 class ExpenseRepository implements ExpenseInterface{
+    use \App\Traits\GuardsAccountingCounterparties;
+
 
     public function all(){
         return Expense::companywise()->with('merchant','merchant.user','deliveryman','deliveryman.user','account','parcel')->orderByDesc('id')->paginate(10);
@@ -42,6 +44,11 @@ class ExpenseRepository implements ExpenseInterface{
     public function store($request)
     {
         try {
+            // S48 — la contrepartie doit etre des notres AVANT tout mouvement.
+            if ($this->contrepartieHorsPerimetre($request)) {
+                return false;
+            }
+
             DB::beginTransaction();
             // check accont balance
             $account = Account::find($request->account_id);
@@ -147,6 +154,11 @@ class ExpenseRepository implements ExpenseInterface{
     public function update($id, $request)
     {
         try {
+            // S48 — la contrepartie doit etre des notres AVANT tout mouvement.
+            if ($this->contrepartieHorsPerimetre($request)) {
+                return false;
+            }
+
             DB::beginTransaction();
             // S30 — la LECTURE etait `companywise()` (juste au-dessus), l'ECRITURE non :
             // cette methode REND LE SOLDE au compte bancaire rattache a la depense lue.
