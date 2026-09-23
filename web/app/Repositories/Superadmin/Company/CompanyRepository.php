@@ -449,8 +449,27 @@ class CompanyRepository implements CompanyInterface
                 $user->password         = Hash::make($request->password);
                 $user->mobile           = $request->mobile;
                 $user->user_type        = UserType::ADMIN;
-                $user->designation_id   = Designation::first()->id;
-                $user->department_id    = Department::first()->id;
+                // ⚠️ S47 — le socle prenait ici `Designation::first()` et
+                // `Department::first()` : la PREMIERE ligne de la table, toutes
+                // societes confondues. Le compte proprietaire d'une societe
+                // neuve pointait donc vers le catalogue d'une societe
+                // existante, et cette route n'est derriere AUCUNE
+                // authentification — `POST company/sign-up/store` vit entre les
+                // pages publiques.
+                //
+                // La consequence n'est pas cosmetique : `users.department_id` et
+                // `users.designation_id` portent `onDelete('cascade')`. La
+                // societe proprietaire du service pouvait donc, en le
+                // supprimant depuis ses propres reglages, DETRUIRE le compte
+                // proprietaire de la societe voisine — sans qu'aucun ecran ne
+                // le mentionne.
+                //
+                // Une societe neuve n'a pas encore de catalogue. Ne rien lui
+                // donner vaut mieux que lui preter celui d'une autre : les deux
+                // colonnes sont nullables, et le socle sait afficher un compte
+                // sans service ni fonction.
+                $user->designation_id   = null;
+                $user->department_id    = null;
                 $user->address          = $request->address;
                 $user->permissions      = $permissions;
                 $user->status           = Status::ACTIVE;

@@ -17,7 +17,13 @@ use App\Models\Backend\SupportChat;
 class SupportRepository implements SupportInterface {
     // get all rows in Department model
     public function departments(){
-        return Department::active()->orderBy('title')->get();
+        // S47 — lecture NUE d'un catalogue de societe. Ce selecteur listait les
+        // services de TOUTES les societes : leurs intitules internes
+        // s'affichaient dans la liste deroulante du formulaire de ticket, et un
+        // ticket pouvait porter le service d'une autre maison. La regle est
+        // pourtant connue du socle — `UserRepository` sert le MEME catalogue en
+        // `where('company_id', settings()->id)->active()`.
+        return Department::companywise()->active()->orderBy('title')->get();
     }
     private function ownedSupports(){
         return Support::where('user_id', Auth::user()->id);
