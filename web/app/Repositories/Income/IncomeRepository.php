@@ -20,6 +20,8 @@ use App\Models\User;
 use Carbon\Carbon;
 
 class IncomeRepository implements IncomeInterface {
+    use \App\Traits\GuardsAccountingCounterparties;
+
 
     public function all(){
         return Income::companywise()->with('merchant','merchant.user','deliveryman','deliveryman.user','account','parcel')->orderByDesc('id')->paginate(10);
@@ -54,6 +56,11 @@ class IncomeRepository implements IncomeInterface {
     {
 
         try {
+            // S48 — la contrepartie doit etre des notres AVANT tout mouvement.
+            if ($this->contrepartieHorsPerimetre($request)) {
+                return false;
+            }
+
             // check account balance
             if($request->account_head_id     == 1):
 
@@ -224,6 +231,11 @@ class IncomeRepository implements IncomeInterface {
     public function update($id, $request)
     {
         try {
+            // S48 — la contrepartie doit etre des notres AVANT tout mouvement.
+            if ($this->contrepartieHorsPerimetre($request)) {
+                return false;
+            }
+
             //update previus
             // S30 — lecture NUE avant des mouvements d'argent : cette methode touche
             // le compte bancaire ET le releve du marchand rattaches a la recette lue.
