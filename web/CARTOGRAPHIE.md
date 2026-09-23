@@ -4339,3 +4339,138 @@ la modification d'un colis : `store`, `duplicateStore` et `update` lisent
 **Vérification** : cliquet abaissé d'un cran → mord et nomme l'écart ; une route
 retirée de `PROUVEES` → mord et la nomme. Les dix gardes du lot sabotées une à
 une → dix rouges.
+
+## ✅ S46 — les catalogues d'un colis : le troisième identifiant (2026-09-23)
+
+### Ce que le relevé de S45 annonçait, et ce que la mesure a trouvé
+
+S38 a fermé l'identifiant du **colis**. S45 celui de l'**agent** — le livreur ou
+l'entrepôt nommé au passage. La création d'un colis en porte une troisième
+famille, plus nombreuse : les **catalogues** qu'on lui applique.
+
+La cartographie de S45 nommait la passe suivante ainsi : « `store`,
+`duplicateStore` et `update` lisent `shop_id`, `zone_id`, `category_id`,
+`packaging_id`, `delivery_type_id`, `delay_id` et `priority_id` en ne gardant
+que `Merchant` ». **Sept identifiants non gardés.** C'était faux, et la mesure
+est plus intéressante que l'annonce :
+
+| Identifiant | Ce que la mesure a trouvé |
+|---|---|
+| `zone_id` | **déjà gardé deux fois** — `ChargeCalculator` et la règle `DeliveryRoutePriced` |
+| `delivery_type_id` | constante de plateforme (`DeliveryType`), pas une clé étrangère |
+| `priority_id` | drapeau 1/2 écrit en dur par le contrôleur |
+| `delay_id` | **nu dans le résolveur** — le défaut d'argent |
+| `shop_id` | **nu** — et `merchant_shops` n'a pas de `company_id` (S26) |
+| `packaging_id` | **nu à l'écriture**, alors que son prix, lui, était gardé |
+| `category_id` | **nu** |
+
+Trois défauts, pas sept. Les nommer séparément vaut mieux qu'annoncer « sept
+identifiants non gardés » — plus spectaculaire, et faux. Un test inscrit
+désormais que la zone était déjà gardée, pour que personne n'aille « réparer »
+ce qui tient.
+
+### Le délai : 1 500 F qui deviennent 10 500 F
+
+`DeliveryChargeResolver::supplement()` lisait `DeliveryDelay::find()` nu. Le
+délai porte une **surcharge** ajoutée à la course : nommer le délai d'une autre
+société facturait son supplément à notre marchand. Mesure faite : une course de
+1 500 F devient **10 500 F** avec un délai voisin surchargé à 9 000.
+
+Atteignable par **deux** chemins — la création du colis et la règle de
+validation `DeliveryRoutePriced`, qui passe elle aussi `delay_id` brut. Garder
+dans le résolveur les ferme tous les deux.
+
+### ⚠️ Le périmètre est celui de la zone, pas du locataire ambiant
+
+`companywise()` lirait `settings()`. Or ce résolveur ne suppose nulle part que
+la route demandée est celle du locataire courant : `trancheDeZone()` ne s'appuie
+que sur le marchand et la zone.
+
+C'est `DeliveryZoneGridTest` qui l'a dit, en tombant. Sa fixture tarifie un
+marchand de la **société 2** pendant que `settings()->id` vaut **1** — le
+premier marchand du locataire semé n'appartient pas au locataire. Une garde sur
+`settings()` y avalait silencieusement le supplément.
+
+La garde tient quand même : un délai étranger présenté avec **notre** zone est
+écarté, puisque c'est la zone qui donne la société. Un test épingle la décision,
+sinon quelqu'un « simplifiera » en `companywise()` un jour.
+
+### La boutique, l'emballage, la catégorie
+
+- **`shop_id`** — `merchant_shops` ne porte **aucune** colonne `company_id`
+  (constat de S26) : le périmètre passe par le **marchand**, et pas seulement
+  par la société — la boutique d'un confrère de la maison n'est pas davantage la
+  sienne. Conséquence imprimée : `backend/parcel/bulk_print` rend
+  `merchantShop->contact_no`. Le téléphone d'une boutique étrangère partait sur
+  **notre** étiquette.
+- **`packaging_id`** — son **prix** était déjà gardé
+  (`ChargeCalculator::packagingAmount()`), son **écriture** non. Le colis portait
+  un emballage absent de notre catalogue, et personne ne le payait.
+- **`category_id`** — une des deux clés du barème. Refusée désormais par une
+  garde et non par accident : sans ligne de barème, une catégorie étrangère
+  faisait échouer la création toute seule. Le test pose donc une ligne de barème
+  de **notre** société portant la catégorie du voisin — rien dans le schéma ne
+  l'interdit — sans quoi il mesurerait un faux déjà acquis.
+
+Chaque catalogue reste **facultatif** : un champ absent laisse le colis sans
+catalogue, comme avant. Seul un identifiant fourni **et** étranger fait refuser.
+
+### ⚠️ L'autre porte, et le pire défaut du lot
+
+Le panneau **marchand** a son propre dépôt de colis, et il lisait les mêmes
+champs sans en vérifier **aucun**. Il en porte un de plus :
+
+```php
+$parcel->merchant_id = $request->merchant_id ?? $merchant_id;
+```
+
+Le formulaire du panneau envoie `merchant_id` dans un champ **caché**, et sa
+requête de validation ne le mentionne même pas. Un marchand pouvait donc, depuis
+**son** panneau, attribuer un colis à n'importe quel autre marchand — y compris
+d'une autre société — pendant que `company_id` restait la nôtre. Le colis
+atterrissait dans les relevés et le solde de l'autre.
+
+C'est **mot pour mot** la forme de S33 côté back-office, et la même phrase vaut
+ici : le formulaire ne propose que soi, rien n'oblige le navigateur à s'y tenir.
+
+> Une faille corrigée d'un côté d'une application vit souvent intacte de
+> l'autre. S33 avait fermé la porte de l'administration ; celle du marchand est
+> restée ouverte dix lots.
+
+### ⚠️ Le sabotage a réclamé trois fois dans ce seul lot
+
+| Ce que le lot croyait couvert | Ce que le sabotage a montré |
+|---|---|
+| la garde du back-office, posée dans trois méthodes | `duplicateStore` et `update` restaient **verts** |
+| la garde du panneau marchand | `duplicateStore`, `update` **et** la branche « catégorie » restaient verts |
+| le contrôle négatif du panneau | il échouait pour une autre raison — voir ci-dessous |
+
+> **Une aide partagée donne l'illusion d'une couverture que ses appelants n'ont
+> pas.** Le sabotage doit viser chaque **point d'appel** et chaque **branche**,
+> pas la fonction appelée.
+
+C'est la troisième fois de suite qu'un sabotage complète le lot au lieu de le
+valider — après le livreur étranger en lot de S45 et l'assertion creuse de
+`ParcelLifecycleTest`.
+
+Et un contrôle négatif a de nouveau corrigé un test : le dépôt du panneau
+suppose le **marchand** connecté — il lit `auth()->user()->hub_id`. Agir en
+administrateur faisait échouer la création légitime pour une autre raison, et le
+contrôle ne mesurait plus rien.
+
+### L'arriéré du filet S38 : 67 → 63
+
+Les quatre portes de création sortent, chacune établie par sabotage contre le
+seul `ParcelCatalogScopeTest` : `admin/parcel/store`, `admin/parcel/clone-store`,
+`merchant/parcel/store`, `merchant/parcel/clone-store`.
+
+`admin/parcel/delivery-category` **reste** : son contrôleur est bien
+`companywise()`, mais aucun test ne tombe quand on le retire. La garde existe ;
+rien ne la tient.
+
+### La passe suivante
+
+Le panneau marchand a d'autres dépôts que celui des colis — boutiques,
+portefeuille, tickets — et le défaut du `merchant_id` caché invite à les relever
+de la même façon : ce qui a été fermé côté administration l'a-t-il été côté
+marchand ?

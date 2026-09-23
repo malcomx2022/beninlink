@@ -115,6 +115,16 @@ class BodyIdentifierCoverageTest extends TestCase
         'POST admin/parcel/return-assign-to-merchant/cancel' => DeliveryCancellationAccountingTest::class,
         'POST admin/parcel/return-received-by-merchant/cancel' => DeliveryCancellationAccountingTest::class,
 
+        // S46 — les quatre portes de CREATION d'un colis. Leur identifiant de
+        // corps n'est pas un, c'est une famille : le marchand facture, et les
+        // catalogues qu'on applique — categorie, boutique, emballage. Chacune a
+        // ete etablie par sabotage contre ce seul fichier : trois points
+        // d'appel et quatre branches de garde, de chaque cote.
+        'POST admin/parcel/store' => ParcelCatalogScopeTest::class,
+        'POST admin/parcel/clone-store' => ParcelCatalogScopeTest::class,
+        'POST merchant/parcel/store' => ParcelCatalogScopeTest::class,
+        'POST merchant/parcel/clone-store' => ParcelCatalogScopeTest::class,
+
         // ⚠️ S45 — CE QUE CETTE COLONNE NE DIT PAS. Elle nomme le test qui tient
         // l'identifiant de COLIS. Elle ne dit rien du SECOND identifiant que la
         // meme requete transporte — le livreur ou l'entrepot qu'on nomme au
@@ -176,12 +186,10 @@ class BodyIdentifierCoverageTest extends TestCase
             'POST admin/merchant/paymentmethod/change',
             'POST admin/merchant/shops/store',
             'POST admin/merchant/store',
-            'POST admin/parcel/clone-store',
             'POST admin/parcel/delivery-category',
             'POST admin/parcel/partial-delivered/cancel',
             'POST admin/parcel/recived-by-hub/search',
             'POST admin/parcel/return-received-by-merchant',
-            'POST admin/parcel/store',
             'POST admin/payment/store',
             'POST admin/push-notification/store',
             'POST admin/request/hub/payment/store',
@@ -197,9 +205,7 @@ class BodyIdentifierCoverageTest extends TestCase
             'POST admin/wallet-request/recharge',
             'POST merchant/accounts/statements-filter',
             'POST merchant/fraud/store',
-            'POST merchant/parcel/clone-store',
             'POST merchant/parcel/delivery-category',
-            'POST merchant/parcel/store',
             'POST merchant/sign-up-store',
             'POST merchant/support/reply',
             'POST merchant/support/store',
@@ -229,7 +235,7 @@ class BodyIdentifierCoverageTest extends TestCase
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 67;
+    private const PLAFOND_HERITAGE = 63;
 
     protected function setUp(): void
     {

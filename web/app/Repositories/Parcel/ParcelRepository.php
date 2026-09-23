@@ -22,6 +22,8 @@ use App\Models\Backend\DeliverymanStatement;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\MerchantDeliveryCharge;
 use App\Models\Backend\Packaging;
+use App\Models\Backend\DeliveryDelay;
+use App\Models\MerchantShops;
 use App\Models\Backend\Parcel;
 use App\Models\Backend\ParcelEvent;
 use App\Models\Backend\CourierStatement;
@@ -366,6 +368,64 @@ class ParcelRepository implements ParcelInterface {
         return Str::upper(settings()->par_track_prefix).random_int(11111111,99999999);  
     }
 
+    /** La categorie partagee de la plateforme — voir `DeliveryCategoryRepository::all()`. */
+    private const CATEGORIE_DE_PLATEFORME = 1;
+
+    /**
+     * S46 — un catalogue applique au colis doit etre celui de la maison.
+     *
+     * Trois identifiants voyagent dans le corps de la requete et n'avaient
+     * aucun perimetre, alors que chacun se convertit en argent ou en adresse :
+     *
+     * · `category_id` — categorie de livraison ; c'est une des deux cles du
+     *   bareme, donc du prix de la course ;
+     * · `shop_id` — boutique de ramassage. `merchant_shops` ne porte AUCUNE
+     *   colonne `company_id` (S26) : son perimetre passe par le MARCHAND, et
+     *   pas seulement par la societe — la boutique d'un confrere de la maison
+     *   n'est pas davantage la sienne. `backend/parcel/bulk_print` imprime
+     *   `merchantShop->contact_no` : une boutique etrangere mettait son
+     *   telephone sur notre etiquette ;
+     * · `packaging_id` — son PRIX etait deja garde (`ChargeCalculator`), son
+     *   ECRITURE non : un emballage etranger s'inscrivait sur le colis et
+     *   etait facture zero.
+     *
+     * Ne sont PAS gardes ici, et c'est mesure : `zone_id` l'est deja deux fois
+     * (`ChargeCalculator` et la regle `DeliveryRoutePriced`), `delivery_type_id`
+     * est une constante de plateforme, `priority_id` un drapeau ecrit en dur
+     * par le controleur, et `delay_id` se garde dans le resolveur — seul
+     * endroit ou sa surcharge est lue.
+     *
+     * Chacun reste FACULTATIF : un champ absent laisse le colis sans catalogue,
+     * comme avant. Seul un identifiant fourni ET etranger fait refuser.
+     */
+    private function catalogueHorsPerimetre($merchant, $request): bool
+    {
+        // ⚠️ La categorie 1 est celle de la PLATEFORME, partagee par toutes les
+        // societes. Ce n'est pas une supposition : `DeliveryCategoryRepository`
+        // ecrit la regle deux fois — `all()` rend « `id = 1` OU `company_id =
+        // settings()->id` », et `get()` la reprend telle quelle. Les six lignes
+        // semees par le socle n'ont d'ailleurs AUCUN `company_id`. Une garde
+        // qui l'ignorerait refuserait le catalogue commun, donc la creation de
+        // colis la plus banale.
+        if (filled($request->category_id)
+            && (int) $request->category_id !== self::CATEGORIE_DE_PLATEFORME
+            && blank(Deliverycategory::companywise()->find($request->category_id))) {
+            return true;
+        }
+
+        if (filled($request->shop_id)
+            && blank(MerchantShops::where('merchant_id', $merchant->id)->find($request->shop_id))) {
+            return true;
+        }
+
+        if (filled($request->packaging_id)
+            && blank(Packaging::companywise()->find($request->packaging_id))) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function store($request) {
 
         try {
@@ -378,6 +438,13 @@ class ParcelRepository implements ParcelInterface {
             // debitait frais, TVA et net a reverser. Le formulaire ne propose que mes
             // marchands ; rien n'obligeait le navigateur a s'y tenir.
             if (blank($merchant)) {
+                DB::rollBack();
+                return false;
+            }
+
+            // S46 — les CATALOGUES du colis. Le marchand etait garde depuis S33 ;
+            // ce qu'on applique au colis ne l'etait pas.
+            if ($this->catalogueHorsPerimetre($merchant, $request)) {
                 DB::rollBack();
                 return false;
             }
@@ -570,6 +637,13 @@ class ParcelRepository implements ParcelInterface {
                 DB::rollBack();
                 return false;
             }
+
+            // S46 — les CATALOGUES du colis. Le marchand etait garde depuis S33 ;
+            // ce qu'on applique au colis ne l'etait pas.
+            if ($this->catalogueHorsPerimetre($merchant, $request)) {
+                DB::rollBack();
+                return false;
+            }
             $duplicate_parcel               = $this->get($request->parcel_id);
             $parcel                         = new Parcel();
             $parcel->company_id             = settings()->id;
@@ -746,6 +820,13 @@ class ParcelRepository implements ParcelInterface {
             $parcel                         = Parcel::companywise()->find($id);
 
             if (blank($parcel) || blank($merchant)) {
+                DB::rollBack();
+                return false;
+            }
+
+            // S46 — les CATALOGUES du colis. Le marchand etait garde depuis S33 ;
+            // ce qu'on applique au colis ne l'etait pas.
+            if ($this->catalogueHorsPerimetre($merchant, $request)) {
                 DB::rollBack();
                 return false;
             }

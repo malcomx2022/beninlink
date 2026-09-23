@@ -205,9 +205,77 @@ class MerchantParcelRepository implements MerchantParcelInterface {
         return Str::upper(settings()->par_track_prefix).random_int(11111111,99999999);  
     }
 
+    /** La categorie partagee de la plateforme — voir `DeliveryCategoryRepository::all()`. */
+    private const CATEGORIE_DE_PLATEFORME = 1;
+
+    /**
+     * S46 — le panneau MARCHAND : la meme famille d'identifiants, l'autre porte.
+     *
+     * Le depot du back-office a recu sa garde ; celui-ci lisait les memes
+     * champs sans en verifier aucun. Il en porte un de plus, et c'est le pire :
+     *
+     * ⚠️ `$parcel->merchant_id = $request->merchant_id ?? $merchant_id` — le
+     * formulaire envoie `merchant_id` dans un champ **cache**, et un champ
+     * cache est tenu par le navigateur, pas par nous. C'est mot pour mot la
+     * forme du defaut S33 cote back-office : « le formulaire ne propose que mes
+     * marchands ; rien n'obligeait le navigateur a s'y tenir. » Un marchand
+     * pouvait donc, depuis SON panneau, attribuer un colis a n'importe quel
+     * autre marchand — y compris d'une autre societe — pendant que
+     * `company_id` restait la notre : le colis atterrissait dans les releves et
+     * le solde de l'autre. La requete du panneau ne valide meme pas ce champ.
+     *
+     * Les trois autres sont ceux du back-office, meme motif : la boutique se
+     * garde par le MARCHAND (`merchant_shops` n'a pas de `company_id`, S26),
+     * l'emballage et la categorie par la societe. La zone et le delai, eux, se
+     * gardent en aval — `ChargeCalculator` et `DeliveryChargeResolver`.
+     */
+    private function catalogueHorsPerimetre($merchant_id, $request): bool
+    {
+        if (filled($request->merchant_id) && (int) $request->merchant_id !== (int) $merchant_id) {
+            return true;
+        }
+
+        // ⚠️ Deux ecarts avec la garde du back-office, tous deux mesures.
+        //
+        // 1. La categorie 1 est celle de la PLATEFORME, partagee par toutes les
+        //    societes. `DeliveryCategoryRepository` ecrit la regle deux fois —
+        //    `all()` rend « `id = 1` OU `company_id = settings()->id` » — et les
+        //    six lignes semees par le socle n'ont aucun `company_id`.
+        // 2. Le perimetre est celui du MARCHAND, pas du locataire ambiant.
+        //    `companywise()` lirait `settings()`, or ce depot est entre par
+        //    l'API mobile et le panneau autant que par le web : le marchand
+        //    authentifie est la source de verite, pas l'hote de la requete.
+        //    Meme decision que pour le supplement de delai dans
+        //    `DeliveryChargeResolver`, et pour la meme raison.
+        $societe = Merchant::find($merchant_id)?->company_id;
+
+        if (filled($request->category_id)
+            && (int) $request->category_id !== self::CATEGORIE_DE_PLATEFORME
+            && blank(Deliverycategory::where('company_id', $societe)->find($request->category_id))) {
+            return true;
+        }
+
+        if (filled($request->shop_id)
+            && blank(MerchantShops::where('merchant_id', $merchant_id)->find($request->shop_id))) {
+            return true;
+        }
+
+        if (filled($request->packaging_id)
+            && blank(Packaging::where('company_id', $societe)->find($request->packaging_id))) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function store($request,$merchant_id) {
 
         try {
+            // S46 — les catalogues du colis, et le marchand facture.
+            if ($this->catalogueHorsPerimetre($merchant_id, $request)) {
+                return false;
+            }
+
 
             /**
              * W5, décision du 2026-09-05 — la création et le débit du
@@ -380,6 +448,11 @@ class MerchantParcelRepository implements MerchantParcelInterface {
 
     public function duplicateStore($request,$merchant_id) {
         try {
+            // S46 — les catalogues du colis, et le marchand facture.
+            if ($this->catalogueHorsPerimetre($merchant_id, $request)) {
+                return false;
+            }
+
             // Dupliquer un colis, c'est en creer un : meme atomicite que
             // `store()`. Le socle ecrivait le colis, puis tentait le debit dans
             // un `catch` vide — un echec laissait un colis a facturer a
@@ -568,6 +641,11 @@ class MerchantParcelRepository implements MerchantParcelInterface {
     public function update($id, $request,$merchant_id) {
 
         try {
+            // S46 — les catalogues du colis, et le marchand facture.
+            if ($this->catalogueHorsPerimetre($merchant_id, $request)) {
+                return false;
+            }
+
 
             $parcel                         = $this->ownedParcels()->find($id);
             if(blank($parcel)){
