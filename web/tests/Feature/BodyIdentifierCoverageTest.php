@@ -91,6 +91,40 @@ class BodyIdentifierCoverageTest extends TestCase
         'PUT admin/fraud/update' => UserAndSettingsScopeTest::class,
         // S31 — la paie
         'PUT admin/salary/update' => SalaryScopeTest::class,
+
+        // S45 — les seize etapes de statut dont le perimetre est MESURE. Chaque
+        // ligne a ete etablie de la meme facon : on retire la garde
+        // `companywise()` de la methode, on relance le fichier nomme ici, et on
+        // exige qu'il tombe. Un nom de test n'a jamais suffi — deux
+        // attributions plausibles ont ete refusees parce qu'elles restaient
+        // vertes sans la garde.
+        'POST admin/parcel/pickup-man/assigned' => ParcelLifecycleTest::class,
+        'POST admin/parcel/pickup/re-schedule' => ParcelLifecycleTest::class,
+        'POST admin/parcel/pickup/received' => ParcelLifecycleTest::class,
+        'POST admin/parcel/received-by-hub' => ParcelLifecycleTest::class,
+        'POST admin/parcel/delivery-man-assign' => ParcelLifecycleTest::class,
+        'POST admin/parcel/delivery-reschedule' => ParcelLifecycleTest::class,
+        'POST admin/parcel/return-to-qourier' => ParcelLifecycleTest::class,
+        'POST admin/parcel/transfer-to-hub' => ParcelLifecycleTest::class,
+        'POST admin/parcel/received-warehouse' => ParcelAgentScopeTest::class,
+        'POST admin/parcel/return-assign-to-merchant-reschedule' => ParcelAgentScopeTest::class,
+        'POST admin/parcel/delivered' => DeliveryAccountingTest::class,
+        'POST admin/parcel/partial-delivered' => PartialDeliveryAccountingTest::class,
+        'POST admin/parcel/delivered/cancel' => DeliveryCancellationAccountingTest::class,
+        'POST admin/parcel/received-warehouse/cancel' => DeliveryCancellationAccountingTest::class,
+        'POST admin/parcel/return-assign-to-merchant/cancel' => DeliveryCancellationAccountingTest::class,
+        'POST admin/parcel/return-received-by-merchant/cancel' => DeliveryCancellationAccountingTest::class,
+
+        // ⚠️ S45 — CE QUE CETTE COLONNE NE DIT PAS. Elle nomme le test qui tient
+        // l'identifiant de COLIS. Elle ne dit rien du SECOND identifiant que la
+        // meme requete transporte — le livreur ou l'entrepot qu'on nomme au
+        // passage. S38 avait inscrit cinq routes ci-dessus (`assign-pickup/bulk`,
+        // `assign-return-to-merchant-bulk`, `return-assign-to-merchant`,
+        // `delivery-man-assign-multiple-parcel`, `transfer-to-hub-multiple-parcel`)
+        // alors que leur `delivery_man_id` n'avait AUCUN perimetre : on creditait
+        // le solde d'un livreur d'une autre societe. `ParcelAgentScopeTest` ferme
+        // cet axe-la pour les huit methodes concernees. Une route « prouvee »
+        // l'est SUR L'AXE QUE SON TEST MESURE, pas dans l'absolu.
     ];
 
     /**
@@ -143,27 +177,11 @@ class BodyIdentifierCoverageTest extends TestCase
             'POST admin/merchant/shops/store',
             'POST admin/merchant/store',
             'POST admin/parcel/clone-store',
-            'POST admin/parcel/delivered',
-            'POST admin/parcel/delivered/cancel',
             'POST admin/parcel/delivery-category',
-            'POST admin/parcel/delivery-man-assign',
-            'POST admin/parcel/delivery-reschedule',
-            'POST admin/parcel/partial-delivered',
             'POST admin/parcel/partial-delivered/cancel',
-            'POST admin/parcel/pickup-man/assigned',
-            'POST admin/parcel/pickup/re-schedule',
-            'POST admin/parcel/pickup/received',
-            'POST admin/parcel/received-by-hub',
-            'POST admin/parcel/received-warehouse',
-            'POST admin/parcel/received-warehouse/cancel',
             'POST admin/parcel/recived-by-hub/search',
-            'POST admin/parcel/return-assign-to-merchant-reschedule',
-            'POST admin/parcel/return-assign-to-merchant/cancel',
             'POST admin/parcel/return-received-by-merchant',
-            'POST admin/parcel/return-received-by-merchant/cancel',
-            'POST admin/parcel/return-to-qourier',
             'POST admin/parcel/store',
-            'POST admin/parcel/transfer-to-hub',
             'POST admin/payment/store',
             'POST admin/push-notification/store',
             'POST admin/request/hub/payment/store',
@@ -211,7 +229,7 @@ class BodyIdentifierCoverageTest extends TestCase
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 83;
+    private const PLAFOND_HERITAGE = 67;
 
     protected function setUp(): void
     {
