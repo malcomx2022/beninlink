@@ -178,7 +178,18 @@ class BodyIdentifierCoverageTest extends TestCase
         'PUT merchant/fraud/update' => MerchantPanelWebScopeTest::class,
         'PUT merchant/accounts/payment-account/update' => MerchantPanelWebScopeTest::class,
         'PUT merchant/payment-request/update' => MerchantPanelWebScopeTest::class,
-    ];
+    
+        // S51 — les portes de CREATION : le second identifiant, septieme fois
+        'POST admin/assets/store' => CreationDoorScopeTest::class,
+        'POST admin/deliveryman/store' => CreationDoorScopeTest::class,
+        'POST admin/todo/todo_add' => CreationDoorScopeTest::class,
+        'POST admin/todo/completed' => CreationDoorScopeTest::class,
+        'POST admin/todo/processing' => CreationDoorScopeTest::class,
+        'POST admin/payment/store' => CreationDoorScopeTest::class,
+        'POST admin/request/hub/payment/store' => CreationDoorScopeTest::class,
+        'POST admin/support/reply' => CreationDoorScopeTest::class,
+        'POST merchant/support/reply' => CreationDoorScopeTest::class,
+];
 
     /**
      * Routes dont l'identifiant de corps ne désigne PAS une ressource de
@@ -197,7 +208,9 @@ class BodyIdentifierCoverageTest extends TestCase
         'DELETE subscription/success' => 'même route, autre verbe',
         'POST admin/addons/activation' => 'bascule d\'un module de la plateforme : l\'identifiant désigne un module, pas une ressource de société',
         'PUT category/update' => 'S35 — le catalogue des catégories ne porte AUCUNE colonne `company_id` : il est commun à toutes les sociétés, et `UserAndSettingsScopeTest` l\'inscrit',
-    ];
+            'POST admin/fraud/store' => 'S51 — la fiche de fraude ne porte AUCUN identifiant de locataire : `phone`, `name`, `details` et `tracking_id` sont des chaines (voir la migration : `tracking_id` est un `string`, pas une cle etrangere). `company_id` vient de `settings()` et `created_by` de la session',
+        'POST merchant/fraud/store' => 'S51 — idem cote panneau marchand : meme depot, memes champs, aucun identifiant a garder',
+];
 
     /**
      * L'arriéré de ce filet, à son ouverture.
@@ -212,11 +225,8 @@ class BodyIdentifierCoverageTest extends TestCase
      * d'autant. C'est le chemin qui a mené l'arriéré de l'autre filet de 171 à 0.
      */
     private const HERITAGE = [
-            'POST admin/assets/store',
             'POST admin/assign-pickup/parcel/search',
             'POST admin/assign-return-to-merchant/parcel/search',
-            'POST admin/deliveryman/store',
-            'POST admin/fraud/store',
             'POST admin/get-merchant-cod',
             'POST admin/income/hub-user-accounts',
             'POST admin/merchant/account',
@@ -227,26 +237,18 @@ class BodyIdentifierCoverageTest extends TestCase
             'POST admin/parcel/partial-delivered/cancel',
             'POST admin/parcel/recived-by-hub/search',
             'POST admin/parcel/return-received-by-merchant',
-            'POST admin/payment/store',
             'POST admin/push-notification/store',
-            'POST admin/request/hub/payment/store',
             'POST admin/salary/search-account',
             'POST admin/sms-send-settings/status',
-            'POST admin/support/reply',
-            'POST admin/todo/completed',
-            'POST admin/todo/processing',
-            'POST admin/todo/todo_add',
             'POST admin/wallet-request/recharge',
             'POST merchant/accounts/statements-filter',
-            'POST merchant/fraud/store',
             'POST merchant/parcel/delivery-category',
             'POST merchant/sign-up-store',
-            'POST merchant/support/reply',
             'PUT admin/currency/update',
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 31;
+    private const PLAFOND_HERITAGE = 20;
 
     protected function setUp(): void
     {

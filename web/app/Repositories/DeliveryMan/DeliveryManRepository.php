@@ -17,6 +17,8 @@ use App\Repositories\DeliveryMan\DeliveryManInterface;
 use Illuminate\Support\Facades\Auth;
 
 class DeliveryManRepository implements DeliveryManInterface {
+    use \App\Traits\GuardsForeignIdentifiers;
+
 
     public function all(){
         return DeliveryMan::where('company_id',settings()->id)->with('uploadLicense','user','hub')->orderByDesc('id')->paginate(10);
@@ -53,6 +55,14 @@ class DeliveryManRepository implements DeliveryManInterface {
     }
 
     public function store($request) {
+       // S51 — le livreur est cree chez nous (`company_id` = la notre), mais son
+       // ENTREPOT d'affectation vient du formulaire. Sans garde, on rattachait
+       // un livreur a l'entrepot d'une autre societe : il apparaissait dans ses
+       // listes d'assignation et ses remises d'especes.
+       if ($this->identifiantsHorsPerimetre($request, ['hub_id' => Hub::class])) {
+           return false;
+       }
+
        try {
 
            $uniqueID =  $this->generateUniqueID();

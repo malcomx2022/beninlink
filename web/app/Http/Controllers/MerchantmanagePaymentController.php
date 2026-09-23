@@ -82,14 +82,25 @@ class MerchantmanagePaymentController extends Controller
 
     //payment store
     public function paymentStore(StoreRequest $request){
-        $account  = Merchant::where('id',$request->merchant)->first();
+        // S51 — meme lecture nue, sur le solde d'un MARCHAND cette fois. Elle
+        // precede le depot, donc elle renseignait sur le solde d'un marchand
+        // d'en face avant meme que la garde du depot ne refuse l'ecriture.
+        $account  = Merchant::companywise()->where('id',$request->merchant)->first();
+        if(blank($account)){
+            Toastr::error(__('merchantmanage.error_msg'),__('message.error'));
+            return back()->withInput();
+        }
         $balance = (double) $account->current_balance;
         if((double) $request->amount > $balance){
             Toastr::warning(__('merchantmanage.not_enough_merchant_balance'),__('message.warning'));
             return back()->withInput();
         }
         if($request->isprocess):
-            $courier_account = Account::find($request->from_account);
+            $courier_account = Account::companywise()->find($request->from_account);
+            if(blank($courier_account)){
+                Toastr::error(__('merchantmanage.error_msg'),__('message.error'));
+                return back()->withInput();
+            }
             if((double) $request->amount > $courier_account->balance){
 
                 Toastr::warning(__('merchantmanage.not_enough_courier_balance'),__('message.warning'));

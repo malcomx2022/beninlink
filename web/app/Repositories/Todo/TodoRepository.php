@@ -7,6 +7,8 @@ use App\Enums\TodoStatus;
 
 
 class TodoRepository implements TodoInterface{
+    use \App\Traits\GuardsForeignIdentifiers;
+
     public function all(){
         return To_do::companywise()->orderByDesc('id')->paginate(10);
     }
@@ -17,6 +19,13 @@ class TodoRepository implements TodoInterface{
     }
 
     public function store($request){
+        // S51 — la tache porte bien `company_id`, mais elle est ASSIGNEE a un
+        // utilisateur nomme par le formulaire. Sans garde, on assignait une
+        // tache a l'agent d'une autre societe, qui la voyait dans sa liste.
+        if ($this->identifiantsHorsPerimetre($request, ['user_id' => User::class])) {
+            return false;
+        }
+
         try {
             $todo               = new To_do();
             $todo->company_id   = settings()->id;

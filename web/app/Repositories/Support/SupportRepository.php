@@ -139,6 +139,22 @@ class SupportRepository implements SupportInterface {
     public function reply($request){
         try {
 
+            // S51 — ⚠️ QUATRIEME PASSAGE DANS CE FICHIER, et `reply()` avait
+            // survecu aux trois precedents. S23 a scope les LECTURES, S29 a
+            // ferme `update()` et `destroy()`, S47 a ferme le `department_id`
+            // de `store()`/`update()` — personne n'a regarde la reponse.
+            //
+            // `support_id` venait du corps, nu : on ecrivait un message dans le
+            // fil de discussion du ticket d'un AUTRE transporteur, signe de
+            // notre `user_id`. Le client d'en face le lisait dans son ticket.
+            //
+            // ⚠️ Le panneau marchand, lui, gardait deja ce chemin. C'est
+            // l'inverse de l'asymetrie supposee en S47 : ici c'est le
+            // BACK-OFFICE qui etait en retard sur le panneau.
+            if (blank($this->ticketsVisibles()->find($request->support_id))) {
+                return false;
+            }
+
             $reply                = new SupportChat();
             $reply->support_id    = $request->support_id;
             $reply->user_id       = Auth::user()->id;

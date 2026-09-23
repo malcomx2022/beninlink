@@ -43,6 +43,14 @@ use App\Models\User;
  */
 trait GuardsAccountingCounterparties
 {
+    /**
+     * S51 — la boucle de garde vit desormais une couche plus bas, parce que les
+     * portes de CREATION du socle nomment les memes ressources autrement. Le
+     * comportement des huit points d'appel de S48 est inchange : meme carte,
+     * meme refus, memes sabotages rouges.
+     */
+    use GuardsForeignIdentifiers;
+
     /** Les contreparties d'une ecriture, et le modele qui porte leur perimetre. */
     private const CONTREPARTIES = [
         'merchant_id'     => Merchant::class,
@@ -63,14 +71,6 @@ trait GuardsAccountingCounterparties
      */
     protected function contrepartieHorsPerimetre($request): bool
     {
-        foreach (self::CONTREPARTIES as $champ => $modele) {
-            $valeur = $request->{$champ} ?? null;
-
-            if (filled($valeur) && blank($modele::companywise()->find($valeur))) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->identifiantsHorsPerimetre($request, self::CONTREPARTIES);
     }
 }

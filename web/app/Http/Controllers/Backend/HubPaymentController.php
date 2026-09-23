@@ -53,7 +53,15 @@ class HubPaymentController extends Controller
     public function paymentStore(StoreRequest $request){
 
         if($request->isprocess):
-            $courier_account = Account::find($request->from_account);
+            // S51 — `Account::find()` etait nu : on LISAIT le solde du compte de
+            // tresorerie d'une autre societe pour le comparer au montant. Le
+            // depot refuse desormais ce versement, mais la comparaison se
+            // faisait AVANT lui, et renseignait deja sur un solde d'en face.
+            $courier_account = Account::companywise()->find($request->from_account);
+            if(blank($courier_account)){
+                Toastr::error(__('hub_payment.error_msg'),__('message.error'));
+                return back()->withInput();
+            }
             if((double) $request->amount > $courier_account->balance){
                 Toastr::warning(__('hub_payment.not_enough_courier_balance'),__('message.warning'));
                 return back()->withInput();

@@ -7,6 +7,8 @@ use App\Models\Backend\Assetcategory;
 use Illuminate\Support\Facades\Auth;
 
 class AssetRepository implements AssetInterface{
+    use \App\Traits\GuardsForeignIdentifiers;
+
 
     public function all(){
         return Asset::companywise()->orderBy('name','asc')->paginate(10);
@@ -31,6 +33,18 @@ class AssetRepository implements AssetInterface{
     // All request data store in NewsOffer tabel.
     public function store($request)
     {
+
+        // S51 — la RESSOURCE est neuve, donc rien a garder de ce cote ; mais
+        // l'immobilisation est CLASSEE dans une categorie et AFFECTEE a un
+        // entrepot, tous deux nommes par le formulaire. Sans garde, elle etait
+        // rangee dans le catalogue d'une autre societe et posee dans son
+        // entrepot. Meme forme qu'en S46 sur les catalogues d'un colis.
+        if ($this->identifiantsHorsPerimetre($request, [
+            'assetcategory_id' => Assetcategory::class,
+            'hub_id'           => Hub::class,
+        ])) {
+            return false;
+        }
 
         try {
 

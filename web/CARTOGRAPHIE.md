@@ -4680,7 +4680,7 @@ le sont également.
 test ne tombe quand on la retire. Elle reste dans l'arriéré, à sa place — c'est
 précisément ce que l'arriéré veut dire.
 
-Six routes ne montrent **aucune garde reconnaissable** : `assets/store`,
+**Onze** routes ne montrent **aucune garde reconnaissable** : `assets/store`,
 `deliveryman/store`, `fraud/store`, les trois `todo`, `payment/store`,
 `hub/payment/store` et les deux `support/reply`. Elles n'ont pas été mesurées
 faute de garde à saboter — ce sont les candidates du prochain lot de correction,
@@ -4703,3 +4703,115 @@ Trois issues, et le choix n'appartient pas à la revue :
 3. **ajouter `company_id`** — chaque société tient ses devises, migration à la clé.
 
 En l'état, une société qui renomme une devise la renomme **pour tout le monde**.
+
+## ✅ S51 — le second identifiant sur les portes de création (2026-09-23)
+
+### Le motif, pour la septième fois
+
+S45 sur **l'agent** d'un mouvement de colis, S46 sur les **catalogues** d'un
+colis, S47 sur le **catalogue** d'un compte, S48 sur les **contreparties** d'une
+écriture, S49 sur le **marchand** d'une boutique, S50 l'a mesuré partout où il
+était déjà fermé. S51 attaque les onze routes que S50 avait désignées : celles
+où l'instrument ne reconnaissait **aucune** garde.
+
+La lecture a d'abord corrigé l'instrument, et c'est le premier constat du lot.
+
+### ⚠️ Un instrument qui cherche une FORME ne trouve pas une RÈGLE
+
+Sur les onze routes signalées « sans garde », **quatre étaient gardées** :
+
+- `todoComplete` et `todoProcessing` comparent `company_id == settings()->id`
+  **à la main**, sans passer par `companywise()` ;
+- la réponse aux tickets du **panneau marchand** refuse déjà par `get()` ;
+- `CashReceivedFromDeliveryman` l'était depuis toujours (déjà corrigé en S48).
+
+Et **deux** n'ont rien à garder : la fiche de fraude ne porte aucun identifiant
+de locataire — `tracking_id` est un `string`, pas une clé étrangère. Elles sont
+désormais **exemptées avec leur motif**, pas corrigées.
+
+> Mon relevé de S50 disait « aucune garde reconnue ». Il disait vrai. J'ai
+> écrit « aucune garde » dans la cartographie — c'était faux, et la correction
+> vaut d'être notée : un instrument ne constate pas, il **signale**.
+
+*(La ligne de S50 qui annonçait « six routes » est corrigée au passage : il y
+en avait onze.)*
+
+### ⚠️ Deux portes déplaçaient de l'argent
+
+C'est là que le défaut coûte, et les deux sont de la famille de S48 sur un
+module qu'il ne couvrait pas :
+
+| Porte | Identifiant nu | Ce que le socle en faisait |
+|---|---|---|
+| versement marchand | `merchant` | `current_balance - amount`, plus un relevé |
+| versement marchand | `from_account` | le compte de **trésorerie** débité |
+| versement marchand | `merchant_account` | le compte bancaire crédité |
+| versement entrepôt | `from_account` | le compte de **trésorerie** débité |
+| versement entrepôt | `hub_id` | l'entrepôt créancier |
+
+Un versement saisi chez nous débitait donc le solde d'un marchand d'une **autre**
+société, et le compte de trésorerie d'en face, en écrivant relevé et transaction
+bancaire à **notre** `company_id`.
+
+### ⚠️ `companywise()` ne suffisait pas sur `merchant_account`
+
+Un compte de versement appartient à **un marchand** (S34 : la table ne porte pas
+de `company_id`). Garder par `companywise()` seul laissait ouvert le paiement du
+marchand **A** sur le compte bancaire du marchand **B** — les deux chez nous.
+La garde est donc plus étroite : le compte doit être **celui du marchand payé**.
+Même leçon qu'en S49.
+
+### Les portes de rattachement
+
+`AssetRepository::store` classait l'immobilisation dans le catalogue du voisin et
+la posait dans son entrepôt ; `DeliveryManRepository::store` affectait le livreur
+à l'entrepôt du voisin ; `TodoRepository::store` assignait la tâche à son agent.
+
+### ⚠️ Quatrième passage dans `SupportRepository`, et `reply()` avait survécu
+
+S23 a scopé les **lectures**, S29 a fermé `update()` et `destroy()`, S47 a fermé
+le `department_id` de `store()`/`update()`. Personne n'avait regardé la
+**réponse** : `support_id` venait du corps, nu. On écrivait un message dans le fil
+du ticket d'un autre transporteur, signé de notre identifiant.
+
+Et le **panneau marchand**, lui, gardait déjà ce chemin — l'inverse exact de
+l'asymétrie supposée en S47. C'est la raison de mesurer les deux côtés plutôt
+que de déduire l'un de l'autre.
+
+### ⚠️ Le sabotage a corrigé le lot trois fois
+
+**1. Un contrôle négatif creux.** `Asset / assetcategory_id` est sorti **vert**.
+La requête de test laissait `hub_id = ''`, ce qui viole la contrainte de clé
+étrangère : le dépôt rendait `false` **pour la mauvaise raison**, et le test
+passait sans jamais exercer sa garde. Une sonde l'a établi plutôt qu'une
+supposition.
+
+**2. Une assertion vide passe toujours.** Les deux tests de contrôleur reposent
+sur `assertStringNotContainsString`, qui est **vrai sur une chaîne vide** — donc
+aussi quand la requête n'atteint jamais le contrôleur. Le sabotage du contrôleur
+marchand est resté **vert** : la route exige `payment_create`, pas
+`merchant_payment_create`, et mon agent recevait un 403.
+
+**3. Et une validation muette.** L'ancrage positif ajouté ensuite a immédiatement
+révélé une deuxième cause : `merchant_account` est obligatoire côté validation,
+donc la requête mourait avant le contrôleur.
+
+> Un test qui vérifie une **absence** doit d'abord prouver une **présence** :
+> que le code visé a bien tourné. Sans cet ancrage, il mesure le vide.
+
+### L'arriéré du filet S38 : 31 → 20
+
+Neuf routes prouvées par `CreationDoorScopeTest`, deux exemptées avec leur motif.
+
+| | |
+|---|---|
+| `CreationDoorScopeTest` | 15 cas, 53 assertions |
+| Sabotages | **15 sur 15 rouges** — 10 champs de dépôt, 2 contrôleurs, 3 gardes préexistantes |
+| Cliquet | mord à 19, et nomme une route retirée de `PROUVEES` **ou** d'`EXEMPTEES` |
+
+### La passe suivante
+
+Il reste **20** routes à l'arriéré. `PUT admin/currency/update` en fait toujours
+partie et attend un arbitrage de produit (voir S50) : `Currency::find()` est nu,
+mais `currencies` ne porte aucune `company_id`, donc une société qui renomme une
+devise la renomme **pour tout le monde**.
