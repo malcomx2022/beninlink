@@ -304,6 +304,36 @@ class ParcelCatalogScopeTest extends TestCase
         $this->assertSame($monEmballage->id, (int) $colis->fresh()->packaging_id);
     }
 
+    /**
+     * ⚠️ La categorie 1 est celle de la PLATEFORME, partagee par toutes les
+     * societes, et ce test existe pour qu'on ne resserre pas la garde dessus.
+     *
+     * Ce n'est pas une supposition : `DeliveryCategoryRepository` ecrit la regle
+     * deux fois — `all()` rend « `id = 1` OU `company_id = settings()->id` », et
+     * `get()` la reprend telle quelle. Les six lignes de `deliverycategories`
+     * semees par le socle n'ont d'ailleurs AUCUN `company_id`.
+     *
+     * Une garde qui l'ignorerait refuserait le catalogue commun — donc la
+     * creation de colis la plus banale. C'est ce qui est arrive : treize tests
+     * existants sont tombes, tous en 500, et c'est eux qui ont dit la regle.
+     */
+    public function test_the_platform_category_is_shared_by_every_company(): void
+    {
+        $partagee = Deliverycategory::findOrFail(1);
+        $this->assertNull(
+            $partagee->company_id,
+            'la fixture doit partir de la categorie de plateforme, sans societe',
+        );
+
+        $this->bareme(settings()->id, 1, $this->maZone->id, 1, 1500);
+
+        $this->assertTrue(
+            (bool) $this->depot->store($this->requete(['category_id' => 1])),
+            'la categorie partagee de la plateforme a ete refusee',
+        );
+        $this->assertSame(1, (int) Parcel::firstOrFail()->category_id);
+    }
+
     /* ───────── la zone : ce que le releve de S45 annoncait a tort ────────── */
 
     /**

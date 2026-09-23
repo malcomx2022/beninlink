@@ -368,6 +368,9 @@ class ParcelRepository implements ParcelInterface {
         return Str::upper(settings()->par_track_prefix).random_int(11111111,99999999);  
     }
 
+    /** La categorie partagee de la plateforme — voir `DeliveryCategoryRepository::all()`. */
+    private const CATEGORIE_DE_PLATEFORME = 1;
+
     /**
      * S46 — un catalogue applique au colis doit etre celui de la maison.
      *
@@ -397,7 +400,15 @@ class ParcelRepository implements ParcelInterface {
      */
     private function catalogueHorsPerimetre($merchant, $request): bool
     {
+        // ⚠️ La categorie 1 est celle de la PLATEFORME, partagee par toutes les
+        // societes. Ce n'est pas une supposition : `DeliveryCategoryRepository`
+        // ecrit la regle deux fois — `all()` rend « `id = 1` OU `company_id =
+        // settings()->id` », et `get()` la reprend telle quelle. Les six lignes
+        // semees par le socle n'ont d'ailleurs AUCUN `company_id`. Une garde
+        // qui l'ignorerait refuserait le catalogue commun, donc la creation de
+        // colis la plus banale.
         if (filled($request->category_id)
+            && (int) $request->category_id !== self::CATEGORIE_DE_PLATEFORME
             && blank(Deliverycategory::companywise()->find($request->category_id))) {
             return true;
         }

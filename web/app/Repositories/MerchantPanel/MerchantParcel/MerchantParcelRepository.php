@@ -205,6 +205,9 @@ class MerchantParcelRepository implements MerchantParcelInterface {
         return Str::upper(settings()->par_track_prefix).random_int(11111111,99999999);  
     }
 
+    /** La categorie partagee de la plateforme — voir `DeliveryCategoryRepository::all()`. */
+    private const CATEGORIE_DE_PLATEFORME = 1;
+
     /**
      * S46 — le panneau MARCHAND : la meme famille d'identifiants, l'autre porte.
      *
@@ -232,8 +235,23 @@ class MerchantParcelRepository implements MerchantParcelInterface {
             return true;
         }
 
+        // ⚠️ Deux ecarts avec la garde du back-office, tous deux mesures.
+        //
+        // 1. La categorie 1 est celle de la PLATEFORME, partagee par toutes les
+        //    societes. `DeliveryCategoryRepository` ecrit la regle deux fois —
+        //    `all()` rend « `id = 1` OU `company_id = settings()->id` » — et les
+        //    six lignes semees par le socle n'ont aucun `company_id`.
+        // 2. Le perimetre est celui du MARCHAND, pas du locataire ambiant.
+        //    `companywise()` lirait `settings()`, or ce depot est entre par
+        //    l'API mobile et le panneau autant que par le web : le marchand
+        //    authentifie est la source de verite, pas l'hote de la requete.
+        //    Meme decision que pour le supplement de delai dans
+        //    `DeliveryChargeResolver`, et pour la meme raison.
+        $societe = Merchant::find($merchant_id)?->company_id;
+
         if (filled($request->category_id)
-            && blank(Deliverycategory::companywise()->find($request->category_id))) {
+            && (int) $request->category_id !== self::CATEGORIE_DE_PLATEFORME
+            && blank(Deliverycategory::where('company_id', $societe)->find($request->category_id))) {
             return true;
         }
 
@@ -243,7 +261,7 @@ class MerchantParcelRepository implements MerchantParcelInterface {
         }
 
         if (filled($request->packaging_id)
-            && blank(Packaging::companywise()->find($request->packaging_id))) {
+            && blank(Packaging::where('company_id', $societe)->find($request->packaging_id))) {
             return true;
         }
 

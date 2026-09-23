@@ -352,7 +352,17 @@ class ParcelController extends Controller
         if (blank($this->repo->get($id))) {
             return $this->responseWithError(__('parcel.not_found'), [], 404);
         }
-        if($this->repo->update($id, $request,auth()->user()->id)){
+        // ⚠️ S46 — le socle passait ici `auth()->user()->id`, c'est-a-dire un
+        // identifiant d'UTILISATEUR la ou le depot attend celui du MARCHAND.
+        // `store()` et `duplicateStore()`, deux methodes plus haut, passent bien
+        // `$merchant->id`. La confusion etait latente : le depot ecrit
+        // `$parcel->merchant_id = $request->merchant_id ?? $merchant_id`, donc
+        // une requete SANS `merchant_id` inscrivait un identifiant d'utilisateur
+        // dans la colonne du marchand — un colis rattache a personne. La garde
+        // de perimetre de S46 l'a mis au jour en comparant les deux.
+        $merchant = $this->repo->getMerchant(auth()->user()->id);
+
+        if($this->repo->update($id, $request, $merchant->id)){
             return $this->responseWithSuccess(__('parcel.update_msg'), [], 200);
         }else{
             return $this->responseWithError(__('parcel.error_msg'), [], 500);
