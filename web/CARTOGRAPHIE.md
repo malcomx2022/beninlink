@@ -4474,3 +4474,232 @@ Le panneau marchand a d'autres dépôts que celui des colis — boutiques,
 portefeuille, tickets — et le défaut du `merchant_id` caché invite à les relever
 de la même façon : ce qui a été fermé côté administration l'a-t-il été côté
 marchand ?
+
+## ✅ S47 — le catalogue emprunté, et une cascade qui traverse les sociétés (2026-09-23)
+
+### La question de S46 a reçu une réponse, et ce n'était pas celle attendue
+
+S46 finissait sur : *« ce qui a été fermé côté administration l'a-t-il été côté
+marchand ? »* Le balayage des **six** dépôts du panneau — boutiques,
+portefeuille, demandes de paiement, tickets, fraude, ramassage — répond **oui** :
+tous portent leur garde de ressource depuis S7. La supposition d'un retard côté
+marchand était fausse.
+
+Le trou était ailleurs, et plus grave.
+
+### ⚠️ L'inscription publique empruntait le catalogue d'une autre société
+
+```php
+$user->designation_id = Designation::first()->id;   // signUpStore()
+$user->department_id  = Department::first()->id;
+```
+
+La **première ligne de la table**, toutes sociétés confondues. Le compte
+propriétaire d'une société neuve pointait vers le catalogue d'une société
+existante — et `POST company/sign-up/store` ne vit derrière **aucune
+authentification** : groupe `['XSS', 'IsInstalled']`, entre le blog et le
+formulaire de contact.
+
+### ⚠️ La conséquence détruisait des comptes
+
+`users.department_id` et `users.designation_id` portent **`onDelete('cascade')`**.
+
+Une société qui supprimait **son** service depuis ses propres réglages détruisait
+les comptes qui le référençaient — y compris **le propriétaire de la société
+voisine**. Aucun écran, aucun journal, aucune confirmation ne le mentionnait.
+
+`test_deleting_our_own_department_never_destroys_another_companys_owner` le
+vérifie de bout en bout. **Il échouait.**
+
+Correctif : une société neuve n'a pas encore de catalogue, et ne rien lui donner
+vaut mieux que lui prêter celui d'une autre. Les deux colonnes sont nullables.
+
+### Le sélecteur était ouvert des deux côtés, l'écriture aussi
+
+`Department::active()` sans périmètre dans le back-office **et** dans le panneau
+marchand, alors que `UserRepository` sert le **même** catalogue en
+`where('company_id', settings()->id)->active()` deux fichiers plus loin. La règle
+était connue ; deux lectures l'ignoraient.
+
+Et fermer le sélecteur ne ferme pas l'écriture :
+`$support->department_id = $request->department_id` restait libre dans `store()`
+et `update()`, des deux côtés. C'est la leçon de S43 prise par l'autre bout —
+là-bas un écran nu empêchait de garder un sélecteur ; ici un sélecteur gardé
+donnait l'illusion que l'écriture l'était.
+
+### ⚠️ Une garde posée dans deux méthodes n'est pas prouvée dans les deux
+
+La garde posée dans `store()` **et** `update()` n'était tenue que dans `store()`.
+
+Troisième lot d'affilée où ce réflexe rattrape le travail.
+
+| | |
+|---|---|
+| `CompanyCatalogScopeTest` | 4 cas, 22 assertions |
+| Gardes sabotées séparément | **8 sur 8 rouges** |
+| Suite complète | 930 tests, 45 572 assertions, verte |
+
+## ✅ S48 — les contreparties d'une écriture comptable (2026-09-23)
+
+### Le motif, pour la quatrième fois
+
+S45 sur **l'agent** d'un mouvement de colis, S46 sur les **catalogues** d'un
+colis, S47 sur le **catalogue** d'un compte. Toujours la même forme : **la
+ressource est gardée, le second identifiant ne l'est pas.**
+
+La ressource comptable l'est depuis S30 — `Income::companywise()->find($id)` —
+mais une écriture ne touche pas que sa propre ligne : elle **déplace de l'argent**
+sur une contrepartie nommée dans la requête.
+
+| Contrepartie | Ce que le socle en faisait |
+|---|---|
+| `Merchant::find()` | `current_balance ± amount`, `save()`, plus un relevé |
+| `DeliveryMan::find()` | idem |
+| `Hub::find()` | idem |
+| `User::find()` | le salaire versé |
+| `Account::find()` | le **compte de trésorerie** mouvementé |
+| `Parcel::find()` | la pièce rattachée |
+
+**Mesure** : une recette de 1 000 F saisie chez nous créditait le solde d'un
+marchand, d'un livreur ou d'un entrepôt d'une **autre** société, en lui attachant
+un relevé portant **notre** `company_id`.
+
+La garde vit dans le trait `GuardsAccountingCounterparties` — les trois dépôts
+écrivent la même famille.
+
+### ⚠️ Le relevé automatique s'est trompé une fois sur quatre
+
+L'instrument signalait aussi `CashReceivedFromDeliveryman`. **Il avait tort** :
+ce dépôt fait déjà `DeliveryMan::companywise()` et `Account::companywise()` avec
+refus, dans `store()` **et** `update()`. La lecture partant d'une ligne déjà
+scopée l'avait trompé.
+
+Les deux gardes posées là par réflexe ont été **retirées**.
+
+> Un relevé automatique se lit, il ne s'applique pas.
+
+### Un défaut trouvé en gardant autre chose
+
+`SalaryGenerate::find($request->id)` était nu dans `salaryGenerateUpdate()` :
+**le bulletin de paie d'une autre société était modifiable** en changeant
+l'identifiant du corps.
+
+### ⚠️ Un seul point d'appel sur huit était tenu
+
+Au premier passage. Les sept autres ont demandé un travail spécifique : leurs
+`update` ne sont atteints qu'avec une **ressource à nous** et une **contrepartie
+étrangère** — sur une ressource étrangère, la garde de la ressource refuse
+d'abord et masque entièrement celle des contreparties.
+
+| | |
+|---|---|
+| `AccountingCounterpartyScopeTest` | 7 cas, 44 assertions |
+| Sabotages | **15 sur 15 rouges** — 8 points d'appel, 6 champs, la ressource |
+
+## ✅ S49 — la boutique et son marchand (2026-09-23)
+
+### Deux défauts, et le second était déjà nommé
+
+`ShopsRepository::store()` n'avait **aucune** garde : `merchant_id` venait du
+formulaire et partait tel quel dans la colonne. Un opérateur créait donc une
+boutique chez le marchand d'une **autre** société — et `merchant_shops` ne porte
+pas de `company_id` (constat de S26), donc cette boutique vit entièrement sous le
+marchand d'en face.
+
+`ShopsRepository::update()` portait le trou que **S29 avait nommé sans le
+fermer**. Son propre commentaire, encore dans le fichier :
+
+> « la ligne `merchant_id` juste en dessous permettait en plus de la
+> **RATTACHER** à un autre marchand »
+
+Le correctif de S29 n'avait fermé que la **lecture**. La ligne est restée cinq
+lots.
+
+> Nommer un défaut dans un commentaire ne le ferme pas.
+
+### ⚠️ Deux sabotages ont menti — en ROUGE
+
+C'est la leçon du lot, et elle est nouvelle.
+
+En supprimant le **bloc** d'une garde, `$marchand` restait indéfini. L'erreur
+tombait dans le `catch (\Throwable)`, la méthode rendait `false` — **pour la
+mauvaise raison** — et le test paraissait couvrir une garde qu'il ne couvrait pas.
+
+Jusqu'ici on savait qu'un sabotage **vert** interroge le test. Celui-ci apprend
+qu'un sabotage **rouge** peut mentir aussi.
+
+> On sabote la **garde** elle-même — `companywise()` retiré — jamais le bloc
+> autour.
+
+Le cas manquant sur `bankUpdate` et `mobileUpdate` suivait la même logique : tous
+les tests existants passaient un `editid` **étranger**, dont la garde de la ligne
+refusait d'abord. Le périmètre du **marchand** n'était jamais atteint. Le cas
+ajouté est l'inverse : **ma** ligne, **son** marchand.
+
+| | |
+|---|---|
+| `MerchantFamilyScopeTest` | 23 cas, 82 assertions (3 ajoutés) |
+| Suite complète | 940 tests, 45 641 assertions, verte |
+
+## ✅ S50 — l'arriéré relu : dix-huit routes déjà closes (2026-09-23)
+
+### Un lot ferme plus de routes qu'il n'en revendique
+
+S49 l'avait constaté sur quatorze lignes : la moitié sortait de l'arriéré parce
+que S47 et S48 les avaient déjà fermées **sans que personne l'ait mesuré**. Ce
+lot-ci prend le constat au sérieux et va chercher l'avance explicitement, sur
+l'arriéré entier.
+
+Aucune ligne de production n'est touchée. C'est une passe de **mesure**.
+
+### Le relevé
+
+Les 49 routes restantes ont été rattachées à leur `contrôleur@méthode` — 47 sur
+49 ; `POST admin/wallet-request/recharge` et `POST merchant/sign-up-store`
+résistent encore à la lecture statique.
+
+La plus grosse famille cohérente est celle des **onze `update` de réglages**. Dix
+portent déjà leur garde ; chacune a été sabotée séparément, et les dix sont
+**rouges**. Huit autres routes — l'argent du back-office et du panneau marchand —
+le sont également.
+
+| Routes | Prouvées par |
+|---|---|
+| neuf réglages (immobilisations, services, fonctions, entrepôts, emballages, rôles, tâches, frais) | `BackOfficeRecordTakeoverTest` |
+| catégorie de livraison | `UserAndSettingsScopeTest` |
+| versement, versement traité | `BackOfficeMoneyScopeTest` |
+| versement d'entrepôt traité | `BackOfficeRecordTakeoverTest` |
+| deux remises d'espèces du livreur | `CashHandoverAccountingTest` |
+| fraude, compte de versement, demande de paiement du marchand | `MerchantPanelWebScopeTest` |
+
+**L'arriéré du filet S38 : 49 → 31.** Le plafond suit.
+
+### Ce qui reste, et ce qui ne se laisse pas prouver
+
+`POST admin/merchant/store` a été sabotée : **verte**. La garde existe, aucun
+test ne tombe quand on la retire. Elle reste dans l'arriéré, à sa place — c'est
+précisément ce que l'arriéré veut dire.
+
+Six routes ne montrent **aucune garde reconnaissable** : `assets/store`,
+`deliveryman/store`, `fraud/store`, les trois `todo`, `payment/store`,
+`hub/payment/store` et les deux `support/reply`. Elles n'ont pas été mesurées
+faute de garde à saboter — ce sont les candidates du prochain lot de correction,
+pas de mesure.
+
+### ⚠️ Une question de produit, pas de technique
+
+`PUT admin/currency/update` reste dans l'arriéré et **ne peut pas en sortir par
+la mesure** : `CurrencyRepository::update` est nu, mais la table `currencies` ne
+porte **aucune** `company_id` — comme `categorys` (constat de S35). Le catalogue
+est pourtant atteignable depuis le back-office **locataire** *et* depuis les
+routes super-administrateur.
+
+Trois issues, et le choix n'appartient pas à la revue :
+
+1. **l'exempter** comme `category/update` — le catalogue des devises est celui de
+   la plateforme, et une société n'a pas à le modifier ;
+2. **réserver la route au super-administrateur** — même décision, appliquée à
+   l'accès plutôt qu'au filet ;
+3. **ajouter `company_id`** — chaque société tient ses devises, migration à la clé.
+
+En l'état, une société qui renomme une devise la renomme **pour tout le monde**.

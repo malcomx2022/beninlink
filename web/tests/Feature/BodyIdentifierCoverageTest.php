@@ -157,6 +157,27 @@ class BodyIdentifierCoverageTest extends TestCase
         // le solde d'un livreur d'une autre societe. `ParcelAgentScopeTest` ferme
         // cet axe-la pour les huit methodes concernees. Une route « prouvee »
         // l'est SUR L'AXE QUE SON TEST MESURE, pas dans l'absolu.
+
+        // S50 — l'arriere relu : dix-huit routes deja closes par les lots precedents,
+        // chacune mesuree par sabotage de sa propre garde (rouge = le test la tient)
+        'PUT admin/asset-category/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/assets/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/departments/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/designations/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/hubs/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/packaging/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/roles/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/todo/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/delivery-charge/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/delivery-category/update' => UserAndSettingsScopeTest::class,
+        'PUT admin/payment/update' => BackOfficeMoneyScopeTest::class,
+        'PUT admin/payment/processed' => BackOfficeMoneyScopeTest::class,
+        'PUT admin/hub-payment/processed' => BackOfficeRecordTakeoverTest::class,
+        'POST admin/hub/cash-received-deliveryman/store' => CashHandoverAccountingTest::class,
+        'PUT admin/hub/cash-received-deliveryman/update' => CashHandoverAccountingTest::class,
+        'PUT merchant/fraud/update' => MerchantPanelWebScopeTest::class,
+        'PUT merchant/accounts/payment-account/update' => MerchantPanelWebScopeTest::class,
+        'PUT merchant/payment-request/update' => MerchantPanelWebScopeTest::class,
     ];
 
     /**
@@ -197,7 +218,6 @@ class BodyIdentifierCoverageTest extends TestCase
             'POST admin/deliveryman/store',
             'POST admin/fraud/store',
             'POST admin/get-merchant-cod',
-            'POST admin/hub/cash-received-deliveryman/store',
             'POST admin/income/hub-user-accounts',
             'POST admin/merchant/account',
             'POST admin/merchant/delivery-charge/info',
@@ -222,28 +242,11 @@ class BodyIdentifierCoverageTest extends TestCase
             'POST merchant/parcel/delivery-category',
             'POST merchant/sign-up-store',
             'POST merchant/support/reply',
-            'PUT admin/asset-category/update',
-            'PUT admin/assets/update',
             'PUT admin/currency/update',
-            'PUT admin/delivery-category/update',
-            'PUT admin/delivery-charge/update',
-            'PUT admin/departments/update',
-            'PUT admin/designations/update',
-            'PUT admin/hub-payment/processed',
-            'PUT admin/hub/cash-received-deliveryman/update',
-            'PUT admin/hubs/update',
-            'PUT admin/packaging/update',
-            'PUT admin/payment/processed',
-            'PUT admin/payment/update',
-            'PUT admin/roles/update',
-            'PUT admin/todo/update',
-            'PUT merchant/accounts/payment-account/update',
-            'PUT merchant/fraud/update',
-            'PUT merchant/payment-request/update',
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 49;
+    private const PLAFOND_HERITAGE = 31;
 
     protected function setUp(): void
     {
