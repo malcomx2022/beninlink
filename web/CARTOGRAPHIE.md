@@ -3988,3 +3988,166 @@ back-office.
 évitée. Périmètre des versements retiré → deux rouges ciblés.
 
 Suite complète : **840 tests, 45 287 assertions**.
+
+---
+
+> ⚠️ **Quatrième collision de numéro — et une DOUBLE collision sur le même numéro.**
+> Ce lot-ci s'est d'abord appelé **S42**, en même temps que « la garde des aides colis »
+> ([#114](https://github.com/malcomx2022/beninlink/pull/114)). Celui-là étant arrivé le
+> premier sur `main`, ce lot est devenu **S43** — et pendant ce temps « la chaîne des
+> écrans nus » ([#115](https://github.com/malcomx2022/beninlink/pull/115)) prenait
+> **aussi** S43 et arrivait sur `main` avant lui. Il devient donc **S44**.
+>
+> La règle ne change pas, elle a simplement servi deux fois de suite : **le lot fusionné
+> le premier garde le numéro.** Ce qu'elle ne suffit plus à faire, c'est prévenir la
+> collision : quatre fois en cinq lots, deux sessions ont choisi le même numéro parce
+> qu'aucune ne voit la cartographie de l'autre avant de commiter. Le numéro se choisit
+> **au moment de la fusion**, pas au moment d'écrire.
+>
+> ⚠️ **Ce qui distingue ces collisions des deux premières** : les numéros n'étaient pas le
+> seul chevauchement. Avec **S42**, six routes étaient gardées par les deux lots — trois
+> du même droit, deux divergentes, et c'est la mesure la plus serrée qui a été retenue
+> (`parcel_status_update` plutôt que `parcel_read` sur `received-warehouse-hub-selected`
+> et `transertohub-selected-hub`, parce qu'elle avait identifié l'écran appelant exact).
+> **Le correctif le plus serré gagne, même quand il n'est pas le sien.**
+>
+> Avec **S43**, le recoupement a porté sur l'**arriéré** : **cinq** routes que ce lot-ci
+> laissait en attente — `parcel/filter`, `payout`, `payout/merchant/payout`,
+> `parcel/deliveryman/search`, `parcel/merchant/shops` — y ont été gardées. C'est le
+> troisième cliquet de ce filet (`test_the_backlog_holds_no_route_that_is_already_guarded`)
+> qui l'a exigé, et la deuxième fois qu'il sert : l'arriéré de ce lot passe de **27 à 22**.
+>
+> Ses propres gardes, elles, restent **27** — celles de S43 ne sont pas les siennes. Et le
+> détail mérite d'être noté, parce qu'il valide les deux lots à la fois : ce lot-ci laissait
+> les deux sélecteurs partagés à l'arriéré en disant qu'il fallait « lire leurs appelants un
+> par un » ; S43 l'a fait par l'autre bout, en gardant d'abord les écrans appelants qui
+> n'avaient aucune garde, ce qui a rendu leur liste de droits **dérivable** (8 et 10
+> droits). Aucun des deux n'aurait pu le faire seul.
+
+## ✅ S44 — la porte du bureau : les 60 routes du back-office sans garde de droit (2026-09-20)
+
+### Le constat
+
+S41 a fermé la porte du **bâtiment** : `admin/*` exige désormais un compte de type
+back-office. Restait celle du **bureau**. Sur les **447 routes `admin/*`** montées
+sous `auth`, **60 ne portaient aucun `hasPermission`** : tout opérateur du
+back-office les atteignait, quel que soit son rôle — y compris un compte **sans un
+seul droit**, vérifié par appel HTTP.
+
+**60 → 33** une fois ce lot fusionné avec S42 : **27 gardes posées** (26 ici, plus
+`parcel/recived-by-hub/search` que S42 a gardée et que mon cliquet a fait sortir de
+l'arriéré), 6 exemptions motivées, **27 lignes d'arriéré** sous plafond.
+
+### Comment se mesure le droit d'une aide AJAX
+
+Il n'est pas déductible de son nom : c'est celui des **écrans qui l'appellent**
+(règle de S36, `hasPermission:a|b|c`). La chaîne se remonte en trois sauts —
+route nue → fichier appelant → écran → droit de l'écran — et le premier saut est
+le piège.
+
+⚠️ **Les appelants vivent dans `public/backend/js/**/custom.js`, pas dans les
+vues.** Une recherche limitée aux `.blade.php` déclare « sans appelant » **onze**
+routes qui sont en réalité des aides AJAX bien vivantes — S40 vient d'en prouver
+les fuites. C'est la raison pour laquelle ces 60 routes avaient survécu à S36 :
+chercher l'appelant au bon endroit n'est pas évident.
+
+### ⚠️ Pourquoi c'est un arriéré et non un balayage
+
+Chercher l'URI **courte** (`parcel/filter`) attrape aussi `merchant/parcel/filter` :
+la liste d'écrans se pollue de vues du **panneau marchand**, et le jeu de droits
+déduit s'élargit à tort. `POST admin/parcel/merchant` en ressort avec **19
+droits** — une garde à 19 droits ne garde presque rien.
+
+La déduction mécanique donne donc une **piste, pas un verdict**. Une route reste à
+l'arriéré tant que ses appelants n'ont pas été lus un par un. C'est exactement la
+discipline de S28 → S35 (171 → 0 en dix passes).
+
+### La trouvaille qui a recadré le lot
+
+Le super-administrateur semé (**70 droits**, issus de `SuperAdminPermission` — une
+**autre table** que le catalogue locataire) est **déjà refusé** sur une route
+gardée du back-office locataire (`admin/parcel/index`, `hasPermission:parcel_read`)
+et servi sur les nues. Or `backend/super-admin/partials/sidebar.blade.php` lie
+`subscribe.index`.
+
+Poser un droit de locataire sur cette route **casserait le menu du
+super-administrateur**. Elle est donc exemptée, avec ce motif : la garde qui
+convient là est celle du **type de compte** (S41), pas celle du droit. C'est ce
+qui explique, au moins en partie, pourquoi ces routes sont restées nues — leur
+garde n'est pas sur la dimension qu'on croit.
+
+### La décision la plus coûteuse, et sa mesure
+
+`POST admin/parcel/priority/update` est une **écriture**. Son écran appelant —
+l'index des colis — n'exige que `parcel_read`, que portent le rôle **Admin**, le
+rôle **User** *et* le chef de hub. La garder par `parcel_update`, que **seul le
+rôle Admin** porte, retire la bascule au rôle User et au chef de hub.
+
+C'est voulu, et c'est la même décision que S36 a prise pour le clone de colis :
+**ce que le rôle User perd ici, il n'aurait jamais dû l'avoir** — un droit de
+lecture ne fait pas écrire. Un test dédié inscrit la mesure.
+
+Les 25 autres gardes **ne retirent l'accès à personne** : leurs écrans appelants
+exigent déjà exactement ces droits, donc un compte qui ne les porte pas n'atteint
+pas l'écran qui appelle l'aide.
+
+### Le discriminateur, repris de S39
+
+Le contrôle négatif ne compare pas à **200** mais au **message flashé** : un refus
+de droit se reconnaît à `message.permission_denied`, et rien d'autre ne le porte.
+Comparer à 200 rendrait le test faux dès qu'une de ces aides répond autre chose
+sur un corps minimal — ce qui n'a rien à voir avec le droit. C'est la troisième
+fois du chantier que ce discriminateur sert.
+
+### La leçon : un sabotage vert qui était un faux sabotage
+
+Remplacer `parcel_update` par `parcel_read` sur la bascule de priorité est resté
+**vert**. La cause n'était ni le code ni le test : mon ancrage
+(`hasPermission:parcel_update`) **n'était pas unique** dans `routes/web.php`, et le
+remplacement a frappé une autre route du socle. Le MD5 du fichier avait bien
+changé — ce qui rendait le vert crédible.
+
+Rejoué avec l'ancrage complet (`->name('parcel.priority.status')->middleware(…)`),
+après avoir **vérifié l'unicité**, il mord sur trois tests. La règle du chantier
+s'enrichit : un sabotage vert interroge le test — **et d'abord l'ancrage du
+sabotage lui-même**. Vérifier que le fichier a changé ne suffit pas ; il faut
+vérifier qu'il a changé **là**.
+
+### Couverture
+
+`tests/Feature/WebAdminPermissionCoverageTest.php` — **58 cas, 118 assertions** :
+
+- le **filet** : aucune route `admin/*` ne reste indéterminée — gardée, exemptée
+  avec motif, ou à l'arriéré ;
+- **trois cliquets** : l'arriéré ne grandit pas ; une ligne d'arriéré dont la route
+  est désormais gardée doit être retirée ; une exemption doit désigner une route
+  qui existe et reste nue ;
+- les **27 gardes**, exercées par appel HTTP dans les deux sens, plus un
+  test qui vérifie que **chaque** droit d'une liste `a|b|c` ouvre la route — sans
+  lui, une liste dont seul le premier fonctionne passerait au vert ;
+- la mesure de la bascule de priorité, inscrite.
+
+**Sabotage : 8 morsures sur 8** (après correction de l'ancrage du deuxième).
+
+Suite complète : **866 tests, 45 355 assertions**, vert.
+
+### Ce que ce lot ne fait pas — l'arriéré, nommé
+
+- **Les addons (8 routes)** : module de plateforme, aucun droit `addons_*` au
+  catalogue. `admin/addons/create` n'est référencée par aucune vue.
+- **Google Maps (2)** : aucun droit déduit de l'écran de réglage.
+- **Abonnement et versements (4)** : `subscription/history`, `paid/invoice`,
+  `payout`, `payout/merchant/payout` — à départager entre droit et type de compte,
+  comme `subscribe`.
+- **Deux routes non reliées** : `admin/parcel/file-export` et
+  `admin/reports/mhd-pdf` — aucune vue, aucun JS ne les nomme, mais leurs méthodes
+  existent et fonctionnent. Non **mortes** au sens de S35 (dont les cinq routes
+  `sms-settings` n'avaient pas de méthode) : **non reliées**. Le panneau marchand,
+  lui, a bien sa propre `merchant-panel.parcel.file-export`.
+- **Huit aides AJAX à jeu large** (6 à 19 droits déduits) : `parcel/filter`,
+  `parcel/search`, `parcel/merchant`, `parcel/merchant/shops`,
+  `parcel/deliveryman/search`, `parcel/hub`, `merchant/account`,
+  `merchant/search`.
+- **Trois écrans en lot** et la barre de navigation : `assign-pickup/parcel/search`,
+  `assign-return-to-merchant/parcel/search`, `parcel/recived-by-hub/search`,
+  `todo/momal`.

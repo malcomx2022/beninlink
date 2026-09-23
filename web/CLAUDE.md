@@ -214,6 +214,21 @@ avant les apps.
   (`message.permission_denied`). ⚠️ Ne pas lire la page précédente par
   `url()->previous()` : elle lit **d'abord l'en-tête `Referer`**, donc une donnée du
   client, ce qui ouvrirait une redirection vers n'importe quelle adresse.
+- Toute route `admin/*` est inscrite dans `tests/Feature/WebAdminPermissionCoverageTest`
+  (**S43**) : **gardée** (`hasPermission`), **exemptée** (avec le motif) ou **à l'arriéré**
+  (sous un plafond qui ne peut que baisser). Le droit d'une **aide AJAX** est celui des
+  **écrans qui l'appellent**, et ⚠️ ces appelants vivent dans
+  `public/backend/js/**/custom.js`, **pas dans les vues** — c'est ce qui avait fait
+  survivre 60 routes à S36. ⚠️ Chercher l'URI **courte** (`parcel/filter`) attrape aussi
+  `merchant/parcel/filter` : la déduction mécanique donne une **piste, pas un verdict**.
+  ⚠️ Le jeu de droits du **super-administrateur** vient d'une autre table
+  (`SuperAdminPermission`) : il est déjà refusé sur les routes gardées du back-office
+  locataire, donc une route liée depuis **son** menu ne se garde pas par un droit de
+  locataire mais par le **type de compte** (S41).
+- Un **sabotage vert** interroge le test — **et d'abord son propre ancrage** (**S43**) :
+  vérifier que le fichier a changé ne suffit pas, il faut vérifier qu'il a changé **là**.
+  Un ancrage non unique (`hasPermission:parcel_update`) frappe une autre ligne et rend le
+  vert crédible.
 - Jamais de clés en dur : `FEDAPAY_*` dans `web/.env`.
 
 ## Étape 0 — cartographie (à lire AVANT de coder ici)

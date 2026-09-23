@@ -277,9 +277,9 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('income/edit/{id}',            [IncomeController::class, 'edit'])->name('income.edit')->middleware('hasPermission:income_update');
                         Route::put('income/update/{id}',          [IncomeController::class, 'update'])->name('income.update')->middleware('hasPermission:income_update');
                         Route::delete('income/delete/{id}',       [IncomeController::class, 'destroy'])->name('income.delete')->middleware('hasPermission:income_delete');
-                        Route::post('income/balance-check',       [IncomeController::class, 'balanceCheck'])->name('income.balance.check');
-                        Route::post('income/hub-user-accounts',   [IncomeController::class, 'hubUserAccounts'])->name('income.hub-user-accounts');
-                        Route::post('income/users',               [IncomeController::class, 'IncomeUsers'])->name('income.users');
+                        Route::post('income/balance-check',       [IncomeController::class, 'balanceCheck'])->name('income.balance.check')->middleware('hasPermission:income_create|income_update|cash_received_from_delivery_man_create|cash_received_from_delivery_man_update');
+                        Route::post('income/hub-user-accounts',   [IncomeController::class, 'hubUserAccounts'])->name('income.hub-user-accounts')->middleware('hasPermission:income_create|income_update');
+                        Route::post('income/users',               [IncomeController::class, 'IncomeUsers'])->name('income.users')->middleware('hasPermission:income_create|income_update');
                         // Account expense
                         Route::get('expense',                      [ExpenseController::class, 'index'])->name('expense.index')->middleware('hasPermission:expense_read');
                         Route::get('expense/filter',               [ExpenseController::class, 'filter'])->name('expense.filter')->middleware('hasPermission:expense_read');
@@ -295,22 +295,22 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('expense/edit/{id}',            [ExpenseController::class, 'edit'])->name('expense.edit')->middleware('hasPermission:expense_update');
                         Route::put('expense/update/{id}',          [ExpenseController::class, 'update'])->name('expense.update')->middleware('hasPermission:expense_update');
                         Route::delete('expense/delete/{id}',       [ExpenseController::class, 'destroy'])->name('expense.delete')->middleware('hasPermission:expense_delete');
-                        Route::post('expense/users',               [ExpenseController::class, 'ExpenseUsers'])->name('expense.users');
+                        Route::post('expense/users',               [ExpenseController::class, 'ExpenseUsers'])->name('expense.users')->middleware('hasPermission:expense_create|expense_update');
                         //salary
                         Route::get('salarys',                      [SalaryController::class, 'index'])->name('salary.index')->middleware('hasPermission:salary_read');
                         Route::get('salarys/filter',                [SalaryController::class, 'salaryFilter'])->name('salary.filter')->middleware('hasPermission:salary_read');
                         Route::get('salarys/create',                [SalaryController::class, 'create'])->name('salary.create')->middleware('hasPermission:salary_create');
-                        Route::post('salary/users',               [SalaryController::class, 'Users'])->name('salary.users');
+                        Route::post('salary/users',               [SalaryController::class, 'Users'])->name('salary.users')->middleware('hasPermission:salary_read|salary_create|salary_update|salary_generate_create|salary_generate_update|salary_reports');
                         Route::post('salary/store',               [SalaryController::class, 'store'])->name('salary.store')->middleware('hasPermission:salary_create');
                         Route::get('salarys/edit/{id}',             [SalaryController::class, 'edit'])->name('salary.edit')->middleware('hasPermission:salary_update');
                         Route::put('salary/update',              [SalaryController::class, 'update'])->name('salary.update')->middleware('hasPermission:salary_update');
                         Route::delete('salary/delete/{id}',        [SalaryController::class, 'delete'])->name('salary.delete')->middleware('hasPermission:salary_delete');
-                        Route::post('salary/search-account',       [SalaryController::class, 'salaryGet'])->name('salary.account.search');
+                        Route::post('salary/search-account',       [SalaryController::class, 'salaryGet'])->name('salary.account.search')->middleware('hasPermission:expense_create|expense_update|salary_create|salary_update');
                         Route::get('salary/pay-slip/{id}',         [SalaryController::class, 'paySlip'])->name('salary.pay.slip')->middleware('hasPermission:salary_read');
                         Route::get('bank-transaction',                 [BankTransactionController::class, 'index'])->name('bank-transaction.index')->middleware('hasPermission:bank_transaction_read');
                         Route::Post('bank-transaction/filter',         [BankTransactionController::class, 'filter'])->name('bank-transaction.filter')->middleware('hasPermission:bank_transaction_read');
-                        Route::get('bank-transaction/specific/search', [BankTransactionController::class, 'bankTransactionSpecificSearch'])->name('bank.transaction.specific.search');
-                        Route::get('bank-transaction/filter/print',    [BankTransactionController::class, 'bankTransactionPrint'])->name('bank.transaction.filter.print');
+                        Route::get('bank-transaction/specific/search', [BankTransactionController::class, 'bankTransactionSpecificSearch'])->name('bank.transaction.specific.search')->middleware('hasPermission:bank_transaction_read');
+                        Route::get('bank-transaction/filter/print',    [BankTransactionController::class, 'bankTransactionPrint'])->name('bank.transaction.filter.print')->middleware('hasPermission:bank_transaction_read');
                         //hub panel cash received from delivery man
                         Route::get('hub/cash-received-deliveryman',               [ReceivedFromDeliverymanController::class, 'index'])->name('cash.received.deliveryman.index')->middleware('hasPermission:cash_received_from_delivery_man_read');
                         Route::get('hub/cash-received-deliveryman/create',        [ReceivedFromDeliverymanController::class, 'create'])->name('cash.received.deliveryman.create')->middleware('hasPermission:cash_received_from_delivery_man_create');
@@ -334,7 +334,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('merchant/view/{id}',      [MerchantController::class, 'view'])->name('merchant.view')->middleware('hasPermission:merchant_view');
                         Route::get('merchant/invoice-generate/{id}',      [MerchantController::class, 'invoiceGenerate'])->name('merchant.invoice.generate')->middleware('hasPermission:merchant_view');
                         //Merchent delivery charge routes
-                        Route::post('merchant/delivery-charge/info',                    [MerchantDeliveryChargeController::class, 'deliveryChargeInfo'])->name('merchant.deliveryCharge.deliveryChargeInfo');
+                        Route::post('merchant/delivery-charge/info',                    [MerchantDeliveryChargeController::class, 'deliveryChargeInfo'])->name('merchant.deliveryCharge.deliveryChargeInfo')->middleware('hasPermission:merchant_delivery_charge_create|merchant_delivery_charge_update');
                         Route::get('merchant/{merchant}/delivery-charge/index',         [MerchantDeliveryChargeController::class, 'index'])->name('merchant.deliveryCharge.index')->middleware('hasPermission:merchant_delivery_charge_read');
                         Route::get('merchant/{merchant}/delivery-charge/create',        [MerchantDeliveryChargeController::class, 'create'])->name('merchant.deliveryCharge.create')->middleware('hasPermission:merchant_delivery_charge_create');
                         Route::post('merchant/{merchant}/delivery-charge/store',        [MerchantDeliveryChargeController::class, 'store'])->name('merchant.deliveryCharge.store')->middleware('hasPermission:merchant_delivery_charge_create');
@@ -355,7 +355,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         //merchant payment account
                         Route::get('merchant/{id}/payment/index',       [MerchantPaymentAccountController::class, 'index'])->name('merchant.paymentaccount.index')->middleware('hasPermission:merchant_payment_read');
                         Route::get('merchant/{id}/payment/add',         [MerchantPaymentAccountController::class, 'paymentAdd'])->name('merchant.payment.add')->middleware('hasPermission:merchant_payment_create');
-                        Route::post('merchant/paymentmethod/change',    [MerchantPaymentAccountController::class, 'paymentChange'])->name('merchant.paymentmethod.change');
+                        Route::post('merchant/paymentmethod/change',    [MerchantPaymentAccountController::class, 'paymentChange'])->name('merchant.paymentmethod.change')->middleware('hasPermission:merchant_payment_create|merchant_payment_update');
                         Route::post('merchant/paymentinfo/bank/store',  [MerchantPaymentAccountController::class, 'bankStore'])->name('merchant.paymentinfo.bank.store')->middleware('hasPermission:merchant_payment_create');
                         Route::post('merchant/paymentinfo/mobile/store', [MerchantPaymentAccountController::class, 'mobileStore'])->name('merchant.paymentinfo.mobile.store')->middleware('hasPermission:merchant_payment_create');
                         Route::get('merchant/{mid}/payment/edit/{id}',  [MerchantPaymentAccountController::class, 'paymentEdit'])->name('merchant.payment.edit')->middleware('hasPermission:merchant_payment_update');
@@ -377,7 +377,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('payment/process/{id}',       [MerchantmanagePaymentController::class, 'process'])->name('merchantmanage.payment.process')->middleware('hasPermission:payment_process');
                         Route::get('payment/cancel-process/{id}', [MerchantmanagePaymentController::class, 'cancelProcess'])->name('merchantmanage.payment.cancel-process')->middleware('hasPermission:payment_process');
                         Route::put('payment/processed',          [MerchantmanagePaymentController::class, 'processed'])->name('merchantmanage.payment.processed')->middleware('hasPermission:payment_process');
-                        Route::get('payment/merchant/filter',    [MerchantmanagePaymentController::class, 'merchantpaymentFilter'])->name('merchantmanage.payment.filter');
+                        Route::get('payment/merchant/filter',    [MerchantmanagePaymentController::class, 'merchantpaymentFilter'])->name('merchantmanage.payment.filter')->middleware('hasPermission:payment_read');
                         //merchant invoice
                         Route::prefix('merchant/{merchant_id}/invoice')->name('merchant.invoice.')->group(function () {
                             Route::get('/',                      [MerchantInvoiceController::class, 'index'])->name('index')->middleware('hasPermission:invoice_read');
@@ -432,9 +432,9 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::post('parcel/received-warehouse/cancel',     [ParcelController::class, 'receivedWarehouseCancel'])->name('parcel.received-warehouse-cancel')->middleware('hasPermission:parcel_status_update');
                         Route::get('parcel/filter',                         [ParcelController::class, 'filter'])->name('parcel.filter')->middleware('hasPermission:parcel_read');
                         Route::post('parcel/search',                        [ParcelController::class, 'search'])->name('parcel.search');
-                        Route::post('parcel/search-delivery-man-assing-multiple-parcel', [ParcelController::class, 'searchDeliveryManAssingMultipleParcel'])->name('parcel.search-delivery-man-assing-multiple-parcel');
-                        Route::post('parcel/search-expense',                [ParcelController::class, 'searchExpense'])->name('parcel.search-expense');
-                        Route::post('parcel/search-income',                 [ParcelController::class, 'searchIncome'])->name('parcel.search-income');
+                        Route::post('parcel/search-delivery-man-assing-multiple-parcel', [ParcelController::class, 'searchDeliveryManAssingMultipleParcel'])->name('parcel.search-delivery-man-assing-multiple-parcel')->middleware('hasPermission:parcel_read');
+                        Route::post('parcel/search-expense',                [ParcelController::class, 'searchExpense'])->name('parcel.search-expense')->middleware('hasPermission:expense_create|expense_update|salary_create|salary_update');
+                        Route::post('parcel/search-income',                 [ParcelController::class, 'searchIncome'])->name('parcel.search-income')->middleware('hasPermission:income_create|income_update|cash_received_from_delivery_man_create|cash_received_from_delivery_man_update');
                         Route::post('parcel/transfer-to-hub-multiple-parcel', [ParcelController::class, 'transferToHubMultipleParcel'])->name('parcel.transfer-to-hub-multiple-parcel')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/delivery-man-assign-multiple-parcel', [ParcelController::class, 'deliveryManAssignMultipleParcel'])->name('parcel.delivery-man-assign-multiple-parcel')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/transfer-to-hub',                [ParcelController::class, 'transfertohub'])->name('parcel.transfer-to-hub')->middleware('hasPermission:parcel_status_update');
@@ -445,7 +445,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::post('parcel/received-warehouse-hub-selected', [ParcelController::class, 'warehouseHubSelected'])->name('parcel.received.warehouse.hub.select')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/delivery-man-assign',            [ParcelController::class, 'deliverymanAssign'])->name('parcel.delivery-man-assign')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/delivery-man/assign/cancel',     [ParcelController::class, 'deliverymanAssignCancel'])->name('parcel.delivery-man-assign-cancel')->middleware('hasPermission:parcel_status_update');
-                        Route::get('parcel/bulkassign/print',                 [ParcelController::class, 'ParcelBulkAssignPrint'])->name('parcel.parcel-bulkassign-print');
+                        Route::get('parcel/bulkassign/print',                 [ParcelController::class, 'ParcelBulkAssignPrint'])->name('parcel.parcel-bulkassign-print')->middleware('hasPermission:parcel_read');
                         Route::post('parcel/delivery-reschedule',            [ParcelController::class, 'deliveryReschedule'])->name('parcel.delivery.reschedule')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/delivery-re-scheule/cancel',     [ParcelController::class, 'deliveryReScheduleCancel'])->name('parcel.delivery-re-schedule-cancel')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/return-to-qourier',              [ParcelController::class, 'returntoQourier'])->name('parcel.return-to-qourier')->middleware('hasPermission:parcel_status_update');
@@ -469,7 +469,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::post('parcel/assign-return-to-merchant-bulk',    [ParcelController::class, 'AssignReturnToMerchantBulk'])->name('parcel.assign-return-to-merchant-bulk')->middleware('hasPermission:parcel_status_update');
                         // new route add
                         Route::post('parcel/priority/update',                   [ParcelController::class, 'priorityUpdate'])->name('parcel.priority.status')->middleware('hasPermission:parcel_update');
-                        Route::get('parcel/deliveryMan/show',                   [ParcelController::class, 'parcelDeliveryMan'])->name('parcel.parcelDeliveryMan');
+                        Route::get('parcel/deliveryMan/show',                   [ParcelController::class, 'parcelDeliveryMan'])->name('parcel.parcelDeliveryMan')->middleware('hasPermission:parcel_read');
                         // S36 — `parcel/logs/{id}` juste au-dessus porte deja `parcel_read` : c'est la meme
                         // chronologie. Mesure : ni le role User ni le chef de hub ne perdent l'acces.
                         Route::get('parcel/delivered/logs/info/{id}',           [ParcelController::class, 'deliveredInfo'])->name('parcel.deliveredInfo')->middleware('hasPermission:parcel_read');
@@ -491,9 +491,9 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('parcel/import-parcel',                      [ParcelController::class, 'parcelImportExport'])->name('parcel.parcel-import')->middleware('hasPermission:parcel_create');
                         Route::post('parcel/file-import',                       [ParcelController::class, 'parcelImport'])->name('parcel.file-import')->middleware('hasPermission:parcel_create');
                         Route::get('parcel/file-export',                        [ParcelController::class, 'parcelExport'])->name('parcel.file-export');
-                        Route::post('parcel/import/merchant',                   [ParcelController::class, 'getImportMerchant'])->name('parcel.import.merchant.get');
+                        Route::post('parcel/import/merchant',                   [ParcelController::class, 'getImportMerchant'])->name('parcel.import.merchant.get')->middleware('hasPermission:parcel_create');
                         //merchant fetch using ajax
-                        Route::post('get-merchant-cod',                         [parcelController::class, 'getMerchantCod'])->name('get.merchant.cod');
+                        Route::post('get-merchant-cod',                         [parcelController::class, 'getMerchantCod'])->name('get.merchant.cod')->middleware('hasPermission:parcel_create|parcel_update');
                         // Deliveryman
                         Route::get('deliveryman',                [DeliveryManController::class, 'index'])->name('deliveryman.index')->middleware('hasPermission:delivery_man_read');
                         Route::get('deliveryman/filter',         [DeliveryManController::class, 'filter'])->name('deliveryman.filter')->middleware('hasPermission:delivery_man_read');
@@ -544,7 +544,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('accounts/edit/{id}',      [AccountController::class, 'edit'])->name('accounts.edit')->middleware('hasPermission:account_update');
                         Route::put('accounts/update/{id}',    [AccountController::class, 'update'])->name('accounts.update')->middleware('hasPermission:account_update');
                         Route::delete('accounts/delete/{id}', [AccountController::class, 'destroy'])->name('accounts.delete')->middleware('hasPermission:account_delete');
-                        Route::post('accounts/current-balance', [AccountController::class, 'currentBalance'])->name('accounts.current-balance');
+                        Route::post('accounts/current-balance', [AccountController::class, 'currentBalance'])->name('accounts.current-balance')->middleware('hasPermission:fund_transfer_create|fund_transfer_update');
                         // Fund Transfer Routes
                         Route::get('fund-transfer/index',          [FundTransferController::class, 'index'])->name('fund-transfer.index')->middleware('hasPermission:fund_transfer_read');
                         Route::get('fund-transfer/create',         [FundTransferController::class, 'create'])->name('fund-transfer.create')->middleware('hasPermission:fund_transfer_create');
@@ -692,7 +692,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('push-notification/create',         [PushNotificationController::class, 'create'])->name('push-notification.create')->middleware('hasPermission:push_notification_create');
                         Route::post('push-notification/store',         [PushNotificationController::class, 'store'])->name('push-notification.store')->middleware('hasPermission:push_notification_create');
                         Route::delete('push-notification/delete/{id}', [PushNotificationController::class, 'destroy'])->name('push-notification.delete')->middleware('hasPermission:push_notification_delete');
-                        Route::post('push-notification/users',        [PushNotificationController::class, 'Users'])->name('push-notification.users');
+                        Route::post('push-notification/users',        [PushNotificationController::class, 'Users'])->name('push-notification.users')->middleware('hasPermission:push_notification_create');
 
                         //social login settings
                         Route::get('social-login-settings',                     [SocialLoginController::class, 'socialLoginSettingsIndex'])->name('social.login.settings.index')->middleware('hasPermission:social_login_settings_read');
