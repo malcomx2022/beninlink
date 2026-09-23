@@ -253,6 +253,56 @@ class ParcelCatalogScopeTest extends TestCase
         $this->assertTrue((bool) $this->depot->store($this->requete()));
     }
 
+    /* ───────── les trois portes : creer, dupliquer, modifier ────────────── */
+
+    /**
+     * ⚠️ Ce test et le suivant existent parce que le sabotage les a reclames.
+     * La garde est appelee dans TROIS methodes — `store`, `duplicateStore` et
+     * `update` — et le lot ne couvrait que la premiere : neutraliser l'appel
+     * dans les deux autres laissait la suite VERTE. Une garde posee trois fois
+     * n'est pas une garde prouvee trois fois.
+     */
+    public function test_the_duplicate_of_a_parcel_refuses_a_foreign_shop(): void
+    {
+        $saBoutique = $this->boutiqueDe($this->sonMarchand);
+
+        $this->assertFalse(
+            (bool) $this->depot->duplicateStore($this->requete(['shop_id' => $saBoutique->id])),
+            'la duplication a accepte la boutique d\'un marchand d\'une autre societe',
+        );
+        $this->assertSame(0, Parcel::count());
+
+        // Controle negatif : la duplication passe sans catalogue etranger.
+        $this->assertTrue((bool) $this->depot->duplicateStore($this->requete()));
+        $this->assertSame(1, Parcel::count());
+    }
+
+    /** La modification d'un colis existant ferme la meme porte. */
+    public function test_updating_a_parcel_refuses_a_foreign_packaging(): void
+    {
+        $this->assertTrue((bool) $this->depot->store($this->requete()));
+        $colis = Parcel::firstOrFail();
+
+        $sonEmballage = Packaging::forceCreate([
+            'company_id' => self::AUTRE, 'name' => 'Carton du voisin', 'price' => 5000,
+            'status' => Status::ACTIVE, 'position' => 1,
+        ]);
+
+        $this->assertFalse(
+            (bool) $this->depot->update($colis->id, $this->requete(['packaging_id' => $sonEmballage->id])),
+            'la modification a accepte un emballage d\'une autre societe',
+        );
+        $this->assertNull($colis->fresh()->packaging_id);
+
+        // Controle negatif : le notre passe, et il est facture.
+        $monEmballage = Packaging::forceCreate([
+            'company_id' => settings()->id, 'name' => 'Carton maison', 'price' => 300,
+            'status' => Status::ACTIVE, 'position' => 1,
+        ]);
+        $this->assertTrue((bool) $this->depot->update($colis->id, $this->requete(['packaging_id' => $monEmballage->id])));
+        $this->assertSame($monEmballage->id, (int) $colis->fresh()->packaging_id);
+    }
+
     /* ───────── la zone : ce que le releve de S45 annoncait a tort ────────── */
 
     /**
