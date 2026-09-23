@@ -302,6 +302,67 @@ class ParcelAgentScopeTest extends TestCase
         $this->assertSame($this->monEntrepot->id, $this->monColis->fresh()->transfer_hub_id);
     }
 
+    /**
+     * Le lot porte lui aussi les DEUX identifiants secondaires, et le sabotage
+     * l'a rappele : la garde de l'entrepot etait prouvee, celle du livreur ne
+     * l'etait pas — ce test-ci manquait, et son absence rendait la garde verte
+     * sans rien etablir.
+     */
+    public function test_bulk_transfer_to_hub_refuses_a_named_foreign_deliveryman(): void
+    {
+        $this->assertFalse($this->depot->transferToHubMultipleParcel(new Request([
+            'parcel_ids' => [$this->monColis->id],
+            'hub_id' => $this->monEntrepot->id,
+            'delivery_man_id' => $this->sonLivreur->id,
+        ])));
+
+        $this->assertSame(ParcelStatus::PENDING, $this->monColis->fresh()->status);
+        $this->assertSame(0, ParcelEvent::where('parcel_id', $this->monColis->id)->count());
+
+        // Controle negatif nº1 : aucun livreur nomme — le lot passe.
+        $this->assertTrue($this->depot->transferToHubMultipleParcel(new Request([
+            'parcel_ids' => [$this->monColis->id],
+            'hub_id' => $this->monEntrepot->id,
+        ])));
+
+        // Controle negatif nº2 : notre livreur — il passe, et il est inscrit.
+        $this->assertTrue($this->depot->transferToHubMultipleParcel(new Request([
+            'parcel_ids' => [$this->monColis->id],
+            'hub_id' => $this->monEntrepot->id,
+            'delivery_man_id' => $this->monLivreur->id,
+        ])));
+        $this->assertSame(
+            $this->monLivreur->id,
+            ParcelEvent::where('parcel_id', $this->monColis->id)->latest('id')->first()->transfer_delivery_man_id,
+        );
+    }
+
+    /* ───────────────── l'axe du colis, la ou il manquait ─────────────────── */
+
+    /**
+     * La reprogrammation du retour est la seule etape unitaire dont l'axe du
+     * COLIS n'etait etabli nulle part : `ParcelLifecycleTest` enumere neuf
+     * etapes et s'arrete avant elle. La garde existait ; rien ne la tenait.
+     */
+    public function test_return_reschedule_refuses_a_parcel_of_another_company(): void
+    {
+        $colisAilleurs = $this->colisDe($this->marchandDe(self::AUTRE));
+
+        $this->assertFalse($this->depot->returnAssignToMerchantReschedule($colisAilleurs->id, new Request([
+            'delivery_man_id' => $this->monLivreur->id,
+            'date' => date('Y-m-d'),
+        ])));
+
+        $this->assertSame(ParcelStatus::PENDING, $colisAilleurs->fresh()->status);
+        $this->assertSame(0, ParcelEvent::where('parcel_id', $colisAilleurs->id)->count());
+
+        // Controle negatif : le notre, dans la meme requete, passe bien.
+        $this->assertTrue($this->depot->returnAssignToMerchantReschedule($this->monColis->id, new Request([
+            'delivery_man_id' => $this->monLivreur->id,
+            'date' => date('Y-m-d'),
+        ])));
+    }
+
     /* ───────────────────────────── fixtures ─────────────────────────────── */
 
     private function agentDe(int $societe): User
