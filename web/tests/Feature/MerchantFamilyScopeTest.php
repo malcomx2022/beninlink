@@ -17,6 +17,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use App\Models\MerchantShops;
+use App\Repositories\MerchantShops\ShopsInterface;
 use Tests\Concerns\SeedsTenant;
 use Tests\TestCase;
 
@@ -216,6 +218,84 @@ class MerchantFamilyScopeTest extends TestCase
         $this->assertTrue((bool) $depot->bankUpdate($this->requeteDeCompte($this->monMarchand, $aMoi)));
         $aMoi = MerchantPayment::where('merchant_id', $this->monMarchand->id)->orderByDesc('id')->firstOrFail();
         $this->assertTrue((bool) $depot->mobileUpdate($this->requeteDeCompte($this->monMarchand, $aMoi)));
+    }
+
+    /**
+     * ⚠️ Le cas que le sabotage a reclame sur les deux MISES A JOUR : `editid`
+     * qui est bien le mien, `merchant_id` qui ne l'est pas. Les tests
+     * precedents passaient toujours un `editid` etranger, dont la garde de la
+     * LIGNE refusait d'abord — le perimetre du MARCHAND n'etait jamais atteint,
+     * et le retirer laissait `bankUpdate` et `mobileUpdate` au vert.
+     *
+     * C'est la meme forme que partout depuis S45 : la ressource est gardee, et
+     * c'est la garde de la ressource qui masque celle du second identifiant.
+     */
+    public function test_a_payout_account_cannot_be_moved_to_another_companys_merchant(): void
+    {
+        $depot = app(PaymentInterface::class);
+
+        $this->assertTrue((bool) $depot->bankstore($this->requeteDeCompte($this->monMarchand)));
+        $maLigne = MerchantPayment::where('merchant_id', $this->monMarchand->id)->orderByDesc('id')->firstOrFail();
+
+        $detournee = $this->requeteDeCompte($this->sonMarchand, $maLigne);
+
+        $this->assertFalse((bool) $depot->bankUpdate($detournee));
+        $this->assertFalse((bool) $depot->mobileUpdate($detournee));
+
+        $this->assertSame(
+            $this->monMarchand->id,
+            (int) $maLigne->fresh()->merchant_id,
+            'mon compte de versement a ete rattache au marchand d\'une autre societe',
+        );
+    }
+
+    /* ─────────────── la boutique, et le marchand qui la porte ───────────── */
+
+    /**
+     * ⚠️ `ShopsRepository::store()` n'avait AUCUNE garde : `merchant_id` venait
+     * du formulaire et partait tel quel dans la colonne. Un operateur creait
+     * donc une boutique chez le marchand d'une AUTRE societe — et
+     * `merchant_shops` ne porte pas de `company_id` (S26), donc cette boutique
+     * vit entierement sous le marchand d'en face.
+     */
+    public function test_a_shop_cannot_be_created_for_another_companys_merchant(): void
+    {
+        $depot = app(ShopsInterface::class);
+        $avant = MerchantShops::where('merchant_id', $this->sonMarchand->id)->count();
+
+        $this->assertFalse((bool) $depot->store($this->requeteDeBoutique($this->sonMarchand)));
+
+        $this->assertSame($avant, MerchantShops::where('merchant_id', $this->sonMarchand->id)->count(),
+            'une boutique a ete creee chez le marchand d\'une autre societe');
+
+        // Controle negatif : chez le mien, elle se cree.
+        $this->assertTrue((bool) $depot->store($this->requeteDeBoutique($this->monMarchand)));
+        $this->assertSame(1, MerchantShops::where('merchant_id', $this->monMarchand->id)->count());
+    }
+
+    /**
+     * ⚠️ Et la mise a jour porte le trou que S29 avait NOMME sans le fermer.
+     * Son commentaire dit : « la ligne `merchant_id` juste en dessous permettait
+     * en plus de la RATTACHER a un autre marchand » — le correctif n'a ferme
+     * que la LECTURE de la boutique. La ligne, elle, est restee.
+     */
+    public function test_a_shop_cannot_be_reassigned_to_another_companys_merchant(): void
+    {
+        $depot = app(ShopsInterface::class);
+
+        $this->assertTrue((bool) $depot->store($this->requeteDeBoutique($this->monMarchand)));
+        $maBoutique = MerchantShops::where('merchant_id', $this->monMarchand->id)->orderByDesc('id')->firstOrFail();
+
+        $detournee = $this->requeteDeBoutique($this->sonMarchand);
+        $detournee->merge(['id' => $maBoutique->id]);
+
+        $this->assertFalse((bool) $depot->update($detournee));
+
+        $this->assertSame(
+            $this->monMarchand->id,
+            (int) $maBoutique->fresh()->merchant_id,
+            'ma boutique a ete rattachee au marchand d\'une autre societe',
+        );
     }
 
     public function test_the_four_payout_screens_answer_not_found_out_of_scope(): void
@@ -542,6 +622,19 @@ class MerchantFamilyScopeTest extends TestCase
     }
 
     /** Une écriture de compte de versement : marchand visé, ligne visée. */
+    private function requeteDeBoutique(Merchant $cible): Request
+    {
+        return new Request([
+            'merchant_id' => $cible->id,
+            'name' => 'Boutique S49',
+            'contact_no' => '0022997000049',
+            'address' => 'Cotonou',
+            'lat' => '6.36',
+            'long' => '2.42',
+            'status' => 1,
+        ]);
+    }
+
     private function requeteDeCompte(Merchant $cible, ?MerchantPayment $ligne = null): Request
     {
         return new Request([

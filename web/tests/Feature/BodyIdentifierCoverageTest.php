@@ -125,6 +125,28 @@ class BodyIdentifierCoverageTest extends TestCase
         'POST merchant/parcel/store' => ParcelCatalogScopeTest::class,
         'POST merchant/parcel/clone-store' => ParcelCatalogScopeTest::class,
 
+        // S49 — quatorze lignes sortent, et la moitie parce que les lots
+        // precedents les avaient DEJA fermees sans que personne l'ait mesure.
+        // Chaque attribution est etablie par sabotage contre le seul fichier
+        // nomme : on retire la garde, on relance ce fichier, on exige qu'il
+        // tombe. Deux sabotages ont d'abord menti — un bloc supprime laissait
+        // une variable indefinie, et le `catch` rendait `false` pour la
+        // mauvaise raison. C'est la GARDE qu'on sabote, pas le bloc autour.
+        'POST admin/income/store' => AccountingCounterpartyScopeTest::class,
+        'POST admin/expense/store' => AccountingCounterpartyScopeTest::class,
+        'POST admin/salary/store' => AccountingCounterpartyScopeTest::class,
+        'POST admin/salary/salary-generate/store' => AccountingCounterpartyScopeTest::class,
+        'PUT admin/salary/salary-generate/update' => AccountingCounterpartyScopeTest::class,
+        'POST admin/support/store' => CompanyCatalogScopeTest::class,
+        'PUT admin/support/update' => CompanyCatalogScopeTest::class,
+        'POST merchant/support/store' => CompanyCatalogScopeTest::class,
+        'POST admin/merchant/paymentinfo/bank/store' => MerchantFamilyScopeTest::class,
+        'POST admin/merchant/paymentinfo/mobile/store' => MerchantFamilyScopeTest::class,
+        'PUT admin/merchant/paymentinfo/bank/update' => MerchantFamilyScopeTest::class,
+        'PUT admin/merchant/paymentinfo/mobile/update' => MerchantFamilyScopeTest::class,
+        'POST admin/merchant/shops/store' => MerchantFamilyScopeTest::class,
+        'PUT admin/merchant/shops/update' => MerchantFamilyScopeTest::class,
+
         // ⚠️ S45 — CE QUE CETTE COLONNE NE DIT PAS. Elle nomme le test qui tient
         // l'identifiant de COLIS. Elle ne dit rien du SECOND identifiant que la
         // meme requete transporte — le livreur ou l'entrepot qu'on nomme au
@@ -173,18 +195,13 @@ class BodyIdentifierCoverageTest extends TestCase
             'POST admin/assign-pickup/parcel/search',
             'POST admin/assign-return-to-merchant/parcel/search',
             'POST admin/deliveryman/store',
-            'POST admin/expense/store',
             'POST admin/fraud/store',
             'POST admin/get-merchant-cod',
             'POST admin/hub/cash-received-deliveryman/store',
             'POST admin/income/hub-user-accounts',
-            'POST admin/income/store',
             'POST admin/merchant/account',
             'POST admin/merchant/delivery-charge/info',
-            'POST admin/merchant/paymentinfo/bank/store',
-            'POST admin/merchant/paymentinfo/mobile/store',
             'POST admin/merchant/paymentmethod/change',
-            'POST admin/merchant/shops/store',
             'POST admin/merchant/store',
             'POST admin/parcel/delivery-category',
             'POST admin/parcel/partial-delivered/cancel',
@@ -193,12 +210,9 @@ class BodyIdentifierCoverageTest extends TestCase
             'POST admin/payment/store',
             'POST admin/push-notification/store',
             'POST admin/request/hub/payment/store',
-            'POST admin/salary/salary-generate/store',
             'POST admin/salary/search-account',
-            'POST admin/salary/store',
             'POST admin/sms-send-settings/status',
             'POST admin/support/reply',
-            'POST admin/support/store',
             'POST admin/todo/completed',
             'POST admin/todo/processing',
             'POST admin/todo/todo_add',
@@ -208,7 +222,6 @@ class BodyIdentifierCoverageTest extends TestCase
             'POST merchant/parcel/delivery-category',
             'POST merchant/sign-up-store',
             'POST merchant/support/reply',
-            'POST merchant/support/store',
             'PUT admin/asset-category/update',
             'PUT admin/assets/update',
             'PUT admin/currency/update',
@@ -219,15 +232,10 @@ class BodyIdentifierCoverageTest extends TestCase
             'PUT admin/hub-payment/processed',
             'PUT admin/hub/cash-received-deliveryman/update',
             'PUT admin/hubs/update',
-            'PUT admin/merchant/paymentinfo/bank/update',
-            'PUT admin/merchant/paymentinfo/mobile/update',
-            'PUT admin/merchant/shops/update',
             'PUT admin/packaging/update',
             'PUT admin/payment/processed',
             'PUT admin/payment/update',
             'PUT admin/roles/update',
-            'PUT admin/salary/salary-generate/update',
-            'PUT admin/support/update',
             'PUT admin/todo/update',
             'PUT merchant/accounts/payment-account/update',
             'PUT merchant/fraud/update',
@@ -235,7 +243,7 @@ class BodyIdentifierCoverageTest extends TestCase
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 63;
+    private const PLAFOND_HERITAGE = 49;
 
     protected function setUp(): void
     {

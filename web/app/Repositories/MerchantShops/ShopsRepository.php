@@ -66,11 +66,37 @@ class ShopsRepository implements ShopsInterface{
         return true;
     }
 
+
+    /**
+     * S49 — le MARCHAND auquel on rattache une boutique.
+     *
+     * `merchant_shops` ne porte aucune colonne `company_id` (constat de S26) :
+     * son perimetre passe entierement par le marchand. Or `merchant_id` venait
+     * du formulaire et partait tel quel dans la colonne.
+     *
+     * ⚠️ Pour `update()`, S29 avait NOMME ce trou sans le fermer. Son
+     * commentaire dit : « la ligne `merchant_id` juste en dessous permettait en
+     * plus de la RATTACHER a un autre marchand ». Le correctif n'avait ferme
+     * que la LECTURE de la boutique ; la ligne, elle, est restee. C'est la meme
+     * forme que S45 a S48 — la ressource gardee, le second identifiant nu.
+     */
+    private function marchandDeLaSociete($merchantId)
+    {
+        return blank($merchantId) ? null : \App\Models\Backend\Merchant::companywise()->find($merchantId);
+    }
+
     public function store($request){
 
         try {
+            // S49 — aucune garde ici : un operateur creait une boutique chez le
+            // marchand d'une AUTRE societe, et elle y vivait entierement.
+            $marchand = $this->marchandDeLaSociete($request->merchant_id);
+            if (blank($marchand)) {
+                return false;
+            }
+
             $shop                   = new MerchantShops();
-            $shop->merchant_id      = $request->merchant_id;
+            $shop->merchant_id      = $marchand->id;
             $shop->name             = $request->name;
             $shop->contact_no       = $request->contact_no;
             $shop->address          = $request->address;
@@ -99,7 +125,13 @@ class ShopsRepository implements ShopsInterface{
                     return false;
                 }
 
-                $shop->merchant_id = $request->merchant_id;
+                // S49 — le trou que S29 avait nomme sans le fermer.
+                $marchand = $this->marchandDeLaSociete($request->merchant_id);
+                if (blank($marchand)) {
+                    return false;
+                }
+
+                $shop->merchant_id = $marchand->id;
                 $shop->name        = $request->name;
                 $shop->contact_no  = $request->contact_no;
                 $shop->address     = $request->address;
