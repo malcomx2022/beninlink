@@ -235,9 +235,20 @@ class WalletRepository implements WalletInterface{
 
     //admin wallet
     public function adminstore($request){
+        // S52 — ⚠️ LE PIRE DE CE LOT. `Merchant::find()` etait nu, et ce chemin
+        // ne fait pas que lire : il CREDITE `wallet_balance` du marchand, ecrit
+        // une ligne de portefeuille portant NOTRE `company_id`, puis ENVOIE UN SMS
+        // au numero de ce marchand. Une recharge saisie chez nous creditait donc
+        // le portefeuille d'un marchand d'une AUTRE societe et lui envoyait un
+        // message a notre nom.
+        $merchant = Merchant::companywise()->find($request->merchant_id);
+
+        if (blank($merchant)) {
+            return false;
+        }
+
         try {
             DB::beginTransaction();
-            $merchant               = Merchant::find($request->merchant_id);
             $wallet                 = new Wallet();
             $wallet->company_id     = settings()->id; 
             $wallet->source         = 'Wallet Recharge'; 

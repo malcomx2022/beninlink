@@ -466,7 +466,15 @@ class ParcelController extends Controller
         if(request()->ajax()):
             $merchant = [];
 
-            $merchant = Merchant::find($request->merchant_id);
+            // S52 — lecture nue : cet AJAX rendait les frais de contre-remboursement
+            // (ville, peripherie, hors-ville) de N'IMPORTE QUEL marchand, donc la
+            // GRILLE TARIFAIRE negociee par un transporteur concurrent. Et `->cod_charges`
+            // sur `null` rendait 500 hors perimetre.
+            $merchant = Merchant::companywise()->find($request->merchant_id);
+
+            if (blank($merchant)) {
+                return response()->json([]);
+            }
 
             $merchant = [
                     'inside_city'  => $merchant->cod_charges['inside_city'],

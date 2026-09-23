@@ -189,6 +189,25 @@ class BodyIdentifierCoverageTest extends TestCase
         'POST admin/request/hub/payment/store' => CreationDoorScopeTest::class,
         'POST admin/support/reply' => CreationDoorScopeTest::class,
         'POST merchant/support/reply' => CreationDoorScopeTest::class,
+
+        // S52 — le reste de l'arriere : les aides AJAX qui RENSEIGNAIENT, et trois
+        // ecritures qui atteignaient un tiers d'une autre societe
+        'POST admin/assign-pickup/parcel/search' => ArrearsRemainderScopeTest::class,
+        'POST admin/assign-return-to-merchant/parcel/search' => ArrearsRemainderScopeTest::class,
+        'POST admin/get-merchant-cod' => ArrearsRemainderScopeTest::class,
+        'POST admin/income/hub-user-accounts' => ArrearsRemainderScopeTest::class,
+        'POST admin/merchant/account' => ArrearsRemainderScopeTest::class,
+        'POST admin/merchant/delivery-charge/info' => ArrearsRemainderScopeTest::class,
+        'POST admin/merchant/paymentmethod/change' => ArrearsRemainderScopeTest::class,
+        'POST admin/merchant/store' => ArrearsRemainderScopeTest::class,
+        'POST admin/parcel/delivery-category' => ArrearsRemainderScopeTest::class,
+        'POST admin/parcel/recived-by-hub/search' => ArrearsRemainderScopeTest::class,
+        'POST admin/push-notification/store' => ArrearsRemainderScopeTest::class,
+        'POST admin/salary/search-account' => ArrearsRemainderScopeTest::class,
+        'POST admin/sms-send-settings/status' => ArrearsRemainderScopeTest::class,
+        'POST admin/wallet-request/recharge' => ArrearsRemainderScopeTest::class,
+        'POST merchant/parcel/delivery-category' => ArrearsRemainderScopeTest::class,
+        'POST merchant/sign-up-store' => ArrearsRemainderScopeTest::class,
 ];
 
     /**
@@ -210,6 +229,7 @@ class BodyIdentifierCoverageTest extends TestCase
         'PUT category/update' => 'S35 — le catalogue des catégories ne porte AUCUNE colonne `company_id` : il est commun à toutes les sociétés, et `UserAndSettingsScopeTest` l\'inscrit',
             'POST admin/fraud/store' => 'S51 — la fiche de fraude ne porte AUCUN identifiant de locataire : `phone`, `name`, `details` et `tracking_id` sont des chaines (voir la migration : `tracking_id` est un `string`, pas une cle etrangere). `company_id` vient de `settings()` et `created_by` de la session',
         'POST merchant/fraud/store' => 'S51 — idem cote panneau marchand : meme depot, memes champs, aucun identifiant a garder',
+        'POST merchant/accounts/statements-filter' => 'S52 — le `parcel_tracking_id` ne peut RIEN atteindre : les releves sont bornes au marchand authentifie, et le socle porte deja `if (tracking_id && blank(parcel)) parcel_id = 0`, donc un numero inconnu et un numero du voisin rendent tous deux un ensemble VIDE. J\'avais d\'abord diagnostique un oracle d\'existence ; c\'est le test qui m\'a corrige',
 ];
 
     /**
@@ -225,30 +245,13 @@ class BodyIdentifierCoverageTest extends TestCase
      * d'autant. C'est le chemin qui a mené l'arriéré de l'autre filet de 171 à 0.
      */
     private const HERITAGE = [
-            'POST admin/assign-pickup/parcel/search',
-            'POST admin/assign-return-to-merchant/parcel/search',
-            'POST admin/get-merchant-cod',
-            'POST admin/income/hub-user-accounts',
-            'POST admin/merchant/account',
-            'POST admin/merchant/delivery-charge/info',
-            'POST admin/merchant/paymentmethod/change',
-            'POST admin/merchant/store',
-            'POST admin/parcel/delivery-category',
             'POST admin/parcel/partial-delivered/cancel',
-            'POST admin/parcel/recived-by-hub/search',
             'POST admin/parcel/return-received-by-merchant',
-            'POST admin/push-notification/store',
-            'POST admin/salary/search-account',
-            'POST admin/sms-send-settings/status',
-            'POST admin/wallet-request/recharge',
-            'POST merchant/accounts/statements-filter',
-            'POST merchant/parcel/delivery-category',
-            'POST merchant/sign-up-store',
             'PUT admin/currency/update',
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 20;
+    private const PLAFOND_HERITAGE = 3;
 
     protected function setUp(): void
     {

@@ -90,7 +90,12 @@ class SalaryController extends Controller
     }
 
     public function salaryGet(Request $request){
-        $salaryAmount = SalaryGenerate::where('user_id',$request->user_id)->where('month',$request->month)->first();
+        // S52 — lecture nue : cet AJAX rendait le MONTANT DU SALAIRE de n'importe
+        // quel utilisateur, y compris un employe d'une autre societe. Le bulletin
+        // est `companywise()` partout ailleurs depuis S30 ; seule cette aide
+        // AJAX l'ignorait.
+        $salaryAmount = SalaryGenerate::companywise()
+            ->where('user_id',$request->user_id)->where('month',$request->month)->first();
 
         if($salaryAmount):
            $salary  = $salaryAmount->amount;

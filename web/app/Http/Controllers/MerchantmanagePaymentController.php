@@ -47,7 +47,18 @@ class MerchantmanagePaymentController extends Controller
     }
 
     public function merchantAccount(Request $request){
-        $merchantaccounts = MerchantPayment::where('merchant_id',$request->merchant_id)->get();
+        // S52 — ⚠️ lecture nue, et la plus grave de ce lot cote confidentialite :
+        // cet AJAX rendait le titulaire, la banque, le NUMERO DE COMPTE, l'agence
+        // et le numero mobile des comptes de versement de n'importe quel marchand,
+        // y compris ceux d'un transporteur concurrent.
+        //
+        // Le perimetre d'un compte de versement passe par son MARCHAND (S34 : la
+        // table ne porte pas de `company_id`).
+        $marchand = Merchant::companywise()->find($request->merchant_id);
+
+        $merchantaccounts = blank($marchand)
+            ? collect()
+            : MerchantPayment::where('merchant_id', $marchand->id)->get();
         $accounts         = "";
         $accounts        .= "<option selected disabled>". __('menus.select').' '.__('merchant.title').' '. __('account.title')."</option>";
         foreach ($merchantaccounts as $account) {
@@ -226,8 +237,11 @@ class MerchantmanagePaymentController extends Controller
         $payments = $this->payment->filter($request);
         $accounts = $this->account->all();
         $merchant = $this->merchant->get($request->merchant_id);
-        if($request->merchant_id):
-            $merchantaccounts = MerchantPayment::where('merchant_id',$request->merchant_id)->get();
+        // S52 — MEME defaut, trouve en gardant `merchantAccount()` : le depot
+        // au-dessus rend bien `null` hors perimetre, mais la ligne suivante
+        // reprenait la valeur BRUTE de la requete au lieu du marchand resolu.
+        if(filled($merchant)):
+            $merchantaccounts = MerchantPayment::where('merchant_id',$merchant->id)->get();
         else:
             $merchantaccounts = null;
         endif;

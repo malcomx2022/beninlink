@@ -4815,3 +4815,118 @@ Il reste **20** routes à l'arriéré. `PUT admin/currency/update` en fait toujo
 partie et attend un arbitrage de produit (voir S50) : `Currency::find()` est nu,
 mais `currencies` ne porte aucune `company_id`, donc une société qui renomme une
 devise la renomme **pour tout le monde**.
+
+## ✅ S52 — les aides qui renseignent, et la fin de l'arriéré S38 (2026-09-24)
+
+### Les vingt dernières routes n'étaient pas de la même nature
+
+Les lots S45 à S51 fermaient des **écritures**. Les vingt routes restantes sont
+pour la plupart des **aides AJAX** : elles ne modifient rien. On pouvait les
+croire sans enjeu.
+
+Trois d'entre elles rendaient des données qu'un concurrent paierait :
+
+| Aide AJAX | Ce qu'elle rendait d'une **autre** société |
+|---|---|
+| `get-merchant-cod` | la grille de frais de contre-remboursement d'un marchand |
+| `merchant/account` | titulaire, banque, **numéro de compte**, agence, mobile |
+| `salary/search-account` | le **montant du salaire** d'un employé |
+
+### ⚠️ La règle qui a structuré la lecture
+
+> Un identifiant étranger utilisé comme **filtre** sur une requête déjà scopée
+> ne fuit rien — la jointure ne rend simplement aucune ligne. Il n'est dangereux
+> que quand il sert à **aller chercher**.
+
+C'est pourquoi les trois recherches de colis (`Parcel::companywise()->where([...])`)
+sont saines, alors que `get-merchant-cod` (`Merchant::find()`) ne l'était pas.
+Les quatre se ressemblent à l'œil.
+
+### Trois écritures atteignaient un tiers d'une autre société
+
+| Écriture | Ce qu'elle faisait |
+|---|---|
+| recharge de portefeuille | **crédite** `wallet_balance` **et envoie un SMS** |
+| notification poussée | **pousse** sur l'appareil du destinataire |
+| création / inscription marchand | le rattache à l'**entrepôt** du voisin |
+
+⚠️ L'inscription marchand est **publique et sans authentification**, comme
+l'inscription société de S47. Et le rattachement d'entrepôt existait à **trois**
+points d'appel — `store`, `signUpStore` et `update` — le troisième trouvé en
+gardant les deux premiers.
+
+Le défaut des comptes bancaires existait lui aussi à **deux** points d'appel :
+`merchantAccount` et `merchantpaymentFilter`, le second trouvé en gardant le
+premier.
+
+### Un refus se dit, il ne plante pas
+
+`sms-send-settings/status` était **correctement scopé** — hors périmètre, la
+requête rend `null` et aucune bascule n'a lieu. Mais l'affectation juste en
+dessous déréférençait ce `null` : **500** au lieu d'un refus. Même famille que
+S15 et S30. C'est l'ancrage du test qui l'a révélé, pas la lecture.
+
+### ⚠️ Le sabotage a corrigé le lot cinq fois
+
+C'est le lot où il a le plus servi, et aucune de ces cinq n'était visible à la
+lecture.
+
+**1. `permissions = null` ne vaut pas « tous les droits ».** Il vaut **aucun
+droit** : les routes répondaient 403, et `assertStringNotContainsString` est vrai
+sur une page « Accès interdit ». `ajax()` exige désormais **200** avant de rendre
+le corps.
+
+**2 et 3. Deux contrôles négatifs creux.** Mon colis de test était toujours en
+`PENDING`, alors que la recherche des retours filtre `RETURN_TO_COURIER` et celle
+de la réception `TRANSFER_TO_HUB`. Le colis ne matchait jamais : les deux tests
+passaient sans exercer leur garde.
+
+**4. Une assertion sur une valeur qui n'apparaît jamais.** J'assertais l'absence
+du **montant** dans la réponse de `deliveryWeight` — or cette vue ne rend que
+`weight` et `category->title`. L'assertion était vraie sans rien prouver.
+
+**5. Un ancrage non unique.** Les gardes de `store` et `update` sont
+textuellement identiques ; le sabotage frappait deux lignes et ne prouvait rien.
+C'est la leçon de S44, reprise telle quelle.
+
+### ⚠️ Et deux fois, il a corrigé ce que j'allais écrire
+
+**Un oracle d'existence qui n'existait pas.** J'avais diagnostiqué que le filtre
+des relevés révélait si un numéro de suivi existe ailleurs, et je l'avais écrit
+dans deux contrôleurs et un test. Le test a échoué : **quatre lignes sous le code
+que j'avais lu**, le socle porte déjà `if (tracking_id && blank($parcelID))
+parcel_id = 0`. Les deux branches rendent un ensemble vide. Le `companywise()`
+reste — il est correct — mais il ne ferme rien, et la route est **exemptée** pour
+ce motif.
+
+**Une attribution fausse.** J'allais inscrire au filet que
+`PartialDeliveryAccountingTest` et `DeliveryCancellationAccountingTest` prouvent
+les deux annulations de colis, d'après un relevé antérieur. Sabotage des deux
+gardes, puis la suite **entière** : **aucun test ne tombe**. La garde existe
+depuis S45 ; rien ne la tenait.
+
+> Une attribution se vérifie au sabotage, elle ne se cite pas de mémoire.
+
+J'ai alors écrit deux cas — et le sabotage les a trouvés **creux** à leur tour :
+sur un colis étranger incomplet, la transaction lève et le `catch` rend `false`
+de toute façon. Les prouver demande un colis d'en face assez complet pour que le
+chemin **non gardé réussisse**. Les deux tests sont **retirés** et les deux routes
+**restent à l'arriéré**.
+
+### L'arriéré du filet S38 : 20 → 3
+
+| | |
+|---|---|
+| `ArrearsRemainderScopeTest` | 17 cas, 46 assertions |
+| Sabotages | **17 sur 17 rouges**, dont 5 seulement après correction |
+| Cliquet | mord sur le plafond, sur `PROUVEES` et sur `EXEMPTEES` |
+
+**Les trois qui restent, et pourquoi :**
+
+1. `parcel/partial-delivered/cancel` — gardée, **rien ne la tient** (ci-dessus) ;
+2. `parcel/return-received-by-merchant` — idem ;
+3. `PUT admin/currency/update` — **question de produit**, pas de technique :
+   `Currency::find()` est nu et `currencies` ne porte aucune `company_id`. En
+   l'état, une société qui renomme une devise la renomme **pour tout le monde**.
+   Exempter comme catalogue de plateforme, réserver au super-administrateur, ou
+   ajouter `company_id` — le choix n'appartient pas à la revue.

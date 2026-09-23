@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class PushNotificationRepository implements PushNotificationInterface{
+    use \App\Traits\GuardsForeignIdentifiers;
+
 
     // get all PushNotification
     public function all(){
@@ -21,6 +23,17 @@ class PushNotificationRepository implements PushNotificationInterface{
     // All request data store in PushNotification.
     public function store($request)
     {
+        // S52 — `user_id` et `merchant_id` venaient du formulaire, nus. La
+        // notification n'etait pas seulement ENREGISTREE avec notre `company_id` :
+        // elle etait POUSSEE sur l'appareil du destinataire. On notifiait donc le
+        // telephone d'un utilisateur ou d'un marchand d'une autre societe.
+        if ($this->identifiantsHorsPerimetre($request, [
+            'user_id'     => \App\Models\User::class,
+            'merchant_id' => \App\Models\Backend\Merchant::class,
+        ])) {
+            return false;
+        }
+
         try {
             $pushNotification                   = new PushNotification();
             $pushNotification->company_id       = settings()->id;
