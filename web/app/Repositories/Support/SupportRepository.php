@@ -14,7 +14,13 @@ use Illuminate\Support\Facades\File;
 class SupportRepository implements SupportInterface {
     // get all rows in Department model
     public function departments(){
-        return Department::active()->orderBy('title')->get();
+        // S47 — lecture NUE d'un catalogue de societe. Ce selecteur listait les
+        // services de TOUTES les societes : leurs intitules internes
+        // s'affichaient dans la liste deroulante du formulaire de ticket, et un
+        // ticket pouvait porter le service d'une autre maison. La regle est
+        // pourtant connue du socle — `UserRepository` sert le MEME catalogue en
+        // `where('company_id', settings()->id)->active()`.
+        return Department::companywise()->active()->orderBy('title')->get();
     }
 
     public function all(){
@@ -58,6 +64,15 @@ class SupportRepository implements SupportInterface {
 
     public function store($request){
         try {
+            // S47 — fermer le SELECTEUR ne ferme pas l'ECRITURE. La liste
+            // deroulante ne propose plus que nos services ; rien n'oblige le
+            // navigateur a s'y tenir. Meme lecon que S43, prise par l'autre
+            // bout : la garde d'un ecran ne vaut pas garde de ce qu'il ecrit.
+            if (filled($request->department_id)
+                && blank(Department::companywise()->find($request->department_id))) {
+                return false;
+            }
+
 
             $support                    = new Support();
             $support->user_id           = Auth::User()->id;
@@ -82,6 +97,15 @@ class SupportRepository implements SupportInterface {
     public function update($id,$request)
     {
         try {
+            // S47 — fermer le SELECTEUR ne ferme pas l'ECRITURE. La liste
+            // deroulante ne propose plus que nos services ; rien n'oblige le
+            // navigateur a s'y tenir. Meme lecon que S43, prise par l'autre
+            // bout : la garde d'un ecran ne vaut pas garde de ce qu'il ecrit.
+            if (filled($request->department_id)
+                && blank(Department::companywise()->find($request->department_id))) {
+                return false;
+            }
+
             // S29 — ⚠️ TROU DE S23 : ce lot-la avait scope les LECTURES du support
             // (`all`, `get`, `chats`) et laisse les ECRITURES nues. `Support::find($id)`
             // ici permettait de reecrire le ticket d'un autre transporteur — sujet,
