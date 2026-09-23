@@ -4034,9 +4034,19 @@ sous `auth`, **60 ne portaient aucun `hasPermission`** : tout opérateur du
 back-office les atteignait, quel que soit son rôle — y compris un compte **sans un
 seul droit**, vérifié par appel HTTP.
 
-**60 → 33** une fois ce lot fusionné avec S42 : **27 gardes posées** (26 ici, plus
-`parcel/recived-by-hub/search` que S42 a gardée et que mon cliquet a fait sortir de
-l'arriéré), 6 exemptions motivées, **27 lignes d'arriéré** sous plafond.
+**60 → 22** une fois ce lot fusionné avec S42 puis S43 — le décompte à jour, et il
+ne se lit plus pour ce lot seul :
+
+| | |
+|---|---|
+| **27 gardes prouvées par ce lot** | 26 posées ici, plus `parcel/recived-by-hub/search` que S42 a gardée et que mon cliquet a fait sortir de l'arriéré |
+| **5 gardes de S43** | `payout`, `payout/merchant/payout`, `parcel/filter`, `parcel/deliveryman/search`, `parcel/merchant/shops` — le cliquet les a fait sortir aussi |
+| **6 exemptions** motivées | |
+| **22 lignes d'arriéré** | plafond ramené de 28 à 22 en deux fusions |
+
+⚠️ **Le troisième cliquet a servi deux fois de suite**, et c'est sa raison d'être :
+à chaque fusion il a exigé que les routes désormais gardées **par le lot voisin**
+sortent de ma liste d'attente. Sans lui le plafond aurait menti deux fois.
 
 ### Comment se mesure le droit d'une aide AJAX
 
