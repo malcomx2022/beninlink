@@ -17,6 +17,7 @@ use App\Services\Sms\SmsTemplate;
 use App\Models\Backend\Deliverycategory;
 use App\Models\Backend\DeliveryCharge;
 use App\Models\Backend\DeliveryMan;
+use App\Models\Backend\Hub;
 use App\Models\Backend\DeliverymanStatement;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\MerchantDeliveryCharge;
@@ -1121,6 +1122,16 @@ class ParcelRepository implements ParcelInterface {
 
     public function transferToHubMultipleParcel($request){
         try {
+            // S45 — l'entrepot de destination vaut pour tout le lot : s'il n'est pas
+            // des notres, aucun colis ne doit partir. Les colis restent chez nous,
+            // mais sortent de toutes nos listes d'entrepot.
+            if(blank(Hub::companywise()->find($request->hub_id))){
+                return false;
+            }
+            // S45 — le livreur du transfert est facultatif ici : garde si nomme.
+            if(filled($request->delivery_man_id) && blank(DeliveryMan::companywise()->find($request->delivery_man_id))){
+                return false;
+            }
 
             foreach($request->parcel_ids as $id){
                 // S38 — le colis venait d'une LISTE portee par le corps de la requete.
@@ -1154,6 +1165,14 @@ class ParcelRepository implements ParcelInterface {
 
     public function deliveryManAssignMultipleParcel($request){
         try {
+            // S45 — S38 a ferme l'axe du COLIS sur ce chemin et l'a inscrit comme
+            // prouve. L'axe de l'AGENT restait ouvert : `delivery_man_id` designe
+            // un livreur d'une AUTRE societe, credite de la course sur NOS ecritures.
+            // Un identifiant de lot hors perimetre est ignore ; celui-ci vaut pour
+            // TOUT le lot, donc on refuse le lot entier.
+            if(blank(DeliveryMan::companywise()->find($request->delivery_man_id))){
+                return false;
+            }
             $deliveryUser  = DeliveryMan::find($request->delivery_man_id);
             foreach($request->parcel_ids_ as $id){
                 // S38 — le colis venait d'une LISTE portee par le corps de la requete.
@@ -1209,6 +1228,18 @@ class ParcelRepository implements ParcelInterface {
         // et designait au passage qui y serait paye.
         $colis = Parcel::companywise()->find($id);
         if(blank($colis)){
+            return false;
+        }
+        // S45 — l'entrepot de destination doit etre des notres. Un `hub_id`
+        // etranger ne montre rien a l'autre societe (les listes restent
+        // `companywise()`), il fait PIRE pour nous : le colis quitte toutes les
+        // listes d'entrepot de la maison et devient introuvable a nos agents.
+        if(blank(Hub::companywise()->find($request->hub_id))){
+            return false;
+        }
+        // S45 — le livreur du transfert est FACULTATIF ici (le controleur n'exige
+        // que `hub_id`) : on ne le garde donc que lorsqu'il est nomme.
+        if(filled($request->delivery_man_id) && blank(DeliveryMan::companywise()->find($request->delivery_man_id))){
             return false;
         }
         try {
@@ -1367,6 +1398,13 @@ class ParcelRepository implements ParcelInterface {
         // et designait au passage qui y serait paye.
         $colis = Parcel::companywise()->find($id);
         if(blank($colis)){
+            return false;
+        }
+        // S45 — l'entrepot de destination doit etre des notres. Un `hub_id`
+        // etranger ne montre rien a l'autre societe (les listes restent
+        // `companywise()`), il fait PIRE pour nous : le colis quitte toutes les
+        // listes d'entrepot de la maison et devient introuvable a nos agents.
+        if(blank(Hub::companywise()->find($request->hub_id))){
             return false;
         }
         try {
@@ -1655,6 +1693,16 @@ class ParcelRepository implements ParcelInterface {
                 return false;
             }
 
+            // S45 — S38 a ferme l'axe du COLIS ici et l'a inscrit comme prouve.
+            // L'axe de l'AGENT restait ouvert, et c'est le plus cher : le solde du
+            // livreur nomme est CREDITE du frais de retour, et deux releves portant
+            // `company_id = settings()->id` sont attaches a son identifiant. Nomme
+            // un livreur d'une autre societe, et nos livres payent son employe.
+            if(blank(DeliveryMan::companywise()->find($request->delivery_man_id))){
+                DB::rollBack();
+                return false;
+            }
+
             $returnassigntomerchant                  = new ParcelEvent();
             $returnassigntomerchant->parcel_id       = $id;
             $returnassigntomerchant->delivery_man_id = $request->delivery_man_id;
@@ -1783,6 +1831,13 @@ class ParcelRepository implements ParcelInterface {
         // et designait au passage qui y serait paye.
         $colis = Parcel::companywise()->find($id);
         if(blank($colis)){
+            return false;
+        }
+        // S45 — l'agent nomme doit etre des notres. Le colis etait garde ; celui
+        // qu'on PAIE pour le mouvement ne l'etait pas : `DeliveryMan::find()` nu
+        // creditait le solde d'un livreur d'une AUTRE societe et attachait nos
+        // releves a son identifiant.
+        if(blank(DeliveryMan::companywise()->find($request->delivery_man_id))){
             return false;
         }
         try {
@@ -3414,6 +3469,14 @@ class ParcelRepository implements ParcelInterface {
     public function pickupdatemanAssignedBulk($request){
 
         try {
+            // S45 — S38 a ferme l'axe du COLIS sur ce chemin et l'a inscrit comme
+            // prouve. L'axe de l'AGENT restait ouvert : `delivery_man_id` designe
+            // un livreur d'une AUTRE societe, credite de la course sur NOS ecritures.
+            // Un identifiant de lot hors perimetre est ignore ; celui-ci vaut pour
+            // TOUT le lot, donc on refuse le lot entier.
+            if(blank(DeliveryMan::companywise()->find($request->delivery_man_id))){
+                return false;
+            }
             foreach ($request->parcel_id as  $id) {
                 // S38 — le colis venait d'une LISTE portee par le corps de la requete.
                 // Aucune route a parametre ne porte ces identifiants : le filet ne
@@ -3472,6 +3535,14 @@ class ParcelRepository implements ParcelInterface {
     }
     public function AssignReturnToMerchantBulk($request){
         try {
+            // S45 — S38 a ferme l'axe du COLIS sur ce chemin et l'a inscrit comme
+            // prouve. L'axe de l'AGENT restait ouvert : `delivery_man_id` designe
+            // un livreur d'une AUTRE societe, credite de la course sur NOS ecritures.
+            // Un identifiant de lot hors perimetre est ignore ; celui-ci vaut pour
+            // TOUT le lot, donc on refuse le lot entier.
+            if(blank(DeliveryMan::companywise()->find($request->delivery_man_id))){
+                return false;
+            }
             foreach ($request->parcel_id as $id) {
                 // S38 — le colis venait d'une LISTE portee par le corps de la requete.
                 // Aucune route a parametre ne porte ces identifiants : le filet ne
