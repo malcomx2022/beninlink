@@ -12,7 +12,7 @@ use Tests\Concerns\SeedsTenant;
 use Tests\TestCase;
 
 /**
- * S43 — la porte du bureau : les routes du back-office sans garde de droit.
+ * S44 — la porte du bureau : les routes du back-office sans garde de droit.
  *
  * S41 a fermé la porte du **bâtiment** — `admin/*` exige désormais un compte de
  * type back-office. Reste celle du **bureau** : parmi les 447 routes `admin/*`,
