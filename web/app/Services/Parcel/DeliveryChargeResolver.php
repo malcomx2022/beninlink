@@ -66,7 +66,7 @@ class DeliveryChargeResolver
 
             // Un pays inconnu n'est pas facturé au hasard : l'appelant doit
             // le voir, pas le découvrir sur la facture du marchand.
-            return $forfait === null ? null : $forfait + $this->supplement($delayId);
+            return $forfait === null ? null : $forfait + $this->supplement($delayId, (int) $zone->company_id);
         }
 
         $tranche = $this->trancheDeZone($merchantId, $categoryId, $weight, $zoneId);
@@ -74,7 +74,7 @@ class DeliveryChargeResolver
             return null;
         }
 
-        return (float) $tranche->amount + $this->supplement($delayId);
+        return (float) $tranche->amount + $this->supplement($delayId, (int) $zone->company_id);
     }
 
     /** Forfait du pays dans une zone d'export, ou `null` s'il n'est pas tarifé. */
@@ -91,14 +91,31 @@ class DeliveryChargeResolver
         return $ligne === null ? null : (float) $ligne->flat_amount;
     }
 
-    /** Supplément du délai — global, donc indépendant de la zone. */
-    private function supplement(?int $delayId): float
+    /**
+     * Supplément du délai — global, donc indépendant de la zone.
+     *
+     * S46 — la lecture était NUE (`DeliveryDelay::find()`). Le délai porte une
+     * SURCHARGE ajoutée à la course : nommer le délai d'une autre société
+     * facturait son supplément à notre marchand. Mesure : 1 500 F de course
+     * devenaient **10 500 F** avec un délai voisin surchargé à 9 000.
+     *
+     * ⚠️ Le périmètre est celui de **la société de la zone tarifée**, pas celui
+     * du locataire ambiant. `companywise()` lirait `settings()`, or ce
+     * résolveur ne suppose nulle part que la route qu'on lui demande est celle
+     * du locataire courant — `trancheDeZone()` ne s'appuie que sur le marchand
+     * et la zone. Scoper sur `settings()` aurait rendu le tarif dépendant du
+     * contexte d'appel plutôt que de la route, ce qui est une autre règle.
+     *
+     * La garde tient quand même : un délai étranger présenté avec NOTRE zone
+     * est écarté, puisque c'est la zone qui donne la société.
+     */
+    private function supplement(?int $delayId, int $companyId): float
     {
         if ($delayId === null) {
             return 0.0;
         }
 
-        return (float) (DeliveryDelay::find($delayId)?->surcharge ?? 0);
+        return (float) (DeliveryDelay::where('company_id', $companyId)->find($delayId)?->surcharge ?? 0);
     }
 
     /**
