@@ -13,6 +13,7 @@ use App\Models\Backend\Packaging;
 use App\Models\Backend\Parcel;
 use App\Models\MerchantShops;
 use App\Models\User;
+use App\Repositories\MerchantPanel\MerchantParcel\MerchantParcelInterface;
 use App\Repositories\Parcel\ParcelInterface;
 use App\Services\Parcel\DeliveryChargeResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -315,6 +316,132 @@ class ParcelCatalogScopeTest extends TestCase
     {
         $this->assertFalse((bool) $this->depot->store($this->requete(['zone_id' => $this->saZone->id])));
         $this->assertSame(0, Parcel::count());
+    }
+
+    /* ───────────── l'autre porte : le panneau du marchand ───────────────── */
+
+    /**
+     * ⚠️ Le defaut le plus grave du lot, et il n'est pas dans le back-office.
+     *
+     * `MerchantParcelRepository::store()` ecrivait
+     * `$parcel->merchant_id = $request->merchant_id ?? $merchant_id`. Le
+     * formulaire du panneau envoie `merchant_id` dans un champ **cache**, et sa
+     * requete de validation ne le mentionne meme pas. Un marchand pouvait donc,
+     * depuis SON panneau, attribuer un colis a n'importe quel autre marchand —
+     * y compris d'une autre societe — pendant que `company_id` restait la
+     * notre. Le colis atterrissait dans les releves et le solde de l'autre.
+     *
+     * C'est mot pour mot la forme de S33 cote back-office. La meme phrase vaut
+     * ici : le formulaire ne propose que soi, rien n'oblige le navigateur a s'y
+     * tenir.
+     */
+    public function test_a_merchant_cannot_bill_a_parcel_to_another_merchant(): void
+    {
+        // Ce depot suppose le MARCHAND connecte : il lit `auth()->user()->hub_id`
+        // pour l'entrepot d'origine. Agir en administrateur ferait echouer la
+        // creation pour une autre raison, et le controle negatif ne mesurerait
+        // plus rien.
+        $this->actingAs($this->monMarchand->user);
+
+        $depot = app(MerchantParcelInterface::class);
+        $maBoutique = $this->boutiqueDe($this->monMarchand);
+
+        $this->assertFalse(
+            (bool) $depot->store(
+                $this->requete(['merchant_id' => $this->sonMarchand->id, 'shop_id' => $maBoutique->id]),
+                $this->monMarchand->id,
+            ),
+            'un marchand a facture un colis au marchand d\'une autre societe',
+        );
+        $this->assertSame(0, Parcel::count());
+
+        // Controle negatif : a son propre nom, le colis se cree.
+        $this->assertTrue((bool) $depot->store(
+            $this->requete(['merchant_id' => $this->monMarchand->id, 'shop_id' => $maBoutique->id]),
+            $this->monMarchand->id,
+        ));
+        $this->assertSame($this->monMarchand->id, (int) Parcel::firstOrFail()->merchant_id);
+    }
+
+    /** Les catalogues du panneau marchand, fermes comme ceux du back-office. */
+    public function test_the_merchant_panel_refuses_a_foreign_shop_and_packaging(): void
+    {
+        $this->actingAs($this->monMarchand->user);
+
+        $depot = app(MerchantParcelInterface::class);
+        $saBoutique = $this->boutiqueDe($this->sonMarchand);
+        $sonEmballage = Packaging::forceCreate([
+            'company_id' => self::AUTRE, 'name' => 'Carton du voisin', 'price' => 5000,
+            'status' => Status::ACTIVE, 'position' => 1,
+        ]);
+        $maBoutique = $this->boutiqueDe($this->monMarchand);
+
+        $this->assertFalse((bool) $depot->store(
+            $this->requete(['merchant_id' => $this->monMarchand->id, 'shop_id' => $saBoutique->id]),
+            $this->monMarchand->id,
+        ));
+
+        $this->assertFalse((bool) $depot->store(
+            $this->requete(['merchant_id' => $this->monMarchand->id, 'shop_id' => $maBoutique->id, 'packaging_id' => $sonEmballage->id]),
+            $this->monMarchand->id,
+        ));
+
+        $this->assertSame(0, Parcel::count());
+    }
+
+    /**
+     * ⚠️ Les TROIS portes du panneau, et les QUATRE branches de sa garde.
+     *
+     * Le sabotage a de nouveau reclame ce test : neutraliser l'appel dans
+     * `duplicateStore` ou `update`, ou la branche « categorie », laissait la
+     * suite verte. Une aide partagee donne l'illusion d'une couverture que ses
+     * appelants n'ont pas — troisieme fois dans ce lot.
+     */
+    public function test_every_door_of_the_merchant_panel_refuses_every_foreign_catalog(): void
+    {
+        $this->actingAs($this->monMarchand->user);
+        $depot = app(MerchantParcelInterface::class);
+
+        $maBoutique = $this->boutiqueDe($this->monMarchand);
+        $base = ['merchant_id' => $this->monMarchand->id, 'shop_id' => $maBoutique->id];
+
+        // Un colis a soi, pour que `update` et la duplication aient une prise.
+        $this->assertTrue((bool) $depot->store($this->requete($base), $this->monMarchand->id));
+        $colis = Parcel::firstOrFail();
+        $dejaLa = Parcel::count();
+
+        $etrangers = [
+            'la categorie du voisin' => ['category_id' => Deliverycategory::forceCreate([
+                'company_id' => self::AUTRE, 'title' => 'Categorie voisine', 'status' => Status::ACTIVE, 'position' => 9,
+            ])->id],
+            'la boutique du voisin' => ['shop_id' => $this->boutiqueDe($this->sonMarchand)->id],
+            'l\'emballage du voisin' => ['packaging_id' => Packaging::forceCreate([
+                'company_id' => self::AUTRE, 'name' => 'Carton voisin', 'price' => 5000,
+                'status' => Status::ACTIVE, 'position' => 1,
+            ])->id],
+            'le marchand du voisin' => ['merchant_id' => $this->sonMarchand->id],
+        ];
+
+        // La categorie etrangere doit pouvoir etre TARIFEE, sinon le refus
+        // serait acquis par absence de bareme et ne prouverait pas la garde.
+        $this->bareme(settings()->id, $etrangers['la categorie du voisin']['category_id'], $this->maZone->id, 1, 1500);
+
+        foreach ($etrangers as $quoi => $champ) {
+            $this->assertFalse(
+                (bool) $depot->store($this->requete($champ + $base), $this->monMarchand->id),
+                "creation : {$quoi} a ete accepte",
+            );
+            $this->assertFalse(
+                (bool) $depot->duplicateStore($this->requete($champ + $base + ['parcel_id' => $colis->id]), $this->monMarchand->id),
+                "duplication : {$quoi} a ete accepte",
+            );
+            $this->assertFalse(
+                (bool) $depot->update($colis->id, $this->requete($champ + $base), $this->monMarchand->id),
+                "modification : {$quoi} a ete accepte",
+            );
+        }
+
+        $this->assertSame($dejaLa, Parcel::count(), 'un colis a ete cree malgre un catalogue etranger');
     }
 
     /* ───────────────────────────── fixtures ─────────────────────────────── */
