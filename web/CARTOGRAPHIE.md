@@ -4161,3 +4161,181 @@ Suite complète : **866 tests, 45 355 assertions**, vert.
 - **Trois écrans en lot** et la barre de navigation : `assign-pickup/parcel/search`,
   `assign-return-to-merchant/parcel/search`, `parcel/recived-by-hub/search`,
   `todo/momal`.
+
+## ✅ S45 — l'agent nommé : le second identifiant d'un mouvement (2026-09-23)
+
+### Ce que S38 avait fermé, et ce qu'il avait laissé
+
+Un changement de statut porte **deux** identifiants dans le corps de la requête,
+et pas un seul : le **colis** qu'on déplace, et **l'agent ou l'entrepôt qu'on
+nomme au passage**. S38 a énuméré les routes d'écriture sans paramètre d'URL,
+trouvé les identifiants de colis qu'elles lisaient, et fermé cet axe-là.
+
+Le second est resté ouvert — y compris sur **cinq chemins que S38 avait inscrits
+comme *prouvés***. La preuve portait sur le colis ; elle ne disait rien du
+livreur. Une route inscrite dans `PROUVEES` n'est donc pas une route close :
+c'est une route close **sur l'axe que le test a mesuré**.
+
+⚠️ C'est la troisième fois que ce projet bute sur cette forme. S41 l'a montrée
+entre droit et société, S43 dans l'autre sens, S45 entre **la ressource
+déplacée** et **l'agent payé pour la déplacer**. La leçon se durcit : une
+surface fermée sur un axe n'est pas fermée, elle est fermée *sur un axe*.
+
+### Le relevé : huit méthodes, deux natures de défaut
+
+Huit méthodes du dépôt des colis lisaient `delivery_man_id` ou `hub_id` dans le
+corps sans jamais vérifier de quelle société ils venaient. Les deux identifiants
+ne coûtent pas la même chose, et c'est le point le plus utile du lot :
+
+**L'axe du livreur — une écriture comptable qui franchit la frontière.**
+
+| Méthode | État avant S45 | Ce qu'un livreur étranger obtenait |
+|---|---|---|
+| `returnAssignToMerchant` | S38 : colis prouvé | solde **crédité** du frais de retour + deux relevés à `company_id` = la nôtre |
+| `AssignReturnToMerchantBulk` | S38 : colis prouvé | idem, **une fois par colis du lot** |
+| `deliveryManAssignMultipleParcel` | S38 : colis prouvé | livreur étranger nommé sur nos colis |
+| `pickupdatemanAssignedBulk` | S38 : colis prouvé | idem côté ramassage |
+| `returnAssignToMerchantReschedule` | arriéré S38 | livreur étranger nommé |
+
+Nommer le livreur d'une autre société faisait **payer son employé par nos
+livres** : `DeliveryMan::find()` nu, puis `current_balance + return_charge`, puis
+`DeliverymanStatement` et `CourierStatement` portant notre `company_id` et son
+identifiant à lui. L'argent traverse dans les deux sens.
+
+**L'axe de l'entrepôt — notre colis qui disparaît.**
+
+| Méthode | État avant S45 | Ce qu'un `hub_id` étranger obtenait |
+|---|---|---|
+| `transfertohub` | arriéré S38 | `transfer_hub_id` vers un entrepôt d'en face |
+| `transferToHubMultipleParcel` | S38 : colis prouvé | idem, sur tout le lot |
+| `receivedWarehouse` | arriéré S38 | `hub_id` vers un entrepôt d'en face |
+
+⚠️ **Et ici il faut être exact plutôt que spectaculaire.** Un `hub_id` étranger
+ne montre **rien** à l'autre société : ses listes d'entrepôt croisent
+`companywise()`. Il fait autre chose, et c'est pour nous — **nos** listes
+croisent `companywise()` **et** `hub_id`, donc le colis en sort et devient
+introuvable à nos propres agents. C'est une corruption, pas une fuite. Les deux
+sont des défauts ; ce ne sont pas les mêmes, et on ne les plaide pas pareil.
+
+### La forme du refus, reprise du socle
+
+Dans un lot, S38 **ignore** un colis hors périmètre et poursuit la boucle :
+l'identifiant est *par élément*, et un numéro glissé par erreur dans une
+sélection ne doit pas faire échouer le lot entier d'un agent légitime.
+
+L'agent, lui, vaut pour **tout le lot**. L'ignorer viderait le lot de son sens —
+on ne pose pas vingt événements sans livreur. On refuse donc l'appel entier,
+comme sur un chemin unitaire. C'est la règle de S38 appliquée à la bonne échelle,
+pas une règle nouvelle.
+
+Un cas à part : dans `transfertohub` et `transferToHubMultipleParcel`, le livreur
+est **facultatif** — le contrôleur n'exige que `hub_id`. La garde ne s'applique
+donc que lorsqu'il est nommé, et deux contrôles négatifs le vérifient : transfert
+sans livreur accepté, transfert avec le nôtre accepté **et inscrit**.
+
+### ⚠️ Deux fois, le sabotage a corrigé le lot
+
+**Un contrôle négatif creux.** `receivedWarehouse` paie le ramasseur : sans
+événement de ramassage antérieur, l'appel échoue de toute façon. Le premier test
+mesurait donc un `false` déjà acquis **sans la garde**. Le colis est désormais
+placé dans l'état où l'appel réussirait, avant qu'on lui oppose un entrepôt
+étranger.
+
+**Une garde verte sous sabotage.** Le sabotage des dix gardes a trouvé un
+**vert** : celui du livreur étranger dans `transferToHubMultipleParcel`. Le test
+du lot couvrait l'entrepôt et **jamais** le livreur — la garde était juste, sa
+preuve n'existait pas. Le cas manquant a été écrit, et le sabotage repasse rouge.
+
+C'est la troisième fois que le sabotage ne valide pas un correctif mais
+**complète un test**. La discipline tient : on sabote chaque garde *séparément*,
+jamais le lot en bloc, sinon un test qui en couvre une couvre visuellement les
+autres.
+
+### L'arriéré du filet S38, et comment on a décidé de le baisser
+
+Le mouvement autorisé sur ce filet est un seul : retirer une ligne de
+`HERITAGE`, l'inscrire dans `PROUVEES` **avec le test qui l'établit**, et baisser
+le plafond d'autant. La tentation est de le faire au nom d'un test : « ce test
+s'appelle `test_a_parcel_of_another_company_cannot_be_delivered`, donc la route
+est prouvée. » Un nom n'est pas une preuve.
+
+La décision s'est donc prise à la **mesure** : pour chaque méthode candidate, on
+retire sa garde `companywise()`, on relance la suite colis, et on regarde. Rouge
+= un test tient réellement le périmètre, la route peut sortir de l'arriéré.
+Vert = rien ne la tient, elle y reste, quel que soit le nom des tests alentour.
+
+C'est la même exigence que le sabotage d'un correctif, retournée vers l'arriéré :
+on ne se fie pas à ce qu'un test prétend couvrir, on regarde ce qu'il casse.
+
+### Le relevé, et les trois fois où il s'est trompé
+
+Dix-huit méthodes candidates, chacune privée de sa garde puis remise à
+l'épreuve. Premier relevé : **dix-huit rouges**. Un score parfait aurait dû
+alerter tout de suite — il n'a alerté qu'après coup, quand la vérification
+d'attribution a commencé à le contredire.
+
+| Ce que le relevé disait | Ce que la vérification a trouvé |
+|---|---|
+| `returnReceivedByMerchant` prouvée | **faux rouge** — aucun des six fichiers ne la tient |
+| `parcelPartialDeliveredCancel` prouvée | **faux rouge** — idem |
+| `receivedWarehouse` prouvée par `ParcelLifecycleTest` | **vrai rouge, mauvaise attribution** — ce fichier ne la tient pas |
+
+Trois erreurs sur dix-huit. Le réflexe a été de vérifier **l'instrument avant la
+conclusion** : la suite colis lancée sans aucun sabotage est verte (89 tests,
+332 assertions), donc l'outil est sain et les rouges venaient bien des gardes
+retirées. Les deux qui ne se rejouent pas restent donc à l'arriéré : la garde
+existe dans le code, mais **rien ne la retient**, et c'est exactement ce que
+l'arriéré désigne — « on ne sait pas », pas « c'est cassé ».
+
+### ⚠️ Le troisième cas : une assertion creuse dans un test existant
+
+`ParcelLifecycleTest::test_no_step_touches_a_parcel_of_another_company` énumère
+neuf étapes et les oppose au colis d'une autre société. Pour `receivedWarehouse`,
+son `assertFalse` **passe sans la garde** : la réception paie le ramasseur, donc
+sans la garde elle irait chercher l'événement de ramassage du colis étranger, ne
+le trouverait pas, et échouerait sur un `null`. Le faux était acquis par accident
+de fixture, pas par périmètre.
+
+C'est la **deuxième fois dans ce seul lot** que cette forme apparaît — la
+première dans mon propre test, corrigée avant commit. La leçon se précise :
+
+> Une assertion négative sur une étape qui a des **préconditions** ne prouve rien
+> tant que la ressource d'en face ne les remplit pas. Il faut lui donner de quoi
+> réussir avant de lui opposer la garde.
+
+`ParcelAgentScopeTest` tient désormais cette étape pour de bon : le colis
+étranger **porte** son événement de ramassage, donc sans la garde l'appel
+réussirait. Sabotage → rouge, et rouge sur ce test-là précisément.
+
+### L'arriéré du filet S38 : 83 → 67
+
+Seize routes sortent, chacune avec le fichier **mesuré** qui la tient :
+
+| Routes | Prouvées par |
+|---|---|
+| ramassage assigné · reprogrammé · reçu · reçu par hub · livreur assigné · reprogrammé · retour au courrier · transfert vers hub | `ParcelLifecycleTest` |
+| réception entrepôt · reprogrammation du retour au marchand | `ParcelAgentScopeTest` |
+| livré | `DeliveryAccountingTest` |
+| livraison partielle | `PartialDeliveryAccountingTest` |
+| annulation : livraison · entrepôt · affectation de retour · réception du retour | `DeliveryCancellationAccountingTest` |
+
+Deux restent, nommément : `POST admin/parcel/return-received-by-merchant` et
+`POST admin/parcel/partial-delivered/cancel`. Leur garde est dans le code ; aucun
+test ne tombe quand on la retire.
+
+⚠️ Et la colonne « prouvée par » porte désormais son avertissement dans le filet
+lui-même : elle nomme le test qui tient l'identifiant de **colis**, et ne dit
+rien du second. C'est ce lot qui a rendu cet avertissement nécessaire.
+
+### La passe suivante, nommée
+
+Le même relevé, poussé au-delà des mouvements de statut, désigne la création et
+la modification d'un colis : `store`, `duplicateStore` et `update` lisent
+`shop_id`, `zone_id`, `category_id`, `packaging_id`, `delivery_type_id`,
+`delay_id` et `priority_id` en ne gardant que `Merchant`. Le cas le plus net est
+`shop_id` : la table `merchant_shops` ne porte **aucune** colonne `company_id`
+(constat de S26), donc son périmètre ne peut passer que par le marchand.
+
+**Vérification** : cliquet abaissé d'un cran → mord et nomme l'écart ; une route
+retirée de `PROUVEES` → mord et la nomme. Les dix gardes du lot sabotées une à
+une → dix rouges.

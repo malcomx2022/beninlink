@@ -363,6 +363,51 @@ class ParcelAgentScopeTest extends TestCase
         ])));
     }
 
+    /**
+     * ⚠️ `ParcelLifecycleTest` ENUMERE cette etape parmi les neuf qu'il oppose au
+     * colis d'une autre societe, et son `assertFalse` passe. Il ne prouve
+     * pourtant rien : sans la garde, la reception irait chercher l'evenement de
+     * ramassage du colis etranger, ne le trouverait pas, et echouerait sur un
+     * `null` — donc `false` dans les deux cas. Le sabotage l'a montre : la garde
+     * retiree, ce fichier reste VERT.
+     *
+     * Ici le colis etranger PORTE son evenement de ramassage. Sans la garde,
+     * l'appel reussirait : le faux qu'on mesure est donc bien celui du
+     * perimetre, et pas celui d'une fixture incomplete.
+     */
+    public function test_warehouse_reception_refuses_a_parcel_of_another_company(): void
+    {
+        $colisAilleurs = $this->colisDe($this->marchandDe(self::AUTRE));
+        ParcelEvent::forceCreate([
+            'parcel_id' => $colisAilleurs->id,
+            'pickup_man_id' => $this->sonLivreur->id,
+            'parcel_status' => ParcelStatus::PICKUP_ASSIGN,
+            'created_by' => auth()->id(),
+        ]);
+        $colisAilleurs->status = ParcelStatus::PICKUP_ASSIGN;
+        $colisAilleurs->save();
+
+        $soldeAvant = (float) $this->sonLivreur->fresh()->current_balance;
+
+        $this->assertFalse($this->depot->receivedWarehouse($colisAilleurs->id, new Request([
+            'hub_id' => $this->monEntrepot->id,
+        ])));
+
+        $this->assertNull($colisAilleurs->fresh()->hub_id, 'le colis d\'une autre societe a ete range dans notre entrepot');
+        $this->assertSame(ParcelStatus::PICKUP_ASSIGN, $colisAilleurs->fresh()->status);
+        $this->assertSame($soldeAvant, (float) $this->sonLivreur->fresh()->current_balance, 'le ramasseur d\'en face a ete paye par nos livres');
+
+        // Controle negatif : le notre, dans le meme etat, passe bien.
+        $this->assertTrue($this->depot->pickupdatemanAssignedBulk(new Request([
+            'parcel_id' => [$this->monColis->id],
+            'delivery_man_id' => $this->monLivreur->id,
+        ])));
+        $this->assertTrue($this->depot->receivedWarehouse($this->monColis->id, new Request([
+            'hub_id' => $this->monEntrepot->id,
+        ])));
+        $this->assertSame($this->monEntrepot->id, $this->monColis->fresh()->hub_id);
+    }
+
     /* ───────────────────────────── fixtures ─────────────────────────────── */
 
     private function agentDe(int $societe): User
