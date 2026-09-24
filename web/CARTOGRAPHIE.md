@@ -5004,3 +5004,80 @@ Trois issues, et le choix appartient au métier, pas à la revue :
 
 Tant qu'elle n'est pas tranchée, la route reste à l'arriéré : c'est la forme
 honnête d'une question ouverte.
+
+## ✅ S54 — la devise est un catalogue de plateforme : l'arriéré S38 est **clos** (2026-09-24)
+
+### Une décision de métier, pas une mesure
+
+`PUT admin/currency/update` était la **dernière** route de l'arriéré, et la seule
+qui ne pouvait pas en sortir par la mesure : `Currency::find($request->id)` est
+nu, mais la table `currencies` ne porte **aucune** `company_id`. Il n'y a donc
+rien à cloisonner — et donc rien à prouver.
+
+Les trois issues posées en S50 puis rappelées à chaque lot ont été tranchées le
+**24/09** : **le catalogue des devises est celui de la plateforme**. La route est
+**exemptée**, exactement comme `PUT category/update` l'avait été en S35 pour la
+même raison.
+
+Le constat lui-même est ancien : **S32** l'avait déjà relevé, et le témoin de
+`categorys` le cite depuis S35 (« comme `currencies` au constat S32 »). Ce qui
+change ici, c'est qu'il cesse d'être un constat en marge pour devenir une
+**règle inscrite**.
+
+### ⚠️ Ce que l'exemption ne dit pas
+
+Elle ferme la question du **filet**, pas celle de l'**accès**.
+
+> Le catalogue reste **partagé et modifiable** : renommer une devise la renomme
+> pour toutes les sociétés. Ce n'est pas un défaut de cloisonnement — il n'y a
+> rien à cloisonner — c'est le prix d'un catalogue commun.
+
+Qui a le droit d'écrire dans un catalogue de plateforme depuis un back-office de
+**locataire** reste une question ouverte ; `hasPermission:currency_update` y
+répond seul aujourd'hui. L'exemption le **dit** au lieu de le taire, et la
+réserve est recopiée mot pour mot de celle de `categorys`.
+
+### La contrepartie : un témoin qui mord
+
+Une exemption sans témoin est une affirmation. `UserAndSettingsScopeTest` porte
+désormais le **jumeau** du témoin des catégories :
+
+```php
+public function test_the_shared_currency_catalogue_carries_no_company_at_all(): void
+{
+    $this->assertFalse(Schema::hasColumn('currencies', 'company_id'), ...);
+}
+```
+
+Si `currencies` gagne un jour une société, **la décision n'a plus lieu d'être** :
+le témoin tombe et force à reprendre l'exemption plutôt qu'à la laisser vivre sur
+une prémisse périmée.
+
+### L'arriéré du filet S38 : 1 → **0**
+
+**Le filet est clos**, treize passes après son ouverture à 90 — le même chemin
+que `WebIsolationCoverageTest`, fermé à S35 après 171 → 0 en dix passes.
+
+`HERITAGE` doit désormais rester **vide** : il n'y a plus de file d'attente. Une
+route d'écriture nouvelle se **prouve** ou se **motive** ; le plafond à `0`
+interdit de l'y ranger.
+
+| | |
+|---|---|
+| `HERITAGE` | **vide** |
+| Plafond | **0** |
+| L'exemption retirée | **mord** et nomme la route |
+| Une ligne remise à l'arriéré | **mord** (`1` n'est pas ≤ `0`) |
+| Le témoin de `currencies` | **mord** si la table gagne une société |
+
+### Les deux filets, côte à côte
+
+| Filet | Ouverture | Fermeture | Passes |
+|---|---|---|---|
+| `WebIsolationCoverageTest` (paramètre d'URL) | 171 | **0** (S35) | 10 |
+| `BodyIdentifierCoverageTest` (identifiant de corps) | 90 | **0** (S53/S54) | 13 |
+
+Ce que les deux disent ensemble : **aucune route d'écriture, à paramètre d'URL
+ou à identifiant de corps, ne peut plus être ajoutée sans qu'on ait écrit ce
+qu'on a fait de sa portée.** Ce n'est pas la promesse qu'il n'existe plus de
+faille — c'est la promesse qu'on ne peut plus en ajouter une sans le dire.

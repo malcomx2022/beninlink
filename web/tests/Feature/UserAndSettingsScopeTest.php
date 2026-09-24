@@ -421,6 +421,33 @@ class UserAndSettingsScopeTest extends TestCase
     }
 
     /**
+     * Le **jumeau** du précédent, et il porte une DÉCISION DE MÉTIER prise le
+     * 24/09 : `PUT admin/currency/update` est **exemptée** du filet S38 au motif
+     * que le catalogue des devises est celui de la **plateforme**.
+     *
+     * Le constat est ancien — S32 l'avait relevé et le test ci-dessus le cite
+     * déjà — mais il restait un constat. L'exemption le transforme en règle, et
+     * ce test en est la contrepartie : si `currencies` gagne un jour une
+     * société, la décision n'a plus lieu d'être et l'exemption doit tomber.
+     *
+     * ⚠️ **La réserve, mot pour mot celle de `categorys`** : ce catalogue reste
+     * **partagé et modifiable**. Renommer une devise la renomme pour toutes les
+     * sociétés. Ce n'est pas un défaut de cloisonnement — il n'y a rien à
+     * cloisonner — c'est le prix d'un catalogue commun. L'exemption ferme la
+     * question du **filet**, pas celle de l'**accès** : qui a le droit d'écrire
+     * dans un catalogue de plateforme depuis un back-office de locataire reste
+     * une question ouverte, et `hasPermission:currency_update` y répond seul
+     * aujourd'hui.
+     */
+    public function test_the_shared_currency_catalogue_carries_no_company_at_all(): void
+    {
+        $this->assertFalse(Schema::hasColumn('currencies', 'company_id'),
+            'si `currencies` porte désormais une société, l\'exemption de '
+            . '`PUT admin/currency/update` dans BodyIdentifierCoverageTest doit tomber '
+            . 'et la route être prouvée');
+    }
+
+    /**
      * Les cinq routes mortes de `sms-settings` sont **retirées**. Elles
      * désignaient des méthodes qui n'existent pas sur `SmsSettingsController` :
      * les atteindre rendait 500, et aucune vue ne les nommait.

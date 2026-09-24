@@ -236,6 +236,7 @@ class BodyIdentifierCoverageTest extends TestCase
             'POST admin/fraud/store' => 'S51 — la fiche de fraude ne porte AUCUN identifiant de locataire : `phone`, `name`, `details` et `tracking_id` sont des chaines (voir la migration : `tracking_id` est un `string`, pas une cle etrangere). `company_id` vient de `settings()` et `created_by` de la session',
         'POST merchant/fraud/store' => 'S51 — idem cote panneau marchand : meme depot, memes champs, aucun identifiant a garder',
         'POST merchant/accounts/statements-filter' => 'S52 — le `parcel_tracking_id` ne peut RIEN atteindre : les releves sont bornes au marchand authentifie, et le socle porte deja `if (tracking_id && blank(parcel)) parcel_id = 0`, donc un numero inconnu et un numero du voisin rendent tous deux un ensemble VIDE. J\'avais d\'abord diagnostique un oracle d\'existence ; c\'est le test qui m\'a corrige',
+        'PUT admin/currency/update' => 'S52/S53 — DECISION DE METIER (24/09) : le catalogue des devises est celui de la PLATEFORME. La table `currencies` ne porte AUCUNE colonne `company_id` (constat S32), exactement comme `categorys` (S35) : l\'identifiant du corps ne designe donc pas une ressource de locataire, et il n\'y a rien a cloisonner. `UserAndSettingsScopeTest::test_the_shared_currency_catalogue_carries_no_company_at_all` l\'inscrit et MORD si la table gagne un jour une societe. ⚠️ RESERVE, la meme qu\'en S32 : ce catalogue reste PARTAGE ET MODIFIABLE — renommer une devise la renomme pour toutes les societes. Ce n\'est pas un defaut de cloisonnement, c\'est le prix d\'un catalogue commun, et l\'exemption le dit au lieu de le taire',
 ];
 
     /**
@@ -247,15 +248,20 @@ class BodyIdentifierCoverageTest extends TestCase
      * que jusqu'ici rien ne le demandait.
      *
      * Le mouvement autorisé est un seul : retirer une ligne d'ici et l'inscrire
-     * dans `PROUVEES` avec le test qui l'établit, en baissant le plafond
-     * d'autant. C'est le chemin qui a mené l'arriéré de l'autre filet de 171 à 0.
+     * dans `PROUVEES` avec le test qui l'établit — ou dans `EXEMPTEES` avec son
+     * motif — en baissant le plafond d'autant. C'est le chemin qui a mené
+     * l'arriéré de l'autre filet de 171 à 0.
+     *
+     * ✅ **CLOS depuis S53 (90 → 0, en treize passes).** Cette liste doit rester
+     * **vide** : il n'y a plus de file d'attente. Une route d'écriture nouvelle
+     * se prouve (`PROUVEES`) ou se motive (`EXEMPTEES`) — elle ne se range plus
+     * ici, et le plafond à `0` l'interdit.
      */
     private const HERITAGE = [
-            'PUT admin/currency/update',
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 1;
+    private const PLAFOND_HERITAGE = 0;
 
     protected function setUp(): void
     {
