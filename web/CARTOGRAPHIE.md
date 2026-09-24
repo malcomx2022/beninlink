@@ -6154,3 +6154,65 @@ Suite complète : **1054 tests, 46 057 assertions**, verte (delta `+7 / +15`).
 | `SearchSurfaceCoverageTest` (S58) | `GET` sans paramètre d'URL | **0** (S63) |
 | `OrScopeEscapeCoverageTest` (S61) | le `OR` au niveau de la portée | — |
 | `NakedReadCoverageTest` (S65) | la lecture nue d'un identifiant | — |
+
+---
+
+## S66 — le rejeu du webhook FedaPay, côté portefeuille
+
+Aucune ligne de production touchée : le comportement était **correct**, c'est la
+**preuve** qui manquait.
+
+### Le constat
+
+FedaPay réessaie, un réseau duplique, un opérateur renvoie le même événement. Le
+solde ne doit bouger qu'une fois. Cette propriété était prouvée côté
+**abonnement** depuis le chantier 3
+(`FedaPaySubscriptionTest::test_le_webhook_approuve_active_le_plan_une_seule_fois`)
+mais **pas** côté portefeuille — et c'est un **autre chemin de code** :
+`walletRepo->approved()` au lieu de `switchPlan()`.
+
+Mesuré avant d'écrire quoi que ce soit, avec un test jetable :
+
+```
+[solde après 1 webhook : 5000]
+[solde après le REJEU  : 5000]
+```
+
+Pas de double crédit. Mais rien ne mordait si quelqu'un touchait aux verrous.
+
+### Pourquoi TROIS tests et non un
+
+Deux gardes couvrent ce chemin :
+
+| garde | où | ce qu'elle fait |
+|---|---|---|
+| **1** | `FedaPayController::approve()` | `lockForUpdate` + `isApproved()` : le rejeu ressort **avant** tout crédit |
+| **2** | `WalletRepository::approved()` | `lockForUpdate` + statut `PENDING` : une recharge déjà approuvée n'est pas re-créditée |
+
+Un seul test d'ensemble aurait laissé **chaque verrou sauter en silence**, puisque
+l'autre tient. C'est la leçon de S64 sur les sabotages partiels — appliquée cette
+fois **en amont**, à la conception du test plutôt qu'après coup.
+
+Le discriminant de la garde 1 est la **réponse** : `already processed` contre
+`approved`. C'est le seul qui ne dépende pas de la garde 2.
+
+### Vérification — et elle justifie le découpage
+
+| Sabotage | détecteur dédié | propriété d'ensemble |
+|---|---|---|
+| garde 1 seule (verrou de la transaction) | **rouge** | *verte — la garde 2 tient* |
+| garde 2 seule (verrou du portefeuille) | **rouge** | *verte — la garde 1 tient* |
+| **les deux ensemble** | — | **rouge** |
+
+`FedaPayWalletOutcomeTest` : 10 cas, 39 assertions.
+Suite complète : **1057 tests, 46 070 assertions**, verte (delta `+3 / +13`).
+
+### L'état du module, pour mémoire
+
+Vérifié à cette occasion : aucune clé FedaPay dans une vue ni dans une ressource
+d'API (l'app ne reçoit que `reference` et `payment_url`) · signature HMAC avec
+tolérance d'horodatage et `hash_equals` · le montant de l'abonnement vient de
+`$plan->price`, jamais du client · au crédit, c'est le montant **enregistré** qui
+est utilisé, jamais celui annoncé par l'événement · la recherche du webhook est
+délibérément **non scopée** (pas de session, `settings()` retomberait sur la
+société 1 — famille F4) et le locataire vient de la transaction.
