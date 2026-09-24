@@ -89,8 +89,16 @@ class HubPaymentController extends Controller
     public function update(UpdateRequest $request,$id){
 
         //courier account balance check
+            // S57 — meme defaut que `paymentStore` (corrige en S51), dans les deux
+            // methodes que ce lot-la n'avait pas couvertes : la lecture du solde
+            // precede la garde du depot, donc elle renseignait sur la tresorerie
+            // d'en face avant tout refus.
         if($request->isprocess):
-            $courier_account = Account::find($request->from_account);
+            $courier_account = Account::companywise()->find($request->from_account);
+            if(blank($courier_account)){
+                Toastr::error(__('hub_payment.error_msg'),__('message.error'));
+                return back()->withInput();
+            }
             if((double) $request->amount > $courier_account->balance){
                 Toastr::warning(__('hub_payment.not_enough_courier_balance'),__('message.warning'));
                 return back()->withInput();
@@ -159,8 +167,15 @@ class HubPaymentController extends Controller
     }
 
     public function processed(ProcessRequest $request){
-        $payment                    = HubPayment::where('id',$request->id)->first();
-        $courier_account            = Account::find($request->from_account);
+        // S57 — deux lectures nues d'un coup : le VERSEMENT d'en face (son
+        // montant) et le COMPTE d'en face (son solde), compares avant que le
+        // depot ne refuse. `->amount` sur `null` rendait de surcroit 500.
+        $payment                    = HubPayment::companywise()->where('id',$request->id)->first();
+        $courier_account            = Account::companywise()->find($request->from_account);
+        if(blank($payment) || blank($courier_account)){
+            Toastr::error(__('hub_payment.error_msg'),__('message.error'));
+            return back()->withInput();
+        }
         if((double) $payment->amount > $courier_account->balance){
             Toastr::warning(__('hub_payment.not_enough_courier_balance'),__('message.warning'));
             return back()->withInput();
