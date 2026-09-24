@@ -108,6 +108,25 @@ class SearchSurfaceCoverageTest extends TestCase
         'GET admin/reports/reports-salary-reports' => ReportsSurfaceScopeTest::class,
         'GET admin/reports/salary-report-print' => ReportsSurfaceScopeTest::class,
         'GET admin/salarys/filter' => ReportsSurfaceScopeTest::class,
+
+        // S63 — les ONZE DERNIERES. L'arriere de ce filet est CLOS.
+        //
+        // Aucun defaut dans ce lot : les onze etaient bornees. Trois niveaux de
+        // preuve selon ce que l'ecran rend — une IDENTITE (appel HTTP), un
+        // AGREGAT (la collection du depot), ou un FICHIER (CSV en flux, tableur
+        // binaire). Et pour le panneau marchand, ce qui est cloisonne n'est pas
+        // la societe mais le MARCHAND.
+        'GET admin/customs/alerts' => RemainingSurfaceScopeTest::class,
+        'GET admin/delivery-charge/filter' => RemainingSurfaceScopeTest::class,
+        'GET admin/delivery-zone/grid' => RemainingSurfaceScopeTest::class,
+        'GET admin/paid/invoice/syscohada-journal' => RemainingSurfaceScopeTest::class,
+        'GET admin/payment/merchant/filter' => RemainingSurfaceScopeTest::class,
+        'GET admin/wallet-request' => RemainingSurfaceScopeTest::class,
+        'GET merchant/my-wallet' => RemainingSurfaceScopeTest::class,
+        'GET merchant/parcel/file-export' => RemainingSurfaceScopeTest::class,
+        'GET merchant/parcel/filter' => RemainingSurfaceScopeTest::class,
+        'GET merchant/reports/parcel-filter-reports' => RemainingSurfaceScopeTest::class,
+        'GET merchant/reports/total-summery-filter' => RemainingSurfaceScopeTest::class,
     ];
 
     /**
@@ -144,6 +163,14 @@ class SearchSurfaceCoverageTest extends TestCase
      * dans `PROUVEES` avec le test qui l'établit — ou dans `EXEMPTEES` avec son
      * motif — en baissant le plafond d'autant.
      *
+     * ✅ **CLOS depuis S63 (46 → 0, en six passes).** Cette liste doit rester
+     * **vide** : il n'y a plus de file d'attente. Une route nouvelle de cette
+     * forme se prouve (`PROUVEES`) ou se motive (`EXEMPTEES`) — elle ne se range
+     * plus ici, et le plafond à `0` l'interdit. C'est le troisième arriéré
+     * d'isolation fermé, après 171 → 0 (S35) et 90 → 0 (S54).
+     *
+     * **S63 : 11 → 0.** Les onze dernières.
+     *
      * **S62 : 17 → 11.** Les six ecrans de rapport.
      *
      * **S61 : 21 → 17.** La famille des colis.
@@ -157,21 +184,10 @@ class SearchSurfaceCoverageTest extends TestCase
      * `BodyIdentifierCoverageTest` de 90 à 0.
      */
     private const HERITAGE = [
-        'GET admin/customs/alerts',
-        'GET admin/delivery-charge/filter',
-        'GET admin/delivery-zone/grid',
-        'GET admin/paid/invoice/syscohada-journal',
-        'GET admin/payment/merchant/filter',
-        'GET admin/wallet-request',
-        'GET merchant/my-wallet',
-        'GET merchant/parcel/file-export',
-        'GET merchant/parcel/filter',
-        'GET merchant/reports/parcel-filter-reports',
-        'GET merchant/reports/total-summery-filter',
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 11;
+    private const PLAFOND_HERITAGE = 0;
 
     protected function setUp(): void
     {
