@@ -28,6 +28,7 @@ class SidebarAndLocalesTest extends TestCase
 {
     private const SIDEBAR = 'resources/views/backend/partials/sidebar.blade.php';
     private const SIDEBAR_MARCHAND = 'resources/views/backend/merchant_panel/partials/sidebar.blade.php';
+    private const SIDEBAR_SUPER_ADMIN = 'resources/views/backend/super-admin/partials/sidebar.blade.php';
 
     private function source(string $relatif): string
     {
@@ -51,13 +52,43 @@ class SidebarAndLocalesTest extends TestCase
      * fichier de 663 lignes : une relecture ne peut pas garantir à l'œil que rien
      * n'est tombé. Les 68 routes du menu opérateur sont donc listées ici. Une
      * entrée supprimée, un `route()` mal recollé, et la suite échoue.
+     *
+     * ⚠️ **S55 — `currency.index` a quitté cet inventaire**, et c'est voulu : le
+     * catalogue des devises est une surface de **plateforme**, passée sous
+     * `super-admin/currency` avec `panel:super-admin`. Un opérateur de locataire
+     * ne peut plus l'atteindre, donc ce menu n'a plus à l'annoncer.
+     *
+     * L'écran n'est pas pour autant orphelin : il **change d'inventaire**.
+     * `test_the_super_admin_menu_reaches_the_platform_catalogue` ci-dessous le
+     * tient désormais. Retirer une ligne d'ici sans l'inscrire ailleurs serait
+     * exactement la façon de faire disparaître un écran en silence.
      */
+    /**
+     * Le pendant de S55 : l'écran que l'opérateur a perdu, le
+     * super-administrateur doit l'avoir. Sans ce test, le retrait de
+     * `currency.index` de l'inventaire ci-dessus ne serait qu'une suppression.
+     */
+    public function test_the_super_admin_menu_reaches_the_platform_catalogue(): void
+    {
+        $this->assertContains('currency.index', $this->routes(self::SIDEBAR_SUPER_ADMIN),
+            'le catalogue des devises n\'est plus atteignable depuis le menu du '
+            . 'super-administrateur : l\'ecran serait orphelin des deux cotes');
+
+        // Et il pointe bien la NOUVELLE adresse : le motif de surbrillance suit.
+        $this->assertStringContainsString("'super-admin/currency*'", $this->source(self::SIDEBAR_SUPER_ADMIN),
+            'le menu du super-administrateur surligne encore l\'ancienne URI `admin/currency*`');
+
+        // Le menu de l'operateur, lui, ne le mentionne plus du tout.
+        $this->assertStringNotContainsString("route('currency.index')", $this->source(self::SIDEBAR),
+            'le menu de l\'operateur annonce encore un ecran de plateforme');
+    }
+
     public function test_the_operator_menu_still_reaches_every_screen(): void
     {
         $attendues = [
             'account.heads.index', 'accounts.index', 'admin.subscription.history',
             'asset-category.index', 'asset.index', 'bank-transaction.index', 'blogs.index',
-            'cash.received.deliveryman.index', 'currency.index', 'customs.alerts',
+            'cash.received.deliveryman.index', 'customs.alerts',
             'database.backup.index', 'delivery-category.index', 'delivery-charge.index',
             'delivery-type.index', 'delivery-zone.index', 'deliveryman.index',
             'departments.index', 'designations.index', 'expense.index', 'faq.index',
