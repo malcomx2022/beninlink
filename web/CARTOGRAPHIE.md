@@ -4702,7 +4702,7 @@ Trois issues, et le choix n'appartient pas à la revue :
    l'accès plutôt qu'au filet ;
 3. **ajouter `company_id`** — chaque société tient ses devises, migration à la clé.
 
-En l'état, une société qui renomme une devise la renomme **pour tout le monde**.
+⚠️ **Rectifié en S55 :** j'ai longtemps écrit ici qu'« une société qui renomme une devise la renomme pour tout le monde ». **C'était faux comme affirmé.** La mesure donne **57** entrées dans la table `permissions` du locataire, et `currency_update` n'en fait pas partie — il n'existe que dans `SuperAdminPermission`. Un administrateur de locataire portant *tous* ses droits recevait déjà un refus. Ce qui était vrai : la garantie venait de la **donnée** (les semences), pas de la **structure** — la route vivait sous `admin/` avec `panel:back-office`. S55 la déplace sous `panel:super-admin`.
 
 ## ✅ S51 — le second identifiant sur les portes de création (2026-09-23)
 
@@ -4927,7 +4927,8 @@ chemin **non gardé réussisse**. Les deux tests sont **retirés** et les deux r
 2. `parcel/return-received-by-merchant` — idem ;
 3. `PUT admin/currency/update` — **question de produit**, pas de technique :
    `Currency::find()` est nu et `currencies` ne porte aucune `company_id`. En
-   l'état, une société qui renomme une devise la renomme **pour tout le monde**.
+   l'état, le catalogue est commun.
+   ⚠️ **Rectifié en S55 :** j'ai longtemps écrit ici qu'« une société qui renomme une devise la renomme pour tout le monde ». **C'était faux comme affirmé.** La mesure donne **57** entrées dans la table `permissions` du locataire, et `currency_update` n'en fait pas partie — il n'existe que dans `SuperAdminPermission`. Un administrateur de locataire portant *tous* ses droits recevait déjà un refus. Ce qui était vrai : la garantie venait de la **donnée** (les semences), pas de la **structure** — la route vivait sous `admin/` avec `panel:back-office`. S55 la déplace sous `panel:super-admin`.
    Exempter comme catalogue de plateforme, réserver au super-administrateur, ou
    ajouter `company_id` — le choix n'appartient pas à la revue.
 
@@ -4992,7 +4993,8 @@ validait le test.
 **La seule route restante est `PUT admin/currency/update`**, et elle ne peut pas
 sortir par la mesure : `Currency::find()` est nu, mais `currencies` ne porte
 **aucune** `company_id` (comme `categorys`, S35). En l'état, une société qui
-renomme une devise la renomme **pour tout le monde**.
+le catalogue est commun.
+⚠️ **Rectifié en S55 :** j'ai longtemps écrit ici qu'« une société qui renomme une devise la renomme pour tout le monde ». **C'était faux comme affirmé.** La mesure donne **57** entrées dans la table `permissions` du locataire, et `currency_update` n'en fait pas partie — il n'existe que dans `SuperAdminPermission`. Un administrateur de locataire portant *tous* ses droits recevait déjà un refus. Ce qui était vrai : la garantie venait de la **donnée** (les semences), pas de la **structure** — la route vivait sous `admin/` avec `panel:back-office`. S55 la déplace sous `panel:super-admin`.
 
 Trois issues, et le choix appartient au métier, pas à la revue :
 
@@ -5081,3 +5083,100 @@ Ce que les deux disent ensemble : **aucune route d'écriture, à paramètre d'UR
 ou à identifiant de corps, ne peut plus être ajoutée sans qu'on ait écrit ce
 qu'on a fait de sa portée.** Ce n'est pas la promesse qu'il n'existe plus de
 faille — c'est la promesse qu'on ne peut plus en ajouter une sans le dire.
+
+## ✅ S55 — la devise passe au panneau du super-administrateur (2026-09-24)
+
+### La seconde moitié de la décision du 24/09
+
+S54 avait **exempté** `currency/update` du filet S38 : le catalogue des devises est
+celui de la plateforme, il n'y a rien à cloisonner. L'exemption fermait la question
+du **filet** et laissait explicitement ouverte celle de l'**accès**. Ce lot la ferme.
+
+### ⚠️ Et d'abord : je m'étais trompé sur l'ampleur du défaut
+
+J'ai écrit, dans la PR #122, dans trois sections de cette cartographie et dans
+`CLAUDE.md`, qu'« une société qui renomme une devise la renomme **pour tout le
+monde** ». **C'était faux comme affirmé.**
+
+La mesure, faite avant de coder :
+
+```
+[droits LOCATAIRE dans la table permissions : 57]
+[currency_update parmi eux ? NON]
+[locataire avec TOUS ses droits -> HTTP 302]
+```
+
+`currency_read/create/update/delete` n'existent que dans `supperAdminPermissions()`,
+qui sème la table `SuperAdminPermission`. Ils sont de surcroît **commentés** dans
+`AdminPermissions()` du `UserSeeder`. Un administrateur de locataire portant *tous*
+ses droits recevait donc déjà un refus.
+
+Les trois occurrences sont rectifiées sur place plutôt que réécrites en silence.
+
+### Ce qui était vrai, et qui reste le motif du lot
+
+> La garantie était **de la donnée**, pas de la **structure**.
+
+Les six routes vivaient sous `admin/` avec `panel:back-office` — donc dans le
+panneau du **locataire**. Seul le contenu des semences l'en tenait écarté. Ajouter
+`currency_*` à la table `permissions` — une ligne de semence, une écriture manuelle,
+un correctif distrait — aurait ouvert la surface sans que rien ne s'en aperçoive.
+
+### ⚠️ Un doublon mort, et un fichier mal nommé
+
+Le relevé a trouvé deux choses que la lecture seule n'aurait pas données :
+
+1. Les six routes étaient déclarées **deux fois** — dans `routes/web.php` **et** dans
+   `routes/superadmin.php`, à l'identique (même URI, même nom, même contrôleur).
+   `superadmin.php` étant chargé **après** `web.php`, sa déclaration **écrasait**
+   l'autre dans la collection. Le bloc de `web.php` était donc **mort**, et
+   `route:list` ne montrait bien que six routes, pas douze.
+
+2. ⚠️ `routes/superadmin.php` **n'est pas** le fichier du super-administrateur. Son
+   groupe `super-admin` ne couvre que les lignes 72→101 (plans, sociétés) ; tout le
+   reste — utilisateurs, réglages généraux, SMS, sauvegarde, et currency — vit dans
+   un groupe **`admin/` avec `panel:back-office`** déclaré dans ce même fichier.
+   J'avais d'abord lu « le super-admin a déjà ses routes currency » : c'était une
+   erreur de lecture, corrigée par l'analyse des accolades puis par `route:list`.
+
+### Le déplacement, dans l'idiome du projet
+
+`WebPanelSeparationTest` exige `'admin/' => 'panel:back-office'` pour **toute** route
+sous ce préfixe. Poser `panel:super-admin` sur `admin/currency` aurait donc cassé
+l'invariant de **S41** — c'est le préfixe d'URI qui dit le panneau, pas le nom de
+route. La seule forme correcte était de **déplacer l'URI** :
+
+| | avant | après |
+|---|---|---|
+| URI | `admin/currency/*` | **`super-admin/currency/*`** |
+| Panneau | `panel:back-office` (ADMIN + SUPER_ADMIN) | **`panel:super-admin`** (SUPER_ADMIN seul) |
+| Déclarations | **deux** (dont une morte) | **une** |
+
+Les noms de route (`currency.index`…) sont inchangés : les vues et leurs
+`route('currency.*')` continuent de fonctionner sans retouche. Seuls les motifs
+`request()->is('admin/currency*')` ont suivi.
+
+L'entrée « devises » **quitte le menu du locataire** : elle ne s'y affichait jamais
+(faute de droit) mais annonçait un écran que ce menu n'a pas à proposer.
+
+### ⚠️ Le contrôle positif était creux, une fois de plus
+
+`assertRedirect()` seul ne prouve rien sur ce chemin : un échec de **validation**
+redirige aussi. C'est exactement ce qui s'est produit au premier jet — `position`
+doit être numérique et j'envoyais `'left'`, donc le super-administrateur « réussissait »
+sans que rien ne soit écrit. Le cas exige désormais `assertSessionHasNoErrors()`,
+la **destination** du redirect, **et** la valeur en base.
+
+### Vérification
+
+| | |
+|---|---|
+| `CurrencyPanelScopeTest` | 4 cas, 9 assertions |
+| `panel:super-admin` → `panel:back-office` | **rouge** |
+| les routes remises sous `admin/` | **rouge** |
+| `WebPanelSeparationTest` | vert — l'invariant S41 tient |
+| Les deux filets | mordent aux deux bouts : nouvelles URI non classées **et** anciennes déclarations orphelines |
+
+Le locataire est désormais refusé **par le panneau**, et le test le prouve en lui
+accordant de force `currency_update` : il reste dehors. Le refus ne dépend plus de
+ce qu'on lui accorde, mais de **qui il est**.

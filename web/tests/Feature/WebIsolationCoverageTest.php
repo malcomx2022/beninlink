@@ -334,8 +334,8 @@ class WebIsolationCoverageTest extends TestCase
         // modifiable par tout administrateur : une societe peut retirer une entree qu'une
         // autre voudrait choisir plus tard. C'est un probleme de catalogue commun, pas de
         // cloisonnement — signale, pas corrige ici.
-        'GET admin/currency/edit/{id}' => 'liste de reference de la plateforme : `currencies` n a pas de `company_id`',
-        'DELETE admin/currency/delete/{id}' => 'liste de reference de la plateforme ; le catalogue partage est signale',
+        'GET super-admin/currency/edit/{id}' => 'S55 — panneau central : le catalogue des devises est une surface de PLATEFORME (decision du 24/09), sous `panel:super-admin`. `currencies` ne porte aucune `company_id` (S32)',
+        'DELETE super-admin/currency/delete/{id}' => 'S55 — panneau central, meme motif que l\'edition',
 
         // Un nom, pas un identifiant.
         'PUT admin/settings/pay-out/setup/update/{paymentmethod}' => 'un nom de passerelle, pas un identifiant de ressource',
