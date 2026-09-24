@@ -68,6 +68,12 @@ use Tests\TestCase;
  * > donne une confiance que rien ne soutient. Ces deux-la sont donc retires,
  * > et leurs routes restent a l'arriere — c'est exactement ce que l'arriere
  * > veut dire.
+ *
+ * **Suite (S53).** Les deux routes sont depuis sorties de l'arriere : il a
+ * fallu construire un colis d'en face COMPLET — livreur assigne, evenement
+ * `DELIVERY_MAN_ASSIGN`, montants numeriques — pour que le chemin NON garde
+ * aboutisse, et donc que la garde devienne mesurable. Voir
+ * `ParcelCancelScopeTest`.
  */
 class ArrearsRemainderScopeTest extends TestCase
 {

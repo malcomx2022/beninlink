@@ -4930,3 +4930,77 @@ chemin **non gardé réussisse**. Les deux tests sont **retirés** et les deux r
    l'état, une société qui renomme une devise la renomme **pour tout le monde**.
    Exempter comme catalogue de plateforme, réserver au super-administrateur, ou
    ajouter `company_id` — le choix n'appartient pas à la revue.
+
+## ✅ S53 — les deux dernières annulations, et pourquoi elles avaient résisté (2026-09-24)
+
+### Le problème n'était pas la garde, c'était la preuve
+
+`parcel/partial-delivered/cancel` et `parcel/return-received-by-merchant` portent
+leur garde depuis **S45**. Elles sont restées à l'arriéré du filet S38 à travers
+S50, S51 et S52 — non faute de correctif, mais faute de **détecteur**.
+
+S52 a établi le pourquoi, en deux temps, et les deux valent d'être écrits.
+
+**1. Une attribution fausse.** J'allais inscrire au filet que
+`PartialDeliveryAccountingTest` et `DeliveryCancellationAccountingTest` les
+prouvent, d'après un relevé antérieur. Sabotage des deux gardes, puis la suite
+**entière** : aucun test ne tombe.
+
+> Une attribution se vérifie au sabotage, elle ne se cite pas de mémoire.
+
+**2. Deux détecteurs creux.** J'ai alors écrit deux cas avec un colis étranger
+**minimal**. Ils passaient — et le sabotage les a trouvés **verts**.
+
+La raison est dans le socle : les deux méthodes lisent
+`$deliveryManAssign->deliveryMan->id` dans leur branche `else`. Sans évènement
+`DELIVERY_MAN_ASSIGN`, cette lecture lève, la transaction est annulée, et le
+`catch` rend `false`. **Le refus ne venait pas de la garde.**
+
+> Pour prouver une garde, le chemin **non gardé** doit RÉUSSIR. Un colis d'en
+> face incomplet ne prouve rien : il fait échouer la méthode pour une raison
+> étrangère au périmètre.
+
+### Ce que ce lot ajoute : un colis d'en face complet
+
+`ParcelCancelScopeTest` construit un colis étranger **entier** — livreur assigné
+et son évènement `DELIVERY_MAN_ASSIGN`, évènement du statut courant, montants
+numériques (`old_cash_collection`, `cod_charge`, `delivery_charge`, `vat`…),
+marchand porteur de son taux de retour — tel que la méthode **aboutirait** sans
+la garde. Ce qu'elle empêche devient alors observable :
+
+| Méthode | Ce que le chemin non gardé écrirait |
+|---|---|
+| `parcelPartialDeliveredCancel` | un `VatStatement` à **notre** `company_id` sur **leur** colis, le statut ramené à `DELIVERY_MAN_ASSIGN`, l'évènement de livraison partielle **supprimé** |
+| `returnReceivedByMerchant` | un `ParcelEvent` de retour reçu, un `MerchantStatement` débitant **leur** marchand, le solde de **leur** livreur modifié |
+
+Chaque cas porte un **contrôle positif** qui exige que le chemin légitime
+**réussisse** sur notre propre colis. C'est précisément ce qui manquait aux deux
+tentatives creuses : sans lui, un refus pour n'importe quelle autre raison
+validait le test.
+
+⚠️ Une correction de fixture au passage : `parcels` ne porte **pas** de
+`delivery_man_id` — le livreur d'un colis vit sur son `ParcelEvent`.
+
+### L'arriéré du filet S38 : 3 → 1
+
+| | |
+|---|---|
+| `ParcelCancelScopeTest` | 2 cas, 16 assertions |
+| Sabotages | **2 sur 2 rouges** — après deux tentatives vertes |
+| Cliquet | mord à 0, sur `PROUVEES`, et sur une classe de test absente |
+
+**La seule route restante est `PUT admin/currency/update`**, et elle ne peut pas
+sortir par la mesure : `Currency::find()` est nu, mais `currencies` ne porte
+**aucune** `company_id` (comme `categorys`, S35). En l'état, une société qui
+renomme une devise la renomme **pour tout le monde**.
+
+Trois issues, et le choix appartient au métier, pas à la revue :
+
+1. **l'exempter** comme `category/update` — le catalogue des devises est celui
+   de la plateforme ;
+2. **réserver la route au super-administrateur** — même décision, appliquée à
+   l'accès ;
+3. **ajouter `company_id`** — chaque société tient ses devises, migration à la clé.
+
+Tant qu'elle n'est pas tranchée, la route reste à l'arriéré : c'est la forme
+honnête d'une question ouverte.

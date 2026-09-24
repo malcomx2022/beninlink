@@ -208,6 +208,12 @@ class BodyIdentifierCoverageTest extends TestCase
         'POST admin/wallet-request/recharge' => ArrearsRemainderScopeTest::class,
         'POST merchant/parcel/delivery-category' => ArrearsRemainderScopeTest::class,
         'POST merchant/sign-up-store' => ArrearsRemainderScopeTest::class,
+
+        // S53 — les deux annulations : gardees depuis S45, mais il aura fallu un
+        // colis d'en face COMPLET pour que le chemin non garde reussisse, et donc
+        // que la garde devienne mesurable. Deux tentatives precedentes etaient creuses.
+        'POST admin/parcel/partial-delivered/cancel' => ParcelCancelScopeTest::class,
+        'POST admin/parcel/return-received-by-merchant' => ParcelCancelScopeTest::class,
 ];
 
     /**
@@ -245,13 +251,11 @@ class BodyIdentifierCoverageTest extends TestCase
      * d'autant. C'est le chemin qui a mené l'arriéré de l'autre filet de 171 à 0.
      */
     private const HERITAGE = [
-            'POST admin/parcel/partial-delivered/cancel',
-            'POST admin/parcel/return-received-by-merchant',
             'PUT admin/currency/update',
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 3;
+    private const PLAFOND_HERITAGE = 1;
 
     protected function setUp(): void
     {
