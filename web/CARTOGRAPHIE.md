@@ -5903,3 +5903,82 @@ Suite complète : **1031 tests, 45 982 assertions**, verte (delta `+7 / +24`).
 ### Le chantier suivant
 
 L'arriéré du filet S58 : **11 routes** — le panneau marchand (5), six isolées.
+
+---
+
+## S63 — l'arriéré du filet S58 est CLOS (11 → 0)
+
+**Troisième arriéré d'isolation fermé**, après 171 → 0 (S35) et 90 → 0 (S54).
+Celui-ci aura demandé six passes : **46 → 32 → 21 → 17 → 11 → 0**.
+
+Aucun défaut dans ce lot : les onze étaient bornées. Elles restaient à l'arriéré
+parce que **lu n'est pas prouvé**.
+
+### Trois niveaux de preuve, selon ce que l'écran rend
+
+| ce que l'écran rend | où se prouve la portée |
+|---|---|
+| une **identité** (nom du client, nom du marchand, n° de transaction) | appel HTTP |
+| un **agrégat** (des compteurs) | la collection que le dépôt rend |
+| un **fichier** (CSV en flux, tableur binaire) | le corps téléchargé |
+
+⚠️ Trois natures de réponse dans le même fichier de test :
+`streamedContent()` **lève** sur une réponse non diffusée, et `getContent()` rend
+`false` sur un fichier binaire. Il faut demander à la réponse **ce qu'elle est**
+avant de lui demander son corps.
+
+### Et pour le panneau marchand, ce n'est pas la société
+
+Ce que ces écrans cloisonnent est le **marchand** : le voisin est de la même
+société. Les sabotages visent donc `Auth::user()->merchant->id`, pas
+`companywise()`.
+
+### Une correction de ma propre lecture
+
+`merchantparcelTotalSummeryReports()` m'a paru ne borner que par société, alors
+que son voisin ajoute le marchand connecté. **C'était faux** : le filtre
+`merchant_id` est bien là, onze lignes plus bas, dans la fermeture. J'avais
+conclu après neuf lignes, et je l'écris plutôt que de le taire.
+
+### Quatre tests creux, tous démasqués par leur sabotage
+
+| | |
+|---|---|
+| **grille des zones** | les deux barèmes portaient des **catégories différentes** : le filtre `category_id` suffisait à exclure l'étranger. Le test mesurait le filtre, pas la portée. Corrigé en leur donnant la **même** catégorie |
+| **export marchand** | `$request->parcel_date !== ""` est **vrai quand le champ est nul** : l'écran prend la première branche, et j'avais saboté la seconde — celle qui ne sert jamais |
+| **rapport marchand** | ne rend que des compteurs ; cherchait un n° de suivi dans la page |
+| **portefeuille marchand** | rend le **n° de transaction**, pas le nom du marchand — contrairement à son voisin d'administration |
+
+### Cinq pièges de fixture, tous dits par le test avant moi
+
+`customs_alerts` n'a pas de colonne `reason` (c'est `message`) · `Invoice` vit
+sous `Merchantpanel\` et sa clé est `invoice_id`, pas `invoice_no` · le relevé ne
+lit pas `parcels_id` mais la table **`invoice_parcels`** · sans frais sur le
+colis, `fees_ttc` vaut 0 et le journal SYSCOHADA n'émet **aucune** ligne · les
+droits réels sont `parcel_read`, `payment_read`, `invoice_read`.
+
+### Vérification — onze sabotages, tous rouges
+
+alertes douanières · grille tarifaire · versements marchands · journal SYSCOHADA
+· grille des zones *(vert au premier jet)* · colis du panneau marchand · rapport
+du panneau marchand · export du panneau marchand *(vert au premier jet)* ·
+portefeuille administration · portefeuille marchand · récapitulatif marchand.
+
+Suite complète : **1042 tests, 46 023 assertions**, verte (delta `+11 / +41`).
+
+### L'état des sept filets
+
+| filet | surface | arriéré |
+|---|---|---|
+| `IsolationCoverageTest` (S7) | API v10 | — |
+| `WebIsolationCoverageTest` (S28) | routes à paramètre d'URL | **0** (S35) |
+| `BodyIdentifierCoverageTest` (S38) | écritures, identifiant dans le corps | **0** (S54) |
+| `WebAdminPermissionCoverageTest` (S44) | droits sous `admin/*` | — |
+| `OffRequestScopeCoverageTest` (S56) | hors requête (F4) | **0** à l'ouverture |
+| `SearchSurfaceCoverageTest` (S58) | `GET` sans paramètre d'URL | **0** (S63) |
+| `OrScopeEscapeCoverageTest` (S61) | le `OR` au niveau de la portée | — |
+
+### Le chantier suivant
+
+Les **35 occurrences** de `instrument-lectures-nues.py`, dont 8 derrière
+`online_payout` (D10, à `false`) et 4 flux d'authentification globaux.
