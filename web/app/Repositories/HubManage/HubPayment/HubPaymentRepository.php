@@ -14,8 +14,11 @@ use App\Models\Backend\Upload;
 use App\Repositories\HubManage\HubPayment\HubPaymentInterface;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
+use App\Models\Backend\Hub;
 
 class HubPaymentRepository implements HubPaymentInterface{
+    use \App\Traits\GuardsForeignIdentifiers;
+
 
     public function all(){
         return HubPayment::companywise()->orderBy('id','desc')->paginate(10);
@@ -27,6 +30,20 @@ class HubPaymentRepository implements HubPaymentInterface{
         return HubPayment::companywise()->find($id);
     }
     public function store($request){
+        // S51 — ⚠️ CE CHEMIN DEPLACE DE L'ARGENT. `from_account` n'etait pas
+        // seulement ecrit dans la ligne : quelques lignes plus bas, le socle
+        // fait `Account::find($payment->from_account)` et lui SOUSTRAIT le
+        // montant. Un versement saisi chez nous debitait donc le compte de
+        // tresorerie d'une AUTRE societe, en lui attachant une transaction
+        // bancaire portant NOTRE `company_id`. Meme famille que S48, sur le
+        // module des versements qu'il ne couvrait pas.
+        if ($this->identifiantsHorsPerimetre($request, [
+            'hub_id'       => Hub::class,
+            'from_account' => Account::class,
+        ])) {
+            return false;
+        }
+
         try {
             DB::beginTransaction();
             $payment                              = new HubPayment();

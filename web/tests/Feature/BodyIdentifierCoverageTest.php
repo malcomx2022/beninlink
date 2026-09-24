@@ -125,6 +125,28 @@ class BodyIdentifierCoverageTest extends TestCase
         'POST merchant/parcel/store' => ParcelCatalogScopeTest::class,
         'POST merchant/parcel/clone-store' => ParcelCatalogScopeTest::class,
 
+        // S49 — quatorze lignes sortent, et la moitie parce que les lots
+        // precedents les avaient DEJA fermees sans que personne l'ait mesure.
+        // Chaque attribution est etablie par sabotage contre le seul fichier
+        // nomme : on retire la garde, on relance ce fichier, on exige qu'il
+        // tombe. Deux sabotages ont d'abord menti — un bloc supprime laissait
+        // une variable indefinie, et le `catch` rendait `false` pour la
+        // mauvaise raison. C'est la GARDE qu'on sabote, pas le bloc autour.
+        'POST admin/income/store' => AccountingCounterpartyScopeTest::class,
+        'POST admin/expense/store' => AccountingCounterpartyScopeTest::class,
+        'POST admin/salary/store' => AccountingCounterpartyScopeTest::class,
+        'POST admin/salary/salary-generate/store' => AccountingCounterpartyScopeTest::class,
+        'PUT admin/salary/salary-generate/update' => AccountingCounterpartyScopeTest::class,
+        'POST admin/support/store' => CompanyCatalogScopeTest::class,
+        'PUT admin/support/update' => CompanyCatalogScopeTest::class,
+        'POST merchant/support/store' => CompanyCatalogScopeTest::class,
+        'POST admin/merchant/paymentinfo/bank/store' => MerchantFamilyScopeTest::class,
+        'POST admin/merchant/paymentinfo/mobile/store' => MerchantFamilyScopeTest::class,
+        'PUT admin/merchant/paymentinfo/bank/update' => MerchantFamilyScopeTest::class,
+        'PUT admin/merchant/paymentinfo/mobile/update' => MerchantFamilyScopeTest::class,
+        'POST admin/merchant/shops/store' => MerchantFamilyScopeTest::class,
+        'PUT admin/merchant/shops/update' => MerchantFamilyScopeTest::class,
+
         // ⚠️ S45 — CE QUE CETTE COLONNE NE DIT PAS. Elle nomme le test qui tient
         // l'identifiant de COLIS. Elle ne dit rien du SECOND identifiant que la
         // meme requete transporte — le livreur ou l'entrepot qu'on nomme au
@@ -135,7 +157,64 @@ class BodyIdentifierCoverageTest extends TestCase
         // le solde d'un livreur d'une autre societe. `ParcelAgentScopeTest` ferme
         // cet axe-la pour les huit methodes concernees. Une route « prouvee »
         // l'est SUR L'AXE QUE SON TEST MESURE, pas dans l'absolu.
-    ];
+
+        // S50 — l'arriere relu : dix-huit routes deja closes par les lots precedents,
+        // chacune mesuree par sabotage de sa propre garde (rouge = le test la tient)
+        'PUT admin/asset-category/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/assets/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/departments/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/designations/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/hubs/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/packaging/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/roles/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/todo/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/delivery-charge/update' => BackOfficeRecordTakeoverTest::class,
+        'PUT admin/delivery-category/update' => UserAndSettingsScopeTest::class,
+        'PUT admin/payment/update' => BackOfficeMoneyScopeTest::class,
+        'PUT admin/payment/processed' => BackOfficeMoneyScopeTest::class,
+        'PUT admin/hub-payment/processed' => BackOfficeRecordTakeoverTest::class,
+        'POST admin/hub/cash-received-deliveryman/store' => CashHandoverAccountingTest::class,
+        'PUT admin/hub/cash-received-deliveryman/update' => CashHandoverAccountingTest::class,
+        'PUT merchant/fraud/update' => MerchantPanelWebScopeTest::class,
+        'PUT merchant/accounts/payment-account/update' => MerchantPanelWebScopeTest::class,
+        'PUT merchant/payment-request/update' => MerchantPanelWebScopeTest::class,
+    
+        // S51 — les portes de CREATION : le second identifiant, septieme fois
+        'POST admin/assets/store' => CreationDoorScopeTest::class,
+        'POST admin/deliveryman/store' => CreationDoorScopeTest::class,
+        'POST admin/todo/todo_add' => CreationDoorScopeTest::class,
+        'POST admin/todo/completed' => CreationDoorScopeTest::class,
+        'POST admin/todo/processing' => CreationDoorScopeTest::class,
+        'POST admin/payment/store' => CreationDoorScopeTest::class,
+        'POST admin/request/hub/payment/store' => CreationDoorScopeTest::class,
+        'POST admin/support/reply' => CreationDoorScopeTest::class,
+        'POST merchant/support/reply' => CreationDoorScopeTest::class,
+
+        // S52 — le reste de l'arriere : les aides AJAX qui RENSEIGNAIENT, et trois
+        // ecritures qui atteignaient un tiers d'une autre societe
+        'POST admin/assign-pickup/parcel/search' => ArrearsRemainderScopeTest::class,
+        'POST admin/assign-return-to-merchant/parcel/search' => ArrearsRemainderScopeTest::class,
+        'POST admin/get-merchant-cod' => ArrearsRemainderScopeTest::class,
+        'POST admin/income/hub-user-accounts' => ArrearsRemainderScopeTest::class,
+        'POST admin/merchant/account' => ArrearsRemainderScopeTest::class,
+        'POST admin/merchant/delivery-charge/info' => ArrearsRemainderScopeTest::class,
+        'POST admin/merchant/paymentmethod/change' => ArrearsRemainderScopeTest::class,
+        'POST admin/merchant/store' => ArrearsRemainderScopeTest::class,
+        'POST admin/parcel/delivery-category' => ArrearsRemainderScopeTest::class,
+        'POST admin/parcel/recived-by-hub/search' => ArrearsRemainderScopeTest::class,
+        'POST admin/push-notification/store' => ArrearsRemainderScopeTest::class,
+        'POST admin/salary/search-account' => ArrearsRemainderScopeTest::class,
+        'POST admin/sms-send-settings/status' => ArrearsRemainderScopeTest::class,
+        'POST admin/wallet-request/recharge' => ArrearsRemainderScopeTest::class,
+        'POST merchant/parcel/delivery-category' => ArrearsRemainderScopeTest::class,
+        'POST merchant/sign-up-store' => ArrearsRemainderScopeTest::class,
+
+        // S53 — les deux annulations : gardees depuis S45, mais il aura fallu un
+        // colis d'en face COMPLET pour que le chemin non garde reussisse, et donc
+        // que la garde devienne mesurable. Deux tentatives precedentes etaient creuses.
+        'POST admin/parcel/partial-delivered/cancel' => ParcelCancelScopeTest::class,
+        'POST admin/parcel/return-received-by-merchant' => ParcelCancelScopeTest::class,
+];
 
     /**
      * Routes dont l'identifiant de corps ne désigne PAS une ressource de
@@ -154,7 +233,11 @@ class BodyIdentifierCoverageTest extends TestCase
         'DELETE subscription/success' => 'même route, autre verbe',
         'POST admin/addons/activation' => 'bascule d\'un module de la plateforme : l\'identifiant désigne un module, pas une ressource de société',
         'PUT category/update' => 'S35 — le catalogue des catégories ne porte AUCUNE colonne `company_id` : il est commun à toutes les sociétés, et `UserAndSettingsScopeTest` l\'inscrit',
-    ];
+            'POST admin/fraud/store' => 'S51 — la fiche de fraude ne porte AUCUN identifiant de locataire : `phone`, `name`, `details` et `tracking_id` sont des chaines (voir la migration : `tracking_id` est un `string`, pas une cle etrangere). `company_id` vient de `settings()` et `created_by` de la session',
+        'POST merchant/fraud/store' => 'S51 — idem cote panneau marchand : meme depot, memes champs, aucun identifiant a garder',
+        'POST merchant/accounts/statements-filter' => 'S52 — le `parcel_tracking_id` ne peut RIEN atteindre : les releves sont bornes au marchand authentifie, et le socle porte deja `if (tracking_id && blank(parcel)) parcel_id = 0`, donc un numero inconnu et un numero du voisin rendent tous deux un ensemble VIDE. J\'avais d\'abord diagnostique un oracle d\'existence ; c\'est le test qui m\'a corrige',
+        'PUT admin/currency/update' => 'S52/S53 — DECISION DE METIER (24/09) : le catalogue des devises est celui de la PLATEFORME. La table `currencies` ne porte AUCUNE colonne `company_id` (constat S32), exactement comme `categorys` (S35) : l\'identifiant du corps ne designe donc pas une ressource de locataire, et il n\'y a rien a cloisonner. `UserAndSettingsScopeTest::test_the_shared_currency_catalogue_carries_no_company_at_all` l\'inscrit et MORD si la table gagne un jour une societe. ⚠️ RESERVE, la meme qu\'en S32 : ce catalogue reste PARTAGE ET MODIFIABLE — renommer une devise la renomme pour toutes les societes. Ce n\'est pas un defaut de cloisonnement, c\'est le prix d\'un catalogue commun, et l\'exemption le dit au lieu de le taire',
+];
 
     /**
      * L'arriéré de ce filet, à son ouverture.
@@ -165,77 +248,20 @@ class BodyIdentifierCoverageTest extends TestCase
      * que jusqu'ici rien ne le demandait.
      *
      * Le mouvement autorisé est un seul : retirer une ligne d'ici et l'inscrire
-     * dans `PROUVEES` avec le test qui l'établit, en baissant le plafond
-     * d'autant. C'est le chemin qui a mené l'arriéré de l'autre filet de 171 à 0.
+     * dans `PROUVEES` avec le test qui l'établit — ou dans `EXEMPTEES` avec son
+     * motif — en baissant le plafond d'autant. C'est le chemin qui a mené
+     * l'arriéré de l'autre filet de 171 à 0.
+     *
+     * ✅ **CLOS depuis S53 (90 → 0, en treize passes).** Cette liste doit rester
+     * **vide** : il n'y a plus de file d'attente. Une route d'écriture nouvelle
+     * se prouve (`PROUVEES`) ou se motive (`EXEMPTEES`) — elle ne se range plus
+     * ici, et le plafond à `0` l'interdit.
      */
     private const HERITAGE = [
-            'POST admin/assets/store',
-            'POST admin/assign-pickup/parcel/search',
-            'POST admin/assign-return-to-merchant/parcel/search',
-            'POST admin/deliveryman/store',
-            'POST admin/expense/store',
-            'POST admin/fraud/store',
-            'POST admin/get-merchant-cod',
-            'POST admin/hub/cash-received-deliveryman/store',
-            'POST admin/income/hub-user-accounts',
-            'POST admin/income/store',
-            'POST admin/merchant/account',
-            'POST admin/merchant/delivery-charge/info',
-            'POST admin/merchant/paymentinfo/bank/store',
-            'POST admin/merchant/paymentinfo/mobile/store',
-            'POST admin/merchant/paymentmethod/change',
-            'POST admin/merchant/shops/store',
-            'POST admin/merchant/store',
-            'POST admin/parcel/delivery-category',
-            'POST admin/parcel/partial-delivered/cancel',
-            'POST admin/parcel/recived-by-hub/search',
-            'POST admin/parcel/return-received-by-merchant',
-            'POST admin/payment/store',
-            'POST admin/push-notification/store',
-            'POST admin/request/hub/payment/store',
-            'POST admin/salary/salary-generate/store',
-            'POST admin/salary/search-account',
-            'POST admin/salary/store',
-            'POST admin/sms-send-settings/status',
-            'POST admin/support/reply',
-            'POST admin/support/store',
-            'POST admin/todo/completed',
-            'POST admin/todo/processing',
-            'POST admin/todo/todo_add',
-            'POST admin/wallet-request/recharge',
-            'POST merchant/accounts/statements-filter',
-            'POST merchant/fraud/store',
-            'POST merchant/parcel/delivery-category',
-            'POST merchant/sign-up-store',
-            'POST merchant/support/reply',
-            'POST merchant/support/store',
-            'PUT admin/asset-category/update',
-            'PUT admin/assets/update',
-            'PUT admin/currency/update',
-            'PUT admin/delivery-category/update',
-            'PUT admin/delivery-charge/update',
-            'PUT admin/departments/update',
-            'PUT admin/designations/update',
-            'PUT admin/hub-payment/processed',
-            'PUT admin/hub/cash-received-deliveryman/update',
-            'PUT admin/hubs/update',
-            'PUT admin/merchant/paymentinfo/bank/update',
-            'PUT admin/merchant/paymentinfo/mobile/update',
-            'PUT admin/merchant/shops/update',
-            'PUT admin/packaging/update',
-            'PUT admin/payment/processed',
-            'PUT admin/payment/update',
-            'PUT admin/roles/update',
-            'PUT admin/salary/salary-generate/update',
-            'PUT admin/support/update',
-            'PUT admin/todo/update',
-            'PUT merchant/accounts/payment-account/update',
-            'PUT merchant/fraud/update',
-            'PUT merchant/payment-request/update',
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 63;
+    private const PLAFOND_HERITAGE = 0;
 
     protected function setUp(): void
     {

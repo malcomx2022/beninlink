@@ -4474,3 +4474,610 @@ Le panneau marchand a d'autres dépôts que celui des colis — boutiques,
 portefeuille, tickets — et le défaut du `merchant_id` caché invite à les relever
 de la même façon : ce qui a été fermé côté administration l'a-t-il été côté
 marchand ?
+
+## ✅ S47 — le catalogue emprunté, et une cascade qui traverse les sociétés (2026-09-23)
+
+### La question de S46 a reçu une réponse, et ce n'était pas celle attendue
+
+S46 finissait sur : *« ce qui a été fermé côté administration l'a-t-il été côté
+marchand ? »* Le balayage des **six** dépôts du panneau — boutiques,
+portefeuille, demandes de paiement, tickets, fraude, ramassage — répond **oui** :
+tous portent leur garde de ressource depuis S7. La supposition d'un retard côté
+marchand était fausse.
+
+Le trou était ailleurs, et plus grave.
+
+### ⚠️ L'inscription publique empruntait le catalogue d'une autre société
+
+```php
+$user->designation_id = Designation::first()->id;   // signUpStore()
+$user->department_id  = Department::first()->id;
+```
+
+La **première ligne de la table**, toutes sociétés confondues. Le compte
+propriétaire d'une société neuve pointait vers le catalogue d'une société
+existante — et `POST company/sign-up/store` ne vit derrière **aucune
+authentification** : groupe `['XSS', 'IsInstalled']`, entre le blog et le
+formulaire de contact.
+
+### ⚠️ La conséquence détruisait des comptes
+
+`users.department_id` et `users.designation_id` portent **`onDelete('cascade')`**.
+
+Une société qui supprimait **son** service depuis ses propres réglages détruisait
+les comptes qui le référençaient — y compris **le propriétaire de la société
+voisine**. Aucun écran, aucun journal, aucune confirmation ne le mentionnait.
+
+`test_deleting_our_own_department_never_destroys_another_companys_owner` le
+vérifie de bout en bout. **Il échouait.**
+
+Correctif : une société neuve n'a pas encore de catalogue, et ne rien lui donner
+vaut mieux que lui prêter celui d'une autre. Les deux colonnes sont nullables.
+
+### Le sélecteur était ouvert des deux côtés, l'écriture aussi
+
+`Department::active()` sans périmètre dans le back-office **et** dans le panneau
+marchand, alors que `UserRepository` sert le **même** catalogue en
+`where('company_id', settings()->id)->active()` deux fichiers plus loin. La règle
+était connue ; deux lectures l'ignoraient.
+
+Et fermer le sélecteur ne ferme pas l'écriture :
+`$support->department_id = $request->department_id` restait libre dans `store()`
+et `update()`, des deux côtés. C'est la leçon de S43 prise par l'autre bout —
+là-bas un écran nu empêchait de garder un sélecteur ; ici un sélecteur gardé
+donnait l'illusion que l'écriture l'était.
+
+### ⚠️ Une garde posée dans deux méthodes n'est pas prouvée dans les deux
+
+La garde posée dans `store()` **et** `update()` n'était tenue que dans `store()`.
+
+Troisième lot d'affilée où ce réflexe rattrape le travail.
+
+| | |
+|---|---|
+| `CompanyCatalogScopeTest` | 4 cas, 22 assertions |
+| Gardes sabotées séparément | **8 sur 8 rouges** |
+| Suite complète | 930 tests, 45 572 assertions, verte |
+
+## ✅ S48 — les contreparties d'une écriture comptable (2026-09-23)
+
+### Le motif, pour la quatrième fois
+
+S45 sur **l'agent** d'un mouvement de colis, S46 sur les **catalogues** d'un
+colis, S47 sur le **catalogue** d'un compte. Toujours la même forme : **la
+ressource est gardée, le second identifiant ne l'est pas.**
+
+La ressource comptable l'est depuis S30 — `Income::companywise()->find($id)` —
+mais une écriture ne touche pas que sa propre ligne : elle **déplace de l'argent**
+sur une contrepartie nommée dans la requête.
+
+| Contrepartie | Ce que le socle en faisait |
+|---|---|
+| `Merchant::find()` | `current_balance ± amount`, `save()`, plus un relevé |
+| `DeliveryMan::find()` | idem |
+| `Hub::find()` | idem |
+| `User::find()` | le salaire versé |
+| `Account::find()` | le **compte de trésorerie** mouvementé |
+| `Parcel::find()` | la pièce rattachée |
+
+**Mesure** : une recette de 1 000 F saisie chez nous créditait le solde d'un
+marchand, d'un livreur ou d'un entrepôt d'une **autre** société, en lui attachant
+un relevé portant **notre** `company_id`.
+
+La garde vit dans le trait `GuardsAccountingCounterparties` — les trois dépôts
+écrivent la même famille.
+
+### ⚠️ Le relevé automatique s'est trompé une fois sur quatre
+
+L'instrument signalait aussi `CashReceivedFromDeliveryman`. **Il avait tort** :
+ce dépôt fait déjà `DeliveryMan::companywise()` et `Account::companywise()` avec
+refus, dans `store()` **et** `update()`. La lecture partant d'une ligne déjà
+scopée l'avait trompé.
+
+Les deux gardes posées là par réflexe ont été **retirées**.
+
+> Un relevé automatique se lit, il ne s'applique pas.
+
+### Un défaut trouvé en gardant autre chose
+
+`SalaryGenerate::find($request->id)` était nu dans `salaryGenerateUpdate()` :
+**le bulletin de paie d'une autre société était modifiable** en changeant
+l'identifiant du corps.
+
+### ⚠️ Un seul point d'appel sur huit était tenu
+
+Au premier passage. Les sept autres ont demandé un travail spécifique : leurs
+`update` ne sont atteints qu'avec une **ressource à nous** et une **contrepartie
+étrangère** — sur une ressource étrangère, la garde de la ressource refuse
+d'abord et masque entièrement celle des contreparties.
+
+| | |
+|---|---|
+| `AccountingCounterpartyScopeTest` | 7 cas, 44 assertions |
+| Sabotages | **15 sur 15 rouges** — 8 points d'appel, 6 champs, la ressource |
+
+## ✅ S49 — la boutique et son marchand (2026-09-23)
+
+### Deux défauts, et le second était déjà nommé
+
+`ShopsRepository::store()` n'avait **aucune** garde : `merchant_id` venait du
+formulaire et partait tel quel dans la colonne. Un opérateur créait donc une
+boutique chez le marchand d'une **autre** société — et `merchant_shops` ne porte
+pas de `company_id` (constat de S26), donc cette boutique vit entièrement sous le
+marchand d'en face.
+
+`ShopsRepository::update()` portait le trou que **S29 avait nommé sans le
+fermer**. Son propre commentaire, encore dans le fichier :
+
+> « la ligne `merchant_id` juste en dessous permettait en plus de la
+> **RATTACHER** à un autre marchand »
+
+Le correctif de S29 n'avait fermé que la **lecture**. La ligne est restée cinq
+lots.
+
+> Nommer un défaut dans un commentaire ne le ferme pas.
+
+### ⚠️ Deux sabotages ont menti — en ROUGE
+
+C'est la leçon du lot, et elle est nouvelle.
+
+En supprimant le **bloc** d'une garde, `$marchand` restait indéfini. L'erreur
+tombait dans le `catch (\Throwable)`, la méthode rendait `false` — **pour la
+mauvaise raison** — et le test paraissait couvrir une garde qu'il ne couvrait pas.
+
+Jusqu'ici on savait qu'un sabotage **vert** interroge le test. Celui-ci apprend
+qu'un sabotage **rouge** peut mentir aussi.
+
+> On sabote la **garde** elle-même — `companywise()` retiré — jamais le bloc
+> autour.
+
+Le cas manquant sur `bankUpdate` et `mobileUpdate` suivait la même logique : tous
+les tests existants passaient un `editid` **étranger**, dont la garde de la ligne
+refusait d'abord. Le périmètre du **marchand** n'était jamais atteint. Le cas
+ajouté est l'inverse : **ma** ligne, **son** marchand.
+
+| | |
+|---|---|
+| `MerchantFamilyScopeTest` | 23 cas, 82 assertions (3 ajoutés) |
+| Suite complète | 940 tests, 45 641 assertions, verte |
+
+## ✅ S50 — l'arriéré relu : dix-huit routes déjà closes (2026-09-23)
+
+### Un lot ferme plus de routes qu'il n'en revendique
+
+S49 l'avait constaté sur quatorze lignes : la moitié sortait de l'arriéré parce
+que S47 et S48 les avaient déjà fermées **sans que personne l'ait mesuré**. Ce
+lot-ci prend le constat au sérieux et va chercher l'avance explicitement, sur
+l'arriéré entier.
+
+Aucune ligne de production n'est touchée. C'est une passe de **mesure**.
+
+### Le relevé
+
+Les 49 routes restantes ont été rattachées à leur `contrôleur@méthode` — 47 sur
+49 ; `POST admin/wallet-request/recharge` et `POST merchant/sign-up-store`
+résistent encore à la lecture statique.
+
+La plus grosse famille cohérente est celle des **onze `update` de réglages**. Dix
+portent déjà leur garde ; chacune a été sabotée séparément, et les dix sont
+**rouges**. Huit autres routes — l'argent du back-office et du panneau marchand —
+le sont également.
+
+| Routes | Prouvées par |
+|---|---|
+| neuf réglages (immobilisations, services, fonctions, entrepôts, emballages, rôles, tâches, frais) | `BackOfficeRecordTakeoverTest` |
+| catégorie de livraison | `UserAndSettingsScopeTest` |
+| versement, versement traité | `BackOfficeMoneyScopeTest` |
+| versement d'entrepôt traité | `BackOfficeRecordTakeoverTest` |
+| deux remises d'espèces du livreur | `CashHandoverAccountingTest` |
+| fraude, compte de versement, demande de paiement du marchand | `MerchantPanelWebScopeTest` |
+
+**L'arriéré du filet S38 : 49 → 31.** Le plafond suit.
+
+### Ce qui reste, et ce qui ne se laisse pas prouver
+
+`POST admin/merchant/store` a été sabotée : **verte**. La garde existe, aucun
+test ne tombe quand on la retire. Elle reste dans l'arriéré, à sa place — c'est
+précisément ce que l'arriéré veut dire.
+
+**Onze** routes ne montrent **aucune garde reconnaissable** : `assets/store`,
+`deliveryman/store`, `fraud/store`, les trois `todo`, `payment/store`,
+`hub/payment/store` et les deux `support/reply`. Elles n'ont pas été mesurées
+faute de garde à saboter — ce sont les candidates du prochain lot de correction,
+pas de mesure.
+
+### ⚠️ Une question de produit, pas de technique
+
+`PUT admin/currency/update` reste dans l'arriéré et **ne peut pas en sortir par
+la mesure** : `CurrencyRepository::update` est nu, mais la table `currencies` ne
+porte **aucune** `company_id` — comme `categorys` (constat de S35). Le catalogue
+est pourtant atteignable depuis le back-office **locataire** *et* depuis les
+routes super-administrateur.
+
+Trois issues, et le choix n'appartient pas à la revue :
+
+1. **l'exempter** comme `category/update` — le catalogue des devises est celui de
+   la plateforme, et une société n'a pas à le modifier ;
+2. **réserver la route au super-administrateur** — même décision, appliquée à
+   l'accès plutôt qu'au filet ;
+3. **ajouter `company_id`** — chaque société tient ses devises, migration à la clé.
+
+En l'état, une société qui renomme une devise la renomme **pour tout le monde**.
+
+## ✅ S51 — le second identifiant sur les portes de création (2026-09-23)
+
+### Le motif, pour la septième fois
+
+S45 sur **l'agent** d'un mouvement de colis, S46 sur les **catalogues** d'un
+colis, S47 sur le **catalogue** d'un compte, S48 sur les **contreparties** d'une
+écriture, S49 sur le **marchand** d'une boutique, S50 l'a mesuré partout où il
+était déjà fermé. S51 attaque les onze routes que S50 avait désignées : celles
+où l'instrument ne reconnaissait **aucune** garde.
+
+La lecture a d'abord corrigé l'instrument, et c'est le premier constat du lot.
+
+### ⚠️ Un instrument qui cherche une FORME ne trouve pas une RÈGLE
+
+Sur les onze routes signalées « sans garde », **quatre étaient gardées** :
+
+- `todoComplete` et `todoProcessing` comparent `company_id == settings()->id`
+  **à la main**, sans passer par `companywise()` ;
+- la réponse aux tickets du **panneau marchand** refuse déjà par `get()` ;
+- `CashReceivedFromDeliveryman` l'était depuis toujours (déjà corrigé en S48).
+
+Et **deux** n'ont rien à garder : la fiche de fraude ne porte aucun identifiant
+de locataire — `tracking_id` est un `string`, pas une clé étrangère. Elles sont
+désormais **exemptées avec leur motif**, pas corrigées.
+
+> Mon relevé de S50 disait « aucune garde reconnue ». Il disait vrai. J'ai
+> écrit « aucune garde » dans la cartographie — c'était faux, et la correction
+> vaut d'être notée : un instrument ne constate pas, il **signale**.
+
+*(La ligne de S50 qui annonçait « six routes » est corrigée au passage : il y
+en avait onze.)*
+
+### ⚠️ Deux portes déplaçaient de l'argent
+
+C'est là que le défaut coûte, et les deux sont de la famille de S48 sur un
+module qu'il ne couvrait pas :
+
+| Porte | Identifiant nu | Ce que le socle en faisait |
+|---|---|---|
+| versement marchand | `merchant` | `current_balance - amount`, plus un relevé |
+| versement marchand | `from_account` | le compte de **trésorerie** débité |
+| versement marchand | `merchant_account` | le compte bancaire crédité |
+| versement entrepôt | `from_account` | le compte de **trésorerie** débité |
+| versement entrepôt | `hub_id` | l'entrepôt créancier |
+
+Un versement saisi chez nous débitait donc le solde d'un marchand d'une **autre**
+société, et le compte de trésorerie d'en face, en écrivant relevé et transaction
+bancaire à **notre** `company_id`.
+
+### ⚠️ `companywise()` ne suffisait pas sur `merchant_account`
+
+Un compte de versement appartient à **un marchand** (S34 : la table ne porte pas
+de `company_id`). Garder par `companywise()` seul laissait ouvert le paiement du
+marchand **A** sur le compte bancaire du marchand **B** — les deux chez nous.
+La garde est donc plus étroite : le compte doit être **celui du marchand payé**.
+Même leçon qu'en S49.
+
+### Les portes de rattachement
+
+`AssetRepository::store` classait l'immobilisation dans le catalogue du voisin et
+la posait dans son entrepôt ; `DeliveryManRepository::store` affectait le livreur
+à l'entrepôt du voisin ; `TodoRepository::store` assignait la tâche à son agent.
+
+### ⚠️ Quatrième passage dans `SupportRepository`, et `reply()` avait survécu
+
+S23 a scopé les **lectures**, S29 a fermé `update()` et `destroy()`, S47 a fermé
+le `department_id` de `store()`/`update()`. Personne n'avait regardé la
+**réponse** : `support_id` venait du corps, nu. On écrivait un message dans le fil
+du ticket d'un autre transporteur, signé de notre identifiant.
+
+Et le **panneau marchand**, lui, gardait déjà ce chemin — l'inverse exact de
+l'asymétrie supposée en S47. C'est la raison de mesurer les deux côtés plutôt
+que de déduire l'un de l'autre.
+
+### ⚠️ Le sabotage a corrigé le lot trois fois
+
+**1. Un contrôle négatif creux.** `Asset / assetcategory_id` est sorti **vert**.
+La requête de test laissait `hub_id = ''`, ce qui viole la contrainte de clé
+étrangère : le dépôt rendait `false` **pour la mauvaise raison**, et le test
+passait sans jamais exercer sa garde. Une sonde l'a établi plutôt qu'une
+supposition.
+
+**2. Une assertion vide passe toujours.** Les deux tests de contrôleur reposent
+sur `assertStringNotContainsString`, qui est **vrai sur une chaîne vide** — donc
+aussi quand la requête n'atteint jamais le contrôleur. Le sabotage du contrôleur
+marchand est resté **vert** : la route exige `payment_create`, pas
+`merchant_payment_create`, et mon agent recevait un 403.
+
+**3. Et une validation muette.** L'ancrage positif ajouté ensuite a immédiatement
+révélé une deuxième cause : `merchant_account` est obligatoire côté validation,
+donc la requête mourait avant le contrôleur.
+
+> Un test qui vérifie une **absence** doit d'abord prouver une **présence** :
+> que le code visé a bien tourné. Sans cet ancrage, il mesure le vide.
+
+### L'arriéré du filet S38 : 31 → 20
+
+Neuf routes prouvées par `CreationDoorScopeTest`, deux exemptées avec leur motif.
+
+| | |
+|---|---|
+| `CreationDoorScopeTest` | 15 cas, 53 assertions |
+| Sabotages | **15 sur 15 rouges** — 10 champs de dépôt, 2 contrôleurs, 3 gardes préexistantes |
+| Cliquet | mord à 19, et nomme une route retirée de `PROUVEES` **ou** d'`EXEMPTEES` |
+
+### La passe suivante
+
+Il reste **20** routes à l'arriéré. `PUT admin/currency/update` en fait toujours
+partie et attend un arbitrage de produit (voir S50) : `Currency::find()` est nu,
+mais `currencies` ne porte aucune `company_id`, donc une société qui renomme une
+devise la renomme **pour tout le monde**.
+
+## ✅ S52 — les aides qui renseignent, et la fin de l'arriéré S38 (2026-09-24)
+
+### Les vingt dernières routes n'étaient pas de la même nature
+
+Les lots S45 à S51 fermaient des **écritures**. Les vingt routes restantes sont
+pour la plupart des **aides AJAX** : elles ne modifient rien. On pouvait les
+croire sans enjeu.
+
+Trois d'entre elles rendaient des données qu'un concurrent paierait :
+
+| Aide AJAX | Ce qu'elle rendait d'une **autre** société |
+|---|---|
+| `get-merchant-cod` | la grille de frais de contre-remboursement d'un marchand |
+| `merchant/account` | titulaire, banque, **numéro de compte**, agence, mobile |
+| `salary/search-account` | le **montant du salaire** d'un employé |
+
+### ⚠️ La règle qui a structuré la lecture
+
+> Un identifiant étranger utilisé comme **filtre** sur une requête déjà scopée
+> ne fuit rien — la jointure ne rend simplement aucune ligne. Il n'est dangereux
+> que quand il sert à **aller chercher**.
+
+C'est pourquoi les trois recherches de colis (`Parcel::companywise()->where([...])`)
+sont saines, alors que `get-merchant-cod` (`Merchant::find()`) ne l'était pas.
+Les quatre se ressemblent à l'œil.
+
+### Trois écritures atteignaient un tiers d'une autre société
+
+| Écriture | Ce qu'elle faisait |
+|---|---|
+| recharge de portefeuille | **crédite** `wallet_balance` **et envoie un SMS** |
+| notification poussée | **pousse** sur l'appareil du destinataire |
+| création / inscription marchand | le rattache à l'**entrepôt** du voisin |
+
+⚠️ L'inscription marchand est **publique et sans authentification**, comme
+l'inscription société de S47. Et le rattachement d'entrepôt existait à **trois**
+points d'appel — `store`, `signUpStore` et `update` — le troisième trouvé en
+gardant les deux premiers.
+
+Le défaut des comptes bancaires existait lui aussi à **deux** points d'appel :
+`merchantAccount` et `merchantpaymentFilter`, le second trouvé en gardant le
+premier.
+
+### Un refus se dit, il ne plante pas
+
+`sms-send-settings/status` était **correctement scopé** — hors périmètre, la
+requête rend `null` et aucune bascule n'a lieu. Mais l'affectation juste en
+dessous déréférençait ce `null` : **500** au lieu d'un refus. Même famille que
+S15 et S30. C'est l'ancrage du test qui l'a révélé, pas la lecture.
+
+### ⚠️ Le sabotage a corrigé le lot cinq fois
+
+C'est le lot où il a le plus servi, et aucune de ces cinq n'était visible à la
+lecture.
+
+**1. `permissions = null` ne vaut pas « tous les droits ».** Il vaut **aucun
+droit** : les routes répondaient 403, et `assertStringNotContainsString` est vrai
+sur une page « Accès interdit ». `ajax()` exige désormais **200** avant de rendre
+le corps.
+
+**2 et 3. Deux contrôles négatifs creux.** Mon colis de test était toujours en
+`PENDING`, alors que la recherche des retours filtre `RETURN_TO_COURIER` et celle
+de la réception `TRANSFER_TO_HUB`. Le colis ne matchait jamais : les deux tests
+passaient sans exercer leur garde.
+
+**4. Une assertion sur une valeur qui n'apparaît jamais.** J'assertais l'absence
+du **montant** dans la réponse de `deliveryWeight` — or cette vue ne rend que
+`weight` et `category->title`. L'assertion était vraie sans rien prouver.
+
+**5. Un ancrage non unique.** Les gardes de `store` et `update` sont
+textuellement identiques ; le sabotage frappait deux lignes et ne prouvait rien.
+C'est la leçon de S44, reprise telle quelle.
+
+### ⚠️ Et deux fois, il a corrigé ce que j'allais écrire
+
+**Un oracle d'existence qui n'existait pas.** J'avais diagnostiqué que le filtre
+des relevés révélait si un numéro de suivi existe ailleurs, et je l'avais écrit
+dans deux contrôleurs et un test. Le test a échoué : **quatre lignes sous le code
+que j'avais lu**, le socle porte déjà `if (tracking_id && blank($parcelID))
+parcel_id = 0`. Les deux branches rendent un ensemble vide. Le `companywise()`
+reste — il est correct — mais il ne ferme rien, et la route est **exemptée** pour
+ce motif.
+
+**Une attribution fausse.** J'allais inscrire au filet que
+`PartialDeliveryAccountingTest` et `DeliveryCancellationAccountingTest` prouvent
+les deux annulations de colis, d'après un relevé antérieur. Sabotage des deux
+gardes, puis la suite **entière** : **aucun test ne tombe**. La garde existe
+depuis S45 ; rien ne la tenait.
+
+> Une attribution se vérifie au sabotage, elle ne se cite pas de mémoire.
+
+J'ai alors écrit deux cas — et le sabotage les a trouvés **creux** à leur tour :
+sur un colis étranger incomplet, la transaction lève et le `catch` rend `false`
+de toute façon. Les prouver demande un colis d'en face assez complet pour que le
+chemin **non gardé réussisse**. Les deux tests sont **retirés** et les deux routes
+**restent à l'arriéré**.
+
+### L'arriéré du filet S38 : 20 → 3
+
+| | |
+|---|---|
+| `ArrearsRemainderScopeTest` | 17 cas, 46 assertions |
+| Sabotages | **17 sur 17 rouges**, dont 5 seulement après correction |
+| Cliquet | mord sur le plafond, sur `PROUVEES` et sur `EXEMPTEES` |
+
+**Les trois qui restent, et pourquoi :**
+
+1. `parcel/partial-delivered/cancel` — gardée, **rien ne la tient** (ci-dessus) ;
+2. `parcel/return-received-by-merchant` — idem ;
+3. `PUT admin/currency/update` — **question de produit**, pas de technique :
+   `Currency::find()` est nu et `currencies` ne porte aucune `company_id`. En
+   l'état, une société qui renomme une devise la renomme **pour tout le monde**.
+   Exempter comme catalogue de plateforme, réserver au super-administrateur, ou
+   ajouter `company_id` — le choix n'appartient pas à la revue.
+
+## ✅ S53 — les deux dernières annulations, et pourquoi elles avaient résisté (2026-09-24)
+
+### Le problème n'était pas la garde, c'était la preuve
+
+`parcel/partial-delivered/cancel` et `parcel/return-received-by-merchant` portent
+leur garde depuis **S45**. Elles sont restées à l'arriéré du filet S38 à travers
+S50, S51 et S52 — non faute de correctif, mais faute de **détecteur**.
+
+S52 a établi le pourquoi, en deux temps, et les deux valent d'être écrits.
+
+**1. Une attribution fausse.** J'allais inscrire au filet que
+`PartialDeliveryAccountingTest` et `DeliveryCancellationAccountingTest` les
+prouvent, d'après un relevé antérieur. Sabotage des deux gardes, puis la suite
+**entière** : aucun test ne tombe.
+
+> Une attribution se vérifie au sabotage, elle ne se cite pas de mémoire.
+
+**2. Deux détecteurs creux.** J'ai alors écrit deux cas avec un colis étranger
+**minimal**. Ils passaient — et le sabotage les a trouvés **verts**.
+
+La raison est dans le socle : les deux méthodes lisent
+`$deliveryManAssign->deliveryMan->id` dans leur branche `else`. Sans évènement
+`DELIVERY_MAN_ASSIGN`, cette lecture lève, la transaction est annulée, et le
+`catch` rend `false`. **Le refus ne venait pas de la garde.**
+
+> Pour prouver une garde, le chemin **non gardé** doit RÉUSSIR. Un colis d'en
+> face incomplet ne prouve rien : il fait échouer la méthode pour une raison
+> étrangère au périmètre.
+
+### Ce que ce lot ajoute : un colis d'en face complet
+
+`ParcelCancelScopeTest` construit un colis étranger **entier** — livreur assigné
+et son évènement `DELIVERY_MAN_ASSIGN`, évènement du statut courant, montants
+numériques (`old_cash_collection`, `cod_charge`, `delivery_charge`, `vat`…),
+marchand porteur de son taux de retour — tel que la méthode **aboutirait** sans
+la garde. Ce qu'elle empêche devient alors observable :
+
+| Méthode | Ce que le chemin non gardé écrirait |
+|---|---|
+| `parcelPartialDeliveredCancel` | un `VatStatement` à **notre** `company_id` sur **leur** colis, le statut ramené à `DELIVERY_MAN_ASSIGN`, l'évènement de livraison partielle **supprimé** |
+| `returnReceivedByMerchant` | un `ParcelEvent` de retour reçu, un `MerchantStatement` débitant **leur** marchand, le solde de **leur** livreur modifié |
+
+Chaque cas porte un **contrôle positif** qui exige que le chemin légitime
+**réussisse** sur notre propre colis. C'est précisément ce qui manquait aux deux
+tentatives creuses : sans lui, un refus pour n'importe quelle autre raison
+validait le test.
+
+⚠️ Une correction de fixture au passage : `parcels` ne porte **pas** de
+`delivery_man_id` — le livreur d'un colis vit sur son `ParcelEvent`.
+
+### L'arriéré du filet S38 : 3 → 1
+
+| | |
+|---|---|
+| `ParcelCancelScopeTest` | 2 cas, 16 assertions |
+| Sabotages | **2 sur 2 rouges** — après deux tentatives vertes |
+| Cliquet | mord à 0, sur `PROUVEES`, et sur une classe de test absente |
+
+**La seule route restante est `PUT admin/currency/update`**, et elle ne peut pas
+sortir par la mesure : `Currency::find()` est nu, mais `currencies` ne porte
+**aucune** `company_id` (comme `categorys`, S35). En l'état, une société qui
+renomme une devise la renomme **pour tout le monde**.
+
+Trois issues, et le choix appartient au métier, pas à la revue :
+
+1. **l'exempter** comme `category/update` — le catalogue des devises est celui
+   de la plateforme ;
+2. **réserver la route au super-administrateur** — même décision, appliquée à
+   l'accès ;
+3. **ajouter `company_id`** — chaque société tient ses devises, migration à la clé.
+
+Tant qu'elle n'est pas tranchée, la route reste à l'arriéré : c'est la forme
+honnête d'une question ouverte.
+
+## ✅ S54 — la devise est un catalogue de plateforme : l'arriéré S38 est **clos** (2026-09-24)
+
+### Une décision de métier, pas une mesure
+
+`PUT admin/currency/update` était la **dernière** route de l'arriéré, et la seule
+qui ne pouvait pas en sortir par la mesure : `Currency::find($request->id)` est
+nu, mais la table `currencies` ne porte **aucune** `company_id`. Il n'y a donc
+rien à cloisonner — et donc rien à prouver.
+
+Les trois issues posées en S50 puis rappelées à chaque lot ont été tranchées le
+**24/09** : **le catalogue des devises est celui de la plateforme**. La route est
+**exemptée**, exactement comme `PUT category/update` l'avait été en S35 pour la
+même raison.
+
+Le constat lui-même est ancien : **S32** l'avait déjà relevé, et le témoin de
+`categorys` le cite depuis S35 (« comme `currencies` au constat S32 »). Ce qui
+change ici, c'est qu'il cesse d'être un constat en marge pour devenir une
+**règle inscrite**.
+
+### ⚠️ Ce que l'exemption ne dit pas
+
+Elle ferme la question du **filet**, pas celle de l'**accès**.
+
+> Le catalogue reste **partagé et modifiable** : renommer une devise la renomme
+> pour toutes les sociétés. Ce n'est pas un défaut de cloisonnement — il n'y a
+> rien à cloisonner — c'est le prix d'un catalogue commun.
+
+Qui a le droit d'écrire dans un catalogue de plateforme depuis un back-office de
+**locataire** reste une question ouverte ; `hasPermission:currency_update` y
+répond seul aujourd'hui. L'exemption le **dit** au lieu de le taire, et la
+réserve est recopiée mot pour mot de celle de `categorys`.
+
+### La contrepartie : un témoin qui mord
+
+Une exemption sans témoin est une affirmation. `UserAndSettingsScopeTest` porte
+désormais le **jumeau** du témoin des catégories :
+
+```php
+public function test_the_shared_currency_catalogue_carries_no_company_at_all(): void
+{
+    $this->assertFalse(Schema::hasColumn('currencies', 'company_id'), ...);
+}
+```
+
+Si `currencies` gagne un jour une société, **la décision n'a plus lieu d'être** :
+le témoin tombe et force à reprendre l'exemption plutôt qu'à la laisser vivre sur
+une prémisse périmée.
+
+### L'arriéré du filet S38 : 1 → **0**
+
+**Le filet est clos**, treize passes après son ouverture à 90 — le même chemin
+que `WebIsolationCoverageTest`, fermé à S35 après 171 → 0 en dix passes.
+
+`HERITAGE` doit désormais rester **vide** : il n'y a plus de file d'attente. Une
+route d'écriture nouvelle se **prouve** ou se **motive** ; le plafond à `0`
+interdit de l'y ranger.
+
+| | |
+|---|---|
+| `HERITAGE` | **vide** |
+| Plafond | **0** |
+| L'exemption retirée | **mord** et nomme la route |
+| Une ligne remise à l'arriéré | **mord** (`1` n'est pas ≤ `0`) |
+| Le témoin de `currencies` | **mord** si la table gagne une société |
+
+### Les deux filets, côte à côte
+
+| Filet | Ouverture | Fermeture | Passes |
+|---|---|---|---|
+| `WebIsolationCoverageTest` (paramètre d'URL) | 171 | **0** (S35) | 10 |
+| `BodyIdentifierCoverageTest` (identifiant de corps) | 90 | **0** (S53/S54) | 13 |
+
+Ce que les deux disent ensemble : **aucune route d'écriture, à paramètre d'URL
+ou à identifiant de corps, ne peut plus être ajoutée sans qu'on ait écrit ce
+qu'on a fait de sa portée.** Ce n'est pas la promesse qu'il n'existe plus de
+faille — c'est la promesse qu'on ne peut plus en ajouter une sans le dire.

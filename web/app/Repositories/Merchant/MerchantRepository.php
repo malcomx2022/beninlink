@@ -65,7 +65,10 @@ class MerchantRepository implements MerchantInterface{
             $merchantUser->email                = $request->email;
             $merchantUser->password             = Hash::make($request->password);
             $merchantUser->address              = $request->address;
-            $merchantUser->hub_id               = $request->hub;
+            // S52 — l'entrepot d'affectation venait du formulaire, nu : un marchand cree chez nous etait rattache a l'entrepot d'une autre societe. Meme forme qu'en S51 sur le livreur.
+            $merchantUser->hub_id               = blank($request->hub)
+                ? null
+                : (Hub::companywise()->find($request->hub)?->id);
             $merchantUser->status               = $request->status;
             $merchantUser->user_type            = UserType::MERCHANT;
 
@@ -180,7 +183,10 @@ class MerchantRepository implements MerchantInterface{
             $merchantUser->user_type            = UserType::MERCHANT;
             $merchantUser->verification_status  = Status::INACTIVE;
             $merchantUser->otp                  = $otp;
-            $merchantUser->hub_id               = $request->hub_id;
+            // S52 — ⚠️ ici la route est PUBLIQUE (`merchant/sign-up-store`, sans authentification, comme l'inscription societe de S47) : n'importe qui pouvait s'inscrire en se rattachant a l'entrepot d'une autre societe.
+            $merchantUser->hub_id               = blank($request->hub_id)
+                ? null
+                : (Hub::companywise()->find($request->hub_id)?->id);
             $merchantUser->permissions          = [];
             $merchantUser->save();
             $merchant                           = new Merchant();
@@ -323,7 +329,10 @@ class MerchantRepository implements MerchantInterface{
                 $merchantUser->password         = Hash::make($request->password);
             $merchantUser->address              = $request->address;
             $merchantUser->user_type            = UserType::MERCHANT;
-            $merchantUser->hub_id               = $request->hub;
+            // S52 — meme ligne, meme defaut, sur la MODIFICATION : elle n'etait pas dans l'arriere (elle porte un parametre d'URL) mais partage le defaut.
+            $merchantUser->hub_id               = blank($request->hub)
+                ? null
+                : (Hub::companywise()->find($request->hub)?->id);
             $merchantUser->status               = $request->status;
 
             if($request->image_id != null) {

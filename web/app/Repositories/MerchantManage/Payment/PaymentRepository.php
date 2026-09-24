@@ -14,8 +14,11 @@ use App\Repositories\MerchantManage\Payment\PaymentInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
+use App\Models\MerchantPayment;
 
 class PaymentRepository implements PaymentInterface{
+    use \App\Traits\GuardsForeignIdentifiers;
+
 
     public function all(){
         return Payment::companywise()->orderBy('id','desc')->paginate(10);
@@ -27,6 +30,32 @@ class PaymentRepository implements PaymentInterface{
         return Payment::companywise()->find($id);
     }
     public function store($request){
+        // S51 — ⚠️ CE CHEMIN DEPLACE DE L'ARGENT, sur DEUX soldes a la fois :
+        // le socle soustrait le montant du `current_balance` du marchand ET du
+        // `balance` du compte de tresorerie, en ecrivant un releve marchand et
+        // une transaction bancaire a notre `company_id`. Les trois identifiants
+        // venaient du formulaire, nus.
+        //
+        // ⚠️ `merchant_account` ne se garde PAS par `companywise()` seul : un
+        // compte de versement appartient a UN marchand (S34 — la table ne porte
+        // pas de `company_id`, son perimetre passe par le marchand). Payer le
+        // marchand A sur le compte bancaire du marchand B serait reste possible
+        // A L'INTERIEUR de notre propre societe. La garde est donc plus etroite :
+        // le compte doit etre CELUI DU MARCHAND PAYE. Meme lecon qu'en S49.
+        if ($this->identifiantsHorsPerimetre($request, [
+            'merchant'     => Merchant::class,
+            'from_account' => Account::class,
+        ])) {
+            return false;
+        }
+
+        $marchand = Merchant::companywise()->find($request->merchant);
+
+        if (filled($request->merchant_account)
+            && blank(MerchantPayment::where('merchant_id', $marchand?->id)->find($request->merchant_account))) {
+            return false;
+        }
+
         try {
             DB::beginTransaction();
             $payment=new Payment(); 

@@ -31,7 +31,19 @@ class StatementsController extends Controller
 
             $id = auth()->user()->merchant->id;
 
-            $parcelID = Parcel::where('tracking_id', $request->parcel_tracking_id)->first();
+            // S52 — ⚠️ CE COMMENTAIRE CORRIGE MA PROPRE LECTURE. J'ai d'abord cru a un
+            // ORACLE D'EXISTENCE : la recherche du colis etait nue, donc un numero de
+            // suivi existant chez un voisin aurait pose le filtre (aucun releve) la ou
+            // un numero inconnu l'aurait laisse de cote (tous nos releves) — et la
+            // difference aurait renseigne sur l'existence du numero.
+            //
+            // C'est FAUX, et c'est le test qui l'a dit : quatre lignes plus bas, le
+            // socle porte deja `if (tracking_id && blank($parcelID)) parcel_id = 0`.
+            // Les deux branches rendent donc un ensemble VIDE, et rien ne fuit.
+            //
+            // Le `companywise()` reste : il rend la lecture correcte et ne coute rien.
+            // Mais il ne ferme aucune fuite, et la route est exemptee pour ce motif.
+            $parcelID = Parcel::companywise()->where('tracking_id', $request->parcel_tracking_id)->first();
             $statements = MerchantStatement::where('merchant_id', $id)->orderByDesc('id')->where(function ($query) use ($request, $parcelID) {
 
                 if ($request->date) {

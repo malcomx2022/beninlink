@@ -174,7 +174,13 @@ avant les apps.
 - Toute route d'**écriture sans paramètre d'URL** qui lit un identifiant dans le **corps**
   de la requête est inscrite dans `tests/Feature/BodyIdentifierCoverageTest` (**S38**) :
   prouvée (avec son test), ou exemptée (avec le motif pour lequel l'identifiant ne désigne
-  pas une ressource de locataire). L'arriéré ouvre à **90** et ne peut que baisser.
+  pas une ressource de locataire). **L'arriéré est fermé depuis S53** (90 → 0) :
+  `HERITAGE` reste **vide**, et le plafond à `0` l'interdit.
+  ⚠️ `PUT admin/currency/update` est **exemptée** (métier, 24/09) : `currencies` ne
+  porte aucune `company_id` — catalogue de **plateforme**, comme `categorys`. Il
+  reste **partagé et modifiable** (renommer une devise la renomme pour toutes) :
+  l'exemption ferme la question du **filet**, pas celle de l'**accès**. Deux témoins
+  dans `UserAndSettingsScopeTest` mordent si l'une des tables gagne une société.
   Ce filet énumère les **contrôleurs**, pas les routes : il lit la source de la méthode de
   contrôleur **et celle de la méthode de dépôt qu'elle appelle**. ⚠️ Le second niveau est
   indispensable — un contrôleur qui passe `$request` tel quel au dépôt ne lit aucun

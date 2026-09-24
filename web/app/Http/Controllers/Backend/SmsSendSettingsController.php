@@ -21,6 +21,11 @@ class SmsSendSettingsController extends Controller
     }
     public function status(Request $request){
         $smsSendSetting             =  SmsSendSetting::companywise()->where(['id'=>$request->id])->first();
+        // S52 — le perimetre etait bon : hors societe, la requete rend `null` et
+        // aucune bascule n'a lieu. Mais l'affectation juste en dessous
+        // dereferencait ce `null` et rendait **500** au lieu d'un refus propre.
+        // Meme famille que S15 et S30 : un refus se dit, il ne plante pas.
+        abort_if(blank($smsSendSetting), 404);
         if(Status::ACTIVE == $request->status){
             $smsSendSetting->status      =  Status::INACTIVE;
         }else {

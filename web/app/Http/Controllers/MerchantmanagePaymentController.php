@@ -47,7 +47,18 @@ class MerchantmanagePaymentController extends Controller
     }
 
     public function merchantAccount(Request $request){
-        $merchantaccounts = MerchantPayment::where('merchant_id',$request->merchant_id)->get();
+        // S52 — ⚠️ lecture nue, et la plus grave de ce lot cote confidentialite :
+        // cet AJAX rendait le titulaire, la banque, le NUMERO DE COMPTE, l'agence
+        // et le numero mobile des comptes de versement de n'importe quel marchand,
+        // y compris ceux d'un transporteur concurrent.
+        //
+        // Le perimetre d'un compte de versement passe par son MARCHAND (S34 : la
+        // table ne porte pas de `company_id`).
+        $marchand = Merchant::companywise()->find($request->merchant_id);
+
+        $merchantaccounts = blank($marchand)
+            ? collect()
+            : MerchantPayment::where('merchant_id', $marchand->id)->get();
         $accounts         = "";
         $accounts        .= "<option selected disabled>". __('menus.select').' '.__('merchant.title').' '. __('account.title')."</option>";
         foreach ($merchantaccounts as $account) {
@@ -82,14 +93,25 @@ class MerchantmanagePaymentController extends Controller
 
     //payment store
     public function paymentStore(StoreRequest $request){
-        $account  = Merchant::where('id',$request->merchant)->first();
+        // S51 — meme lecture nue, sur le solde d'un MARCHAND cette fois. Elle
+        // precede le depot, donc elle renseignait sur le solde d'un marchand
+        // d'en face avant meme que la garde du depot ne refuse l'ecriture.
+        $account  = Merchant::companywise()->where('id',$request->merchant)->first();
+        if(blank($account)){
+            Toastr::error(__('merchantmanage.error_msg'),__('message.error'));
+            return back()->withInput();
+        }
         $balance = (double) $account->current_balance;
         if((double) $request->amount > $balance){
             Toastr::warning(__('merchantmanage.not_enough_merchant_balance'),__('message.warning'));
             return back()->withInput();
         }
         if($request->isprocess):
-            $courier_account = Account::find($request->from_account);
+            $courier_account = Account::companywise()->find($request->from_account);
+            if(blank($courier_account)){
+                Toastr::error(__('merchantmanage.error_msg'),__('message.error'));
+                return back()->withInput();
+            }
             if((double) $request->amount > $courier_account->balance){
 
                 Toastr::warning(__('merchantmanage.not_enough_courier_balance'),__('message.warning'));
@@ -215,8 +237,11 @@ class MerchantmanagePaymentController extends Controller
         $payments = $this->payment->filter($request);
         $accounts = $this->account->all();
         $merchant = $this->merchant->get($request->merchant_id);
-        if($request->merchant_id):
-            $merchantaccounts = MerchantPayment::where('merchant_id',$request->merchant_id)->get();
+        // S52 — MEME defaut, trouve en gardant `merchantAccount()` : le depot
+        // au-dessus rend bien `null` hors perimetre, mais la ligne suivante
+        // reprenait la valeur BRUTE de la requete au lieu du marchand resolu.
+        if(filled($merchant)):
+            $merchantaccounts = MerchantPayment::where('merchant_id',$merchant->id)->get();
         else:
             $merchantaccounts = null;
         endif;
