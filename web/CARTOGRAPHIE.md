@@ -5406,3 +5406,123 @@ perde pas.
 | versement marchand `update`, garde retirée | **rouge** |
 
 `SearchAndBalanceDisclosureTest` : 7 cas, 21 assertions.
+
+---
+
+## S58 — le sixième filet : la surface de recherche
+
+Le chantier nommé à la fin de S57 est ouvert et fermé : un **GET sans paramètre
+d'URL** dont l'identifiant voyage dans la chaîne de requête n'était couvert par
+aucun des cinq filets. Ce lot construit le sixième, et le défaut qu'il a trouvé
+en chemin.
+
+### La mesure d'abord
+
+| Mesure | Valeur |
+|---|---|
+| routes `GET` sans paramètre d'URL servies par un contrôleur de l'application | **203** |
+| dont **lisent un champ de la requête** | **46** |
+| dont un `*_id` | 26 |
+| dont un **terme** (non `*_id`) | 38 |
+
+L'estimation « une quarantaine » de S57 était juste.
+
+### Pourquoi le trou était structurel
+
+Chacun des cinq filets excluait cette forme **par sa propre définition**, pas par
+accident :
+
+| Filet | Ce qu'il énumère | Pourquoi il ne voyait pas cette forme |
+|---|---|---|
+| `IsolationCoverageTest` (S7) | l'API v10 | ce sont des routes web |
+| `WebIsolationCoverageTest` (S28) | les routes **à paramètre d'URL** | celles-ci n'en ont aucun |
+| `BodyIdentifierCoverageTest` (S38) | `POST`/`PUT`/`PATCH`/`DELETE` | celles-ci sont des `GET` |
+| `WebAdminPermissionCoverageTest` (S44) | les droits exigés sous `admin/*` | le droit était bien exigé |
+| `OffRequestScopeCoverageTest` (S56) | la surface **hors** requête | celles-ci sont dans une requête |
+
+### Le défaut : un mot manquant, des coordonnées bancaires
+
+Un seul vrai défaut dans les 46, et il tenait à une asymétrie entre deux écrans
+jumeaux :
+
+| écran d'impression | requête |
+|---|---|
+| `bank-transaction/filter/print` | `BankTransaction::companywise()->whereIn('id', $request->ids)` |
+| `fund-transfer/search/flter/print` | `FundTransfer::whereIn('id', $request->ids)` — **nue** |
+
+La vue d'impression rend, **pour le compte source et le compte destinataire** :
+numéro de compte, banque, agence, type, passerelle, mobile, plus le **nom et
+l'e-mail du titulaire**, et le montant. Il suffisait à un administrateur
+disposant de `fund_transfer_read` chez lui de poser des `ids[]` dans l'URL pour
+imprimer les coordonnées bancaires d'un transporteur concurrent.
+
+### Ce que la mesure a corrigé chez moi
+
+**Onze de mes treize alertes étaient fausses.** Mon marqueur de garde cherchait
+`companywise(` ; or trois dépôts bornent en écrivant `where('company_id',
+settings()->id)` **à la main** — `HubRepository::filter`, `UserRepository::filter`,
+`DeliveryManRepository::filter`. Reconnaître la forme littérale a fait tomber les
+« nues » de **13 à 2**. C'est la même leçon qu'en S57 : un instrument qui cherche
+une **forme** ne trouve pas une **règle**.
+
+**Et un marqueur de garde fautif absout au lieu d'alerter.** J'avais ajouté
+`'company_id' => settings()->id` à la liste des gardes de l'instrument de S57.
+C'est faux : cette forme n'est pas une portée, c'est un **champ écrit** dans un
+tableau de création. Elle absolvait **neuf** lectures nues des passerelles de
+paiement — dont `Merchant::find($request->merchantId)` dans `stripePost()`, qui
+reste nue. Je ne l'ai vu qu'en regardant **ce que le motif retirait**, une par
+une. Motif supprimé, raison inscrite dans l'instrument.
+
+> Un marqueur de garde qui se trompe ne fait pas du bruit : il fait **silence**.
+
+**Effet mesuré du reste de l'affinage sur l'instrument de S57 : aucun** — 35
+occurrences avant, 35 après. Les trois dépôts concernés n'y figuraient pas, cet
+instrument cherchant une *lecture* et non un filtre `like`. Le motif est gardé
+parce qu'il est juste, pas parce qu'il a trouvé quelque chose.
+
+### Un niveau construit, mesuré, puis abandonné
+
+J'ai outillé un **troisième niveau** de résolution — les fonctions d'aide globales
+de `app/Http/Helper/Helper.php` — en pensant qu'un contrôleur pouvait y cacher ses
+lectures. Mesure : **0** route n'est vue par ce niveau seul. Il n'est pas dans le
+filet. Un mécanisme qui ne change rien ne se garde pas au motif qu'il a coûté du
+travail.
+
+(Les deux aides concernées, `parcelsStatus()` et `idWiseParcels()`, écrivent bien
+`Parcel::companywise()->whereIn('id', …)`.)
+
+### Le filet
+
+`SearchSurfaceCoverageTest` — 46 routes recensées : **1 prouvée**, **9 exemptées
+avec motif**, **36 à l'arriéré**, plafond `36`. Il ne juge pas et ne cherche
+aucune garde ; il exige qu'aucune route de cette forme ne soit ajoutée sans qu'on
+ait écrit ce qu'on fait de sa portée. Deux témoins le gardent honnête : le second
+niveau (`GET admin/users/filter`, dont le contrôleur ne lit rien lui-même) et la
+forme fondatrice.
+
+> ⚠️ **Lu n'est pas prouvé.** Plusieurs routes de l'arriéré ont été lues pendant
+> ce lot et paraissent bornées. Elles restent à l'arriéré : ce filet ne connaît
+> que la preuve.
+
+### Vérification
+
+| Sabotage | Verdict |
+|---|---|
+| `FundTransfer::companywise()` retiré | **rouge** (2 tests) |
+| une route retirée du recensement du filet | **rouge** |
+| le **second niveau** du filet éteint | **rouge** (3 tests, dont son témoin) |
+
+Le contrôle positif du test de portée vit **dans le même appel** : on demande
+l'impression du virement de la société connectée **et** de celui d'en face. Si la
+vue cesse de rendre quoi que ce soit, la présence tombe **avant** que l'absence ne
+puisse passer pour une preuve. C'est la leçon de S53 — pour prouver une garde, il
+faut que le chemin non gardé réussisse.
+
+Suite complète : **999 tests, 45 874 assertions**, verte (delta `+8 / +26`,
+exactement les deux fichiers de ce lot).
+
+### Le chantier suivant
+
+L'arriéré de ce filet : **36 routes**. Le mouvement est celui qui a mené les deux
+autres arriérés à zéro (171 → 0, 90 → 0) — prouver ou motiver, une par une, en
+baissant le plafond d'autant.

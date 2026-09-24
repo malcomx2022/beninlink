@@ -57,9 +57,12 @@ use Tests\TestCase;
  * | `WebAdminPermissionCoverageTest` | mesure les **droits**, pas le périmètre |
  *
  * ⚠️ Un **GET sans paramètre d'URL** dont l'identifiant est un terme de recherche
- * n'est couvert par aucun filet d'isolation. Il y en a une quarantaine sous les
- * trois panneaux. C'est un constat, pas une correction : il est écrit dans
- * `CARTOGRAPHIE.md` comme chantier suivant.
+ * n'était couvert par aucun filet d'isolation. Constat posé ici en S57, **fermé
+ * en S58** : `SearchSurfaceCoverageTest` énumère cette surface — 203 routes, dont
+ * **46** lisent un champ de la requête (l'estimation « une quarantaine » était
+ * juste). Le défaut fondateur de ce filet est le jumeau de celui-ci :
+ * `fund-transfer/search/flter/print` imprimait les coordonnées bancaires d'un
+ * transporteur concurrent.
  *
  * ## ⚠️ Et le piège du `orWhere`
  *

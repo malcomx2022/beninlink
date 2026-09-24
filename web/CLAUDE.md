@@ -198,8 +198,28 @@ avant les apps.
   le filet. Elle a déjà mordu `invoice:generate` (seule la société 1 avait ses relevés)
   et menaçait `SendSms`. La société se prend **explicitement** : lue dans une liste,
   passée en option, ou dérivée de la **ligne** traitée.
-  Les quatre autres filets énumèrent `Route::getRoutes()` : cette surface leur est
+  Les cinq autres filets énumèrent `Route::getRoutes()` : cette surface leur est
   invisible.
+- Toute route **`GET` sans paramètre d'URL** qui lit un champ de la requête est inscrite
+  dans `tests/Feature/SearchSurfaceCoverageTest` (**S58**) : prouvée (avec son test),
+  exemptée (avec motif), ou à l'arriéré (plafond **36** à l'ouverture, 46 routes sur 203).
+  ⚠️ Le trou était **structurel** : chacun des cinq filets précédents excluait cette forme
+  par sa propre définition — routes à paramètre d'URL, verbes d'écriture, droits, API,
+  hors requête. Défaut fondateur : `fund-transfer/search/flter/print` lisait
+  `FundTransfer::whereIn('id', $request->ids)` **sans périmètre** quand son jumeau
+  `bankTransactionPrint()` écrit `BankTransaction::companywise()->whereIn(...)` — la vue
+  rend les **coordonnées bancaires** (numéro, banque, agence, mobile) et le nom et
+  l'e-mail du titulaire, des **deux** comptes du virement.
+  ⚠️ **Lu n'est pas prouvé** : une route lue et jugée correcte reste à l'arriéré tant
+  qu'un test ne l'établit pas.
+- ⚠️ **Un marqueur de garde qui se trompe ne fait pas du bruit : il fait SILENCE.**
+  Deux formes reconnaissent une portée : `companywise()` et `where('company_id', …)`
+  écrit à la main (trois dépôts le font — ignorer cette seconde forme a produit
+  **11 fausses alertes sur 13** en S58). Mais `'company_id' => settings()->id` n'en est
+  **pas** une : c'est un **champ écrit** dans un tableau de création. Inscrite par erreur
+  dans `docs/outils/instrument-lectures-nues.py`, elle y absolvait **neuf** lectures nues
+  des passerelles de paiement. On ne valide un marqueur de garde qu'en regardant, une par
+  une, **ce qu'il retire**.
 - Les chemins **en lot** sont le cas le plus dangereux de cette famille : leur identifiant
   est une **liste**, et rien dans la signature d'une route ne la porte. Règle de forme
   (**S38**) : dans un lot, un identifiant hors périmètre est **ignoré** et la boucle
