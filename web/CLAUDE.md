@@ -219,12 +219,13 @@ avant les apps.
   (**S60**, prouvé par un sabotage resté vert). Vérifier aussi le format attendu :
   `Income`/`Expense::filter` lisent `date` comme une date **unique** (`strtotime`),
   une plage « …To… » y devient `1970-01-01` et ne rend rien.
-- ⚠️ **Le piège du `orWhere` se répète — `companywise()` peut être là et ne rien couvrir.**
-  `companywise()->whereHas(A)->orWhereHas(B)` donne `company_id = X AND A OR B` : le
-  `OR` de premier niveau **sort** du périmètre (**S57**, puis **S60** sur
-  `fund-transfer/specific/search`). Le groupe de `OR` doit vivre dans une **fermeture**.
-  L'instrument ne détecte PAS cette famille — il cherche `Model::find($request->x)`,
-  pas une structure de requête ; ces chaînes se relisent à la main.
+- ⚠️ **Le piège du `orWhere` — `companywise()` peut être là et ne rien couvrir.**
+  `companywise()->where(A)->orWhere(B)` donne `company_id = X AND A OR B` : le `OR`
+  de premier niveau **sort** du périmètre (**S57**, puis **S60**). Le groupe de `OR`
+  doit vivre dans une **fermeture**. Depuis **S61** un septième filet le surveille —
+  `OrScopeEscapeCoverageTest` — et il redétecte le défaut de S60 si on le réintroduit ;
+  l'instrument des lectures nues, lui, ne verra jamais cette famille (il cherche une
+  lecture, pas une structure de requête).
 - ⚠️ **Une garde ne protège que ce qu'elle NOMME, et seulement en AVAL d'elle-même.**
   L'instrument de **S57** sautait toute méthode contenant une garde — granularité
   méthode, alors que la famille poursuivie depuis **S45** est « ressource gardée,

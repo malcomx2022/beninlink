@@ -89,6 +89,14 @@ class SearchSurfaceCoverageTest extends TestCase
         'GET admin/fund-transfer/filter' => AccountingSearchScopeTest::class,
         'GET admin/fund-transfer/specific/search' => AccountingSearchScopeTest::class,
         'GET admin/income/filter' => AccountingSearchScopeTest::class,
+
+        // S61 — la famille des colis. Les quatre etaient deja bornes (S38 pour les
+        // etiquettes et le lot, S57 pour la recherche et son piege du `orWhere`) ;
+        // ils restaient a l'arriere parce que LU N'EST PAS PROUVE.
+        'GET admin/parcel/specific/search' => ParcelSearchSurfaceScopeTest::class,
+        'GET admin/parcel/filter' => ParcelSearchSurfaceScopeTest::class,
+        'GET admin/parcel/multiple/print/label' => ParcelSearchSurfaceScopeTest::class,
+        'GET admin/parcel/bulkassign/print' => ParcelSearchSurfaceScopeTest::class,
     ];
 
     /**
@@ -125,6 +133,8 @@ class SearchSurfaceCoverageTest extends TestCase
      * dans `PROUVEES` avec le test qui l'établit — ou dans `EXEMPTEES` avec son
      * motif — en baissant le plafond d'autant.
      *
+     * **S61 : 21 → 17.** La famille des colis.
+     *
      * **S60 : 32 → 21.** Sept ecrans comptables prouves, quatre routes motivees.
      *
      * **S59 : 36 → 32.** Les trois `filter` mentionnés ci-dessus sont sortis —
@@ -138,10 +148,6 @@ class SearchSurfaceCoverageTest extends TestCase
         'GET admin/delivery-charge/filter',
         'GET admin/delivery-zone/grid',
         'GET admin/paid/invoice/syscohada-journal',
-        'GET admin/parcel/bulkassign/print',
-        'GET admin/parcel/filter',
-        'GET admin/parcel/multiple/print/label',
-        'GET admin/parcel/specific/search',
         'GET admin/payment/merchant/filter',
         'GET admin/reports/parcel-filter-reports',
         'GET admin/reports/parcel-filter-total-summery',
@@ -158,7 +164,7 @@ class SearchSurfaceCoverageTest extends TestCase
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 21;
+    private const PLAFOND_HERITAGE = 17;
 
     protected function setUp(): void
     {
