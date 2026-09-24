@@ -219,6 +219,16 @@ avant les apps.
   (**S60**, prouvé par un sabotage resté vert). Vérifier aussi le format attendu :
   `Income`/`Expense::filter` lisent `date` comme une date **unique** (`strtotime`),
   une plage « …To… » y devient `1970-01-01` et ne rend rien.
+- Toute **lecture nue d'un identifiant de requête** (`Model::find($request->x)`) est
+  inscrite dans `tests/Feature/NakedReadCoverageTest` (**S65**, huitième filet) :
+  24 occurrences, toutes classées — 19 derrière `online_payout` (**inatteignables**,
+  pas correctes : rouvrir le module les rend failles), 3 flux OTP, 1 super-admin,
+  1 sûre **par l'ordre**. Une garde compte si elle **précède** la lecture, porte sur
+  le **même champ**, ou est une aide dont la **carte** (lue dans `app/Traits/`) le couvre.
+- ⚠️ **`estIdentifiant()` reconnaît une CONVENTION DE NOM, pas un rôle.** `id`, `ids`,
+  `*_id`, `*_ids`, et depuis **S65** `key` et `slug` — élargissement mesuré, venu d'un
+  défaut que le filet avait laissé passer (`delivery-type/status`, S64). Un identifiant
+  au nom libre (`from`, `token`, `reference`) **échappe encore**.
 - ⚠️ **Le piège du `orWhere` — `companywise()` peut être là et ne rien couvrir.**
   `companywise()->where(A)->orWhere(B)` donne `company_id = X AND A OR B` : le `OR`
   de premier niveau **sort** du périmètre (**S57**, puis **S60**). Le groupe de `OR`

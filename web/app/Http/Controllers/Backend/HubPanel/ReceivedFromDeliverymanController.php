@@ -83,8 +83,17 @@ class ReceivedFromDeliverymanController extends Controller
 
     public function update(UpdateRequest $request){
 
-        $deliveryman   = DeliveryMan::find($request->delivery_man_id);
-        $cashReceived  = CashReceivedFromDeliveryman::find($request->id);
+        // S65 — la REPRISE portait le meme oracle que le depot (corrige en S64),
+        // et une seconde lecture nue : la remise elle-meme. Deux identifiants,
+        // deux portees ; mon correctif de S64 n'avait attrape que `store()`.
+        $deliveryman   = DeliveryMan::companywise()->find($request->delivery_man_id);
+        $cashReceived  = CashReceivedFromDeliveryman::companywise()->find($request->id);
+
+        if(blank($deliveryman) || blank($cashReceived)):
+            Toastr::error(__('account.error_msg'),__('message.error'));
+            return redirect()->back()->withInput();
+        endif;
+
         $cashReceivedAmount = $deliveryman->current_balance - $cashReceived->amount;
 
         if($cashReceivedAmount > -$request->amount || $cashReceivedAmount > 0):

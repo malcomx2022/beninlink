@@ -212,6 +212,11 @@ class BodyIdentifierCoverageTest extends TestCase
         // S53 — les deux annulations : gardees depuis S45, mais il aura fallu un
         // colis d'en face COMPLET pour que le chemin non garde reussisse, et donc
         // que la garde devienne mesurable. Deux tentatives precedentes etaient creuses.
+        // S65 — les deux routes que l'elargissement de `estIdentifiant()` fait
+        // entrer. `delivery-type/status` est le defaut que ce filet avait laisse
+        // passer : il BASCULAIT le reglage d'une autre societe (corrige en S64).
+        'POST admin/delivery-type/status' => NakedReadRemainderScopeTest::class,
+
         'POST admin/parcel/partial-delivered/cancel' => ParcelCancelScopeTest::class,
         'POST admin/parcel/return-received-by-merchant' => ParcelCancelScopeTest::class,
 ];
@@ -232,7 +237,8 @@ class BodyIdentifierCoverageTest extends TestCase
         'PATCH subscription/success' => 'même route, autre verbe',
         'DELETE subscription/success' => 'même route, autre verbe',
         'POST admin/addons/activation' => 'bascule d\'un module de la plateforme : l\'identifiant désigne un module, pas une ressource de société',
-        'PUT category/update' => 'S35 — le catalogue des catégories ne porte AUCUNE colonne `company_id` : il est commun à toutes les sociétés, et `UserAndSettingsScopeTest` l\'inscrit',
+        'POST category/store' => 'S65 — même motif que `PUT category/update` juste en dessous : le catalogue des catégories ne porte AUCUNE colonne `company_id`, il est commun à toutes les sociétés. Entrée dans le filet par l\'élargissement de `estIdentifiant()` à `slug`',
+                'PUT category/update' => 'S35 — le catalogue des catégories ne porte AUCUNE colonne `company_id` : il est commun à toutes les sociétés, et `UserAndSettingsScopeTest` l\'inscrit',
             'POST admin/fraud/store' => 'S51 — la fiche de fraude ne porte AUCUN identifiant de locataire : `phone`, `name`, `details` et `tracking_id` sont des chaines (voir la migration : `tracking_id` est un `string`, pas une cle etrangere). `company_id` vient de `settings()` et `created_by` de la session',
         'POST merchant/fraud/store' => 'S51 — idem cote panneau marchand : meme depot, memes champs, aucun identifiant a garder',
         'POST merchant/accounts/statements-filter' => 'S52 — le `parcel_tracking_id` ne peut RIEN atteindre : les releves sont bornes au marchand authentifie, et le socle porte deja `if (tracking_id && blank(parcel)) parcel_id = 0`, donc un numero inconnu et un numero du voisin rendent tous deux un ensemble VIDE. J\'avais d\'abord diagnostique un oracle d\'existence ; c\'est le test qui m\'a corrige',
@@ -272,10 +278,29 @@ class BodyIdentifierCoverageTest extends TestCase
 
     /* ────────────────────────── l'énumération ───────────────────────────── */
 
-    /** Un nom de champ qui désigne un identifiant : `id`, `ids`, `*_id`, `*_ids`, `*_ids_`. */
+    /**
+     * Un nom de champ qui désigne un identifiant.
+     *
+     * `id`, `ids`, `*_id`, `*_ids`, `*_ids_` — et depuis **S65** `key` et `slug`.
+     *
+     * ⚠️ **Cet élargissement vient d'un défaut que ce filet avait laissé passer.**
+     * `POST admin/delivery-type/status` est une écriture, donc dans son domaine :
+     * elle basculait le réglage d'une AUTRE société (corrigé en S64). Elle lui a
+     * échappé parce que son identifiant s'appelle `key`, pas `*_id`.
+     *
+     * Mesuré avant d'élargir : `key` et `slug` ajoutent **deux** routes, toutes
+     * deux classées ci-dessous. Une version plus large (`_key$`, `_code$`,
+     * `reference`) en ajoutait six, dont quatre FAUX POSITIFS — `map_key` et
+     * `fcm_secret_key` sont des **valeurs**, pas des identifiants. On n'élargit
+     * que de ce que la preuve justifie.
+     *
+     * ⚠️ **L'angle mort n'est pas refermé** : un identifiant au nom libre —
+     * `from`, `reference`, `token` — échappe encore. Ce filet reconnaît une
+     * CONVENTION DE NOM, pas un rôle.
+     */
     private function estIdentifiant(string $nom): bool
     {
-        return (bool) preg_match('/^(id|ids)$|_ids?_?$/i', $nom);
+        return (bool) preg_match('/^(id|ids|key|slug)$|_ids?_?$/i', $nom);
     }
 
     /** Les identifiants qu'un morceau de source lit dans la requête. */
