@@ -5747,3 +5747,91 @@ ses listes s'allonger).
 
 L'arriéré du filet S58 : **21 routes** — la famille des colis (4), celle des
 rapports (5), le panneau marchand (5) et sept isolées.
+
+---
+
+## S61 — le septième filet : le `OR` qui sort du périmètre
+
+Arriéré du filet S58 : **21 → 17**.
+
+### La famille que rien ne surveillait
+
+```
+Model::companywise()->where(A)->orWhere(B)
+SQL : company_id = X AND A OR B          ← le OR de PREMIER NIVEAU s'échappe
+```
+
+`AND` lie plus fort que `OR`. Un `orWhere` posé **au même niveau** que la portée
+la neutralise pour toute la branche de droite.
+
+Elle a mordu **deux fois**, et les six filets plus l'instrument l'ont tous
+manquée :
+
+| | |
+|---|---|
+| **S57** | `ParcelRepository::parcelSearchs` — nom, téléphone, adresse des clients de **toutes** les sociétés |
+| **S60** | `FundTransferRepository::fundTransferSearch` — coordonnées bancaires **et soldes** |
+
+> Dans les deux cas **`companywise()` était là**. Ce n'est pas une garde
+> manquante : c'est une garde que la **structure de la requête** annule. Aucun
+> filet cherchant une garde *absente* ne pouvait la voir, et l'instrument des
+> lectures nues cherche une **lecture**, pas une structure.
+
+### `OrScopeEscapeCoverageTest`
+
+Il repère un appel de portée dans chaque méthode, puis avance en comptant
+parenthèses et accolades : un `orWhere` à la **même profondeur** est signalé ; un
+`orWhere` plus profond — dans une fermeture, dans un `whereHas` — est **enfermé**,
+donc sans danger. C'est exactement la correction appliquée en S57 et en S60.
+
+**Quatre occurrences, toutes délibérées** : `(company_id = X OR id = 1)` ajoute la
+catégorie de livraison de la **plateforme** au catalogue de la société —
+`categorys` ne porte aucune `company_id` (S32), et `ParcelCatalogScopeTest`
+l'établit depuis S46. Le filet ne juge pas : il exige que chacune soit écrite
+avec sa raison.
+
+Un instrument en ligne de commande l'accompagne :
+`docs/outils/instrument-or-hors-perimetre.py`.
+
+### Le témoin qui compte
+
+Le filet embarque un témoin de **détection** : il soumet à son analyse les deux
+formes côte à côte, celle qui s'échappe et celle qui est enfermée, et exige qu'il
+voie la première **et ignore la seconde**.
+
+> Sans lui, une analyse qui signalerait *tout* `orWhere` passerait pour
+> fonctionnelle tout en étant inutilisable — et une analyse qui n'en signalerait
+> aucun passerait pour rassurante.
+
+Un second témoin exige que les **commentaires** soient dépouillés : les deux
+corrections de cette famille *citent* la chaîne fautive pour expliquer le piège.
+Sans dépouillement, le filet accuserait précisément le code qui documente la
+règle (leçon S56).
+
+### La famille des colis, prouvée
+
+Quatre routes sortent de l'arriéré : `parcel/specific/search`, `parcel/filter`,
+`parcel/multiple/print/label`, `parcel/bulkassign/print`. Toutes étaient bornées
+(S38, S57) ; elles restaient à l'arriéré parce que **lu n'est pas prouvé**.
+
+### Vérification
+
+| Sabotage | Verdict |
+|---|---|
+| **le défaut de S60 réintroduit** (fermeture retirée) | **rouge — le filet le voit** |
+| une occurrence retirée de `DELIBEREES` | **rouge** |
+| le dépouillement des commentaires éteint | **rouge** |
+| `companywise()` retiré (recherche colis) | **rouge** |
+| `companywise()` retiré (filtre colis) | **rouge** |
+| `companywise()` retiré (étiquettes) | **rouge** |
+| `companywise()` retiré (lot d'affectation) | **rouge** |
+
+Le premier est le plus important : **le filet aurait attrapé S60 avant sa
+livraison.**
+
+Suite complète : **1024 tests, 45 958 assertions**, verte (delta `+9 / +22`).
+
+### Le chantier suivant
+
+L'arriéré du filet S58 : **17 routes** — les rapports (6), le panneau marchand
+(5), six isolées.
