@@ -49,6 +49,32 @@ MODELS = subprocess.run(
 GARDES = ['companywise(', 'contrepartieHorsPerimetre(', 'identifiantsHorsPerimetre(',
           'catalogueHorsPerimetre(', 'ticketsVisibles(', 'marchandDeLaSociete(',
           'abort_if(', 'abort_unless(']
+# S58 — la garde ecrite LITTERALEMENT.
+#
+# Certains depots bornent sans passer par le scope : `HubRepository::filter`,
+# `UserRepository::filter` et `DeliveryManRepository::filter` ecrivent
+# `where('company_id', settings()->id)` a la main. C'est une garde, et la liste
+# ci-dessus ne la reconnaissait pas.
+#
+# ⚠️ EFFET MESURE SUR CET INSTRUMENT : AUCUN — 35 occurrences avant, 35 apres.
+# Les trois depots concernes ne figuraient pas dans sa liste, parce qu'il
+# cherche une LECTURE (`Model::find($request->x)`), pas un filtre `like`. Le
+# motif est garde parce qu'il est juste, pas parce qu'il a trouve quelque chose.
+# Il a en revanche ete decisif pour la mesure de S58 : 13 fausses alertes sur 13.
+#
+# ⚠️ ON NE PEUT PAS chercher la simple chaine `company_id` : une methode qui lit
+# `$request->company_id` la contiendrait et passerait pour gardee.
+#
+# ⚠️ ET PAS DAVANTAGE `'company_id' => settings()->id` : je l'avais ajoute ici,
+# a tort, et il a fallu regarder ce qu'il retirait pour le voir. Cette forme
+# n'est pas une portee, c'est un CHAMP ECRIT dans un tableau de creation. Elle
+# absolvait neuf lectures nues des passerelles de paiement — dont
+# `Merchant::find($request->merchantId)` dans `stripePost()`, qui reste nue.
+# Un marqueur de garde qui se trompe ne fait pas du bruit : il fait SILENCE.
+GARDES_MOTIF = [
+    re.compile(r"where\s*\(\s*['\"]company_id['\"]"),
+]
+
 
 def sans_commentaires(src):
     src = re.sub(r'/\*.*?\*/', '', src, flags=re.S)
@@ -78,6 +104,8 @@ for racine in ('app/Http', 'app/Repositories', 'app/Services'):
             for nom, corps in methodes(src):
                 if any(g in corps for g in GARDES):
                     continue                      # une garde domine la methode
+                if any(g.search(corps) for g in GARDES_MOTIF):
+                    continue                      # ... ou la meme garde, ecrite a la main
                 for mm in LECTURE.finditer(corps):
                     modele, op, arg = mm.group(1), mm.group(2), mm.group(3)
                     if not re.search(r'\$request->|request\(\)->', arg):

@@ -104,7 +104,25 @@ class FundTransferController extends Controller
 
     public function fundTransferSearchFilterPrint(Request $request){
 
-        $fund_transfers = FundTransfer::whereIn('id',$request->ids)->get();
+        // S58 — premier defaut du sixieme filet, et il tenait en un mot.
+        //
+        // L'ecran d'impression des transferts lisait `whereIn('id', $request->ids)`
+        // SANS perimetre, alors que son jumeau `BankTransactionController::
+        // bankTransactionPrint()` ecrit `BankTransaction::companywise()
+        // ->whereIn('id', $request->ids)`. Deux ecrans identiques, un garde,
+        // l'autre non : un oubli, pas une intention.
+        //
+        // Ce que la vue rend, pour le compte source ET le compte destinataire :
+        // numero de compte, banque, agence, type, passerelle, mobile, plus le
+        // NOM et l'E-MAIL du titulaire, et le montant. Il suffisait de poser des
+        // `ids[]` dans l'URL pour imprimer les coordonnees bancaires d'un
+        // transporteur concurrent.
+        //
+        // La route est un GET SANS parametre d'URL : ni `WebIsolationCoverageTest`
+        // (qui enumere les parametres d'URL) ni `BodyIdentifierCoverageTest` (qui
+        // ne regarde que POST/PUT/PATCH/DELETE) ne pouvaient la voir. C'est
+        // exactement l'angle mort que ce lot ferme.
+        $fund_transfers = FundTransfer::companywise()->whereIn('id',$request->ids)->get();
         return view('backend.fund_transfer.print',compact('fund_transfers'));
     }
 
