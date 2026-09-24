@@ -189,6 +189,17 @@ avant les apps.
   indispensable — un contrôleur qui passe `$request` tel quel au dépôt ne lit aucun
   identifiant lui-même (`POST admin/assign-pickup/bulk`), et sort de l'énumération sans lui.
   Un test-témoin garde ce point.
+- Tout ce qui tourne **hors requête HTTP** — commandes Artisan, tâches planifiées,
+  jobs en file, observateurs, notifications — est inscrit dans
+  `tests/Feature/OffRequestScopeCoverageTest` (**S56**) : **aucune** résolution
+  ambiante du périmètre (`settings()`, `companywise()`, `Auth::`, `auth()`), ou une
+  exemption motivée. ⚠️ C'est la famille **F4** : `settings()` résout par sous-domaine
+  ou utilisateur connecté, et faute des deux **retombe sur la société 1** — mesuré par
+  le filet. Elle a déjà mordu `invoice:generate` (seule la société 1 avait ses relevés)
+  et menaçait `SendSms`. La société se prend **explicitement** : lue dans une liste,
+  passée en option, ou dérivée de la **ligne** traitée.
+  Les quatre autres filets énumèrent `Route::getRoutes()` : cette surface leur est
+  invisible.
 - Les chemins **en lot** sont le cas le plus dangereux de cette famille : leur identifiant
   est une **liste**, et rien dans la signature d'une route ne la porte. Règle de forme
   (**S38**) : dans un lot, un identifiant hors périmètre est **ignoré** et la boucle
