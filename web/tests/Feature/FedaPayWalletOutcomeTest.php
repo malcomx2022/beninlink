@@ -106,6 +106,85 @@ class FedaPayWalletOutcomeTest extends TestCase
         return (int) round((float) Merchant::find($this->merchant->id)->wallet_balance);
     }
 
+    /* ───────────────────────── le rejeu ─────────────────────────────────── */
+
+    /**
+     * S66 — **la propriété qui compte** : FedaPay réessaie, un réseau duplique,
+     * un opérateur renvoie le même événement. Le solde ne doit bouger qu'une fois.
+     *
+     * Elle était prouvée côté ABONNEMENT depuis le chantier 3
+     * (`FedaPaySubscriptionTest::test_le_webhook_approuve_active_le_plan_une_seule_fois`)
+     * mais **pas** côté portefeuille, alors que c'est un autre chemin de code :
+     * `walletRepo->approved()` au lieu de `switchPlan()`.
+     *
+     * ⚠️ **DEUX gardes couvrent ce chemin**, et c'est pour cela que les trois
+     * tests ci-dessous existent au lieu d'un seul :
+     *
+     * | garde | où | ce qu'elle fait |
+     * |---|---|---|
+     * | 1 | `FedaPayController::approve()` | `lockForUpdate` + `isApproved()` : le rejeu ressort avant tout crédit |
+     * | 2 | `WalletRepository::approved()` | `lockForUpdate` + statut `PENDING` : une recharge déjà approuvée n'est pas re-créditée |
+     *
+     * Retirer **une** des deux laisse l'autre tenir : un sabotage partiel resterait
+     * vert et ne mesurerait que la survivante (leçon S64). Chaque garde a donc son
+     * propre détecteur, et celui-ci tient la propriété d'ensemble.
+     */
+    public function test_a_replayed_webhook_credits_the_wallet_only_once(): void
+    {
+        $this->webhook('transaction.approved')->assertOk();
+
+        $this->assertSame(self::MONTANT, $this->solde(),
+            'contrôle positif tombé : le premier webhook ne crédite plus rien');
+
+        $this->webhook('transaction.approved')->assertOk();
+
+        $this->assertSame(self::MONTANT, $this->solde(),
+            'LE REJEU A CRÉDITÉ DEUX FOIS : les deux verrous ont sauté');
+        $this->assertSame(1, Wallet::where('id', $this->wallet->id)
+            ->where('status', WalletStatus::APPROVED)->count());
+    }
+
+    /**
+     * La garde **1**, seule : le rejeu doit ressortir de `approve()` AVANT le
+     * crédit, et la réponse le dit — `already processed`, pas `approved`.
+     *
+     * C'est le seul discriminant qui ne dépende pas de la garde 2 : si le verrou
+     * de la transaction saute, le second appel repart vers le dépôt (qui le
+     * refusera, mais pour une autre raison) et la réponse devient `approved`.
+     */
+    public function test_the_transaction_lock_answers_already_processed_on_a_replay(): void
+    {
+        $this->assertStringContainsString('approved',
+            $this->webhook('transaction.approved')->assertOk()->getContent(),
+            'contrôle positif tombé : le premier webhook n\'approuve plus');
+
+        $this->assertStringContainsString('already processed',
+            $this->webhook('transaction.approved')->assertOk()->getContent(),
+            'le verrou de la transaction a sauté : le rejeu repart vers le dépôt '
+            . 'au lieu de ressortir immédiatement');
+    }
+
+    /**
+     * La garde **2**, seule : appelée deux fois en direct, sans passer par le
+     * webhook, elle ne crédite qu'une fois.
+     *
+     * ⚠️ Le passage par le dépôt est délibéré : c'est le seul moyen d'atteindre
+     * la garde 2 sans que la garde 1 ne s'interpose.
+     */
+    public function test_the_wallet_lock_credits_only_once_when_called_twice(): void
+    {
+        $depot = app(\App\Repositories\Wallet\WalletInterface::class);
+
+        $this->assertTrue($depot->approved($this->wallet->id),
+            'contrôle positif tombé : le premier crédit échoue');
+        $this->assertSame(self::MONTANT, $this->solde());
+
+        $this->assertFalse($depot->approved($this->wallet->id),
+            'le dépôt accepte de créditer une recharge DÉJÀ approuvée');
+        $this->assertSame(self::MONTANT, $this->solde(),
+            'le verrou du portefeuille a sauté : le second appel a re-crédité');
+    }
+
     public function test_a_declined_payment_closes_the_pending_request(): void
     {
         $this->webhook('transaction.declined')->assertOk();
