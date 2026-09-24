@@ -170,6 +170,51 @@ class NakedReadRemainderScopeTest extends TestCase
             'le livreur étranger doit être refusé par un message de refus, pas ignoré');
     }
 
+    /**
+     * S65 — la REPRISE d'un encaissement portait le même oracle que le dépôt, et
+     * une seconde lecture nue : la remise elle-même. Mon correctif de S64
+     * n'avait attrapé que `store()` — c'est l'instrument qui l'a dit, en
+     * continuant de désigner `update()` après le lot.
+     */
+    public function test_the_cash_handover_update_never_reads_a_foreign_record(): void
+    {
+        // ⚠️ MEME PIEGE QU'EN S64, et je l'ai refait : le solde doit etre celui
+        // qui DECLENCHE l'avertissement. `$cashReceivedAmount = solde - remise`
+        // doit valoir plus que `-$request->amount` ; avec un solde de 0 et une
+        // remise de 5000 il vaut -5000, la condition est fausse des DEUX cotes,
+        // et le sabotage restait vert.
+        $sien = $this->livreurDe(self::AUTRE);
+        $sien->current_balance = 10000;
+        $sien->save();
+
+        // ⚠️ `user_id` et `hub_id` sont indispensables : sans eux le trait
+        // d'enregistrement d'activite leve sur une relation nulle, et le test
+        // tomberait pour une raison qui n'est pas la portee.
+        $saRemise = \App\Models\CashReceivedFromDeliveryman::forceCreate([
+            'company_id' => self::AUTRE,
+            'user_id' => $sien->user_id,
+            'hub_id' => $sien->user->hub_id,
+            'delivery_man_id' => $sien->id,
+            'account_id' => $this->compteDe(self::AUTRE, 900000)->id,
+            'amount' => 5000,
+            'date' => now(),
+        ]);
+
+        $agent = $this->agentDe(settings()->id);
+        $agent->permissions = ['cash_received_from_delivery_man_update'];
+        $agent->save();
+
+        $this->actingAs($agent)->put(self::HOTE . '/admin/hub/cash-received-deliveryman/update', [
+            'id' => $saRemise->id, 'delivery_man_id' => $sien->id, 'amount' => 1000,
+            'date' => now()->toDateString(), 'account_id' => $this->compteDe(settings()->id, 900000)->id,
+        ])->assertRedirect();
+
+        $this->assertStringNotContainsString(__('account.not_enough_balance'), $this->messagesToastr(),
+            'la reprise renseigne sur le SOLDE d\'un livreur d\'une autre société');
+        $this->assertStringContainsString(__('account.error_msg'), $this->messagesToastr(),
+            'la remise étrangère doit être refusée par un message de refus');
+    }
+
     public function test_the_salary_precheck_never_reads_a_foreign_payslip(): void
     {
         $sonSalarie = $this->agentDe(self::AUTRE);

@@ -6054,3 +6054,103 @@ Suite complète : **1047 tests, 46 042 assertions**, verte (delta `+5 / +19`).
 globaux (OTP e-mail / mobile) · `switchPlan` (super-administrateur) ·
 `transferToHubMultipleParcel` (sûr **par l'ordre** : le dépôt garde le hub et
 rend `false` avant que le contrôleur ne le relise) · une reprise d'encaissement.
+
+---
+
+## S65 — le huitième filet, et l'angle mort qu'un défaut a révélé
+
+### Le filet S38 élargi, parce qu'il avait laissé passer quelque chose
+
+`POST admin/delivery-type/status` est une **écriture**, donc dans le domaine de
+`BodyIdentifierCoverageTest`. Elle basculait le réglage d'une autre société
+(corrigé en S64). Elle lui a échappé parce que son identifiant s'appelle **`key`**,
+et `estIdentifiant()` ne reconnaissait que `id`, `ids`, `*_id`, `*_ids`.
+
+**Mesuré avant d'élargir.** Une version large (`_key$`, `_code$`, `reference`)
+ajoutait **six** routes dont **quatre faux positifs** — `map_key` et
+`fcm_secret_key` sont des *valeurs*, pas des identifiants. Resserré à `key` et
+`slug` : **deux** routes, toutes deux classées (`delivery-type/status` prouvée,
+`category/store` exemptée comme son jumeau `category/update`).
+
+> On n'élargit que de ce que la preuve justifie.
+
+⚠️ **L'angle mort n'est pas refermé** : un identifiant au nom libre — `from`,
+`token`, `reference` — échappe encore. Ce filet reconnaît une **convention de
+nom**, pas un rôle. C'est écrit dans son docbloc.
+
+### `NakedReadCoverageTest` — le huitième filet
+
+Il restait un **script**. Un script se lance ; un filet mord tout seul. Ce lot
+porte l'analyse de `instrument-lectures-nues.py` dans un test, avec ses trois
+critères de S59 (position, même identifiant, cartes des aides lues dans
+`app/Traits/`), et exige que **chaque** occurrence porte sa raison.
+
+**24 occurrences, toutes classées** :
+
+| catégorie | nombre | motif |
+|---|---|---|
+| `DERRIERE_UN_MODULE_COUPE` | 19 | `online_payout` à `false` (D10) ; `OnlinePayoutModuleDisabledTest` établit que chaque route est derrière `if (onlinePayoutEnabled())` |
+| `FLUX_GLOBAUX` | 3 | OTP e-mail / mobile : un code se vérifie **avant** toute session, il n'y a pas encore de société |
+| `SUPER_ADMIN` | 1 | `switchPlan` : acte de plateforme |
+| `SUR_PAR_ORDRE` | 1 | `transferToHubMultipleParcel` : le dépôt garde le hub et rend `false` avant que le contrôleur ne le relise |
+
+> ⚠️ Les 19 ne sont **pas** exemptées parce qu'elles seraient correctes, mais
+> parce qu'elles sont **inatteignables**. Le jour où le module rouvre, elles
+> redeviennent des failles — et `config/payments.php` le dit déjà.
+
+> ⚠️ `SUR_PAR_ORDRE` est la catégorie la plus fragile : elle dépend d'un ordre
+> d'appel, pas d'une garde sur place. Chaque ligne nomme donc **où** vit la garde.
+
+### Le témoin de détection : quatre formes côte à côte
+
+Le filet soumet à sa propre analyse une lecture nue, une lecture scopée, une
+garde **avant** et une garde **après**. Il doit voir la première et la dernière,
+et ignorer les deux du milieu. Un second témoin exige que la **carte des aides**
+reste lue et non devinée ; un troisième, que les commentaires soient dépouillés.
+
+### Une reprise que S64 avait manquée
+
+`ReceivedFromDeliverymanController::update()` portait le même oracle que
+`store()` — corrigé en S64 — **plus** une seconde lecture nue : la remise
+elle-même. Mon correctif n'avait attrapé que `store()`, et c'est l'instrument qui
+l'a dit en continuant de désigner `update()` après le lot.
+
+### Et j'ai refait la même erreur de test
+
+Le premier test de cette reprise était **creux**, pour exactement la raison
+corrigée en S64 : le solde du livreur d'en face ne déclenchait pas
+l'avertissement, donc la condition était fausse des deux côtés. Le sabotage l'a
+dit. Corrigé avec un solde qui la déclenche.
+
+> Connaître le piège ne suffit pas à l'éviter. C'est le **sabotage** qui l'évite.
+
+### Vérification
+
+| Sabotage | Verdict |
+|---|---|
+| **le défaut de S64 réintroduit** (le virement) | **rouge — le filet le NOMME** |
+| **le défaut de la bascule réintroduit** | **rouge** |
+| une occurrence retirée des listes | **rouge** |
+| le dépouillement des commentaires éteint | **rouge** |
+| la carte des aides n'est plus lue | **rouge** |
+| reprise d'encaissement : les deux gardes retirées | **rouge** *(vert au premier jet)* |
+
+⚠️ Un sabotage a d'abord été **vert à tort** : il laissait en place le *texte* de
+la garde (`'from_account' => Account::class`), que l'analyse voit nommer le
+champ. Le filet avait raison ; c'est le sabotage qui était insuffisant. Repris
+en retirant la garde **entièrement** — quatrième variante de la leçon S49.
+
+Suite complète : **1054 tests, 46 057 assertions**, verte (delta `+7 / +15`).
+
+### Les huit filets
+
+| filet | surface | arriéré |
+|---|---|---|
+| `IsolationCoverageTest` (S7) | API v10 | — |
+| `WebIsolationCoverageTest` (S28) | routes à paramètre d'URL | **0** (S35) |
+| `BodyIdentifierCoverageTest` (S38) | écritures, identifiant dans le corps | **0** (S54) |
+| `WebAdminPermissionCoverageTest` (S44) | droits sous `admin/*` | — |
+| `OffRequestScopeCoverageTest` (S56) | hors requête (F4) | **0** |
+| `SearchSurfaceCoverageTest` (S58) | `GET` sans paramètre d'URL | **0** (S63) |
+| `OrScopeEscapeCoverageTest` (S61) | le `OR` au niveau de la portée | — |
+| `NakedReadCoverageTest` (S65) | la lecture nue d'un identifiant | — |
