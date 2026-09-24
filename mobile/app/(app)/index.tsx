@@ -3,11 +3,17 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native
 import { Link } from 'expo-router';
 
 import { ApiError } from '../../src/api/client';
+import { CUSTOMS_ALERTS_PER_PAGE, fetchCustomsAlerts } from '../../src/api/customs';
 import { fetchBalanceDetails, fetchDashboard } from '../../src/api/merchant';
 import { fetchUnreadCount } from '../../src/api/notifications';
 import type { BalanceDetails, DashboardData } from '../../src/api/types';
 import { useSession } from '../../src/session/SessionProvider';
 import { Card, CountTile, ErrorText, Muted, StatTile, Title } from '../../src/components/ui';
+import {
+  CustomsAlertStatus,
+  customsLevelColorName,
+  highestCustomsLevel,
+} from '../../src/domain/customsLevel';
 import { colors } from '../../src/theme/colors';
 import { fonts, fontSizes, spacing } from '../../src/theme/typography';
 import { formatAmount } from '../../src/domain/money';
@@ -18,22 +24,37 @@ export default function DashboardScreen() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [balance, setBalance] = useState<BalanceDetails | null>(null);
   const [unread, setUnread] = useState(0);
+  /**
+   * Alertes douanières EN COURS — `mobile/CLAUDE.md` les liste au tableau de
+   * bord, et seul un lien y menait.
+   *
+   * On compte la première page : au-delà on affiche « 20+ » plutôt qu'un
+   * chiffre faux. Il n'existe pas d'endpoint de comptage, et on n'en invente
+   * pas — règle d'or, `web/` est le contrat.
+   */
+  const [customsPending, setCustomsPending] = useState(0);
+  const [customsLevel, setCustomsLevel] = useState(0);
+  const [customsCapped, setCustomsCapped] = useState(false);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     setError('');
     try {
-      // Les trois appels sont indépendants : en parallèle. Le compteur de
-      // notifications est un confort : son échec n'empêche pas le tableau.
-      const [d, b, n] = await Promise.all([
+      // Les quatre appels sont indépendants : en parallèle. Les deux derniers
+      // sont des conforts — leur échec n'empêche pas le tableau de s'afficher.
+      const [d, b, n, alerts] = await Promise.all([
         fetchDashboard(),
         fetchBalanceDetails(),
         fetchUnreadCount().catch(() => 0),
+        fetchCustomsAlerts(CustomsAlertStatus.PENDING, 1).catch(() => []),
       ]);
       setDashboard(d);
       setBalance(b);
       setUnread(n);
+      setCustomsPending(alerts.length);
+      setCustomsLevel(highestCustomsLevel(alerts));
+      setCustomsCapped(alerts.length >= CUSTOMS_ALERTS_PER_PAGE);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
     }
@@ -102,8 +123,18 @@ export default function DashboardScreen() {
         <Link href="/(app)/invoices" style={styles.link}>
           {t('invoices.title')}
         </Link>
-        <Link href="/(app)/customs" style={styles.link}>
+        {/* Le nombre ET la gravité : un blocage à la frontière se lit en rouge
+            sans ouvrir l'écran. La couleur vient de la même table que la liste
+            des alertes (`src/domain/customsLevel.ts`). */}
+        <Link
+          href="/(app)/customs"
+          style={[
+            styles.link,
+            customsPending > 0 && { color: colors[customsLevelColorName(customsLevel)] },
+          ]}
+        >
           {t('customs.title')}
+          {customsPending > 0 ? ` (${customsPending}${customsCapped ? '+' : ''})` : ''}
         </Link>
         <Link href="/(app)/shops" style={styles.link}>
           {t('shops.title')}

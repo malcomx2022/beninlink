@@ -1316,11 +1316,16 @@ elle a survécu au correctif qui l'annulait. Une vérification du module l'a rel
 la leçon vaut pour toutes les lignes `⏳` de ce fichier : elles se relisent quand on
 touche à leur sujet, sinon elles deviennent la version la plus crédible d'une erreur.
 
-⏳ L'écran `customs` de `mobile/` suit — le chantier a été mené « backend d'abord ».
-Vérifié le 24/09 : `mobile/src/api/customs.ts` existe (`fetchCustomsReference`,
-`fetchCustomsAlerts`, `resolveCustomsAlert`) et **aucun fichier ne l'importe** —
-`mobile/src` ne contient d'ailleurs pas encore de dossier `screens/`. Le client
-d'API est là, l'écran non. La réserve reste ouverte, et elle est exacte.
+✅ **L'écran `customs` de `mobile/` existe** — `app/(app)/customs.tsx`, avec ses
+deux onglets, la résolution d'alerte et le routage depuis le push (`data.kind`).
+Les trois exports de `src/api/customs.ts` sont consommés : `fetchCustomsAlerts` et
+`resolveCustomsAlert` par cet écran, `fetchCustomsReference` par la création de
+colis. La réserve qui figurait ici était **fausse**, et voir S68 pour comment.
+
+⚠️ **`mobile/` est une app expo-router : ses écrans vivent dans `app/`.**
+Il n'y a pas de dossier `src/screens/`, et il n'y en aura pas — `app/` **est** le
+dossier des écrans, chaque fichier y étant une route. Chercher un écran dans
+`mobile/src` ne trouve rien et ne prouve rien.
 
 ## ✅ Fil de notifications marchand (2026-09-04)
 
@@ -6330,3 +6335,120 @@ d'abord lus comme des résultats.
 
 Corrigé : sauvegarde par copie, ancrage vérifié **unique** avant chaque
 remplacement, et état restauré recontrôlé (vert) entre deux sabotages.
+
+---
+
+## S68 — l'écran douane de `mobile/`, et une affirmation de S67 qui était fausse
+
+### D'abord : ce que j'avais écrit, et pourquoi c'était faux
+
+S67 a conclu que l'écran `customs` de `mobile/` n'existait pas. Deux constats
+exacts, une conclusion fausse :
+
+| Constat | Vrai ? | Ce qu'il prouve |
+|---|---|---|
+| `mobile/src/api/customs.ts` n'a aucun importeur | **non** — le grep était limité à `mobile/src` | rien |
+| `mobile/src` ne contient pas de dossier `screens/` | oui | **rien** |
+
+`mobile/` est une app **expo-router** : `"main": "expo-router/entry"`, et ses
+écrans vivent dans **`app/`**, un fichier par route. `app/(app)/customs.tsx`
+existait, 181 lignes, avec ses onglets, sa résolution et son routage depuis le
+push. Un dossier `src/screens/` n'a jamais eu à exister.
+
+> Une recherche limitée au mauvais dossier ne rend pas « aucun résultat » : elle
+> rend « aucun résultat **là** ». La différence est invisible dans la sortie, et
+> c'est au lecteur de la rétablir.
+
+Aggravant : je l'ai écrit dans ce fichier, et la PR est partie. Une erreur
+consignée se transmet.
+
+### Ce que l'écran avait réellement — trois défauts, tous trouvés en lisant
+
+**1. Il ne lisait que la première page.** `customs/alerts` répond en
+`paginate(20)` ; l'écran appelait `fetchCustomsAlerts(tab)`. Et
+`CUSTOMS_ALERTS_PER_PAGE = 20` était **exporté depuis l'origine sans être
+utilisé nulle part** — le module d'API avait prévu la pagination, l'écran ne
+l'avait jamais prise. Un marchand à plus de vingt alertes en voyait vingt, sans
+compteur, sans bouton, sans fin de liste : la perte était **silencieuse**, sur un
+écran de conformité douanière.
+
+**2. Il peignait deux niveaux sur trois avec des couleurs réservées à autre
+chose.** `mobile/src/theme/colors.ts` nomme pourtant les trois :
+
+| Niveau | La charte dit | L'écran faisait |
+|---|---|---|
+| BLOQUANT (3) | `danger` « réservé […] au niveau douanier BLOQUANT » | `danger` ✅ |
+| AVERTISSEMENT (2) | `warning` « AVERTISSEMENT douanier » | **`accent`** — l'ocre, « actions clés uniquement » |
+| INFO (1) | `info` « INFO douanier » | **`primary`** — le vert, qui se lit « tout va bien » |
+
+Une couleur qui ment sur la gravité coûte plus cher qu'une couleur laide.
+
+**3. Le tableau de bord n'avait qu'un lien.** `mobile/CLAUDE.md` liste pourtant
+« alerte douane » parmi son contenu, et le lien *Notifications* juste au-dessus
+porte son compteur.
+
+### Ce que ce lot fait
+
+| Pièce | Rôle |
+|---|---|
+| `mobile/src/domain/customsLevel.ts` | niveaux, statuts et **nom de charte** d'une couleur |
+| `app/(app)/customs.tsx` | pagination (idiome de `invoices.tsx`) + couleurs par le domaine |
+| `app/(app)/index.tsx` | compteur des alertes **en cours**, coloré par la plus grave |
+| `web/tests/Feature/MerchantAppCustomsContractTest.php` | le détecteur |
+
+⚠️ **`src/domain/` n'importe rien**, et ce module non plus : il rend le **nom**
+de la couleur (`'danger' | 'warning' | 'info'`), l'écran le résout dans `colors`.
+C'est ce qui garde la couche pure — et ce qui rend la correspondance lisible de
+l'extérieur, donc vérifiable.
+
+⚠️ **Aucun endpoint inventé.** Le compteur du tableau de bord est la longueur de
+la première page ; au-delà il affiche « 20+ » plutôt qu'un chiffre faux. Il
+n'existe pas de route de comptage, et on n'en ajoute pas depuis l'app.
+
+### Le détecteur, et pourquoi il vit dans `web/`
+
+`mobile/` **n'a pas de lanceur de tests**. Le dépôt a déjà sa réponse :
+`OpenApiSpecTest` lit `mobile/src/api/endpoints.ts`, `ParcelStageTest` lit
+`mobile/src/domain/parcelStatus.ts`. PHPUnit est le seul endroit d'où un
+invariant de l'app se mesure — et la règle d'or veut de toute façon que ce soit
+le backend qui arbitre.
+
+⚠️ **La taille de page est un contrat IMPLICITE**, et c'est ce qui le rend
+dangereux : rien dans la réponse HTTP ne la porte (l'enveloppe sert la collection
+sans les compteurs du paginateur). L'app déduit « il en reste » d'une page
+pleine. Si un côté bouge seul, elle s'arrête trop tôt — ou boucle sur une page
+vide — **sans erreur**. Les trois paires concordent aujourd'hui (douane 20/20,
+notifications 20/20, relevés 10/10) : le test existe pour le jour où l'une
+bougera.
+
+### Vérification — six sabotages, dont un qui a corrigé le test
+
+| Sabotage | Effet |
+|---|---|
+| l'écran revient à la page 1 seule | **rouge** |
+| l'app dérive sa taille de page (20 → 10) | **rouge** |
+| le **serveur** change la sienne (20 → 15) | **rouge** — le test lit les deux côtés |
+| l'app renumérote un niveau (WARNING 2 → 5) | **rouge** |
+| le tableau de bord compte les alertes traitées aussi | **rouge** |
+| l'écran repeint les niveaux en ocre/vert | *verte*, puis **rouge** |
+
+**Le dernier est le seul qui ait appris quelque chose.** Mon test lisait
+`src/domain/customsLevel.ts` et ne vérifiait jamais que l'**écran** s'en sert :
+j'ai remis le défaut exact que je venais de corriger, table de domaine intacte,
+et la suite est restée verte. Elle mesurait le bon principe **dans le mauvais
+fichier**.
+
+> Une table de correspondance juste ne protège rien tant qu'un écran peut la
+> contourner. Le test doit vérifier qu'il la **traverse**.
+
+Un septième cas a été écarté à dessein : afficher l'alerte sur le **détail du
+colis**. `customs/alerts` n'a pas de filtre par colis, et filtrer côté client une
+liste paginée mentirait. Cela demanderait une évolution de `web/` — donc un autre
+lot, dans le bon ordre.
+
+### Ce que ce lot ne garantit pas
+
+`mobile/` n'ayant pas de lanceur de tests, ces six propriétés sont des lectures
+de **source**, pas des rendus d'écran. Elles mordent si le code perd une
+propriété ; elles ne diraient pas qu'un compteur affiche un mauvais nombre. Le
+contrôle visuel humain reste dû — et il l'était déjà.
