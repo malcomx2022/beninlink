@@ -97,6 +97,17 @@ class SearchSurfaceCoverageTest extends TestCase
         'GET admin/parcel/filter' => ParcelSearchSurfaceScopeTest::class,
         'GET admin/parcel/multiple/print/label' => ParcelSearchSurfaceScopeTest::class,
         'GET admin/parcel/bulkassign/print' => ParcelSearchSurfaceScopeTest::class,
+
+        // S62 — les six ecrans de rapport. Deux niveaux de preuve : ceux qui
+        // rendent une IDENTITE (nom du client, nom du salarie) par appel HTTP ;
+        // les deux qui ne rendent que des COMPTEURS AGREGES au niveau du depot,
+        // ou la collection se lit sans dependre d'un chiffre perdu dans du HTML.
+        'GET admin/reports/parcel-filter-reports' => ReportsSurfaceScopeTest::class,
+        'GET admin/reports/parcel-filter-total-summery' => ReportsSurfaceScopeTest::class,
+        'GET admin/reports/parcel-wise-profit-reports' => ReportsSurfaceScopeTest::class,
+        'GET admin/reports/reports-salary-reports' => ReportsSurfaceScopeTest::class,
+        'GET admin/reports/salary-report-print' => ReportsSurfaceScopeTest::class,
+        'GET admin/salarys/filter' => ReportsSurfaceScopeTest::class,
     ];
 
     /**
@@ -133,6 +144,8 @@ class SearchSurfaceCoverageTest extends TestCase
      * dans `PROUVEES` avec le test qui l'établit — ou dans `EXEMPTEES` avec son
      * motif — en baissant le plafond d'autant.
      *
+     * **S62 : 17 → 11.** Les six ecrans de rapport.
+     *
      * **S61 : 21 → 17.** La famille des colis.
      *
      * **S60 : 32 → 21.** Sept ecrans comptables prouves, quatre routes motivees.
@@ -149,12 +162,6 @@ class SearchSurfaceCoverageTest extends TestCase
         'GET admin/delivery-zone/grid',
         'GET admin/paid/invoice/syscohada-journal',
         'GET admin/payment/merchant/filter',
-        'GET admin/reports/parcel-filter-reports',
-        'GET admin/reports/parcel-filter-total-summery',
-        'GET admin/reports/parcel-wise-profit-reports',
-        'GET admin/reports/reports-salary-reports',
-        'GET admin/reports/salary-report-print',
-        'GET admin/salarys/filter',
         'GET admin/wallet-request',
         'GET merchant/my-wallet',
         'GET merchant/parcel/file-export',
@@ -164,7 +171,7 @@ class SearchSurfaceCoverageTest extends TestCase
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 17;
+    private const PLAFOND_HERITAGE = 11;
 
     protected function setUp(): void
     {

@@ -5835,3 +5835,71 @@ Suite complète : **1024 tests, 45 958 assertions**, verte (delta `+9 / +22`).
 
 L'arriéré du filet S58 : **17 routes** — les rapports (6), le panneau marchand
 (5), six isolées.
+
+---
+
+## S62 — les six écrans de rapport
+
+Arriéré du filet S58 : **17 → 11**. Les six étaient bornés ; ils restaient à
+l'arriéré parce que **lu n'est pas prouvé**.
+
+### Deux niveaux de preuve, et pourquoi
+
+Quatre écrans rendent une **identité** — nom du client, nom du salarié — et se
+prouvent par appel HTTP : c'est la donnée qui fuirait.
+
+`parcel-filter-reports` et `parcel-filter-total-summery` ne rendent que des
+**compteurs agrégés**. Une assertion sur un chiffre dans du HTML serait fragile
+(« 1 » et « 7 » sont partout dans une page). Ils sont prouvés au niveau du
+**dépôt**, en vérifiant que la collection rendue contient notre colis et pas
+celui d'en face — l'idiome de `BackOfficeMoneyScopeTest` (S30).
+
+### Un vert creux, encore, et le même piège qu'en S60
+
+Le test du rapport de paie était **vert**, et son sabotage aussi. Deux causes
+empilées :
+
+1. il ne semait que des `Salary`, or la vue boucle sur **`SalaryGenerate`** —
+   deux tables dans le même rapport, la page n'avait donc aucune ligne ;
+2. le contrôle positif passait quand même, parce que le nom du salarié figurait
+   dans la **liste déroulante des utilisateurs**.
+
+Corrigé en semant les deux tables et en prenant pour marqueur de présence un
+**montant** : la liste rend les noms, elle ne rend aucun montant.
+
+### Une portée réelle mais invisible à l'écran
+
+La branche des **versements** (`Salary`) du rapport de paie n'est pas observable
+depuis la vue : les versements y sont appariés au bulletin par `user_id`, et un
+`user_id` étranger ne correspond à aucune de nos lignes. Sa portée est de la
+défense en profondeur — réelle, mais qu'aucun appel HTTP ne peut mettre en
+évidence. Elle est donc prouvée sur la **collection** que le dépôt rend.
+
+> Une garde dont on ne peut pas voir l'effet n'est pas une garde inutile. Mais
+> elle doit être prouvée là où elle se voit, pas là où c'est commode.
+
+### Trois pièges de fixture, tous dits par le test avant moi
+
+| | |
+|---|---|
+| `salaries` n'a pas de colonne `salary_date` | le rapport filtre sur `created_at` ; `salary_date` n'est qu'un **paramètre de requête** |
+| `salaries.account_id` est `NOT NULL` | sans compte, l'insertion échoue et le test tombe pour une raison qui n'est pas la portée |
+| `month` est au format `Y-m` | la vue fait `Carbon::createFromFormat('Y-m', …)` ; « September » lève |
+
+### Vérification
+
+| Sabotage | Verdict |
+|---|---|
+| `companywise()` retiré (rapport rentabilité) | **rouge** |
+| `companywise()` retiré (rapport paie, branche `SalaryGenerate`) | **rouge** |
+| `companywise()` retiré (rapport paie, branche `Salary`) | **rouge** *(vert au premier jet)* |
+| `companywise()` retiré (impression paie) | **rouge** |
+| `companywise()` retiré (filtre des bulletins) | **rouge** |
+| `companywise()` retiré (rapport des colis) | **rouge** |
+| `companywise()` retiré (récapitulatif total) | **rouge** |
+
+Suite complète : **1031 tests, 45 982 assertions**, verte (delta `+7 / +24`).
+
+### Le chantier suivant
+
+L'arriéré du filet S58 : **11 routes** — le panneau marchand (5), six isolées.
