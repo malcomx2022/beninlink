@@ -143,7 +143,13 @@ class MerchantmanagePaymentController extends Controller
     public function update(UpdateRequest $request){
 
         //merchant balance check
-        $account  = Merchant::where('id',$request->merchant)->first();
+        // S57 — meme defaut que `paymentStore` et `merchantpaymentFilter`
+        // (corriges en S51), dans la methode que ce lot-la n'avait pas couverte.
+        $account  = Merchant::companywise()->where('id',$request->merchant)->first();
+        if(blank($account)){
+            Toastr::error(__('merchantmanage.error_msg'),__('message.error'));
+            return back()->withInput();
+        }
         $balance = (double) $account->current_balance;
         if((double) $request->amount > $balance){
             Toastr::warning(__('merchantmanage.not_enough_merchant_balance'),__('message.warning'));
@@ -151,7 +157,11 @@ class MerchantmanagePaymentController extends Controller
         }
         //courier account balance check
         if($request->isprocess):
-            $courier_account = Account::find($request->from_account);
+            $courier_account = Account::companywise()->find($request->from_account);
+            if(blank($courier_account)){
+                Toastr::error(__('merchantmanage.error_msg'),__('message.error'));
+                return back()->withInput();
+            }
             if((double) $request->amount > $courier_account->balance){
                 Toastr::warning(__('merchantmanage.not_enough_courier_balance'),__('message.warning'));
                 return back()->withInput();

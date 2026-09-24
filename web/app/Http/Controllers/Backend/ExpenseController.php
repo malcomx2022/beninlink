@@ -119,7 +119,11 @@ class ExpenseController extends Controller
 
     public function ExpenseUsers(Request $request){
         if($request->ajax()):
-            $users = User::where('name','like','%'.$request->search.'%')->paginate(10);
+            // S57 — lecture nue : cette autocompletion rendait le NOM et l'IDENTIFIANT
+            // de tout utilisateur de TOUTE societe dont le nom correspond. Le
+            // repertoire du personnel d'un transporteur concurrent, a la frappe.
+            // L'ecriture qui suit est gardee depuis S48 ; la DIVULGATION ne l'etait pas.
+            $users = User::companywise()->where('name','like','%'.$request->search.'%')->paginate(10);
             $response = [];
             foreach ($users as  $user) {
                 $response [] = [

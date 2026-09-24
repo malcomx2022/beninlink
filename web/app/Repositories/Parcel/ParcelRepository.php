@@ -3717,16 +3717,30 @@ class ParcelRepository implements ParcelInterface {
     }
     //end app dashboard
     public function parcelSearchs($request){
-        return  Parcel::where('customer_name','Like','%'.$request->search.'%')
-            ->orWhere('customer_phone','Like','%'.$request->search.'%')
-            ->orWhere('customer_address','Like','%'.$request->search.'%')
-            ->orWhere('invoice_no','Like','%'.$request->search.'%')
-            ->orWhere('tracking_id','Like','%'.$request->search.'%')
-            ->orWhereHas('merchant',function($query) use($request){
-                $query->where('business_name','Like','%'.$request->search.'%');
+        // S57 — ⚠️ LA PIRE DIVULGATION DU LOT. Cette recherche n'avait AUCUN
+        // perimetre : elle rendait les colis de toutes les societes, avec le
+        // `customer_name`, le `customer_phone` et le `customer_address` — donc
+        // les DONNEES PERSONNELLES des clients d'un transporteur concurrent.
+        // Meme nature que le defaut de S28 (une carte des courses hors `auth`
+        // qui versait nom, telephone et adresse dans la page).
+        //
+        // ⚠️ ET LE PIEGE : poser `companywise()` devant cette chaine ne l'aurait
+        // PAS scopee. `where(A)->orWhere(B)` donne `company_id = X AND A OR B`,
+        // et le OR sort du perimetre : un colis d'en face correspondant sur
+        // `customer_phone` serait encore rendu. Le groupe de OR est donc
+        // ENFERME dans une fermeture, pour que le perimetre domine l'ensemble.
+        return Parcel::companywise()
+            ->where(function ($query) use ($request) {
+                $query->where('customer_name','Like','%'.$request->search.'%')
+                    ->orWhere('customer_phone','Like','%'.$request->search.'%')
+                    ->orWhere('customer_address','Like','%'.$request->search.'%')
+                    ->orWhere('invoice_no','Like','%'.$request->search.'%')
+                    ->orWhere('tracking_id','Like','%'.$request->search.'%')
+                    ->orWhereHas('merchant',function($query) use($request){
+                        $query->where('business_name','Like','%'.$request->search.'%');
+                    });
             })
             ->paginate(10);
-
     }
 
 

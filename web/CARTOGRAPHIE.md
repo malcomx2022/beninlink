@@ -5284,3 +5284,125 @@ glob cassé, et le filet passerait au vert sans rien examiner. Il exige au moins
 | `BodyIdentifierCoverageTest` (S38) | écritures à identifiant de corps | **arriéré 90 → 0** |
 | `WebAdminPermissionCoverageTest` (S44) | droits des routes `admin/*` | tenu |
 | `OffRequestScopeCoverageTest` (**S56**) | **hors requête** : commandes, jobs, observateurs | **ouvert à 0** |
+
+## ✅ S57 — l'instrument affiné, et ce qu'il a désigné (2026-09-24)
+
+### La dette de S47, payée
+
+S47 avait relevé « ~250 occurrences de lectures non scopées », jugé l'instrument
+**trop bruyant pour décider**, et remis son affinage :
+
+> « il faudrait le raffiner — ne retenir qu'une lecture dont **aucune** garde ne
+> domine le chemin — avant d'en tirer un lot. C'est un chantier en soi. »
+
+Ce lot est ce chantier. L'outil vit désormais dans
+`docs/outils/instrument-lectures-nues.py`.
+
+| Critère | Occurrences |
+|---|---|
+| brut : toute lecture non scopée d'un modèle `scopeCompanywise` | **~570** |
+| + l'identifiant vient de la **requête** | 53 |
+| + connaître les **aides de garde du projet** | **43** |
+
+### ⚠️ Le critère qui rend l'instrument honnête
+
+`contrepartieHorsPerimetre()` (S48) ne contient pas la chaîne `companywise(`.
+L'instrument brut **accusait** donc les dépôts de recette, dépense et salaire —
+gardés depuis S48.
+
+> Un instrument qui cherche une **forme** ne trouve pas une **règle**.
+
+C'est la leçon de S52, appliquée cette fois à mon propre outil. Il connaît
+maintenant les cinq aides que le projet s'est données, plus `abort_if`/`abort_unless`.
+
+### Le tri des 43
+
+| Nature | Occ. | Suite |
+|---|---|---|
+| derrière le drapeau `online_payout` (**D10**, à `false`) | 8 | routes non enregistrées : exemptées de fait |
+| flux d'authentification globaux par nature (OTP e-mail/mobile) | 4 | un compte se retrouve par son e-mail, sans société connue |
+| **vrais défauts** | **8** | **corrigés et prouvés ci-dessous** |
+| reste à trancher | 23 | inscrites pour le prochain lot |
+
+### ⚠️ La divulgation la plus grave de la série
+
+`ParcelRepository::parcelSearchs()` n'avait **aucun** périmètre. Elle rendait les
+colis de **toutes** les sociétés, avec `customer_name`, `customer_phone` et
+`customer_address` : les **données personnelles** des clients d'un transporteur
+concurrent, sur une simple recherche. Même nature que le défaut de **S28**.
+
+Et les deux autocomplétions — `ExpenseUsers`, `IncomeUsers` — rendaient le **nom
+et l'identifiant** de tout utilisateur de toute société. L'annuaire du personnel
+d'en face, à la frappe. L'écriture qui suit était gardée depuis S48 ; la
+**divulgation** ne l'était pas.
+
+### ⚠️ Et le piège du `orWhere`
+
+Poser `companywise()` devant cette chaîne **ne l'aurait pas scopée** :
+
+```php
+Parcel::companywise()->where(A)->orWhere(B)
+// SQL : company_id = X AND A OR B   ← le OR sort du périmètre
+```
+
+Un colis d'en face correspondant sur `customer_phone` serait encore rendu. Le
+groupe de `OR` est donc **enfermé** dans une fermeture.
+
+`test_the_parcel_search_scope_survives_the_or_branches` vise précisément une
+branche `orWhere`, et le sabotage qui retire la **fermeture en gardant
+`companywise()`** est **rouge** : la correction naïve est prouvée insuffisante.
+
+### Les soldes lus avant que le dépôt ne refuse
+
+S51 avait corrigé `paymentStore()` dans les deux contrôleurs de versement. Trois
+méthodes voisines portaient le même défaut et n'étaient pas couvertes :
+
+| Méthode | Lecture nue |
+|---|---|
+| `HubPaymentController::processed` | le **versement** d'en face *et* le **compte** d'en face |
+| `HubPaymentController::update` | le compte d'en face |
+| `MerchantmanagePaymentController::update` | le **marchand** d'en face *et* son compte |
+
+### ⚠️ Deux sabotages ont menti, de deux façons différentes
+
+**Un vert creux.** Le premier test du versement d'entrepôt ne montait pas les
+routes du locataire : l'appel rendait **404**, et les deux assertions d'absence
+passaient sur du vide. Le sabotage est resté **vert**. Corrigé par le montage et
+par un **ancrage** qui exige la preuve que le contrôleur a tourné.
+
+**Un vert qui n'était même pas un sabotage.** Sur `MerchantmanagePaymentController`,
+mon ancre de sabotage ne correspondait à rien (échappement de guillemets dans le
+shell) : le fichier n'avait **pas changé**, et le « vert » ne mesurait rien. C'est
+exactement la leçon de **S44** — vérifier que le sabotage a modifié le fichier, et
+**là**. Repris avec un script qui l'assertit, puis **rouge**.
+
+### Ce qu'aucun filet ne couvre — le chantier suivant
+
+`parcel/specific/search` échappait aux **trois** filets :
+
+| Filet | Pourquoi il ne la voyait pas |
+|---|---|
+| `WebIsolationCoverageTest` | n'énumère que les routes à **paramètre d'URL** |
+| `BodyIdentifierCoverageTest` | n'énumère que les **écritures** (`ECRITURES = POST/PUT/PATCH/DELETE`) |
+| `WebAdminPermissionCoverageTest` | mesure les **droits**, pas le périmètre |
+
+> ⚠️ Un **GET sans paramètre d'URL** dont l'identifiant est un terme de recherche
+> n'est couvert par **aucun** filet d'isolation.
+
+Il y en a une **quarantaine** sous les trois panneaux. C'est un constat mesuré, pas
+une correction : c'est le chantier suivant, et il est nommé ici pour qu'il ne se
+perde pas.
+
+### Vérification
+
+| Sabotage | Verdict |
+|---|---|
+| recherche dépenses, `companywise()` retiré | **rouge** |
+| recherche recettes, `companywise()` retiré | **rouge** |
+| recherche colis, `companywise()` retiré | **rouge** |
+| **la fermeture retirée** (`companywise()` gardé) | **rouge** |
+| versement entrepôt `processed`, gardes retirées | **rouge** |
+| versement entrepôt `update`, garde retirée | **rouge** |
+| versement marchand `update`, garde retirée | **rouge** |
+
+`SearchAndBalanceDisclosureTest` : 7 cas, 21 assertions.
