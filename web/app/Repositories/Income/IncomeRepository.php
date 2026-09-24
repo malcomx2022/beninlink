@@ -208,12 +208,21 @@ class IncomeRepository implements IncomeInterface {
     }
     public function hubCheck($request){
 
+        // S64 — trois lectures NUES qui alimentent un AJAX : `balanceCheck()`
+        // renvoie l'objet resolu TEL QUEL en JSON (`['mhd' => ...]`). Le nom
+        // commercial d'un marchand d'en face, ses soldes, son adresse — ou ceux
+        // d'un livreur, ou d'un entrepot — sortaient sur une simple requete.
+        //
+        // Et `IncomeController::balanceCheck()` fait `$marchenHubDeliveryman->id`
+        // juste apres : hors perimetre, `find()` rendait `null` et la ligne
+        // dereferencait (famille S15). Rendre `null` ici est donc le bon refus —
+        // c'est deja la branche `else` du socle.
         if($request->from     == 1):
-            return $user    = Merchant::find($request->merchant);
+            return $user    = Merchant::companywise()->find($request->merchant);
         elseif($request->from == 2):
-            return $user    = DeliveryMan::find($request->deliveryman);
+            return $user    = DeliveryMan::companywise()->find($request->deliveryman);
         elseif($request->from == 7):
-            return $user    = Hub::find($request->hub);
+            return $user    = Hub::companywise()->find($request->hub);
         else:
             return $user    = null;
         endif;

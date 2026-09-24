@@ -44,8 +44,18 @@ class ReceivedFromDeliverymanController extends Controller
     }
 
     public function store(StoreRequest $request){
-        $deliveryman   = DeliveryMan::find($request->delivery_man_id);
-    
+        // S64 — meme forme qu'en S51 et S59 : la lecture PRECEDE le depot, donc
+        // elle renseignait avant que la garde de S48 ne refuse l'ecriture. Les
+        // deux lignes suivantes lisent `current_balance` et rendent la reponse
+        // differente selon lui : un ORACLE sur le solde d'un livreur d'une AUTRE
+        // societe. Et hors perimetre, `find()` rend `null` (famille S15).
+        $deliveryman   = DeliveryMan::companywise()->find($request->delivery_man_id);
+
+        if(blank($deliveryman)):
+            Toastr::error(__('account.error_msg'),__('message.error'));
+            return redirect()->back()->withInput();
+        endif;
+
         if($deliveryman->current_balance > -$request->amount || $deliveryman->current_balance == 0):
             Toastr::warning(__('account.not_enough_balance'),__('message.warning'));
             return redirect()->back()->withInput();

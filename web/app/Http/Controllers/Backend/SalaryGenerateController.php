@@ -52,8 +52,11 @@ class SalaryGenerateController extends Controller
     }
 
     public function store(StoreRequest $request){
-        $user  = User::find($request->user_id);
-        $salaryGenerated            = SalaryGenerate::where('user_id',$request->user_id)->where('month',$request->month)->first();
+        // S64 — la pre-verification precede le depot (garde depuis S48), et elle
+        // interrogeait la paie d'un utilisateur d'en face : un ORACLE d'existence
+        // sur les bulletins d'une autre societe, avant meme le refus d'ecriture.
+        $user  = User::companywise()->find($request->user_id);
+        $salaryGenerated            = SalaryGenerate::companywise()->where('user_id',$request->user_id)->where('month',$request->month)->first();
         if($salaryGenerated):
             Toastr::error('Already salary generated.',__('message.error'));
             return redirect()->back();
