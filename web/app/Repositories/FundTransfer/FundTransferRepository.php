@@ -187,24 +187,51 @@ class FundTransferRepository implements FundTransferInterface{
 
 
     public function fundTransferSearch($request){
-        return FundTransfer::companywise()->whereHas('fromAccount',function($query) use($request){
-            $query->where('account_holder_name','Like','%'.$request->search.'%');
-            $query->orWhere('account_no','Like','%'.$request->search.'%');
-            $query->orWhere('branch_name','Like','%'.$request->search.'%');
-            $query->orWhere('mobile','Like','%'.$request->search.'%');
-            $query->orWhere('account_type','Like','%'.$request->search.'%');
-            $query->orWhereHas('user',function($query) use($request){
-                $query->where('name','Like','%'.$request->search.'%');
-            });
-        })
-        ->orWhereHas('toAccount',function($query) use($request){
-            $query->where('account_holder_name','Like','%'.$request->search.'%');
-            $query->orWhere('account_no','Like','%'.$request->search.'%');
-            $query->orWhere('branch_name','Like','%'.$request->search.'%');
-            $query->orWhere('mobile','Like','%'.$request->search.'%');
-            $query->orWhere('account_type','Like','%'.$request->search.'%');
-            $query->orWhereHas('user',function($query) use($request){
-                $query->where('name','Like','%'.$request->search.'%');
+        // S60 — LE PIEGE DU `orWhere`, deuxieme occurrence apres S57.
+        //
+        // La chaine etait :
+        //
+        //     FundTransfer::companywise()
+        //         ->whereHas('fromAccount', ...)
+        //         ->orWhereHas('toAccount', ...)
+        //
+        // soit, en SQL : `company_id = X AND fromAccount... OR toAccount...`.
+        // Le `OR` de PREMIER NIVEAU sort du perimetre : un virement d'une AUTRE
+        // societe dont le compte DESTINATAIRE correspondait a la recherche
+        // remontait, et la vue `fund_transfer/index` rend le numero de compte,
+        // la banque, l'agence, le mobile, le nom et l'e-mail du titulaire —
+        // plus, ici, le SOLDE et le SOLDE D'OUVERTURE des deux comptes.
+        //
+        // C'est l'ecran voisin de celui que S58 a corrige : la meme table, les
+        // memes donnees, l'autre porte. `companywise()` y etait pourtant deja.
+        //
+        // ⚠️ Poser `companywise()` ne suffit donc PAS — il etait la. Ce qu'il
+        // faut, c'est ENFERMER le groupe de `OR` dans une fermeture, pour que la
+        // portee se conjugue au groupe entier et non a son premier membre. Le
+        // sabotage qui retire la fermeture EN GARDANT `companywise()` est rouge.
+        //
+        // `BankTransactionRepository::filterSearch()` fait cela correctement
+        // depuis toujours : tout son `OR` vit dans un seul `where(fermeture)`.
+        return FundTransfer::companywise()->where(function ($query) use ($request) {
+            $query->whereHas('fromAccount',function($query) use($request){
+                $query->where('account_holder_name','Like','%'.$request->search.'%');
+                $query->orWhere('account_no','Like','%'.$request->search.'%');
+                $query->orWhere('branch_name','Like','%'.$request->search.'%');
+                $query->orWhere('mobile','Like','%'.$request->search.'%');
+                $query->orWhere('account_type','Like','%'.$request->search.'%');
+                $query->orWhereHas('user',function($query) use($request){
+                    $query->where('name','Like','%'.$request->search.'%');
+                });
+            })
+            ->orWhereHas('toAccount',function($query) use($request){
+                $query->where('account_holder_name','Like','%'.$request->search.'%');
+                $query->orWhere('account_no','Like','%'.$request->search.'%');
+                $query->orWhere('branch_name','Like','%'.$request->search.'%');
+                $query->orWhere('mobile','Like','%'.$request->search.'%');
+                $query->orWhere('account_type','Like','%'.$request->search.'%');
+                $query->orWhereHas('user',function($query) use($request){
+                    $query->where('name','Like','%'.$request->search.'%');
+                });
             });
         });
 

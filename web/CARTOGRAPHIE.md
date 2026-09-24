@@ -5646,3 +5646,104 @@ voyant sa liste `PROUVEES` s'allonger).
 L'arriéré du filet S58 : **32 routes**. Et, côté instrument, **35 occurrences**
 après les quatre corrections — dont 8 derrière `online_payout` (D10, à `false`)
 et 4 flux d'authentification globaux.
+
+---
+
+## S60 — le module comptable, et le `orWhere` qui recommence
+
+Suite de l'arriéré du filet S58 : **32 → 21**.
+
+### Le défaut : le piège du `orWhere`, deuxième occurrence
+
+```php
+FundTransfer::companywise()
+    ->whereHas('fromAccount', ...)
+    ->orWhereHas('toAccount', ...)     // ← sort du périmètre
+```
+
+En SQL : `company_id = X AND fromAccount… OR toAccount…`. Un virement d'une
+**autre** société dont le compte **destinataire** correspondait à la recherche
+remontait.
+
+> ⚠️ **`companywise()` était déjà là.** Ce n'est pas une garde manquante, c'est
+> une garde qui ne couvrait pas ce qu'elle semblait couvrir. Le sabotage qui
+> retire la **fermeture** en **gardant** `companywise()` est **rouge** : la
+> correction naïve est prouvée insuffisante, exactement comme en S57.
+
+Et c'est l'écran **voisin** de celui que S58 avait corrigé — même table, mêmes
+données, l'autre porte. `fund_transfer/index` rend le numéro de compte, la
+banque, l'agence, le mobile, le nom et l'e-mail du titulaire, **plus le solde et
+le solde d'ouverture** des deux comptes.
+
+`BankTransactionRepository::filterSearch()` fait cela correctement depuis
+toujours : tout son `OR` vit dans un seul `where(fermeture)`. La dissymétrie est
+un oubli, pas une intention.
+
+### ⚠️ L'instrument ne voit pas ce défaut, et ne le verra pas
+
+Il reste à **35** occurrences après ce lot. Il cherche des lectures de la forme
+`Model::find($request->x)` ; le piège du `orWhere` est une **structure de
+requête**, pas une lecture nue. Deux outils, deux familles : l'instrument pour
+les lectures, la **relecture des chaînes `orWhere`/`orWhereHas`** pour celle-ci.
+
+### Trois vers creux, tous attrapés par leur contrôle positif ou leur sabotage
+
+**1. La date des recettes.** `IncomeRepository::filter` traite `date` comme une
+date **unique** (`strtotime`). Une plage « …To… » y devient `1970-01-01` et ne
+rend **aucune** ligne. Le contrôle positif est tombé et l'a dit.
+
+**2. Le marqueur de présence était dans la liste déroulante.** Ces écrans rendent
+un `<select>` des comptes qui contient `account_holder_name`, `account_no` **et**
+`branch_name` de tous **nos** comptes, résultat ou pas. Un contrôle positif pris
+sur le compte passe donc au vert **avec zéro ligne rendue**.
+
+**3. Et c'est le sabotage qui l'a prouvé.** Le test des dépenses était **vert**,
+et son sabotage aussi : `companywise()` retiré, rien ne tombait. Corrigé en
+prenant pour marqueur le **nom de l'auteur** de la dépense — la liste ne rend
+`$account->user->name` que pour les comptes en espèces, et les nôtres sont
+bancaires. Sabotage repris : **rouge**.
+
+> Un contrôle positif ne vaut que si son marqueur ne peut venir **que** d'une
+> ligne de résultat. Sur ces écrans, presque tout le reste vient du formulaire.
+
+### Quatre routes motivées
+
+| route | motif |
+|---|---|
+| `GET dashboard` | ne lit que des **dates** ; chaque requête est bornée par l'identité de session, ou relève de la vue plateforme du super-administrateur |
+| `GET facebook/login` | ⚠️ **faux positif de la détection** (ci-dessous) |
+| `GET google/login` | idem |
+| `GET super-admin/reporting` | surface super-administrateur, reporting SaaS en lecture seule |
+
+### ⚠️ Un faux positif du filet, et il faut le nommer
+
+Le filet cherche la chaîne `$request->`. Or
+`MerchantRepository::socialSignupStore($user, ...)` nomme son paramètre
+`$request` alors qu'il reçoit **l'objet utilisateur de Socialite**, pas la
+requête HTTP. Les champs lus (`id`, `name`, `email`, `avatar_original`) viennent
+du fournisseur OAuth.
+
+> Le filet reconnaît un **nom de variable**, pas la requête. C'est sa limite, et
+> elle est désormais écrite dans l'exemption plutôt que découverte deux fois.
+
+### Vérification
+
+| Sabotage | Verdict |
+|---|---|
+| **la fermeture retirée, `companywise()` gardé** | **rouge** |
+| `companywise()` retiré (recherche virement) | **rouge** |
+| `companywise()` retiré (filtre virement) | **rouge** |
+| `companywise()` retiré (filtre comptes) | **rouge** |
+| `companywise()` retiré (recherche transactions) | **rouge** |
+| `companywise()` retiré (impression transactions) | **rouge** |
+| `companywise()` retiré (filtre recettes) | **rouge** |
+| `companywise()` retiré (filtre dépenses) | **rouge** *(vert au premier jet — voir ci-dessus)* |
+
+Suite complète : **1015 tests, 45 936 assertions**, verte (delta `+7 / +32` —
+les 7 cas du nouveau fichier et les 11 assertions que le filet gagne en voyant
+ses listes s'allonger).
+
+### Le chantier suivant
+
+L'arriéré du filet S58 : **21 routes** — la famille des colis (4), celle des
+rapports (5), le panneau marchand (5) et sept isolées.

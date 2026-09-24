@@ -75,6 +75,20 @@ class SearchSurfaceCoverageTest extends TestCase
         'GET admin/users/filter' => NeighbouringGuardScopeTest::class,
         'GET admin/hubs/filter' => NeighbouringGuardScopeTest::class,
         'GET admin/deliveryman/filter' => NeighbouringGuardScopeTest::class,
+
+        // S60 — les sept ecrans du module comptable. Six etaient deja bornes ;
+        // le septieme, `fund-transfer/specific/search`, portait LE PIEGE DU
+        // `orWhere` (deuxieme occurrence apres S57) : `companywise()` y etait
+        // bien, mais `->whereHas('fromAccount')->orWhereHas('toAccount')` donne
+        // `company_id = X AND from... OR to...`, et le OR de premier niveau sort
+        // du perimetre. C'est l'ecran VOISIN de celui que S58 avait corrige.
+        'GET admin/accounts/filter' => AccountingSearchScopeTest::class,
+        'GET admin/bank-transaction/filter/print' => AccountingSearchScopeTest::class,
+        'GET admin/bank-transaction/specific/search' => AccountingSearchScopeTest::class,
+        'GET admin/expense/filter' => AccountingSearchScopeTest::class,
+        'GET admin/fund-transfer/filter' => AccountingSearchScopeTest::class,
+        'GET admin/fund-transfer/specific/search' => AccountingSearchScopeTest::class,
+        'GET admin/income/filter' => AccountingSearchScopeTest::class,
     ];
 
     /**
@@ -90,6 +104,10 @@ class SearchSurfaceCoverageTest extends TestCase
         'GET tracking' => 'S58 — suivi PUBLIC. `ParcelRepository::parcelTracking()` borne par `if(tenant()): where(company_id, settings()->id)`. Hors locataire c\'est le site central, et l\'absence de portée y est le comportement voulu',
         'GET fedapay/callback' => 'S58 — retour de la passerelle. La `reference` est un jeton OPAQUE émis par FedaPay, et la méthode ne rend RIEN du dossier : un message et une redirection, puis la vue reçoit la référence que l\'appelant a lui-même fournie. L\'API compagnonne `status()`, juste en dessous, est bornée par marchand',
         'GET admin/payout/merchant/payout' => 'S52 (règle filtre/fetch) — `companywise()->where(\'merchant_id\', $merchant_id)` : l\'identifiant étranger FILTRE une requête DÉJÀ bornée, il ne sert pas à aller chercher. Un marchand d\'en face rend l\'ensemble vide',
+        'GET dashboard' => 'S60 — ne lit que des DATES (`filter_date`, `days`), jamais un identifiant : rien ne peut y designer la ressource d\'une autre societe. Et chaque requete de l\'ecran est bornee par l\'identite de SESSION (`Auth::user()->merchant->id`) ou releve de la vue PLATEFORME du super-administrateur, branchee sur `user_type`',
+        'GET facebook/login' => 'S60 — ⚠️ FAUX POSITIF de la detection, et il faut le nommer : le filet cherche la chaine `$request->`, or `MerchantRepository::socialSignupStore($user, ...)` nomme son parametre `$request` alors qu\'il recoit l\'OBJET UTILISATEUR DE SOCIALITE, pas la requete HTTP. Les champs lus (`id`, `name`, `email`, `avatar_original`) viennent du fournisseur OAuth ; aucun n\'est un identifiant de locataire',
+        'GET google/login' => 'S60 — idem : meme methode, meme parametre mal nomme, meme fournisseur',
+        'GET super-admin/reporting' => 'surface SUPER-ADMINISTRATEUR (`routes/superadmin.php`, groupe `super-admin`) : reporting SaaS de la PLATEFORME, en lecture seule',
         'GET admin/reports/merchnat-hub-delivery-reports-print-page' => 'S58 — les identifiants de colis ne sont pas lus par le contrôleur mais par les aides globales `parcelsStatus()` et `idWiseParcels()`, qui écrivent toutes deux `Parcel::companywise()->whereIn(\'id\', ...)` (app/Http/Helper/Helper.php)',
     ];
 
@@ -107,6 +125,8 @@ class SearchSurfaceCoverageTest extends TestCase
      * dans `PROUVEES` avec le test qui l'établit — ou dans `EXEMPTEES` avec son
      * motif — en baissant le plafond d'autant.
      *
+     * **S60 : 32 → 21.** Sept ecrans comptables prouves, quatre routes motivees.
+     *
      * **S59 : 36 → 32.** Les trois `filter` mentionnés ci-dessus sont sortis —
      * non pas parce qu'on les avait relus, mais parce qu'un test atteint
      * désormais la ligne d'en face et échoue si la garde saute. C'est le chemin qui a mené
@@ -114,16 +134,9 @@ class SearchSurfaceCoverageTest extends TestCase
      * `BodyIdentifierCoverageTest` de 90 à 0.
      */
     private const HERITAGE = [
-        'GET admin/accounts/filter',
-        'GET admin/bank-transaction/filter/print',
-        'GET admin/bank-transaction/specific/search',
         'GET admin/customs/alerts',
         'GET admin/delivery-charge/filter',
         'GET admin/delivery-zone/grid',
-        'GET admin/expense/filter',
-        'GET admin/fund-transfer/filter',
-        'GET admin/fund-transfer/specific/search',
-        'GET admin/income/filter',
         'GET admin/paid/invoice/syscohada-journal',
         'GET admin/parcel/bulkassign/print',
         'GET admin/parcel/filter',
@@ -137,19 +150,15 @@ class SearchSurfaceCoverageTest extends TestCase
         'GET admin/reports/salary-report-print',
         'GET admin/salarys/filter',
         'GET admin/wallet-request',
-        'GET dashboard',
-        'GET facebook/login',
-        'GET google/login',
         'GET merchant/my-wallet',
         'GET merchant/parcel/file-export',
         'GET merchant/parcel/filter',
         'GET merchant/reports/parcel-filter-reports',
         'GET merchant/reports/total-summery-filter',
-        'GET super-admin/reporting',
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 32;
+    private const PLAFOND_HERITAGE = 21;
 
     protected function setUp(): void
     {
