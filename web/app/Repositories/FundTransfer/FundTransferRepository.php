@@ -10,7 +10,10 @@ use App\Enums\UserType;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-class FundTransferRepository implements FundTransferInterface{
+class FundTransferRepository implements FundTransferInterface
+{
+    use \App\Traits\GuardsForeignIdentifiers;
+
     public function all(){
         return FundTransfer::companywise()->orderByDesc('id')->with('fromAccount','fromAccount.user','fromAccount.user.upload','toAccount','toAccount.user','toAccount.user.upload')->paginate(10);
     }
@@ -26,9 +29,34 @@ class FundTransferRepository implements FundTransferInterface{
 
     public function store($request){
         try {
+            // S64 — LE DEFAUT LE PLUS LOURD DE LA SERIE : un VIREMENT entre deux
+            // comptes lus NUMENT.
+            //
+            // Les deux lignes qui suivaient debitaient `from_account` et
+            // creditaient `to_account` sans jamais verifier qu'ils sont de la
+            // maison. Un administrateur pouvait donc SORTIR DE L'ARGENT du compte
+            // bancaire d'un transporteur concurrent et le verser sur le sien — et
+            // la ligne de virement enregistree portait NOTRE `company_id`, donc
+            // la victime ne la voyait meme pas dans son journal.
+            //
+            // ⚠️ La carte des contreparties de S48 ne couvrait PAS ce cas :
+            // elle connait `account_id`, pas `from_account` / `to_account`. Une
+            // aide partagee ne couvre que les champs de sa carte — c'est
+            // exactement la lecon de S46 et de S47, sur les noms cette fois.
+            //
+            // Le refus vaut `false`, comme les autres echecs du depot : le
+            // controleur rend alors `fund_transfer.error_msg`, et surtout AUCUNE
+            // ecriture n'a eu lieu (la garde precede `beginTransaction`).
+            if ($this->identifiantsHorsPerimetre($request, [
+                'from_account' => Account::class,
+                'to_account'   => Account::class,
+            ])) {
+                return false;
+            }
+
             DB::beginTransaction();
             // check balance in from account and minus balance
-            $from_account = Account::find($request->from_account);
+            $from_account = Account::companywise()->find($request->from_account);
             if($from_account->balance < $request->amount){
                 return 2;
             }
@@ -38,7 +66,7 @@ class FundTransferRepository implements FundTransferInterface{
             $from_account->balance              = $from_account->balance - $request->amount;
             $from_account->save();
             // add balance in to account
-            $to_account                         = Account::find($request->to_account);
+            $to_account                         = Account::companywise()->find($request->to_account);
             $to_account->balance                = $to_account->balance + $request->amount;
             $to_account->save();
             // add row fund transter

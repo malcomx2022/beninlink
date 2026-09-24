@@ -5982,3 +5982,75 @@ Suite complète : **1042 tests, 46 023 assertions**, verte (delta `+11 / +41`).
 
 Les **35 occurrences** de `instrument-lectures-nues.py`, dont 8 derrière
 `online_payout` (D10, à `false`) et 4 flux d'authentification globaux.
+
+---
+
+## S64 — neuf lectures nues, dont la plus lourde de la série
+
+L'arriéré du filet S58 étant clos (S63), le chantier restant était la liste de
+`instrument-lectures-nues.py` : **35 → 26**.
+
+### Le défaut le plus lourd : de l'argent sorti d'un compte d'en face
+
+`FundTransferRepository::store()` lisait **nûment** `from_account` et
+`to_account`, puis débitait l'un et créditait l'autre. Un administrateur pouvait
+**sortir de l'argent du compte bancaire d'un transporteur concurrent** — et la
+ligne de virement enregistrée portait **notre** `company_id`, donc la victime ne
+la voyait même pas dans son journal.
+
+> ⚠️ La carte des contreparties de S48 ne couvrait pas ce cas : elle connaît
+> `account_id`, pas `from_account` / `to_account`. **Une aide partagée ne couvre
+> que les champs de sa carte** — la leçon de S46 et S47, sur les *noms* cette fois.
+
+### Les huit autres
+
+| lecture | ce qu'elle faisait |
+|---|---|
+| `IncomeRepository::hubCheck` ×3 | un AJAX rendait **en JSON** le marchand, le livreur ou l'entrepôt d'une autre société |
+| `DeliveryTypeController::status` | **basculait** un réglage d'une autre société — une écriture, pas une lecture |
+| `ReceivedFromDeliverymanController::store` + `update` | **oracle** sur le solde d'un livreur d'en face, avant le refus du dépôt |
+| `SalaryGenerateController::store` | **oracle d'existence** sur les bulletins d'une autre société |
+
+### ⚠️ Un `POST` que le filet S38 ne pouvait pas voir
+
+`delivery-type/status` est une **écriture**, donc dans le domaine de
+`BodyIdentifierCoverageTest`. Il lui a échappé parce que son identifiant
+s'appelle **`key`**, et `estIdentifiant()` ne reconnaît que `id`, `ids`, `*_id`,
+`*_ids`. Même angle mort que le **terme de recherche** qui avait donné le filet
+S58 — et il reste ouvert : un identifiant au nom libre échappe encore à ce filet.
+
+### Trois sabotages verts, et ce qu'ils ont appris
+
+**Deux n'étaient pas des tests creux, mais des sabotages partiels.** Retirer
+*une* des trois gardes du virement laissait le test vert : la portée restante
+rendait `null`, le déréférencement levait, et le `catch` rendait `false` — **un
+refus venu du mauvais endroit** (leçon S49). Avec les trois retirées ensemble, le
+dépôt rend `1` : le virement est accepté, et le test est rouge.
+
+> Quand plusieurs gardes couvrent le même chemin, la seule sabotage honnête les
+> retire **ensemble** : sinon c'est la survivante qu'on mesure.
+
+**Le troisième était bien creux.** Le livreur d'en face avait un solde de
+`-50000`, or la condition qui déclenche l'avertissement est
+`current_balance > -amount || current_balance == 0` : elle était fausse des deux
+côtés, et le test passait sans rien mesurer. Corrigé avec un solde de `0`.
+
+### Vérification
+
+| Sabotage | Verdict |
+|---|---|
+| virement : **les trois gardes ensemble** | **rouge** |
+| AJAX solde : le marchand / le livreur / l'entrepôt | **rouge** (×3) |
+| bascule du réglage | **rouge** |
+| encaissement : la garde du livreur | **rouge** *(vert au premier jet)* |
+| pré-vérification du bulletin | **rouge** |
+
+Suite complète : **1047 tests, 46 042 assertions**, verte (delta `+5 / +19`).
+
+### Ce qui reste des 26
+
+19 passerelles de paiement derrière `online_payout` (D10 à `false`, gating
+établi par `OnlinePayoutModuleDisabledTest`) · 4 flux d'authentification
+globaux (OTP e-mail / mobile) · `switchPlan` (super-administrateur) ·
+`transferToHubMultipleParcel` (sûr **par l'ordre** : le dépôt garde le hub et
+rend `false` avant que le contrôleur ne le relise) · une reprise d'encaissement.
