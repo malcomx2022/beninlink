@@ -612,13 +612,14 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         // General settings
                         Route::get('general-settings/index',        [GeneralSettingsController::class, 'index'])->name('general-settings.index')->middleware('hasPermission:general_settings_read');
                         Route::put('general-settings/update',       [GeneralSettingsController::class, 'update'])->name('general-settings.update')->middleware('hasPermission:general_settings_update');
-                        //currency settings
-                        Route::get('currency',                      [CurrencyController::class, 'index'])->name('currency.index')->middleware('hasPermission:currency_read');
-                        Route::get('currency/create',               [CurrencyController::class, 'create'])->name('currency.create')->middleware('hasPermission:currency_create');
-                        Route::post('currency/store',               [CurrencyController::class, 'store'])->name('currency.store')->middleware('hasPermission:currency_create');
-                        Route::get('currency/edit/{id}',            [CurrencyController::class, 'edit'])->name('currency.edit')->middleware('hasPermission:currency_update');
-                        Route::put('currency/update',               [CurrencyController::class, 'update'])->name('currency.update')->middleware('hasPermission:currency_update');
-                        Route::delete('currency/delete/{id}',       [CurrencyController::class, 'delete'])->name('currency.delete')->middleware('hasPermission:currency_delete');
+                        // S55 — les six routes `currency` ont quitte ce fichier : le catalogue
+                        // des devises est une surface de PLATEFORME (decision du 24/09) et vit
+                        // desormais sous le prefixe `super-admin` de routes/superadmin.php, ou
+                        // `panel:super-admin` n'admet que le SUPER_ADMIN.
+                        //
+                        // ⚠️ Ce bloc-ci etait de surcroit MORT : routes/superadmin.php le
+                        // redeclarait a l'identique (meme URI, meme nom, meme controleur) et,
+                        // charge APRES web.php, il ecrasait celui-ci dans la collection.
                         // Asset Categorys Routes
                         Route::get('asset-category/index',          [AssetcategoryController::class, 'index'])->name('asset-category.index')->middleware('hasPermission:asset_category_read');
                         Route::get('asset-category/create',         [AssetcategoryController::class, 'create'])->name('asset-category.create')->middleware('hasPermission:asset_category_create');

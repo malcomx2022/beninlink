@@ -98,6 +98,21 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('/subscription/switch/{id}', 'switchSubscription')->name('subscription.switch')->middleware('hasPermission:company_subscribe');
                         Route::post('/subscription/switch/store', 'switchSubscriptionStore')->name('subscription.switch.store')->middleware('hasPermission:company_subscribe');
                     });
+
+                // S55 — DECISION DU 24/09 : le catalogue des devises est celui de la
+                // PLATEFORME. Ces six routes vivaient sous `admin/` avec `panel:back-office`,
+                // donc dans le panneau du LOCATAIRE. Seule la DONNEE des permissions les en
+                // tenait ecartees : `currency_*` n'existe que dans `SuperAdminPermission` et
+                // reste absent de la table `permissions` du locataire (57 entrees, mesurees).
+                // Sous `super-admin/`, `panel:super-admin` n'admet que le SUPER_ADMIN : la
+                // garantie devient STRUCTURELLE au lieu de dependre de ce que les semences
+                // accordent. C'est l'invariant de S41, et `WebPanelSeparationTest` l'exige.
+                Route::get('currency',                      [CurrencyController::class, 'index'])->name('currency.index')->middleware('hasPermission:currency_read');
+                Route::get('currency/create',               [CurrencyController::class, 'create'])->name('currency.create')->middleware('hasPermission:currency_create');
+                Route::post('currency/store',               [CurrencyController::class, 'store'])->name('currency.store')->middleware('hasPermission:currency_create');
+                Route::get('currency/edit/{id}',            [CurrencyController::class, 'edit'])->name('currency.edit')->middleware('hasPermission:currency_update');
+                Route::put('currency/update',               [CurrencyController::class, 'update'])->name('currency.update')->middleware('hasPermission:currency_update');
+                Route::delete('currency/delete/{id}',       [CurrencyController::class, 'delete'])->name('currency.delete')->middleware('hasPermission:currency_delete');
             });
 
 
@@ -173,13 +188,6 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                 // `SmsSettingsController`, comme leurs jumelles du cote locataire.
                 Route::put('sms-settings/update/{id}',      [SmsSettingsController::class, 'update'])->name('sms-settings.update')->middleware('hasPermission:sms_settings_update');
 
-                //currency settings
-                Route::get('currency',                      [CurrencyController::class, 'index'])->name('currency.index')->middleware('hasPermission:currency_read');
-                Route::get('currency/create',               [CurrencyController::class, 'create'])->name('currency.create')->middleware('hasPermission:currency_create');
-                Route::post('currency/store',               [CurrencyController::class, 'store'])->name('currency.store')->middleware('hasPermission:currency_create');
-                Route::get('currency/edit/{id}',            [CurrencyController::class, 'edit'])->name('currency.edit')->middleware('hasPermission:currency_update');
-                Route::put('currency/update',               [CurrencyController::class, 'update'])->name('currency.update')->middleware('hasPermission:currency_update');
-                Route::delete('currency/delete/{id}',       [CurrencyController::class, 'delete'])->name('currency.delete')->middleware('hasPermission:currency_delete');
 
                 // database backup
                 Route::get('/database-backup',             [DatabaseBackupController::class, 'index'])->name('database.backup.index')->middleware('hasPermission:database_backup_read');

@@ -579,10 +579,10 @@
                 hasPermission('packaging_read') == true)
             <!---for setting--->
             <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/database-backup*', 'admin/delivery-category*', 'admin/delivery-category*', 'admin/delivery-charge*', 'admin/delivery-zone*', 'admin/packaging*', 'admin/delivery-type*', 'admin/liquid-fragile*', 'admin/sms-settings*', 'admin/sms-send-settings*', 'admin/general-settings*', 'admin/notification-settings*', 'admin/googlemap-settings*', 'admin/asset-category*', 'admin/social-login-setting*', 'admin/pay-out/setup*', 'admin/settings/pay-out/setup*', 'admin/settings/invoice-generate-menually*', 'admin/currency*') ? 'active' : '' }} "
+                <a class="nav-link {{ request()->is('admin/database-backup*', 'admin/delivery-category*', 'admin/delivery-category*', 'admin/delivery-charge*', 'admin/delivery-zone*', 'admin/packaging*', 'admin/delivery-type*', 'admin/liquid-fragile*', 'admin/sms-settings*', 'admin/sms-send-settings*', 'admin/general-settings*', 'admin/notification-settings*', 'admin/googlemap-settings*', 'admin/asset-category*', 'admin/social-login-setting*', 'admin/pay-out/setup*', 'admin/settings/pay-out/setup*', 'admin/settings/invoice-generate-menually*') ? 'active' : '' }} "
                     href="#" data-toggle="collapse" aria-expanded="false" data-target="#submenu-0"
                     aria-controls="submenu-0"><i class="fa fa-cogs"></i> {{ __('menus.settings') }}</a>
-                <div class="{{ request()->is('admin/database-backup*', 'admin/delivery-category*', 'admin/delivery-charge*', 'admin/delivery-zone*', 'admin/packaging*', 'admin/delivery-type*', 'admin/liquid-fragile*', 'admin/sms-settings*', 'admin/sms-send-settings*', 'admin/general-settings*', 'admin/notification-settings*', 'admin/googlemap-settings*', 'admin/asset-category*', 'admin/social-login-setting*', 'admin/pay-out/setup*', 'admin/settings/pay-out/setup*', 'admin/settings/invoice-generate-menually*', 'admin/currency*') ? '' : 'collapse' }} submenu"
+                <div class="{{ request()->is('admin/database-backup*', 'admin/delivery-category*', 'admin/delivery-charge*', 'admin/delivery-zone*', 'admin/packaging*', 'admin/delivery-type*', 'admin/liquid-fragile*', 'admin/sms-settings*', 'admin/sms-send-settings*', 'admin/general-settings*', 'admin/notification-settings*', 'admin/googlemap-settings*', 'admin/asset-category*', 'admin/social-login-setting*', 'admin/pay-out/setup*', 'admin/settings/pay-out/setup*', 'admin/settings/invoice-generate-menually*') ? '' : 'collapse' }} submenu"
                     id="submenu-0" class="collapse submenu">
                     <ul class="nav flex-column">
 
@@ -673,12 +673,12 @@
                         @endif
 
 
-                        @if (hasPermission('currency_read') == true)
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->is('admin/currency*') ? 'active' : '' }}"
-                                    href="{{ route('currency.index') }}">{{ __('settings.currency') }}</a>
-                            </li>
-                        @endif
+                        {{-- S55 — l'entree « devises » a quitte le menu du LOCATAIRE : le
+                             catalogue des devises est une surface de PLATEFORME, desormais sous
+                             `super-admin/currency` avec `panel:super-admin`. Le lien ne
+                             s'affichait de toute facon jamais ici — `currency_read` n'existe pas
+                             dans la table `permissions` du locataire — mais il annoncait un
+                             ecran que ce menu n'a pas a proposer. --}}
 
                         @if (hasPermission('asset_category_read') == true)
                             <li class="nav-item">

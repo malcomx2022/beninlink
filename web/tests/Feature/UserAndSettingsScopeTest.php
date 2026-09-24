@@ -430,14 +430,21 @@ class UserAndSettingsScopeTest extends TestCase
      * ce test en est la contrepartie : si `currencies` gagne un jour une
      * société, la décision n'a plus lieu d'être et l'exemption doit tomber.
      *
-     * ⚠️ **La réserve, mot pour mot celle de `categorys`** : ce catalogue reste
-     * **partagé et modifiable**. Renommer une devise la renomme pour toutes les
-     * sociétés. Ce n'est pas un défaut de cloisonnement — il n'y a rien à
-     * cloisonner — c'est le prix d'un catalogue commun. L'exemption ferme la
-     * question du **filet**, pas celle de l'**accès** : qui a le droit d'écrire
-     * dans un catalogue de plateforme depuis un back-office de locataire reste
-     * une question ouverte, et `hasPermission:currency_update` y répond seul
-     * aujourd'hui.
+     * ⚠️ **Réserve rectifiée en S55.** Ce docbloc disait que « renommer une
+     * devise la renomme pour toutes les sociétés », en laissant entendre qu'un
+     * back-office de locataire pouvait le faire. **C'était faux** : la table
+     * `permissions` du locataire compte 57 entrées et `currency_update` n'en
+     * fait pas partie — il n'existe que dans `SuperAdminPermission`.
+     *
+     * Ce qui était vrai : la garantie venait de la **donnée**, pas de la
+     * **structure**. S55 a déplacé les six routes sous `super-admin/`, où
+     * `panel:super-admin` n'admet que le SUPER_ADMIN, et
+     * `CurrencyPanelScopeTest` le prouve en accordant de force `currency_update`
+     * à un locataire : il reste dehors.
+     *
+     * Le catalogue reste **commun** — c'est le prix d'un catalogue de
+     * plateforme, et ce n'est pas un défaut de cloisonnement puisqu'il n'y a
+     * rien à cloisonner.
      */
     public function test_the_shared_currency_catalogue_carries_no_company_at_all(): void
     {
