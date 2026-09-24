@@ -23,6 +23,13 @@ Elle **consomme l'API de `web/`** ; aucune logique de paiement propre.
 - Le solde n'est à jour **qu'après confirmation serveur** (webhook) : rafraîchir via
   l'endpoint de solde, pas sur le retour de WebView.
 
+## Où vivent les écrans
+⚠️ **expo-router** (`"main": "expo-router/entry"`) : un écran est un fichier de
+**`app/`**, et son chemin est sa route — `app/(app)/customs.tsx` → `/(app)/customs`.
+Il n'y a **pas** de `src/screens/`, et il n'y en aura pas. `src/` tient ce qui n'est
+pas un écran : `api/`, `domain/`, `components/`, `theme/`, `i18n/`, `push/`, `session/`.
+Chercher un écran dans `src/` ne trouve rien — et ne prouve rien (S68).
+
 ## Écrans (référence maquette validée)
 - Auth : connexion, **inscription PME (IFU/RCCM/CNSS)**, récupération mot de passe (SMS).
 - Tableau de bord (KPIs, solde wallet, alerte douane, colis récents).
@@ -93,3 +100,21 @@ Rien de tout ceci ne peut être versionné — ce sont des secrets et des liens 
 - Chaînes **natives** (nom d'app, demandes de permission iOS/Android) : `src/i18n/expo-fr.json`,
   déclaré par `expo.locales` dans `app.json`. Sans ce fichier, Expo ne fait qu'avertir au
   `prebuild` et les textes natifs restent en anglais.
+- **Une liste servie paginée se parcourt.** L'API expose sa taille de page en constante
+  (`*_PER_PAGE`) ; l'écran s'en sert pour `hasMore` et demande la suite sur `onEndReached`
+  — idiome de `app/(app)/invoices.tsx`. ⚠️ L'enveloppe du backend ne porte **pas** les
+  compteurs du paginateur : « une page pleine, donc il en reste » est la seule déduction
+  possible, et une constante fausse fait perdre des lignes **en silence** (S68 : l'écran
+  douane en lisait 20 sur N). `MerchantAppCustomsContractTest` compare ces constantes aux
+  `paginate()` du serveur.
+- **`src/domain/` n'importe rien.** Les tables de correspondance y sont pures : elles
+  rendent un code ou un **nom** de couleur, jamais une valeur de thème. L'écran résout le
+  nom dans `colors`. C'est ce qui les garde lisibles depuis les tests de `web/`.
+- ⚠️ **Une couleur de gravité vient de la charte, pas du goût.** `colors.ts` nomme
+  `danger` (BLOQUANT), `warning` (AVERTISSEMENT) et `info` (INFO) pour la douane. L'ocre
+  est réservé aux **actions clés**, et le vert primaire se lit « tout va bien » : les
+  employer pour une alerte ment sur sa gravité (S68).
+- **Pas de lanceur de tests ici.** Les garanties de l'app se posent en PHPUnit dans
+  `web/tests/` — précédents : `OpenApiSpecTest` (endpoints), `ParcelStageTest` (statuts),
+  `MerchantAppCustomsContractTest` (douane). Avant tout commit : `npx tsc --noEmit` et
+  `npx expo lint`, qui ne prouvent que la forme.

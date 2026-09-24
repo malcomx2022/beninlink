@@ -2,9 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '../../src/api/client';
-import { fetchCustomsAlerts, resolveCustomsAlert } from '../../src/api/customs';
+import {
+  CUSTOMS_ALERTS_PER_PAGE,
+  fetchCustomsAlerts,
+  resolveCustomsAlert,
+} from '../../src/api/customs';
 import type { CustomsAlert } from '../../src/api/types';
 import { Button, ErrorText, Muted } from '../../src/components/ui';
+import { CustomsAlertStatus, customsLevelColorName } from '../../src/domain/customsLevel';
 import { colors } from '../../src/theme/colors';
 import { fonts, fontSizes, radii, spacing } from '../../src/theme/typography';
 import { t } from '../../src/i18n';
@@ -20,32 +25,73 @@ import { t } from '../../src/i18n';
  * même discipline que les montants depuis S2.
  */
 
-/** 1 en cours, 2 traitée (App\Enums\CustomsAlertStatus). */
-const PENDING = 1;
-const RESOLVED = 2;
+const { PENDING, RESOLVED } = CustomsAlertStatus;
 
-/** Rouge pour un blocage, ocre pour un avertissement — charte du projet. */
+/**
+ * La couleur d'un niveau, résolue dans la charte.
+ *
+ * ⚠️ Elle était écrite ici, et elle se trompait deux fois sur trois : ocre pour
+ * un AVERTISSEMENT (la charte réserve l'ocre aux « actions clés ») et vert
+ * primaire pour un INFO (qui se lit « tout va bien »). Or `colors.ts` nomme les
+ * trois couleurs douanières. La correspondance vit maintenant dans
+ * `src/domain/customsLevel.ts`, où le tableau de bord la lit aussi.
+ */
 function levelColor(level: number): string {
-  if (level >= 3) return colors.danger;
-  if (level === 2) return colors.accent;
-  return colors.primary;
+  return colors[customsLevelColorName(level)];
 }
 
 export default function CustomsScreen() {
-  const [tab, setTab] = useState(PENDING);
+  // `useState<number>` et non l'inférence : `CustomsAlertStatus` est `as const`,
+  // donc `useState(PENDING)` figerait le type sur le littéral `1`.
+  const [tab, setTab] = useState<number>(PENDING);
   const [alerts, setAlerts] = useState<CustomsAlert[]>([]);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
+  /** Dernière page reçue, et s'il en reste — même forme que l'écran Relevés. */
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const load = useCallback(async () => {
     setError('');
     try {
-      setAlerts(await fetchCustomsAlerts(tab));
+      const list = await fetchCustomsAlerts(tab, 1);
+      setAlerts(list);
+      setPage(1);
+      // Une page incomplète est la dernière : le serveur en sert 20 par page.
+      setHasMore(list.length >= CUSTOMS_ALERTS_PER_PAGE);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
     }
   }, [tab]);
+
+  /**
+   * ⚠️ L'écran ne lisait QUE la première page.
+   *
+   * `customs/alerts` répond en `paginate(20)` et `CUSTOMS_ALERTS_PER_PAGE` était
+   * exporté depuis le début — sans être utilisé nulle part. Un marchand à plus
+   * de vingt alertes en voyait vingt, sans rien qui le lui dise : ni compteur,
+   * ni bouton, ni fin de liste. La perte était **silencieuse**, et c'est la
+   * forme de défaut la plus coûteuse sur un écran de conformité douanière.
+   */
+  const loadMore = useCallback(async () => {
+    if (!hasMore || loadingMore || refreshing) return;
+
+    setLoadingMore(true);
+    try {
+      const next = await fetchCustomsAlerts(tab, page + 1);
+      // Le serveur peut renvoyer une page vide : ne pas boucler dessus.
+      setAlerts((current) => [...current, ...next]);
+      setPage((p) => p + 1);
+      setHasMore(next.length >= CUSTOMS_ALERTS_PER_PAGE);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [hasMore, loadingMore, page, refreshing, tab]);
 
   useEffect(() => {
     void load();
@@ -64,6 +110,11 @@ export default function CustomsScreen() {
         await resolveCustomsAlert(id);
         // L'alerte quitte l'onglet « En cours » : on recharge plutôt que de
         // deviner localement ce que le serveur a enregistré.
+        //
+        // Conséquence assumée depuis la pagination : la liste revient à sa
+        // première page. Retirer une ligne au milieu d'un lot déjà parcouru
+        // décalerait toutes les pages suivantes côté serveur — recharger dit la
+        // vérité, reconstituer localement la devinerait.
         await load();
       } catch (e) {
         setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
@@ -80,6 +131,15 @@ export default function CustomsScreen() {
       keyExtractor={(alert) => String(alert.id)}
       contentContainerStyle={styles.list}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      onEndReached={() => void loadMore()}
+      onEndReachedThreshold={0.4}
+      ListFooterComponent={
+        loadingMore ? (
+          <View style={styles.empty}>
+            <Muted>{t('common.loading')}</Muted>
+          </View>
+        ) : null
+      }
       ListHeaderComponent={
         <View style={styles.header}>
           <Muted>{t('customs.subtitle')}</Muted>
