@@ -20,4 +20,9 @@ return [
 
     'payout_title' => 'Demande de retrait : :status',
     'payout_body' => 'Montant : :amount.',
+
+    // Courriel du fil (App\Mail\MerchantFeedMail) — seules les familles
+    // listées dans MerchantNotification::COURRIEL en déclenchent un.
+    'mail_outro' => 'Cette alerte est aussi visible dans votre application BeninLink.',
+    'mail_contact' => 'Une question ? Écrivez-nous :',
 ];

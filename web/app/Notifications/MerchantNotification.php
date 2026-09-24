@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\User;
+use App\Notifications\Channels\EmailChannel;
 use App\Notifications\Channels\PushChannel;
 use App\Services\Push\PushMessage;
 use Illuminate\Notifications\Notification;
@@ -15,10 +16,14 @@ use Illuminate\Notifications\Notification;
  * en français par `MerchantFeed`. Une classe par événement n'apporterait ici
  * qu'un nom de type de plus en base.
  *
- * Deux canaux : `database` (le fil que lit l'app) et `push` (la notification
- * poussée sur l'appareil). Le second ne s'ajoute que si l'utilisateur a au
- * moins un appareil abonné — sinon on n'appelle rien. L'e-mail, lui, n'a
- * toujours pas de gabarit.
+ * Trois canaux : `database` (le fil que lit l'app), `push` (la notification
+ * poussée sur l'appareil) et `courriel`. Les deux derniers sont CONDITIONNELS,
+ * et pour des raisons différentes :
+ *
+ *  - le push ne s'ajoute que si l'utilisateur a au moins un appareil abonné —
+ *    sinon on n'appelle rien ;
+ *  - le courriel ne s'ajoute que pour les familles de `COURRIEL`, parce qu'un
+ *    courriel par changement de statut de colis serait du harcèlement.
  */
 class MerchantNotification extends Notification
 {
@@ -37,6 +42,23 @@ class MerchantNotification extends Notification
     ) {
     }
 
+    /**
+     * Les familles pour lesquelles un COURRIEL part, en plus du fil.
+     *
+     * ⚠️ C'est une LISTE, pas un drapeau, et c'est le cœur de la décision.
+     * `.claude/rules/customs.md` demande « notification (email/push) » pour
+     * l'alerte douanière : un marchand dont le colis est bloqué à la frontière
+     * doit l'apprendre sans ouvrir l'app. Étendre l'envoi aux six familles
+     * aurait envoyé un courriel à CHAQUE changement de statut de colis — un
+     * marchand à trente colis par jour en recevrait une centaine par semaine,
+     * et les marquerait indésirables, ce qui coûterait aussi les alertes.
+     *
+     * Une famille s'ajoute ici quand le métier la décide, une ligne à la fois.
+     * Un test garde ce choix (`test_un_changement_de_statut_de_colis_n_envoie_pas_de_courriel`) :
+     * l'élargissement doit être voulu, pas subi.
+     */
+    private const COURRIEL = [self::KIND_CUSTOMS];
+
     public function via($notifiable): array
     {
         $canaux = ['database'];
@@ -47,7 +69,28 @@ class MerchantNotification extends Notification
             $canaux[] = PushChannel::class;
         }
 
+        if (in_array($this->kind, self::COURRIEL, true)) {
+            $canaux[] = EmailChannel::class;
+        }
+
         return $canaux;
+    }
+
+    /**
+     * Le contenu remis à `EmailChannel`.
+     *
+     * Le même triplet que le fil — le courriel ne raconte pas une autre
+     * histoire que l'écran. `extra` sert au gabarit à rappeler le numéro de
+     * suivi quand il y en a un ; il n'y compose rien.
+     */
+    public function toEmail($notifiable): array
+    {
+        return [
+            'kind' => $this->kind,
+            'title' => $this->title,
+            'body' => $this->body,
+            'extra' => $this->extra,
+        ];
     }
 
     /**

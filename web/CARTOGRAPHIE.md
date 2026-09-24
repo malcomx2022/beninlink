@@ -1300,12 +1300,27 @@ les colis existants.
 6 catégories, dont les 3 exemples de la maquette. À faire relire par un transitaire :
 une règle BLOQUANTE erronée empêche un marchand de créer son colis.
 
-⏳ **Reste au chantier** : la notification à la création, demandée par
-`.claude/rules/customs.md`. Le push est hors service (API FCM legacy arrêtée, bloc K),
-l'e-mail demande un Mailable et un gabarit. L'alerte est enregistrée et visible dans
-les deux écrans, mais rien n'est envoyé.
+✅ **La notification à la création est branchée** (réserve levée). Elle avait trois
+canaux à ouvrir, ouverts à trois moments différents — et la réserve ci-dessus est
+restée écrite alors que deux l'étaient déjà :
+
+| Canal | État | Par quoi |
+|---|---|---|
+| Fil en base | ✅ | `CustomsAlertFeedObserver` → `MerchantFeed::customsAlertRaised()` |
+| Push | ✅ | `PushChannel` + job `SendPush` (D11 ; muet si l'utilisateur n'a aucun appareil) |
+| Courriel | ✅ | `EmailChannel` + `App\Mail\MerchantFeedMail` (voir plus bas) |
+
+⚠️ **Une réserve qui survit à sa cause dit le contraire de ce qu'elle voulait dire.**
+Celle-ci affirmait « rien n'est envoyé » alors que le fil et le push partaient déjà :
+elle a survécu au correctif qui l'annulait. Une vérification du module l'a relevée —
+la leçon vaut pour toutes les lignes `⏳` de ce fichier : elles se relisent quand on
+touche à leur sujet, sinon elles deviennent la version la plus crédible d'une erreur.
 
 ⏳ L'écran `customs` de `mobile/` suit — le chantier a été mené « backend d'abord ».
+Vérifié le 24/09 : `mobile/src/api/customs.ts` existe (`fetchCustomsReference`,
+`fetchCustomsAlerts`, `resolveCustomsAlert`) et **aucun fichier ne l'importe** —
+`mobile/src` ne contient d'ailleurs pas encore de dossier `screens/`. Le client
+d'API est là, l'écran non. La réserve reste ouverte, et elle est exacte.
 
 ## ✅ Fil de notifications marchand (2026-09-04)
 
@@ -6216,3 +6231,102 @@ tolérance d'horodatage et `hash_equals` · le montant de l'abonnement vient de
 est utilisé, jamais celui annoncé par l'événement · la recherche du webhook est
 délibérément **non scopée** (pas de session, `settings()` retomberait sur la
 société 1 — famille F4) et le locataire vient de la transaction.
+
+---
+
+## S67 — la moitié manquante du module douane : le canal courriel
+
+Point de départ : une **vérification** demandée du module douane, pas un défaut
+signalé. Le module est sain — deux tables, `CustomsService` comme source unique,
+la règle `CustomsAllowed` portée par **les trois portes de création** (l'API
+réutilise `App\Http\Requests\MerchantPanel\Parcel\StoreRequest`, elle n'a pas de
+règle parallèle qui aurait pu diverger), tout le back-office en `companywise()`,
+l'API scopée société **et** marchand, 15 tests verts.
+
+Deux écarts seulement, et aucun n'est une faille :
+
+1. `.claude/rules/customs.md` demande « notification (email/**push**) ».
+   `MerchantNotification` portait `toPush()` et `toDatabase()` — **pas de
+   courriel**. Son propre docbloc l'admettait : « L'e-mail, lui, n'a toujours pas
+   de gabarit. »
+2. Une réserve `⏳` de ce fichier affirmait encore « rien n'est envoyé », alors
+   que le fil et le push partaient depuis le `CustomsAlertFeedObserver`.
+   Rectifiée ci-dessus.
+
+### Le canal, et pourquoi pas celui du socle
+
+| Pièce | Rôle |
+|---|---|
+| `App\Notifications\Channels\EmailChannel` | jumeau de `PushChannel` : met en file, résout la marque, tolère l'échec |
+| `App\Mail\MerchantFeedMail` | `Mailable implements ShouldQueue` — **D13** |
+| `resources/views/backend/merchant/mail/feed.blade.php` | même ossature en tables que `signup.blade.php` |
+| `MerchantNotification::COURRIEL` | la **liste** des familles qui déclenchent un envoi |
+
+⚠️ **Le canal `mail` du socle ne convenait pas.** Laravel bâtit et remet le
+message **dans la requête** tant que la notification n'est pas `ShouldQueue` — et
+la rendre `ShouldQueue` aurait aussi déplacé l'écriture du **fil en base**, que
+l'app lit aussitôt. D13 veut l'inverse : le fil écrit tout de suite, l'envoi
+sortant part en file. D'où un canal à nous, exactement comme `PushChannel` — qui
+existe pour la même raison et dont ce lot n'est que le décalque.
+
+⚠️ **La sélectivité est la décision, pas le branchement.** Brancher les six
+familles aurait envoyé un courriel à **chaque changement de statut de colis** :
+un marchand à trente colis par jour en recevrait une centaine par semaine, les
+marquerait indésirables, et perdrait du même coup l'alerte douanière — celle qui
+justifiait le canal. `COURRIEL` ne contient que `KIND_CUSTOMS`, et un test garde
+ce choix pour que l'élargissement soit **voulu**, jamais subi.
+
+⚠️ **F4 — la marque vient du DESTINATAIRE.** L'observer se déclenche sur
+`Parcel::saved` : une création par l'API, mais aussi un import Excel ou une
+commande. Hors requête, `settings()` retombe sur la société 1 et le marchand de
+« Kola Distribution » recevrait un message signé du premier transporteur de la
+base, logo compris — le défaut déjà corrigé dans `MerchantSignup`. La société est
+donc lue sur l'utilisateur notifié. Le `Mailable`, lui, ne touche **pas** à
+`settings()` du tout : la marque lui est **passée**.
+
+### Vérification — six sabotages, et deux enseignements
+
+| Sabotage | Effet mesuré |
+|---|---|
+| `via()` n'ajoute plus `EmailChannel` | **rouge** (3 cas) |
+| `COURRIEL` élargi aux six familles | **rouge** — la sélectivité |
+| la marque revient à `settings()` | **rouge** — F4 |
+| `ShouldQueue` retiré du `Mailable` | **rouge** — D13 |
+| la garde « adresse vide » retirée | **rouge** |
+| le `catch` d'`EmailChannel` **seul** | *verte* — **sabotage partiel** |
+| les **deux** `catch` ensemble | **rouge** |
+
+**Enseignement 1 — le sabotage partiel, encore.** `MerchantFeed::deliver()` porte
+déjà un `catch` : neutraliser celui du canal **seul** laisse le test vert. Ce test
+mesure donc une **paire**, pas une garde, et son docbloc le dit. Ce que le `catch`
+du canal apporte n'est pas la survie de l'alerte — c'est le journal qui **nomme**
+le canal fautif.
+
+**Enseignement 2 — deux filets mordent sur le même sabotage.** Le retour à
+`settings()` fait aussi tomber `OffRequestScopeCoverageTest` (**S56**), parce que
+`app/Notifications` est dans sa surface. Le filet de S56 n'avait pas été écrit
+pour ce canal : il l'attendait.
+
+### Ce que la vérification a aussi montré, et que je n'ai pas fait
+
+`app/Mail` n'est **pas** dans la surface de `OffRequestScopeCoverageTest`. Les
+quatre `Mailable` du dépôt (`MerchantSignup`, `CompanySignup`, `ContactMail`,
+`InvoicePDFSend`) lisent `settings()` dans leur constructeur — correctement, car
+ils sont construits **dans la requête**, et leurs docblocs l'expliquent. Ajouter
+`app/Mail` à la surface demanderait donc quatre exemptions motivées : c'est un
+lot en soi, pas une ligne de celui-ci. Noté ici pour qu'il ne se perde pas.
+
+### Mon erreur de méthode dans ce lot
+
+J'ai bâti le harnais de sabotage sur `git checkout --` pour restaurer. Deux des
+trois fichiers étaient **neufs, donc non suivis** : la restauration a échoué sans
+rien dire pour eux, et pour le troisième elle a rendu le fichier à son état
+**commité** — c'est-à-dire qu'elle a effacé le correctif que j'étais en train de
+mesurer. Les trois sabotages suivants n'ont mesuré que du bruit, et je les ai
+d'abord lus comme des résultats.
+
+> Un harnais de sabotage qui restaure par `git` ne restaure rien d'un fichier
+> neuf. La sauvegarde se fait **par copie**, et on vérifie l'état restauré.
+
+Corrigé : sauvegarde par copie, ancrage vérifié **unique** avant chaque
+remplacement, et état restauré recontrôlé (vert) entre deux sabotages.

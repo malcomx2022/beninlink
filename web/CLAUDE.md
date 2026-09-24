@@ -152,6 +152,12 @@ avant les apps.
 - Une notification poussée ne se décide pas dans un repository : le fil marchand passe
   par `MerchantFeed` et le canal `push` de `MerchantNotification`. Un push raté ne fait
   jamais échouer l'écriture métier, et un même fait ne donne **qu'une** notification.
+  Le **courriel** (S67) suit la même forme : `EmailChannel`, jumeau de `PushChannel`,
+  qui met en file un `Mailable` (**D13** — le canal `mail` du socle enverrait dans la
+  requête). ⚠️ Il est **sélectif par liste** (`MerchantNotification::COURRIEL`, aujourd'hui
+  la seule alerte douanière) : brancher les six familles enverrait un courriel par
+  changement de statut de colis. Et sa marque vient du **destinataire**, pas de
+  `settings()` — l'observer peut se déclencher hors requête (**F4**).
 - Toute route `/api/v10` à identifiant est inscrite dans `tests/Feature/IsolationCoverageTest`
   avec le test prouvant qu'un compte n'atteint pas la ressource d'un autre (S7).
 - Toute route **web** à paramètre est inscrite dans `tests/Feature/WebIsolationCoverageTest` :

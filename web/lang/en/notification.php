@@ -20,4 +20,7 @@ return [
 
     'payout_title' => 'Withdrawal request: :status',
     'payout_body' => 'Amount: :amount.',
+
+    'mail_outro' => 'This alert is also available in your BeninLink app.',
+    'mail_contact' => 'Any question? Write to us:',
 ];
