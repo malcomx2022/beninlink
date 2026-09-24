@@ -212,6 +212,14 @@ avant les apps.
   l'e-mail du titulaire, des **deux** comptes du virement.
   ⚠️ **Lu n'est pas prouvé** : une route lue et jugée correcte reste à l'arriéré tant
   qu'un test ne l'établit pas.
+- ⚠️ **Une garde ne protège que ce qu'elle NOMME, et seulement en AVAL d'elle-même.**
+  L'instrument de **S57** sautait toute méthode contenant une garde — granularité
+  méthode, alors que la famille poursuivie depuis **S45** est « ressource gardée,
+  second identifiant nu » *dans la même méthode*. **S59** exige donc : garde **avant**
+  la lecture, sur le **même champ**, et pour une aide `*HorsPerimetre()` que ce champ
+  soit dans sa **carte** (lue dans `app/Traits/`, jamais recopiée). 35 → **39**, rien
+  de perdu. Témoin : le `Parcel::companywise()->count()` d'un **quota d'abonnement**
+  absolvait le `Merchant::find($request->merchant_id)` onze lignes plus bas.
 - ⚠️ **Un marqueur de garde qui se trompe ne fait pas du bruit : il fait SILENCE.**
   Deux formes reconnaissent une portée : `companywise()` et `where('company_id', …)`
   écrit à la main (trois dépôts le font — ignorer cette seconde forme a produit

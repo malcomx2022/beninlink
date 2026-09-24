@@ -212,7 +212,16 @@ class ReportsRepository implements ReportsInterface {
             if($request->user_type == 1):
             elseif($request->user_type == 2):
 
-                $data['hub']                   =  Hub::find($request->hub_id);
+                // S59 — nue, et la ligne JUSTE EN DESSOUS porte `companywise()`
+                // sur le MEME `hub_id`. Dissymetrie d'oubli, comme celle de S58
+                // entre les deux ecrans d'impression.
+                //
+                // ⚠️ Rien ne la RENDAIT : `$MHDreports['hub']` n'apparait dans
+                // aucune vue vivante (la seule qui s'en servirait depend de
+                // `MHDPrintPage`, qui n'est routee nulle part). Ce n'est donc
+                // pas une divulgation constatee, c'est un piege arme — et on ne
+                // laisse pas un piege arme au motif qu'il n'a pas encore servi.
+                $data['hub']                   =  Hub::companywise()->find($request->hub_id);
                 $data['hub_statements']        =  HubStatement::companywise()->where('hub_id',$request->hub_id)->get();
                 //print need
                 $data['hub_statement_ids']            = '';
@@ -221,7 +230,8 @@ class ReportsRepository implements ReportsInterface {
                 }
                 //end print
             elseif($request->user_type == 3):
-                $data['deliveryman']           =  DeliveryMan::find($request->delivery_man_id);
+                // S59 — meme dissymetrie, sur le livreur cette fois.
+                $data['deliveryman']           =  DeliveryMan::companywise()->find($request->delivery_man_id);
                 $data['deliveryman_statements']=  DeliverymanStatement::companywise()->where('delivery_man_id',$request->delivery_man_id)->whereBetween('created_at', [$from, $to])->get();
                 //print need
                     $data['deliveryman_statement_ids']            = '';
@@ -247,7 +257,12 @@ class ReportsRepository implements ReportsInterface {
                 endif;
             }
 
-            $data['deliveryman']           =  DeliveryMan::find($request->delivery_man_id);
+            // S59 — troisieme occurrence du meme motif. ⚠️ `MHDprint()` n'est
+            // appelee que par `ReportsController::MHDPrintPage()`, qui n'est
+            // declaree dans AUCUN fichier de routes : ce chemin est MORT. On le
+            // corrige quand meme — une methode morte se reveille en une ligne de
+            // route, et elle se reveillerait avec sa faille.
+            $data['deliveryman']           =  DeliveryMan::companywise()->find($request->delivery_man_id);
             $data['deliveryman_statements']=  DeliverymanStatement::companywise()->where('delivery_man_id',$request->delivery_man_id)->whereIn('id',$deliveryman_statement_ids)->get();
 
         endif;

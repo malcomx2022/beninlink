@@ -5526,3 +5526,123 @@ exactement les deux fichiers de ce lot).
 L'arriéré de ce filet : **36 routes**. Le mouvement est celui qui a mené les deux
 autres arriérés à zéro (171 → 0, 90 → 0) — prouver ou motiver, une par une, en
 baissant le plafond d'autant.
+
+---
+
+## S59 — la garde VOISINE : quand une garde en absout une autre
+
+L'arriéré du filet S58 était le chantier nommé. En l'attaquant, j'ai trouvé plus
+grave que les routes : **l'instrument lui-même était aveugle à sa propre cible**.
+
+### Le défaut de l'instrument
+
+`instrument-lectures-nues.py` (S57) écrivait :
+
+```python
+if any(g in corps for g in GARDES):
+    continue          # une garde domine la methode
+```
+
+Sa granularité était donc la **méthode**. Or la famille de défauts que toute
+cette série poursuit depuis S45 est précisément *« la ressource est gardée, le
+second identifiant ne l'est pas »* — **dans la même méthode**. L'instrument ne
+pouvait pas voir ce qu'il était censé chercher.
+
+### Trois critères, mesurés un par un
+
+| critère | ce qu'il exige | mesure |
+|---|---|---|
+| départ (S57) | une garde quelque part dans la méthode | 35 |
+| **position** | la garde doit **précéder** la lecture | 37 (+2) |
+| **identifiant** | elle doit porter sur le **même champ** | 46 (+9) |
+| **cartes des aides** | un appel `*HorsPerimetre()` couvre les champs de sa carte | **39** |
+
+Le critère « identifiant » seul produisait **8 faux positifs** : les aides du
+projet (`contrepartieHorsPerimetre($request)`) ne contiennent pas le nom du
+champ, c'est un **appel**. L'instrument lit donc maintenant les cartes
+`'champ' => Modele::class` dans `app/Traits/` — il ne les recopie pas. Le jour où
+une contrepartie s'ajoute, il la connaît ; le jour où elle en sort, il recommence
+à signaler les lectures qu'elle couvrait.
+
+**35 → 39, sans en perdre une seule.** Les quatre nouvelles sont réelles.
+
+### Les quatre lectures
+
+| lecture | ce qu'elle faisait | rendu ? |
+|---|---|---|
+| `ParcelController::store` → `Merchant::find($request->merchant_id)` | **oracle sur le portefeuille** d'un marchand d'en face, + **500** sur identifiant inconnu | oui |
+| `ReportsRepository::MHDreports` → `Hub::find($request->hub_id)` | résout l'entrepôt d'une autre société | non |
+| `ReportsRepository::MHDreports` → `DeliveryMan::find(...)` | idem, sur le livreur | non |
+| `ReportsRepository::MHDprint` → `DeliveryMan::find(...)` | idem — **chemin mort** | non |
+
+**La première est la vraie.** Elle est de la famille de S51 : la lecture nue
+**précède** le dépôt, donc elle renseignait avant que la garde de S46 ne refuse
+l'écriture. Les deux lignes suivantes lisent `wallet_use_activation` puis
+comparent à `wallet_balance`, et le message « low balance » rend la réponse
+différente selon le solde — en faisant varier `cash_collection` on encadrait le
+solde d'un marchand d'un transporteur concurrent. Et hors périmètre `find()`
+rendait `null`, donc **500** au lieu d'un refus (famille S15).
+
+> ⚠️ **Les trois autres ne sont rendues par aucune vue vivante.** Ce ne sont pas
+> des divulgations constatées : ce sont des pièges armés. Et `MHDprint()` n'est
+> appelée que par `MHDPrintPage()`, qui n'est déclarée dans **aucun** fichier de
+> routes — chemin mort, corrigé quand même : une méthode morte se réveille en une
+> ligne de route, et elle se réveillerait avec sa faille.
+
+### Pourquoi l'instrument ne voyait pas la première
+
+`ParcelController::store()` écrit à sa cinquième ligne
+`Parcel::companywise()->count()` — un **quota d'abonnement**, qui n'a rien à voir
+avec ce marchand. Cette garde-là absolvait toute la méthode.
+
+### Un vert creux, attrapé par son ancrage
+
+Les trois cas HTTP repartaient sur `Something went wrong!` à la **première** ligne
+de `store()`, sans jamais atteindre celle qu'ils prétendaient mesurer :
+`souscrireLeLocataire()` satisfait `subscriptionCheckMiddleware` (qui passe par
+`Auth::user()->subscription`) mais **pas** `settings()->subscription`, qui est un
+`belongsTo` sur la colonne `general_settings.subscription_id` que rien ne remplit.
+
+C'est l'ancrage sur un message **précis** qui l'a révélé. Une assertion sur
+« ça redirige » serait passée au vert.
+
+### L'arriéré du filet S58 : 36 → 32
+
+| route | comment elle sort |
+|---|---|
+| `GET admin/reports/mhd-reports` | prouvée — ses deux lectures nues corrigées et sabotées |
+| `GET admin/users/filter` | prouvée |
+| `GET admin/hubs/filter` | prouvée |
+| `GET admin/deliveryman/filter` | prouvée |
+
+Les trois `filter` avaient été **lus** en S58 et jugés bornés. Ils restaient à
+l'arriéré parce que **lu n'est pas prouvé**. Ils en sortent maintenant par un test
+qui atteint la ligne d'en face et qui tombe si la garde saute.
+
+### Vérification
+
+| Sabotage | Verdict |
+|---|---|
+| `Merchant::companywise()` retiré (store) | **rouge** |
+| le refus sur marchand nul retiré (store) | **rouge** |
+| `Hub::companywise()` retiré (MHDreports) | **rouge** |
+| `DeliveryMan::companywise()` retiré (MHDreports) | **rouge** |
+| `DeliveryMan::companywise()` retiré (MHDprint, chemin mort) | **rouge** |
+| `where('company_id')` retiré de `UserRepository::filter` | **rouge** |
+| idem `HubRepository::filter` | **rouge** |
+| idem `DeliveryManRepository::filter` | **rouge** |
+
+Deux sabotages n'ont **pas** été appliqués au premier jet, et le script l'a dit
+au lieu de saboter en silence : une ancre à 12 espaces est un **sous-ensemble**
+de la même ligne indentée à 16, et le motif du dépôt des comptes se répète quatre
+fois. Reprise avec des ancres uniques (leçon S44, quatrième application).
+
+Suite complète : **1008 tests, 45 904 assertions**, verte (delta `+9 / +30` —
+les 9 cas du nouveau fichier et les 4 assertions que le filet S58 gagne en
+voyant sa liste `PROUVEES` s'allonger).
+
+### Le chantier suivant
+
+L'arriéré du filet S58 : **32 routes**. Et, côté instrument, **35 occurrences**
+après les quatre corrections — dont 8 derrière `online_payout` (D10, à `false`)
+et 4 flux d'authentification globaux.

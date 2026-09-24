@@ -59,6 +59,22 @@ class SearchSurfaceCoverageTest extends TestCase
         // compte source ET le compte destinataire, le numéro de compte, la
         // banque, l'agence, le mobile, plus le nom et l'e-mail du titulaire.
         'GET admin/fund-transfer/search/flter/print' => SearchSurfaceScopeTest::class,
+
+        // S59 — quatre lignes sortent de l'arriere, chacune par sabotage de sa
+        // propre garde (rouge = le test la tient).
+        //
+        // `mhd-reports` portait DEUX lectures nues que l'instrument de S57 ne
+        // pouvait pas voir : `Hub::find($request->hub_id)` et
+        // `DeliveryMan::find($request->delivery_man_id)`, chacune juste au-dessus
+        // d'une soeur `companywise()` portant sur le MEME identifiant.
+        //
+        // Les trois `filter` avaient ete LUS en S58 et juges bornes — ils ecrivent
+        // `where('company_id', settings()->id)` a la main. Ils restaient pourtant
+        // a l'arriere, parce que lu n'est pas prouve. Ils le sont maintenant.
+        'GET admin/reports/mhd-reports' => NeighbouringGuardScopeTest::class,
+        'GET admin/users/filter' => NeighbouringGuardScopeTest::class,
+        'GET admin/hubs/filter' => NeighbouringGuardScopeTest::class,
+        'GET admin/deliveryman/filter' => NeighbouringGuardScopeTest::class,
     ];
 
     /**
@@ -89,7 +105,11 @@ class SearchSurfaceCoverageTest extends TestCase
      *
      * Le mouvement autorisé est un seul : retirer une ligne d'ici et l'inscrire
      * dans `PROUVEES` avec le test qui l'établit — ou dans `EXEMPTEES` avec son
-     * motif — en baissant le plafond d'autant. C'est le chemin qui a mené
+     * motif — en baissant le plafond d'autant.
+     *
+     * **S59 : 36 → 32.** Les trois `filter` mentionnés ci-dessus sont sortis —
+     * non pas parce qu'on les avait relus, mais parce qu'un test atteint
+     * désormais la ligne d'en face et échoue si la garde saute. C'est le chemin qui a mené
      * l'arriéré de `WebIsolationCoverageTest` de 171 à 0, et celui de
      * `BodyIdentifierCoverageTest` de 90 à 0.
      */
@@ -100,11 +120,9 @@ class SearchSurfaceCoverageTest extends TestCase
         'GET admin/customs/alerts',
         'GET admin/delivery-charge/filter',
         'GET admin/delivery-zone/grid',
-        'GET admin/deliveryman/filter',
         'GET admin/expense/filter',
         'GET admin/fund-transfer/filter',
         'GET admin/fund-transfer/specific/search',
-        'GET admin/hubs/filter',
         'GET admin/income/filter',
         'GET admin/paid/invoice/syscohada-journal',
         'GET admin/parcel/bulkassign/print',
@@ -112,14 +130,12 @@ class SearchSurfaceCoverageTest extends TestCase
         'GET admin/parcel/multiple/print/label',
         'GET admin/parcel/specific/search',
         'GET admin/payment/merchant/filter',
-        'GET admin/reports/mhd-reports',
         'GET admin/reports/parcel-filter-reports',
         'GET admin/reports/parcel-filter-total-summery',
         'GET admin/reports/parcel-wise-profit-reports',
         'GET admin/reports/reports-salary-reports',
         'GET admin/reports/salary-report-print',
         'GET admin/salarys/filter',
-        'GET admin/users/filter',
         'GET admin/wallet-request',
         'GET dashboard',
         'GET facebook/login',
@@ -133,7 +149,7 @@ class SearchSurfaceCoverageTest extends TestCase
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 36;
+    private const PLAFOND_HERITAGE = 32;
 
     protected function setUp(): void
     {

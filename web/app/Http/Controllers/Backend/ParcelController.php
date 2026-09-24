@@ -123,7 +123,27 @@ class ParcelController extends Controller
 
 
         //wallet use checking
-        $merchant      = Merchant::find($request->merchant_id);
+        // S59 — lecture NUE, et de la meme famille que `paymentStore` (S51) :
+        // elle PRECEDE le depot, donc elle renseignait avant que la garde du
+        // depot (S46) ne refuse l'ecriture. Deux consequences, pas une :
+        //
+        //  1. un ORACLE sur le portefeuille d'un marchand d'en face — les deux
+        //     lignes suivantes lisent `wallet_use_activation` puis comparent a
+        //     `wallet_balance`, et le message « low balance » rend la reponse
+        //     differente selon le solde ; en faisant varier `cash_collection`
+        //     on encadrait le solde d'un marchand d'un transporteur concurrent ;
+        //  2. un 500 au lieu d'un refus (famille S15) : hors perimetre `find()`
+        //     rend `null` et `$merchant->wallet_use_activation` dereferencait.
+        //
+        // ⚠️ L'instrument de S57 ne pouvait PAS la voir : il sautait toute
+        // methode contenant une garde, et la ligne 5 de celle-ci ecrit
+        // `Parcel::companywise()->count()` — un quota d'abonnement, qui n'a
+        // rien a voir avec ce marchand. C'est le resserrement de S59.
+        $merchant      = Merchant::companywise()->find($request->merchant_id);
+        if (blank($merchant)) {
+            Toastr::error(__('parcel.error_msg'), __('message.error'));
+            return redirect()->back()->withInput($request->all());
+        }
         // Meme remarque que dans le panneau marchand : le montant vient du
         // serveur, `chargeDetails` n'est plus envoye par l'ecran.
         if ($merchant->wallet_use_activation == Status::ACTIVE) :

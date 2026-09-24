@@ -92,9 +92,34 @@ def methodes(src):
                     res.append((m.group(1), src[i:j])); break
     return res
 
+
+# S59 — CE QUE LES AIDES DE GARDE DU PROJET COUVRENT.
+#
+# `contrepartieHorsPerimetre($request)` ne contient pas la chaine `user_id` :
+# c'est un APPEL. Un critere qui exige que la garde nomme le champ la declare
+# donc inoperante, et signale huit lectures pourtant protegees.
+#
+# La carte n'est PAS recopiee ici : elle est LUE dans les traits. Le jour ou
+# une contrepartie s'ajoute a `GuardsAccountingCounterparties::CONTREPARTIES`,
+# l'instrument la connait sans qu'on y touche — et le jour ou elle en sort, il
+# recommence a signaler les lectures qu'elle couvrait.
+def champs_couverts_par_les_aides():
+    champs = set()
+    for d, _, fs in os.walk('app/Traits'):
+        for f in fs:
+            if not f.endswith('.php'):
+                continue
+            src = open(os.path.join(d, f), encoding='utf-8', errors='ignore').read()
+            champs |= set(re.findall(r"'(\w+)'\s*=>\s*\w+::class", src))
+    return champs
+
+CHAMPS_DES_AIDES = champs_couverts_par_les_aides()
+AIDE = re.compile(r'\w*HorsPerimetre\s*\(')
+
 LECTURE = re.compile(r'\b(' + '|'.join(MODELS) + r')::(find|where|firstWhere)\s*\(\s*([^;)]{0,140})')
 
 suspects=[]
+voisinage=[]   # S59 : lecture nue DANS une methode qui garde par ailleurs
 for racine in ('app/Http', 'app/Repositories', 'app/Services'):
     for d,_,fs in os.walk(racine):
         for f in fs:
@@ -102,21 +127,53 @@ for racine in ('app/Http', 'app/Repositories', 'app/Services'):
             p=os.path.join(d,f)
             src=sans_commentaires(open(p,encoding='utf-8',errors='ignore').read())
             for nom, corps in methodes(src):
-                if any(g in corps for g in GARDES):
-                    continue                      # une garde domine la methode
-                if any(g.search(corps) for g in GARDES_MOTIF):
-                    continue                      # ... ou la meme garde, ecrite a la main
+                # S59 — DEUX resserrements par rapport a la version de S57, qui
+                # sautait la methode entiere des qu'une garde y figurait.
+                #
+                #  1. POSITION : la garde ne compte que si elle PRECEDE la lecture.
+                #  2. IDENTIFIANT : elle ne compte que si elle porte sur le MEME
+                #     champ de requete. Une garde sur A n'a jamais protege B —
+                #     c'est meme la famille de defauts que toute cette serie
+                #     poursuit depuis S45 : la ressource est gardee, le second
+                #     identifiant ne l'est pas.
+                gardes = [corps.find(g) for g in GARDES if g in corps]
+                gardes += [m.start() for g in GARDES_MOTIF for m in g.finditer(corps)]
                 for mm in LECTURE.finditer(corps):
                     modele, op, arg = mm.group(1), mm.group(2), mm.group(3)
-                    if not re.search(r'\$request->|request\(\)->', arg):
-                        continue                  # l'identifiant ne vient pas du corps
+                    champ = re.search(r'(?:\$request|request\(\))->(\w+)', arg)
+                    if not champ:
+                        continue                  # l'identifiant ne vient pas de la requete
                     if 'company_id' in arg:
                         continue                  # la lecture porte deja son perimetre
-                    suspects.append((p, nom, f"{modele}::{op}({arg.strip()[:64]})"))
+                    champ = champ.group(1)
+                    protegee = False
+                    for g in gardes:
+                        if g >= mm.start():
+                            continue              # la garde vient APRES : elle n'a rien empeche
+                        # la garde doit parler du MEME champ, entre son debut et la lecture
+                        entre = corps[g:mm.start()]
+                        if champ in entre:
+                            protegee = True
+                            break
+                        # ... ou la garde est une AIDE du projet dont la carte
+                        # couvre ce champ (carte lue dans app/Traits).
+                        if champ in CHAMPS_DES_AIDES and AIDE.search(entre):
+                            protegee = True
+                            break
+                    (voisinage if protegee else suspects).append(
+                        (p, nom, f"{modele}::{op}({arg.strip()[:64]})"))
 
 print(f"INSTRUMENT RAFFINE — {len(suspects)} occurrences decidables\n")
+print(f"[S59] lectures nues VOISINES d'une garde, dans la meme methode : {len(voisinage)}]\n")
 par_fichier={}
 for p,nom,lec in suspects: par_fichier.setdefault(p,[]).append((nom,lec))
 for p in sorted(par_fichier):
     print(p)
     for nom,lec in par_fichier[p]: print(f"    {nom}()  ->  {lec}")
+
+print("\n================ [S59] LE VOISINAGE ================")
+par_f2={}
+for p,nom,lec in voisinage: par_f2.setdefault(p,[]).append((nom,lec))
+for p in sorted(par_f2):
+    print(p)
+    for nom,lec in par_f2[p]: print(f"    {nom}()  ->  {lec}")
