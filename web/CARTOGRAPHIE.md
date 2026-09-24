@@ -5180,3 +5180,107 @@ la **destination** du redirect, **et** la valeur en base.
 Le locataire est désormais refusé **par le panneau**, et le test le prouve en lui
 accordant de force `currency_update` : il reste dehors. Le refus ne dépend plus de
 ce qu'on lui accorde, mais de **qui il est**.
+
+## ✅ S56 — le filet de la surface hors requête (2026-09-24)
+
+### Ce que les quatre filets ne regardaient pas
+
+Les deux arriérés d'isolation sont clos (171 → 0 en S35, 90 → 0 en S54). Mais les
+**quatre** filets de couverture — `WebIsolationCoverageTest`,
+`BodyIdentifierCoverageTest`, `IsolationCoverageTest`,
+`WebAdminPermissionCoverageTest` — appellent tous `Route::getRoutes()`.
+
+> Ce qui tourne **sans requête HTTP** leur est entièrement invisible.
+
+Et c'est précisément là que vit une famille de défauts que ce dépôt avait déjà
+**nommée** sans jamais l'outiller : **F4**.
+
+### F4, mesuré avant d'être écrit
+
+`scopeCompanywise()` est `where('company_id', settings()->id)`. Et `settings()`
+résout la société par le **sous-domaine** ou l'**utilisateur connecté** ; faute des
+deux, elle retombe sur la société **1** :
+
+```
+[societes actives : 1, 2]
+[settings()->id hors requete : 1]
+```
+
+Une commande qui écrit `Model::companywise()` ne traite donc **qu'une** société,
+sans erreur ni alerte. La société 2 est silencieusement invisible.
+
+### Elle a déjà mordu deux fois — et rien n'empêchait la troisième
+
+| Où | Ce que ça donnait |
+|---|---|
+| `invoice:generate` | bouclait sur `merchantIdlist()` filtré par `settings()->id` : **seule la société 1** avait ses relevés, les autres transporteurs **jamais** |
+| `SendSms` | aurait envoyé au nom du mauvais transporteur si le job ne portait pas sa société |
+
+Les deux sont corrigés depuis, et leurs docblocs **expliquent** la règle. Mais
+aucun filet ne regardait cette surface : la troisième fois n'attendait qu'un
+contributeur pressé.
+
+### L'état relevé : la surface est saine
+
+| | |
+|---|---|
+| commandes Artisan | 12 |
+| jobs | 2 |
+| observateurs | 7 |
+| notifications | 2 |
+| résolutions ambiantes | **0** |
+
+Les deux commandes qui touchent des soldes (`MerchantBalanceDriftCommand`,
+`UndebitedParcelsCommand`) itèrent volontairement **tous** les marchands, puis
+dérivent tout de `$marchand->id` : c'est la forme correcte — la société vient de
+la **ligne**, jamais de l'ambiance. Les sept observateurs dérivent de l'instance.
+
+> C'est le bon moment pour poser un filet : quand la surface est saine, pas quand
+> elle ne l'est plus.
+
+### ⚠️ Le dépouillement des commentaires n'est pas une précaution théorique
+
+`Invoice` et `SendSms` **citent** `settings()` dans leur docbloc, pour expliquer le
+piège. Un filet qui lirait le fichier brut signalerait donc exactement **les deux
+fichiers qui documentent la règle** — il accuserait la documentation au lieu du
+code.
+
+La source passe au **tokenizer** PHP et perd ses `T_COMMENT` / `T_DOC_COMMENT`.
+Le sabotage le confirme : retirer ce dépouillement rend le filet **rouge**.
+
+### ⚠️ Un test sans assertion ne prouve rien
+
+`test_no_exemption_points_to_a_file_that_no_longer_exists` bouclait d'abord sur
+`EXEMPTEES` — vide à l'ouverture. Une boucle sur une liste vide n'exécute aucune
+assertion : PHPUnit l'a marqué **risky**, et le test ne mesurait rien.
+
+Réécrit en comparaison d'**ensembles**, il assertit une fois quoi qu'il arrive.
+C'est la même famille de piège que les assertions d'absence des lots S51 à S55,
+rencontrée pour la sixième fois — et cette fois c'est PHPUnit qui l'a dit, pas le
+sabotage.
+
+Un témoin garde aussi l'**énumération** elle-même : un répertoire renommé, un
+glob cassé, et le filet passerait au vert sans rien examiner. Il exige au moins
+20 fichiers et la présence nommée des deux que F4 a mordus.
+
+### Vérification
+
+| Sabotage | Verdict |
+|---|---|
+| une commande appelant `settings()` | **rouge** |
+| une commande appelant `companywise()` | **rouge** |
+| une commande appelant `auth()` | **rouge** |
+| le dépouillement des commentaires retiré | **rouge** |
+| la prémisse F4 faussée | **rouge** |
+
+`OffRequestScopeCoverageTest` : 4 cas, 9 assertions, `EXEMPTEES` **vide**.
+
+### Les cinq filets, désormais
+
+| Filet | Surface | État |
+|---|---|---|
+| `IsolationCoverageTest` (S7) | routes `/api/v10` à identifiant | tenu |
+| `WebIsolationCoverageTest` | routes web à paramètre d'URL | **arriéré 171 → 0** |
+| `BodyIdentifierCoverageTest` (S38) | écritures à identifiant de corps | **arriéré 90 → 0** |
+| `WebAdminPermissionCoverageTest` (S44) | droits des routes `admin/*` | tenu |
+| `OffRequestScopeCoverageTest` (**S56**) | **hors requête** : commandes, jobs, observateurs | **ouvert à 0** |
