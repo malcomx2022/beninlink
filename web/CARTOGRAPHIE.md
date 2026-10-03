@@ -6630,3 +6630,80 @@ mon propre commentaire — il lit désormais le code sans ses `//`, leçon de S6
 Onze filets voisins relancés après le lot : **139 tests, 781 assertions**, verts. Suite
 complète : voir la ligne ci-dessous.
 Suite complète : **1 087 tests, 46 197 assertions**, verte (delta `+11 / +28` pour ce lot).
+
+## S71 — la répétition générale de la recette pilote (2026-10-03)
+
+### Ce que « préparer la recette » peut vouloir dire depuis un conteneur
+
+`docs/guides/recette-pilote/` décrivait tout : l'environnement, les APK, le jeu de
+données, 34 scénarios à cocher sur des téléphones, les critères de sortie. Rien n'était
+coché, et rien ne pouvait l'être d'ici — un conteneur n'a ni téléphone, ni réseau
+mobile, ni compte FedaPay sandbox. Ce qu'il a, c'est le serveur et ses tests.
+
+Chaque scénario a pourtant **deux moitiés** : ce que l'app affiche, et ce que le
+serveur fait quand l'app l'appelle. La seconde se joue ici, sur le jeu
+`beninlink:pilote`, avec les comptes que les PME recevront, par les routes exactes
+des deux apps. C'est `RecettePiloteRepetitionTest` : **25 scénarios sur 34**, un test
+par case, nommé par son numéro (`test_m5_…`). Le jour J, un test rouge est un défaut
+**du serveur**, à corriger avant de distribuer les APK ; un test vert ne dit rien de
+l'écran, qui reste à cocher par un humain. Le §0 du guide tient la correspondance.
+
+Neuf scénarios n'ont pas de moitié serveur jouable ici : la question posée aux PME
+(L6), le tableau de bord du back-office (A1 — ses routes ne se montent que sur le
+domaine de la société pilote, et `MountsTenantRoutes` mappe la société 1, pas la 2),
+le reporting SaaS côté super-admin (A3 — le calcul est couvert par `SaasMetricsTest`),
+`php artisan test` sur la version déployée (S3 — c'est cette suite elle-même), et la
+moitié « écran » de toutes les lignes.
+
+### Ce que la répétition a trouvé : rien côté serveur, trois pièges côté test
+
+Vingt-cinq scénarios, **zéro défaut serveur**. Les sept tests tombés au premier passage
+étaient tous des erreurs de ma lecture, et chacune vaut d'être écrite pour qui
+prolongera la répétition :
+
+| Ce que j'avais supposé | Ce qui est vrai |
+|---|---|
+| un colis créé par l'API porte le préfixe `PIL` | non — `PIL` n'appartient qu'au **jeu** ; l'API attribue le préfixe de la société (`CO…`) |
+| la chronologie du marchand est `data.logs[]` avec `status` | c'est `data.parcelEvents[]` avec `parcel_status` **en chaîne** |
+| le détail d'une course est une `ParcelResource` | c'est le **modèle** avec ses relations (`parcel.merchant.business_name`) |
+| la position s'écrit sur le colis | sur l'**événement** de la course (`parcel_events.delivery_lat`), comme S7 l'avait fixé |
+| `beninlink:journal-syscohada` lit le mois courant | **le mois dernier** par défaut ; passer `--du`/`--au` |
+| après `Sanctum::actingAs()`, une connexion par mot de passe marche | non — le garde par défaut est devenu `sanctum`, et `Auth::attempt()` n'existe que sur `web` ; **et `config('auth.defaults.guard')` a déjà été réécrit**, donc le rétablir par la config rend `sanctum` : il faut `shouldUse('web')` |
+| le compteur du fil est `data.unread` | `data.unread_count` |
+
+### Les apps : un `expo-doctor` qui avait rougi en silence
+
+Le guide exigeait `npx expo-doctor` avant tout build et notait 21/21 au 2026-09-06. Au
+2026-10-03 : **20/21**, « 1 check failed » — 11 paquets côté marchand, 13 côté livreur,
+en retard à l'intérieur du SDK 57 (`expo` 57.0.20 → 57.0.26, `expo-router`,
+`expo-notifications`, `expo-location`, `expo-image-picker`…). Rien dans le dépôt ne
+pouvait le voir : les apps n'ont pas de lanceur, et ce contrôle dépend du registre npm
+du jour. `npx expo install --fix` dans les deux apps, puis typecheck, lint et doctor
+**21/21** sur chacune. Un `expo-doctor` rouge fait échouer EAS après dix minutes de
+file (`mobile-livreur/CLAUDE.md`) : il se relance avant **chaque** build.
+
+### Ce que le lot livre, et ce qu'il ne livre pas
+
+| Livré | Où |
+|---|---|
+| la répétition (25 tests, 158 assertions) | `tests/Feature/RecettePiloteRepetitionTest.php` |
+| le §0 du guide : correspondance scénario ↔ test, ce qui reste humain, les pièges | `docs/guides/recette-pilote/README.md` |
+| la **fiche de préparation** P1-P10 : serveur, base, FedaPay sandbox, worker, SMS, EAS et keystores, téléphones, PME informées, suite verte, tableau de collecte — un responsable et une vérification par ligne | idem, §7 |
+| le modèle de collecte des retours | `docs/guides/recette-pilote/retours-modele.csv` |
+| les deux apps à jour du SDK 57, 21/21 | `mobile/package.json`, `mobile-livreur/package.json` et leurs `lock` |
+
+Non livré, parce que non livrable d'ici : les APK (compte EAS, deux keystores), le
+serveur de recette, les clés FedaPay sandbox, les téléphones, les PME. La fiche P1-P10
+nomme chaque manque et qui le comble. **E1 passe de « rien n'est coché » à « tout ce
+qui se vérifie sans téléphone est vérifié » ; l'exécution reste humaine.**
+
+### Vérification — quatre sabotages
+
+| Sabotage | Effet |
+|---|---|
+| le jeu n'affecte plus de course à un livreur (`PARCEL_PLAN`) | **rouge** (L2 : onglet « En cours » vide) |
+| le forfait Togo passe à 15 000 (`ZoneCatalog`) | **rouge** (M3) |
+| le jeu ne crée plus la boutique des PME | **rouge** (M2 : `shop_id` manquant, 422) |
+| la boutique n'est plus « par défaut » | *verte* — l'API ne lit pas ce drapeau, seul l'écran web de création le fait (piège de S70) : la répétition joue l'API, pas Blade |
+
+Suite complète : **1 112 tests, 46 355 assertions**, verte (delta `+25 / +158` pour ce lot).

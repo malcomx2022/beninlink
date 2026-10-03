@@ -119,6 +119,10 @@ avant les apps.
   n'avaient **jamais** de relevé. La société vient désormais de la liste des
   sociétés et, pour chaque relevé, du **marchand**.
   Voir `docs/guides/comptabilite/reprise-des-releves.md`.
+- `php artisan test --filter RecettePiloteRepetitionTest` — la **répétition générale** de la
+  recette pilote (**S71**) : la moitié serveur de 25 des 34 scénarios du guide, jouée sur le
+  jeu `beninlink:pilote` par les routes des deux apps. À relancer sur la version déployée
+  avant de distribuer les APK ; un rouge est un défaut du serveur, pas de l'app.
 - `php artisan beninlink:file-attente [--seuil=5]` — état de la file des envois
   (SMS, push, e-mails) et détection d'un **worker arrêté** : la panne que la file
   introduit est silencieuse. Décision **D13**.

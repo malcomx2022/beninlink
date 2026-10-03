@@ -2,7 +2,64 @@
 
 > Guide opérationnel pour monter l'environnement de recette, produire les
 > applications de test et dérouler les scénarios avec les PME pilotes et les
-> livreurs. Mis à jour le 2026-09-09.
+> livreurs. Mis à jour le 2026-10-03 (S71 : répétition générale automatisée,
+> fiche de préparation, modèle de collecte).
+
+## 0. Répétition générale — ce que la suite prouve avant qu'un téléphone soit allumé
+
+Chaque scénario du §4 a deux moitiés : ce que l'app **affiche** (un humain, un
+appareil, un réseau mobile) et ce que le serveur **fait** quand l'app l'appelle.
+`tests/Feature/RecettePiloteRepetitionTest.php` (**S71**) joue la seconde moitié de
+**25 scénarios sur 34**, sur le jeu `beninlink:pilote`, avec les comptes que les PME
+recevront (`PIL-001`, `LIV-001`, `pilote2026`), par les routes exactes des deux apps.
+
+```bash
+cd web && php artisan test --filter RecettePiloteRepetitionTest   # ~16 s, 25 tests
+```
+
+Chaque test porte le numéro de sa case (`test_m5_…` ↔ « Portefeuille : recharge
+Mobile Money »). **Un test rouge le jour J est un défaut du serveur, pas de l'app** :
+on le corrige avant de distribuer les APK. Un test vert ne dit rien de l'écran — la
+case reste à cocher par un humain.
+
+| Scénario | Moitié serveur jouée par S71 | Reste humain |
+|---|---|---|
+| M1 connexion | jeton, enseigne et agence rendus | l'écran les affiche |
+| M2 devis puis création | devis = colis enregistré, TVA 18 % | l'affichage avant validation |
+| M3 export CEDEAO | alerte, interdit refusé (422), **forfait Togo 12 000** quel que soit le poids | le message à l'écran |
+| M4 suivi | la chronologie porte les statuts et les **preuves** du livreur | — |
+| M5 recharge | le solde ne bouge qu'au **webhook signé**, une seule fois (rejeu) | le parcours USSD sandbox |
+| M6 retrait | son compte accepté, celui d'une autre PME refusé (422) | — |
+| M7 factures | numérotation `PREFIXE-AAAA-NNNNNN`, liste, **PDF par lien signé**, journal équilibré | l'ouverture du PDF sur le téléphone |
+| M8 notifications | compteur et entrée du fil après un statut | le toucher ouvre le colis |
+| M9 inscription | IFU/RCCM obligatoires, **code SMS mis en file**, le code ouvre la session | la réception du SMS |
+| M10 mot de passe oublié | lien émis, nouveau mot de passe accepté | la réception du lien |
+| L1 connexion livreur | `LIV-001` accepté, `PIL-001` refusé | — |
+| L2 mes courses | trois onglets servis, téléphone et adresse sur chaque course | Appeler / Itinéraire ouvrent les apps |
+| L3 détail | marchand, adresse d'enlèvement, destinataire, montant | — |
+| L4 livré avec photo | la photo part, le colis passe dans Livrés | la prise de vue |
+| L5 signature | la signature part et s'affiche côté marchand | le tracé au doigt, « Effacer » |
+| L7 partielle | montant obligatoire, **net recalculé côté serveur** | — |
+| L8 retour | le colis passe dans Retours | — |
+| L9 position | écrite sur les courses en cours | la demande d'autorisation |
+| L10 gains | solde, gains, encaissements servis | — |
+| L11 mot de passe | changé, reconnexion | — |
+| A2 relevé | voir M7 | la page d'administration |
+| A4 liste noire | visible par PIL-002, modifiable par PIL-001 seul | — |
+| A5 passerelles | Aamarpay et SSLCommerz coupées | les écrans ne les proposent pas |
+| S1, S2, S4, S5, S6, S7, S8 | jetons croisés 403, colis d'autrui 404, trois constats vides, tarification prête, colis sans zone refusé, `zone_code` dans les modèles, file lue | — |
+
+**Entièrement humains** : L6 (la question posée aux PME sur la signature des retours),
+A1 (le tableau de bord du back-office : ses routes ne se montent que sur le domaine
+de la société pilote), A3 (le reporting SaaS se lit côté super-admin — le calcul est
+couvert par `SaasMetricsTest`), S3 (`php artisan test` sur la version déployée : c'est
+cette suite elle-même), et toute la moitié « écran » de chaque ligne.
+
+⚠️ Deux pièges rencontrés en écrivant la répétition, utiles à qui la prolongera :
+`Sanctum::actingAs()` fait du garde `sanctum` le garde par défaut, et `Auth::attempt()`
+(la connexion) n'existe que sur `web` — se reconnecter après une session simulée
+demande `auth()->shouldUse('web')` ; et `beninlink:journal-syscohada` lit par défaut
+**le mois dernier**, pas le mois courant.
 
 ## 1. Environnement de recette (`web/`)
 
@@ -70,7 +127,13 @@ eas build -p android --profile recette   # → lien de téléchargement de l'APK
 ⚠️ `EXPO_PUBLIC_*` est embarqué en clair dans l'APK : la clé de recette ne protège
 rien, elle filtre. Les données restent protégées par les jetons Sanctum.
 
-Avant chaque build : `npm run typecheck && npx expo lint` dans l'app concernée.
+Avant chaque build : `npm run typecheck && npx expo lint && npx expo-doctor` dans
+l'app concernée. **Au 2026-10-03 (S71)** : les deux apps passent les trois — après
+mise à jour des paquets Expo à l'intérieur du SDK 57 (`npx expo install --fix`,
+11 paquets côté marchand, 13 côté livreur) : `expo-doctor` était tombé à 20/21,
+« 1 check failed », depuis le 21/21 du 2026-09-06. Un `expo-doctor` rouge fait
+échouer EAS après dix minutes de file : le relancer avant **chaque** build, pas
+seulement le premier.
 
 ## 3. Jeu de données béninois
 
@@ -232,4 +295,23 @@ Cocher chaque scénario sur un appareil réel, en réseau mobile (pas seulement 
 
 Un tableau partagé par PME avec, pour chaque retour : date, app et écran, ce qui
 était attendu, ce qui s'est passé, gravité (bloquant / gênant / cosmétique), capture.
-Les retours se traitent par PR sur `main`, comme les chantiers.
+Le modèle est `retours-modele.csv` dans ce dossier (une ligne d'exemple). Les retours
+se traitent par PR sur `main`, comme les chantiers.
+
+## 7. Fiche de préparation — ce qui doit exister avant le premier téléphone
+
+Ce que la suite ne peut ni fournir ni vérifier. Chaque ligne a un responsable et se
+coche **avant** le jour J ; une ligne vide reporte la recette, elle ne la dégrade pas.
+
+| # | À réunir | Responsable | Vérification |
+|---|---|---|---|
+| P1 | Serveur de recette monté selon `infra/mise-en-service/` (PHP 8.3, MySQL `utf8mb4_unicode_ci`, `.env` avec `APP_INSTALLED=yes`, nginx, certificat `*.beninlink.app`) | exploitation | `https://recette.beninlink.app/api/v10/general-settings` répond 200 avec `apiKey` |
+| P2 | Base séparée, `db:seed`, `beninlink:pilote`, société de recette ajoutée dans `domains` avec le sous-domaine `recette` | exploitation | `php artisan beninlink:tarification-prete --societe=<id>` sort en succès |
+| P3 | Compte **FedaPay sandbox** : clés publique/secrète/webhook dans `.env`, webhook pointé sur `https://recette.beninlink.app/fedapay/webhook` | porteur | une recharge de test crédite PIL-002 (`infra/supervision/fedapay-webhooks.md` pour les trois lectures) |
+| P4 | Worker de file installé et surveillé (`infra/supervisor/`), ou `QUEUE_CONNECTION=sync` assumé | exploitation | `php artisan beninlink:file-attente` sort en 0 |
+| P5 | Passerelle SMS configurée (ou `MAIL_MAILER=log` et lecture des codes dans `storage/logs/`) | porteur | M9 : le code OTP arrive, ou se lit dans le journal |
+| P6 | Compte **Expo / EAS** lié aux deux projets (`eas init`), **deux keystores**, variable `EXPO_PUBLIC_API_KEY` posée par profil | développement | `eas build -p android --profile recette` rend deux liens APK |
+| P7 | **Deux téléphones Android** au moins, réseau mobile (pas seulement Wi-Fi), APK installés | porteur | connexion `PIL-001` et `LIV-001` réussie sur chacun |
+| P8 | Les 5 PME et 3 livreurs informés : identifiants, mot de passe commun, personne à appeler, fenêtre de recette | porteur | accusé de réception |
+| P9 | `php artisan test` vert sur la version déployée, dont `RecettePiloteRepetitionTest` | développement | 1 112 tests au 2026-10-03 |
+| P10 | Tableau de collecte ouvert (§6) et partagé aux PME | porteur | une ligne d'essai saisie par chaque PME |

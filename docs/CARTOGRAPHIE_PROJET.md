@@ -171,13 +171,13 @@ sécurité ouvert — les 32 constats S1-S32 et les 11 constats W/F sont fermés
 |---|---|---|
 | M1 | **Alerte douanière sur le détail du colis** : `customs/alerts` n'a pas de filtre par colis ; exige une évolution `web/` → OpenAPI → app, dans l'ordre. | CARTOGRAPHIE S68 |
 | M2 | **Aucun lanceur de tests** dans les deux apps : les six propriétés de S68 sont des lectures de source, pas des rendus. Le **contrôle visuel humain** reste dû. | S68 « ce que ce lot ne garantit pas » |
-| M3 | **Builds EAS non produits** : `eas init`, identifiants, deux keystores distincts, profils `recette` / `production` prêts mais aucun APK référencé. `npx expo-doctor` était 21/21 au 2026-09-06. | recette §2, CLAUDE.md livreur |
+| M3 | **Builds EAS non produits** : `eas init`, identifiants, deux keystores distincts, profils `recette` / `production` prêts mais aucun APK référencé. `npx expo-doctor` était retombé à 20/21 (paquets Expo en retard dans le SDK 57) ; **remis à 21/21 le 2026-10-03 (S71)**, typecheck et lint verts sur les deux apps. | recette §2 et §7 (P6), CLAUDE.md livreur |
 | M4 | **Écran Tarifs à double forme** (zones ou 4 colonnes) : à simplifier seulement quand plus aucun serveur ne sert les colonnes. | `mobile/CLAUDE.md` |
 
 ### 7.4 Recette pilote et mise en service (rien n'est coché)
 | # | Sujet | Source |
 |---|---|---|
-| E1 | **Recette pilote non exécutée** : 10 scénarios marchand, 11 livreur, 5 administration, 8 sécurité, toutes les cases vides. Critères de sortie : 2 Android en réseau mobile, 5 PME avec un colis réel de bout en bout, une recharge FedaPay sandbox par PME. | `recette-pilote/README.md` §4-5 |
+| E1 | **Recette pilote** : ✅ **préparée le 2026-10-03 (S71)** — la moitié serveur de 25 scénarios sur 34 est jouée par `RecettePiloteRepetitionTest` sur le jeu pilote (zéro défaut serveur), fiche de préparation P1-P10 et modèle de collecte dans le guide. **Reste l'exécution humaine** : 2 Android en réseau mobile, 5 PME avec un colis réel de bout en bout, une recharge FedaPay sandbox par PME ; prérequis non livrables d'ici : serveur de recette, clés sandbox, compte EAS. | `recette-pilote/README.md` §0, §4-5, §7 |
 | E2 | **Serveur de recette** `recette.beninlink.app` : `.env` propre, `API_KEY` de recette, jeu `beninlink:pilote` — décrit, à poser. | recette §1 |
 | E3 | **Mise en service production** : secrets `SSH_HOST/USER/KEY` dans Actions, utilisateur système, deux paires SSH, certificat **générique** par DNS-01 (pas `certbot --nginx`), `APP_INSTALLED=yes`, puis Supervisor (sans lui plus aucun SMS ne part), sauvegarde **et exercice de restauration**, supervision. Piège connu : le `db:seed` crée deux sociétés dont une sans zones → `tarification-prete` échoue sur une installation neuve. | `infra/mise-en-service/` |
 | E4 | **Reprise du passé** si une production tournait avant les correctifs : `beninlink:colis-non-debites`, `ecarts-marchands`, `retours-annules`, `reglages-orphelins`, `invoice:generate --societe=N`. À lire, pas à brancher sur un cron (sortie 0 même avec écarts). | REVUE_FEDAPAY §24, `infra/supervision/` |
