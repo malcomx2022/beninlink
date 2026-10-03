@@ -50,5 +50,9 @@ return [
     'journal_settlement' => 'Relevé :number — compensation frais / COD — :merchant',
     'journal_payout' => 'Relevé :number — reversement du net — :merchant',
     'not_found' => 'Relevé introuvable.',
+
+    // Courriel d'envoi du relevé (`App\Mail\InvoicePDFSend`, S69).
+    'mail_intro' => 'Votre relevé de règlement, émis le :date, est joint à ce message au format PDF.',
+    'mail_attachment' => 'Le document joint fait foi ; il reste consultable à tout moment dans votre espace marchand, rubrique Factures.',
     'link_ready' => 'Lien de téléchargement prêt.',
 ];

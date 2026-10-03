@@ -77,8 +77,9 @@ class WebAdminPermissionCoverageTest extends TestCase
     private const HERITAGE = [
         // Les addons : module de plateforme, aucun droit `addons_*` au catalogue.
         'GET admin/addons', 'POST admin/addons', 'GET admin/addons/create',
-        'GET admin/addons/{addon}', 'GET admin/addons/{addon}/edit',
-        'PUT|PATCH admin/addons/{addon}', 'DELETE admin/addons/{addon}',
+        // ⚠️ `GET` et `DELETE admin/addons/{addon}` sont SORTIES de cette liste (S69) :
+        // la ressource les déclarait sur `show()` et `destroy()`, qui n'existent pas.
+        'GET admin/addons/{addon}/edit', 'PUT|PATCH admin/addons/{addon}',
         'POST admin/addons/activation',
         // Réglages Google Maps : aucun droit déduit de l'écran.
         'GET admin/googlemap-settings/index', 'PUT admin/googlemap-settings/update',
@@ -88,8 +89,10 @@ class WebAdminPermissionCoverageTest extends TestCase
         // catalogue sans être utilisé — parce qu'elles bloquaient la garde des deux
         // sélecteurs partagés. Troisième cliquet, deuxième fois qu'il sert.
         'GET admin/subscription/history', 'GET admin/paid/invoice',
-        // NON RELIÉES : aucune vue, aucun JS ne les nomme (leurs méthodes existent).
-        'GET admin/parcel/file-export', 'GET admin/reports/mhd-pdf',
+        // NON RELIÉE : aucune vue, aucun JS ne la nomme (sa méthode existe).
+        // ⚠️ `GET admin/parcel/file-export` est SORTIE de cette liste (S69) : sa méthode,
+        // `ParcelController::parcelExport`, n'existait PAS — la route est retirée.
+        'GET admin/reports/mhd-pdf',
         // Aides AJAX à jeu de droits LARGE : de 6 à 19 droits déduits, sur des
         // listes d'écrans polluées par le motif court. À lire une par une.
         // ⚠️ `parcel/filter`, `parcel/merchant/shops` et `parcel/deliveryman/search`
@@ -109,12 +112,13 @@ class WebAdminPermissionCoverageTest extends TestCase
         // veut plus rien dire.
         'POST admin/assign-pickup/parcel/search',
         'POST admin/assign-return-to-merchant/parcel/search',
-        // La barre de navigation.
-        'POST admin/todo/momal',
+        // ⚠️ `POST admin/todo/momal` (la barre de navigation) est SORTIE de cette liste (S69) :
+        // `TodoController::todoModal` n'existait pas, et l'attribut qui la nommait n'était lu
+        // par aucun script. La route est retirée.
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 22;
+    private const PLAFOND_HERITAGE = 18;
 
     /**
      * Les gardes posées par ce lot, et le droit mesuré pour chacune.

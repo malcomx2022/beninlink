@@ -149,11 +149,12 @@ sécurité ouvert — les 32 constats S1-S32 et les 11 constats W/F sont fermés
 | R6 | **Catalogues de plateforme partagés et modifiables** (`currencies`, `categorys`) et **six catégories de livraison d'amorçage sans société**. | `CARTOGRAPHIE.md` S35 « reste à décider » | porteur |
 | R7 | **TVA** : sociétés hors Bénin, marchands exonérés (`0` = « pas saisi », pas « exonéré »). | D1 limite assumée | porteur |
 | R8 | **Signature du destinataire sur un retour** : utile ou superflue ? Tranché après recette. | recette §4 livreur | PME pilotes |
+| R9 | **Envoyer les relevés de règlement par courriel** : le mailable `InvoicePDFSend` est prêt (S69) mais volontairement non branché — cadence, destinataires et opposabilité du PDF restent à trancher. | CARTOGRAPHIE S69 | porteur, expert-comptable |
 
 ### 7.2 Dette technique `web/` (connue, consignée, non bloquante)
 | # | Sujet | Source |
 |---|---|---|
-| T1 | **Lot de nettoyage du code mort** : `InvoicePDFSend` (expéditeur `admin@example.com`, nom de vue à casse fautive), vue `invoice_pdf.blade.php` (constante inexistante), `InvoiceRepository::InvoicePdf()` doublon, `IncomeController::searchAccount()` méthode morte, routes mortes du bloc I. Règle du projet : 0 fichier supprimé du socle, donc à neutraliser, pas à effacer. | REVUE_FEDAPAY §24, charte-web §11.6, CARTOGRAPHIE S32/S35 |
+| ~~T1~~ | ~~**Lot de nettoyage du code mort**~~ — ✅ **livré le 2026-10-03 (S69)** : `InvoicePDFSend` rendu juste (vue qui résout, marque du destinataire, en file — toujours **non branché**, voir R9), `invoice_pdf.blade.php` délègue au relevé officiel, `InvoicePdf()` et `IncomeController::searchAccount()` retirés, et un **neuvième filet** : toute route déclarée vise une méthode de contrôleur existante (`LegacyDeadCodeCleanupTest`). 0 fichier supprimé. | CARTOGRAPHIE S69 |
 | T2 | **Colonnes monétaires en `decimal(…,2)`** : les décimales ne sont plus affichées mais toujours stockées. Migration à décider séparément. | CARTOGRAPHIE bloc H |
 | T3 | **Migration Bootstrap 4 → 5** (217 `data-toggle`, deux versions chargées ensemble). Hors de tous les lots charte. | charte-web §2.8, §18 |
 | T4 | **PHP 8.4 fermé** par `nette/utils`, `ezyang/htmlpurifier`, `nette/schema` (remontent à `league/commonmark`). | `web/CLAUDE.md` |

@@ -235,20 +235,7 @@ class InvoiceRepository implements InvoiceInterface
     }
     //end admin panel merchant invoice
 
-
-    //both panel invoice print
-    public function InvoicePdf($merchant_id, $invoice_id)
-    {
-        try {
-            $invoice  = Invoice::companywise()->where(['merchant_id' => $merchant_id, 'invoice_id' => $invoice_id])->first();
-            return $invoice;
-        } catch (\Throwable $th) {
-            return false;
-        }
-    }
-
-
-    //get invoice
+    //both panel invoice print (PDF, CSV, journal) — un seul point de lecture (S69)
     public function invoiceGet($merchant_id, $invoice_id)
     {
         try {
