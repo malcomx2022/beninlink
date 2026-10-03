@@ -88,19 +88,71 @@ jobs:
 
       - name: Déploiement par SSH
         uses: appleboy/ssh-action@v1
+        env:
+          DEPLOY_PATH: /var/www/beninlink
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
+          envs: DEPLOY_PATH
           script_stop: true
           script: |
             set -euo pipefail
-            cd /var/www/beninlink
-            # Le script de déploiement est pris à la version qu'on déploie, et
+            cd "$DEPLOY_PATH"
+            # Les scripts de déploiement sont pris à la version qu'on déploie, et
             # non à celle laissée par le déploiement précédent : sans cela, une
             # correction du script ne s'appliquerait qu'au déploiement suivant
-            # — c'est-à-dire jamais à celui qui la transporte.
+            # — c'est-à-dire jamais à celui qui la transporte. Le dossier entier :
+            # deploy.sh appelle verifier-env.sh (S76).
             git fetch origin main
-            git checkout FETCH_HEAD -- docs/guides/infra/deploy/deploy.sh
-            bash docs/guides/infra/deploy/deploy.sh
+            git checkout FETCH_HEAD -- docs/guides/infra/deploy/
+            DEPLOY_PATH="$DEPLOY_PATH" bash docs/guides/infra/deploy/deploy.sh
+
+  # S76 (E2) — le serveur de RECETTE : un vhost sur la même machine que la
+  # production (`/var/www/beninlink-recette`, utilisateur système, base et `.env`
+  # propres), déployé depuis `main` lui aussi — la recette éprouve exactement ce
+  # qui part en production, pas une autre branche.
+  #
+  # Ses secrets sont les siens (`RECETTE_SSH_*`). Tant qu'ils sont vides, le job
+  # se SAUTE au lieu d'échouer : la production ne dépend pas de la recette.
+  # Sur le serveur, `deploy.sh` refuse un `.env` de recette qui porterait des
+  # clés FedaPay live (`verifier-env.sh`).
+  deploy-recette:
+    name: Déploiement sur le serveur de recette
+    needs: tests
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Le serveur de recette est-il configuré ?
+        id: config
+        env:
+          HOTE: ${{ secrets.RECETTE_SSH_HOST }}
+          UTILISATEUR: ${{ secrets.RECETTE_SSH_USER }}
+          CLE: ${{ secrets.RECETTE_SSH_KEY }}
+        run: |
+          if [ -n "$HOTE" ] && [ -n "$UTILISATEUR" ] && [ -n "$CLE" ]; then
+            echo "actif=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "actif=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Pas de serveur de recette configuré (secrets RECETTE_SSH_HOST / RECETTE_SSH_USER / RECETTE_SSH_KEY) : étape sautée."
+          fi
+
+      - name: Déploiement par SSH (recette)
+        if: steps.config.outputs.actif == 'true'
+        uses: appleboy/ssh-action@v1
+        env:
+          DEPLOY_PATH: ${{ secrets.RECETTE_DEPLOY_PATH || '/var/www/beninlink-recette' }}
+        with:
+          host: ${{ secrets.RECETTE_SSH_HOST }}
+          username: ${{ secrets.RECETTE_SSH_USER }}
+          key: ${{ secrets.RECETTE_SSH_KEY }}
+          port: ${{ secrets.RECETTE_SSH_PORT || secrets.SSH_PORT || 22 }}
+          envs: DEPLOY_PATH
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd "$DEPLOY_PATH"
+            git fetch origin main
+            git checkout FETCH_HEAD -- docs/guides/infra/deploy/
+            DEPLOY_PATH="$DEPLOY_PATH" bash docs/guides/infra/deploy/deploy.sh

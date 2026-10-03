@@ -6976,3 +6976,63 @@ Le prorata d'abonnement, la colonne de langue des SMS, la personnalisation des c
 par société, la signature sur retour (après la recette). Et deux surveillances
 d'exploitation pour R9 : la file des envois (`beninlink:file-attente`) et les rebonds de
 courriel ; l'opposabilité juridique du PDF va au dossier de l'expert-comptable (R2).
+
+## S76 — le serveur de recette se déploie comme la production, et ne peut pas encaisser (2026-10-03)
+
+### D'où ça vient
+
+Le plan d'action E1/E2 du porteur partait d'un diagnostic « secrets SSH probablement
+manquants ». Vérifié dans les journaux GitHub Actions : les trois secrets `SSH_HOST`,
+`SSH_USER`, `SSH_KEY` sont **vides**, et tous les déploiements de `main` — les sept du
+jour et ceux d'avant — s'arrêtent au garde des secrets, en une seconde. La suite de
+tests passe à chaque fois ; aucune version n'a jamais atteint un serveur par le workflow.
+
+Et le workflow ne connaissait **qu'un serveur**. Un serveur de recette ne pouvait pas se
+« déployer par le workflow réparé » : il n'y avait rien à réparer, il manquait un job.
+Décision du porteur : la recette est un **vhost** sur la machine de production.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `deploy.yml`, job `deploy-recette` | suit les tests, ignore les pull requests, lit `RECETTE_SSH_*` ; une étape `config` pose `actif=true/false`, et l'étape SSH ne tourne que si `actif` — sans secrets, le job **se saute** au lieu d'échouer : la production ne dépend pas de la recette |
+| `deploy.yml`, les deux étapes SSH | passent `DEPLOY_PATH` au serveur (`envs`), reprennent le dossier `deploy/` **entier** à la version déployée (deploy.sh appelle désormais un second script) |
+| `deploy.sh` | `DEPLOY_PATH="${DEPLOY_PATH:-/var/www/beninlink}"` — sans variable, la production, comme avant ; appelle `verifier-env.sh .env` **avant** `php artisan down` |
+| `verifier-env.sh` | autonome : refuse un `.env` hors production dont `FEDAPAY_ENVIRONMENT=live` **ou** dont une clé contient `_live_` ; avertit une production restée en sandbox ; refuse un `.env` absent |
+
+Pourquoi deux lectures dans le garde : `FedaPayGateway` ne lit que `FEDAPAY_ENVIRONMENT`,
+mais une clé live avec un environnement sandbox est exactement l'erreur de copier-coller
+que le risque décrit. L'une peut être juste et l'autre fausse ; les deux sont lues.
+
+Piège rencontré en l'écrivant : sous `set -euo pipefail`, un `grep` sans résultat dans une
+substitution de commande **tue le script en silence** — les cinq essais rendaient 1 sans
+un mot. `|| true` sur le `grep` : une clé absente n'est pas une erreur.
+
+### Ce que le test fixe — `tests/Feature/RecetteDeploymentTest` (10 tests, 41 assertions)
+
+Le workflow est **analysé** (Symfony Yaml) : le job de recette existe, suit les tests,
+ignore les pull requests, lit ses trois secrets, se saute sans eux (pas de `exit 1` dans
+l'étape de configuration), et les deux étapes SSH déploient par le même script, dossier
+entier, chacune avec son chemin et ses secrets. `deploy.sh` lit `DEPLOY_PATH` et appelle le
+garde **avant** la coupure (position dans le fichier). Et le garde est **exécuté** sur des
+`.env` fabriqués : recette + live refusée, recette + clé live refusée même en sandbox,
+recette sandbox acceptée, recette sans clé acceptée, production live acceptée, production
+sandbox avertie sans refus, `.env` absent refusé.
+
+### Vérification — trois sabotages
+
+| Sabotage | Effet |
+|---|---|
+| `deploy.sh` ne vérifie plus le `.env` | **rouge** |
+| l'étape de configuration du job de recette fait `exit 1` sans secrets | **rouge** |
+| le garde oublie la lecture des clés `_live_` | **rouge** |
+
+Suite complète : **1 182 tests, 46 676 assertions**, verte.
+
+### Ce qui reste, et à qui — hors du dépôt
+
+Tout ce lot est inerte tant que l'exploitation n'a pas : renseigné les **six** secrets
+(production et recette), créé l'utilisateur et le dossier `/var/www/beninlink-recette`
+avec le dépôt cloné, posé sa base et son `.env` (`APP_ENV=staging`, FedaPay sandbox), et
+repointé `recette.beninlink.app` vers la vraie adresse. La fiche P0-P1 du guide de recette
+le dit ligne par ligne. Le premier run vert des **deux** jobs de déploiement est le critère.
