@@ -73,7 +73,12 @@ avant les apps.
 ## Commandes
 - `composer install` · `php artisan migrate` · `php artisan test` (avant tout commit) · `php -l <fichier>`
   La suite tourne aussi dans GitHub Actions : **rien ne part en production sans
-  elle** (`.github/workflows/deploy.yml`, un push sur `main` déploie).
+  elle** (`.github/workflows/deploy.yml`, un push sur `main` déploie). Depuis **S76**
+  le même workflow déploie aussi le **vhost de recette** (`/var/www/beninlink-recette`,
+  secrets `RECETTE_SSH_*`, job qui se saute sans eux) par le même
+  `docs/guides/infra/deploy/deploy.sh`, dont le chemin vient de `DEPLOY_PATH`. Avant de
+  couper le site, `verifier-env.sh` refuse un `.env` hors production qui porterait
+  FedaPay en live ou une clé `_live_` (`RecetteDeploymentTest` l'exécute).
 - `php artisan openapi:generate` après tout changement de `routes/api.php` ou de
   `resources/openapi/overlay.php` (régénère `public/openapi/v10.json`, versionné).
 - `php artisan beninlink:pilote [--company=] [--reset]` : jeu de données béninois de recette

@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 # Déploiement BeninLink (backend web/) — exécuté sur le VPS par GitHub Actions.
 set -euo pipefail
-cd /var/www/beninlink/web
+
+# S76 (E2) : le même script sert la production (/var/www/beninlink) et le vhost
+# de recette (/var/www/beninlink-recette). Le chemin vient du workflow, par la
+# variable DEPLOY_PATH ; sans elle, c'est la production — comme avant.
+DEPLOY_PATH="${DEPLOY_PATH:-/var/www/beninlink}"
+cd "$DEPLOY_PATH/web"
 
 # ---------------------------------------------------------------------------
 # Le serveur sert-il la bonne version de PHP ?
@@ -35,6 +40,18 @@ php -r 'exit(PHP_VERSION_ID >= 80300 && PHP_VERSION_ID < 80400 ? 0 : 1);' || {
     echo "   Rien n'a été touché : le site n'a pas été coupé." >&2
     exit 1
 }
+
+# ---------------------------------------------------------------------------
+# Le .env est-il celui de cet environnement ? (S76, E2)
+#
+# Une recette qui porte une clé FedaPay « live » encaisse de l'argent réel. Le
+# garde refuse tout .env hors production dont FedaPay est en live ou dont une
+# clé est live, et avertit une production restée en sandbox. Il passe AVANT
+# la coupure, pour la même raison que le garde PHP : ne pas déployer vaut
+# mieux que couper pour s'arrêter ensuite. Script autonome, testé par
+# `RecetteDeploymentTest`.
+# ---------------------------------------------------------------------------
+bash "$DEPLOY_PATH/docs/guides/infra/deploy/verifier-env.sh" .env
 
 # ---------------------------------------------------------------------------
 # Le filet : si quoi que ce soit échoue après la coupure, le site remonte.

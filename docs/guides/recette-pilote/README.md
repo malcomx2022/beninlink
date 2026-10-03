@@ -105,6 +105,39 @@ Ajouter la société de recette dans `domains` (page super-admin « Sociétés �
 sous-domaine `recette`, puis régler sur la page « Liquide/Fragile & TVA » le taux de
 TVA (18 %) — la migration l'a déjà posé, vérifier seulement.
 
+### Déploiement (S76, E2) — un vhost, le même mécanisme que la production
+
+Décision du 2026-10-03 : la recette est un **vhost sur la même machine** que la
+production, pas un serveur dédié. Ce qui la sépare : son **utilisateur système**,
+son dossier `/var/www/beninlink-recette`, sa **base** et son `.env`. Le PHP 8.3 déjà
+validé pour la production la sert.
+
+Elle se déploie par le **même workflow** (`.github/workflows/deploy.yml`), depuis
+`main` — la recette éprouve exactement ce qui part en production, jamais une autre
+branche — par un second job, « Déploiement sur le serveur de recette », qui a ses
+propres secrets de dépôt et **se saute** tant qu'ils sont vides (la production ne
+dépend pas de la recette) :
+
+| Secret Actions | Contenu |
+|---|---|
+| `RECETTE_SSH_HOST` | adresse du serveur (la même que la production si vhost) |
+| `RECETTE_SSH_USER` | l'utilisateur système **de la recette**, propriétaire de `/var/www/beninlink-recette` |
+| `RECETTE_SSH_KEY` | sa clé privée (clé publique dans son `authorized_keys`) |
+| `RECETTE_SSH_PORT` | facultatif ; sinon `SSH_PORT`, sinon 22 |
+| `RECETTE_DEPLOY_PATH` | facultatif ; `/var/www/beninlink-recette` par défaut |
+
+Le script `docs/guides/infra/deploy/deploy.sh` lit son chemin dans `DEPLOY_PATH` et,
+**avant de couper le site**, exécute `verifier-env.sh` sur le `.env` : un `.env` hors
+production dont `FEDAPAY_ENVIRONMENT=live` ou dont une clé contient `_live_` est
+**refusé**, rien n'est déployé. C'est la réponse au premier risque du pilote — une clé
+live recopiée depuis la production, et une recette qui encaisse de l'argent réel.
+`RecetteDeploymentTest` exécute ce garde sur des `.env` fabriqués.
+
+Avant le premier déploiement, le dépôt doit être cloné dans `/var/www/beninlink-recette`
+par l'utilisateur de recette (le workflow fait `git fetch` puis `deploy.sh`, il ne clone
+pas), et `recette.beninlink.app` doit pointer sur la vraie adresse du serveur : au
+2026-10-03 le nom résolvait vers une plage non routable (DNS parqué).
+
 ## 2. Applications de test (EAS)
 
 Les deux apps ont un `eas.json` avec deux profils :
@@ -310,7 +343,8 @@ coche **avant** le jour J ; une ligne vide reporte la recette, elle ne la dégra
 
 | # | À réunir | Responsable | Vérification |
 |---|---|---|---|
-| P1 | Serveur de recette monté selon `infra/mise-en-service/` (PHP 8.3, MySQL `utf8mb4_unicode_ci`, `.env` avec `APP_INSTALLED=yes`, nginx, certificat `*.beninlink.app`) | exploitation | `https://recette.beninlink.app/api/v10/general-settings` répond 200 avec `apiKey` |
+| P0 | **Déploiement** : les trois secrets de production (`SSH_HOST` / `SSH_USER` / `SSH_KEY`) **et** les trois de recette (`RECETTE_SSH_*`) renseignés dans Settings → Secrets → Actions ; dépôt cloné dans `/var/www/beninlink-recette` par l'utilisateur de recette ; `recette.beninlink.app` repointé vers la vraie adresse (il était parqué au 2026-10-03) | exploitation | le run du workflow sur `main` passe ses **deux** jobs de déploiement au vert (au 2026-10-03, tous échouaient au garde des secrets) |
+| P1 | Vhost de recette monté selon `infra/mise-en-service/` (PHP 8.3, MySQL `utf8mb4_unicode_ci`, `.env` avec `APP_INSTALLED=yes` et `APP_ENV=staging`, nginx, certificat `*.beninlink.app` — wildcard : validation **DNS-01**) | exploitation | `https://recette.beninlink.app/api/v10/general-settings` répond 200 avec `apiKey` ; `bash docs/guides/infra/deploy/verifier-env.sh web/.env` sort en 0 |
 | P2 | Base séparée, `db:seed`, `beninlink:pilote`, société de recette ajoutée dans `domains` avec le sous-domaine `recette` | exploitation | `php artisan beninlink:tarification-prete --societe=<id>` sort en succès |
 | P3 | Compte **FedaPay sandbox** : clés publique/secrète/webhook dans `.env`, webhook pointé sur `https://recette.beninlink.app/fedapay/webhook` | porteur | une recharge de test crédite PIL-002 (`infra/supervision/fedapay-webhooks.md` pour les trois lectures) |
 | P4 | Worker de file installé et surveillé (`infra/supervisor/`), ou `QUEUE_CONNECTION=sync` assumé | exploitation | `php artisan beninlink:file-attente` sort en 0 |
