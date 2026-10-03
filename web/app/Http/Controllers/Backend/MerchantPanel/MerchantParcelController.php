@@ -51,6 +51,14 @@ class MerchantParcelController extends Controller
         $parcels = $this->repo->all($merchant->id);
         return view('backend.merchant_panel.parcel.index',compact('parcels','request' ));
     }
+    /** Étiquettes en lot (S70) — la vue est celle de l'administration, les colis sont ceux du marchand. */
+    public function parcelMultiplePrintLabel(Request $request)
+    {
+        $request->validate(['parcels' => ['required', 'array']]);
+        $parcels = $this->repo->parcelMultiplePrintLabel($request);
+        return view('backend.parcel.multiple-print-label', compact('parcels'));
+    }
+
     public function parcelBank(Request $request)
     {
         $userID = Auth::user()->id;

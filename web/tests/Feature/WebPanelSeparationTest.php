@@ -51,8 +51,11 @@ use Tests\TestCase;
  * l'exige la règle de S36 — les comptes du back-office sont ADMIN et
  * SUPER_ADMIN et rien d'autre (`HUB` et `INCHARGE` ne sont pas des types de
  * compte mais des marqueurs de lignes de relevé) ; le livreur n'a aucun écran
- * web ; aucune vue marchande n'appelle une URL `admin/`, aucune vue du
- * back-office n'appelle une URL `merchant/` ; aucun rôle de locataire ne porte
+ * web ; ~~aucune vue marchande n'appelle une URL `admin/`~~ — ⚠️ **c'était FAUX**
+ * (S70) : cinq liens vivants du panneau marchand nommaient des routes `admin/`
+ * (annuler, fil d'Ariane, effacer, étiquettes en lot) et répondaient 403 depuis
+ * cette garde ; `MerchantPanelCrossLinkTest` les a recâblés et interdit le retour.
+ * Aucune vue du back-office n'appelle une URL `merchant/` ; aucun rôle de locataire ne porte
  * `plans_*` ni `company_*` ; et il n'existe aucune usurpation d'identité.
  */
 class WebPanelSeparationTest extends TestCase

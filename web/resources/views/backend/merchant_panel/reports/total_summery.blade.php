@@ -14,7 +14,7 @@
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="{{route('dashboard.index')}}" class="breadcrumb-link">{{ __('reports.dashboard') }}</a></li>
                             <li class="breadcrumb-item"><a href="#" class="breadcrumb-link">{{ __('reports.title') }}</a></li>
-                            <li class="breadcrumb-item"><a href="{{route('parcel.reports') }}" class="breadcrumb-link">{{ __('reports.parcel_total_summery') }}</a></li>
+                            <li class="breadcrumb-item"><a href="{{route('merchant.total.summery') }}" class="breadcrumb-link">{{ __('reports.parcel_total_summery') }}</a></li>
                         </ol>
                     </nav>
                 </div>
@@ -34,7 +34,7 @@
                                 <div class="d-flex col-12 col-md-12 col-lg-8 col-sm-12">
                                     <input type="text" autocomplete="off" id="date" name="parcel_date" placeholder="{{ __('placeholder.Enter_date') }}" class="form-control date_range_picker group-input w-50" value="{{ old('parcel_date',$request->parcel_date) }}">
                                     <button type="submit" class="btn btn-space btn-primary group-btn ml-0"><i class="fa fa-filter"></i> {{ __('levels.filter') }}</button>
-                                    <a href="{{ route('parcel.total.summery.index') }}" class="btn btn-space btn-secondary"><i class="fa fa-eraser"></i> {{ __('levels.clear') }}</a>
+                                    <a href="{{ route('merchant.total.summery') }}" class="btn btn-space btn-secondary"><i class="fa fa-eraser"></i> {{ __('levels.clear') }}</a>
                                 </div>
                                 @error('parcel_date')
                                 <small class="text-danger mt-2">{{ $message }}</small>
@@ -219,13 +219,11 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <script type="text/javascript" src="{{ static_asset('backend/js/date-range-picker/date-range-picker-custom.js') }}"></script>
     <script>
-        var merchantUrl = '{{ route('parcel.merchant.get') }}';
-        var merchantID = '{{ $request->parcel_merchant_id }}';
         var deliveryManID = '{{ $request->parcel_deliveryman_id }}';
         var pickupManID = '{{ $request->parcel_pickupman_id }}';
         var dateParcel = '{{ $request->parcel_date }}';
     </script>
-    <script src="{{ static_asset('backend/js/parcel/filter.js') }}"></script>
+    <script src="{{ static_asset('backend/js/merchant_panel/parcel/filter.js') }}"></script>
     <script src="{{ static_asset('backend/js/reports/print.js') }}"></script>
     <script src="{{ static_asset('backend/js/reports/jquery.table2excel.min.js') }}"></script>
     <script src="{{ static_asset('backend/js/reports/reports.js') }}"></script>

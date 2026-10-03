@@ -316,7 +316,7 @@
                                 <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12  d-flex justify-content-end">
                                     <button type="submit"
                                         class="btn btn-space btn-primary">{{ __('levels.save') }}</button>
-                                    <a href="{{ route('parcel.index') }}"
+                                    <a href="{{ route('merchant-panel.parcel.index') }}"
                                         class="btn btn-space btn-secondary">{{ __('levels.cancel') }}</a>
                                 </div>
                             </div>

@@ -96,7 +96,7 @@
                     <div class="col-4 ">
                         <div class="d-flex justify-content-end  mt-0 parcel-create-import-btn-start">
                             {{-- multiple parcel label print --}}
-                            <form action="{{ route('parcel.multiple.print-label') }}" method="get" target="_blank" id="print_label_form">
+                            <form action="{{ route('merchant-panel.parcel.multiple.print-label') }}" method="get" target="_blank" id="print_label_form">
                                 @csrf
                                 <div id="print_label_content"></div>
                                 <button type="submit" class="btn btn-sm btn-primary mr-2 multiplelabelprint" data-parcels='' style="display: none">{{ __('levels.print_label') }}</button>
