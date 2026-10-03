@@ -173,10 +173,10 @@
                 hasPermission('currency_read') == true )
             <!---for setting--->
             <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/database-backup*', 'admin/delivery-category*', 'admin/delivery-category*', 'admin/delivery-charge*', 'admin/packaging*', 'admin/delivery-type*', 'admin/liquid-fragile*', 'admin/sms-settings*', 'admin/sms-send-settings*', 'admin/general-settings*', 'admin/notification-settings*', 'admin/googlemap-settings*', 'admin/asset-category*', 'admin/social-login-setting*', 'admin/pay-out/setup*', 'admin/settings/pay-out/setup*', 'admin/settings/invoice-generate-menually*', 'super-admin/currency*') ? 'active' : '' }} "
+                <a class="nav-link {{ request()->is('admin/database-backup*', 'admin/delivery-category*', 'admin/delivery-category*', 'admin/delivery-charge*', 'admin/packaging*', 'admin/delivery-type*', 'admin/liquid-fragile*', 'admin/sms-settings*', 'admin/sms-send-settings*', 'admin/general-settings*', 'admin/notification-settings*', 'admin/googlemap-settings*', 'admin/asset-category*', 'admin/social-login-setting*', 'admin/pay-out/setup*', 'admin/settings/pay-out/setup*', 'admin/settings/invoice-generate-menually*', 'super-admin/currency*', 'super-admin/category*') ? 'active' : '' }} "
                     href="#" data-toggle="collapse" aria-expanded="false" data-target="#submenu-0"
                     aria-controls="submenu-0"><i class="fa fa-cogs"></i> {{ __('menus.settings') }}</a>
-                <div class="{{ request()->is('admin/database-backup*', 'admin/delivery-category*', 'admin/delivery-charge*', 'admin/packaging*', 'admin/delivery-type*', 'admin/liquid-fragile*', 'admin/sms-settings*', 'admin/sms-send-settings*', 'admin/general-settings*', 'admin/notification-settings*', 'admin/googlemap-settings*', 'admin/asset-category*', 'admin/social-login-setting*', 'admin/pay-out/setup*', 'admin/settings/pay-out/setup*', 'admin/settings/invoice-generate-menually*', 'super-admin/currency*') ? '' : 'collapse' }} submenu"
+                <div class="{{ request()->is('admin/database-backup*', 'admin/delivery-category*', 'admin/delivery-charge*', 'admin/packaging*', 'admin/delivery-type*', 'admin/liquid-fragile*', 'admin/sms-settings*', 'admin/sms-send-settings*', 'admin/general-settings*', 'admin/notification-settings*', 'admin/googlemap-settings*', 'admin/asset-category*', 'admin/social-login-setting*', 'admin/pay-out/setup*', 'admin/settings/pay-out/setup*', 'admin/settings/invoice-generate-menually*', 'super-admin/currency*', 'super-admin/category*') ? '' : 'collapse' }} submenu"
                     id="submenu-0" class="collapse submenu">
                     <ul class="nav flex-column">
 
@@ -205,6 +205,13 @@
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->is('super-admin/currency*') ? 'active' : '' }}"
                                     href="{{ route('currency.index') }}">{{ __('settings.currency') }}</a>
+                            </li>
+                        @endif
+                        {{-- R6 (S75) : le catalogue des catégories a suivi les devises sous super-admin/. --}}
+                        @if (hasPermission('category_read') == true)
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('super-admin/category*') ? 'active' : '' }}"
+                                    href="{{ route('category.index') }}">{{ __('menus.category_manage') }}</a>
                             </li>
                         @endif
  

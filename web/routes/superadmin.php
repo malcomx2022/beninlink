@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Backend\CurrencyController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\Backend\DatabaseBackupController;
 use App\Http\Controllers\Backend\DepartmentController;
 use App\Http\Controllers\Backend\DesignationController;
@@ -113,6 +114,17 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                 Route::get('currency/edit/{id}',            [CurrencyController::class, 'edit'])->name('currency.edit')->middleware('hasPermission:currency_update');
                 Route::put('currency/update',               [CurrencyController::class, 'update'])->name('currency.update')->middleware('hasPermission:currency_update');
                 Route::delete('currency/delete/{id}',       [CurrencyController::class, 'delete'])->name('currency.delete')->middleware('hasPermission:currency_delete');
+
+                // R6 (S75) — le catalogue des catégories (`categorys`, sans `company_id`) suit
+                // les devises : une surface de plateforme, réservée au super-administrateur par
+                // la STRUCTURE (`panel:super-admin`), pas seulement par la donnée des droits.
+                // Les six catégories de livraison d'amorçage, elles, ne bougent pas (D4).
+                Route::get('category/index',         [CategoryController::class, 'index'])->name('category.index')->middleware('hasPermission:category_read');
+                Route::get('category/create',        [CategoryController::class, 'create'])->name('category.create')->middleware('hasPermission:category_create');
+                Route::post('category/store',        [CategoryController::class, 'store'])->name('category.store')->middleware('hasPermission:category_create');
+                Route::get('category/edit/{id}',     [CategoryController::class, 'edit'])->name('category.edit')->middleware('hasPermission:category_update');
+                Route::put('category/update',        [CategoryController::class, 'update'])->name('category.update')->middleware('hasPermission:category_update');
+                Route::delete('category/delete/{id}', [CategoryController::class, 'destroy'])->name('category.delete')->middleware('hasPermission:category_delete');
             });
 
 

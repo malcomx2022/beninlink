@@ -99,6 +99,11 @@ class MerchantRepository implements MerchantInterface{
             if($request->vat !==""){
                 $merchant->vat              = $request->vat;
             }
+            // R7 b (S75) : le statut TVA est explicite — exonéré n'est plus un 0 ambigu.
+            $merchant->vat_status           = \App\Services\Parcel\VatRate::statut((new Merchant())->forceFill(['vat_status' => $request->vat_status]));
+            if ($merchant->vat_status === \App\Enums\VatStatus::EXEMPT) {
+                $merchant->vat = 0;
+            }
             $merchant->cod_charges          = $cod_charges;
             $merchant->address              = $request->address;
 
@@ -371,6 +376,11 @@ class MerchantRepository implements MerchantInterface{
             ;
             if($request->vat !==""){
             $merchant->vat                  = $request->vat;
+            }
+            // R7 b (S75) : même règle qu'à la création.
+            $merchant->vat_status           = \App\Services\Parcel\VatRate::statut((new Merchant())->forceFill(['vat_status' => $request->vat_status]));
+            if ($merchant->vat_status === \App\Enums\VatStatus::EXEMPT) {
+                $merchant->vat = 0;
             }
             $merchant->cod_charges          = $cod_charges;
             $merchant->address              = $request->address;

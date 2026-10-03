@@ -34,6 +34,7 @@ return [
     'total_net' => 'Net payable to merchant',
     'vat_rate' => 'VAT rate applied',
     'vat_none' => 'No VAT charged on this statement.',
+    'vat_exempt' => 'VAT-exempt merchant (declared status): no VAT is charged on this statement.',
     'formula' => 'Net payable = COD collected − fees excl. VAT − VAT.',
     'inconsistent' => 'Warning: recomputed net (:computed) differs from the recorded net (:recorded).',
     'legal_footer' => ':name — IFU :ifu — RCCM :rccm — :address',

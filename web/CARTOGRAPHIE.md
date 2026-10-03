@@ -6898,3 +6898,81 @@ retours facturés sans TVA — `beninlink:retours-sans-tva` en chiffre l'enjeu. 
 aura tranché, la régularisation sera un lot à part, sur le modèle de
 `retours-annules --corriger`. Les reversements aux livreurs (courses payées) ne sont pas
 journalisés : ils restent dans les soldes internes, à ouvrir s'il le demande.
+
+## S75 — sept décisions produit en un lot : R3 à R9 (2026-10-03)
+
+### D'où ça vient
+
+Le § 7.1 de `docs/CARTOGRAPHIE_PROJET.md` gardait sept points « en attente du
+porteur » (R3 à R9). Ils ont été tranchés en une séance, et ce lot les traduit : cinq ont
+du code, deux (R4, R8) n'en ont pas et le disent. Règle d'architecture reçue avec le
+brief : backend d'abord ; aucun des sept ne touche à l'API, donc ni OpenAPI ni apps.
+
+### Ce qui est écrit
+
+| Point | Décision | Où |
+|---|---|---|
+| R3 | pas de prorata ; la règle est **dite avant la confirmation** | `levels.plan_switch_notice` dans `subscription.blade.php` et `switch_subscription.blade.php` |
+| R4 | SMS français seul ; couture `SmsTemplate::locale()` conservée | — |
+| R5 | menu Réglages visible en **OU** sur les droits que lisent ses entrées | `sidebar.blade.php` : la garde liste les quatorze droits du sous-menu (pas `google_map_settings_read`, que le sous-menu ne lit pas) |
+| R6 | catalogue `categorys` réservé au super-admin, comme `currencies` (S55) | six routes déplacées dans `routes/superadmin.php` ; `category_*` retiré des trois listes du locataire (`PermissionSeeder`, `RoleSeeder`, `UserSeeder`) et ajouté aux attributs super-admin ; migration `2026_10_03_110000` pour les super-admins existants ; lien dans le menu super-admin ; `CategoryController` redirige par route nommée |
+| R7 b | statut TVA explicite | `App\Enums\VatStatus`, `merchants.vat_status` (migration `2026_10_03_120000`, `taxable` là où `vat > 0`, jamais `exempt`), `VatRate::for()` / `statut()` / `estExonere()`, sélecteur dans les deux formulaires marchand, `SettlementStatement['merchant']['vat_exempt']`, mention imprimée sur le relevé |
+| R9 | relevés par courriel à l'émission | `SettlementPdf` (point de rendu unique), `StatementMailer` (hors transaction, marque par identifiant, file), appelé par `InvoiceRepository::store()` ; `InvoicePDFSend` et `MerchantInvoiceController::pdfResponse()` passent par `SettlementPdf` |
+
+### Trois choses apprises en chemin
+
+**La garde d'un menu se mesure, elle ne se devine pas.** Le § 13.7 de la charte parlait
+de « quinze » droits ; le sous-menu en lit **quatorze** — l'entrée Google Maps n'est pas
+gardée par `google_map_settings_read`. Lister les quinze aurait ouvert le menu à un agent
+qui n'y aurait rien vu. Le test ne fixe pas une liste : il compare la garde au sous-menu.
+
+**Le droit `category_*` était offert au locataire à trois endroits**, pas un : la table
+`permissions` (seeder), la liste `AdminPermissions()` de `RoleSeeder` **et** celle de
+`UserSeeder`, qui ne se parlent pas. Le premier passage n'en avait retiré que deux, et le
+test l'a dit (« le droit est offert au super-admin et plus au locataire », rouge).
+
+**Blade échappe l'apostrophe.** `assertStringContainsString(__('…'), $html)` échoue sur
+« n'est » devenu `&#039;` ; comparer avec `e(__('…'))`.
+
+### Ce que les tests fixent (25 tests, 67 assertions)
+
+- `PlanSwitchNoticeTest` : le texte sur les deux écrans, et `switchPlan()` qui repart
+  toujours de la date du jour (la règle est dite, pas changée).
+- `SettingsMenuGuardTest` : garde = droits du sous-menu ; un lecteur seul voit le menu ;
+  un agent sans droit de réglages ne le voit pas ; le lecteur reçoit **403** à l'écriture ;
+  la garde d'écriture de la route n'a pas bougé.
+- `CategoryPanelScopeTest` : l'administrateur de société reçoit 403 **même avec le droit en
+  poche** ; le marchand aussi ; le super-admin passe ; l'ancienne URI répond 404 ; le droit a
+  changé de camp dans les semences ; les six catégories de livraison d'amorçage restent.
+- `MerchantVatStatusTest` : non renseigné → taux société, exonéré → 0 (même si un taux
+  traîne), taux propre ; une ligne ancienne garde son comportement ; la migration ne pose
+  jamais `exempt` ; le formulaire refuse un statut inconnu ; le relevé d'un exonéré le dit en
+  toutes lettres, et pas avec la phrase « aucune TVA » ; celui d'un non renseigné ne parle
+  pas d'exonération.
+- `StatementEmailTest` : l'émission met le courriel en file au compte marchand ; le passage
+  planifié aussi, avec la marque de la société du relevé (F4) ; un compte sans courriel reçoit
+  son relevé sans envoi ; la pièce jointe porte le nom du téléchargement et vient du même
+  rendu ; **un seul** fichier d'`app/` nomme la vue du relevé ; **aucune** route d'écriture
+  sur un relevé n'existe (D8).
+
+`SidebarAndLocalesTest` gagne l'inventaire de l'écran des catégories côté super-admin ; les
+filets `WebIsolationCoverageTest` et `BodyIdentifierCoverageTest` suivent les URI.
+
+### Vérification — cinq sabotages
+
+| Sabotage | Effet |
+|---|---|
+| l'avertissement R3 disparaît de la page des plans | **rouge** (1) |
+| la garde du menu perd `general_settings_read` | **rouge** (1) |
+| la route d'écriture des catégories ressort du panneau super-admin | **rouge** (2) |
+| `VatRate` oublie le statut exonéré | **rouge** (2) |
+| le relevé ne part plus par courriel | **rouge** (2) |
+
+Filets et voisins : 260 tests verts. Suite complète : **1 172 tests, 46 635 assertions**, verte.
+
+### Ce qui reste, hors de ce lot et à dessein
+
+Le prorata d'abonnement, la colonne de langue des SMS, la personnalisation des catalogues
+par société, la signature sur retour (après la recette). Et deux surveillances
+d'exploitation pour R9 : la file des envois (`beninlink:file-attente`) et les rebonds de
+courriel ; l'opposabilité juridique du PDF va au dossier de l'expert-comptable (R2).

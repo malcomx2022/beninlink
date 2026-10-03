@@ -1210,7 +1210,12 @@ D'où `test_the_touched_views_compile_to_valid_php`, qui **lint le PHP compilé*
 treize vues de ce lot. Vérifié : en réintroduisant le double `||`, il échoue.
 C'est le test le plus utile du lot, et il n'existerait pas sans l'erreur.
 
-### 13.7 Un défaut préexistant, signalé et non corrigé
+### 13.7 Un défaut préexistant, signalé — corrigé le 2026-10-03 (S75, R5)
+
+> **Corrigé en S75** : le porteur a tranché la visibilité **en OU**. La garde du
+> menu liste désormais les quatorze droits que ses entrées lisent, et
+> `SettingsMenuGuardTest` compare les deux listes ; les gardes d'écriture des
+> routes n'ont pas bougé. Le constat ci-dessous est conservé tel qu'il a été écrit.
 
 La garde du menu **Réglages** ne liste que cinq permissions
 (`delivery_category_read`, `delivery_charge_read`, `delivery_type_read`,

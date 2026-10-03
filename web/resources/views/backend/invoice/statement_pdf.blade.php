@@ -126,7 +126,7 @@
     </table>
 
     <p class="note">{{ __('statement.formula') }} {{ __('statement.amounts_in') }}
-        @if(!$s['vat_rates']) {{ __('statement.vat_none') }} @endif</p>
+        @if($s['merchant']['vat_exempt']) {{ __('statement.vat_exempt') }} @elseif(!$s['vat_rates']) {{ __('statement.vat_none') }} @endif</p>
     @unless($s['totals']['consistent'])
         <p class="warn">{{ __('statement.inconsistent', ['computed' => $fmt($s['totals']['net']), 'recorded' => $fmt($s['totals']['net_recorded'])]) }}</p>
     @endunless

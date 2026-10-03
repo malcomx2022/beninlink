@@ -572,11 +572,24 @@
             </li>
         @endif
 
-        @if (hasPermission('delivery_category_read') == true ||
+        {{-- R5 (S75) : le menu s'affiche dès qu'UNE entrée du sous-menu est accessible — la
+             garde liste les quatorze droits que ses entrées lisent, et rien d'autre
+             (un test compare les deux listes). Les gardes
+             d'écriture des actions (routes `hasPermission:*_update`) ne changent pas. --}}
+        @if (hasPermission('general_settings_read') == true ||
+                hasPermission('delivery_category_read') == true ||
                 hasPermission('delivery_charge_read') == true ||
                 hasPermission('delivery_type_read') == true ||
                 hasPermission('liquid_fragile_read') == true ||
-                hasPermission('packaging_read') == true)
+                hasPermission('sms_settings_read') == true ||
+                hasPermission('sms_send_settings_read') == true ||
+                hasPermission('notification_settings_read') == true ||
+                hasPermission('social_login_settings_update') == true ||
+                hasPermission('payout_setup_settings_read') == true ||
+                hasPermission('packaging_read') == true ||
+                hasPermission('asset_category_read') == true ||
+                hasPermission('database_backup_read') == true ||
+                hasPermission('invoice_generate_menually') == true)
             <!---for setting--->
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/database-backup*', 'admin/delivery-category*', 'admin/delivery-category*', 'admin/delivery-charge*', 'admin/delivery-zone*', 'admin/packaging*', 'admin/delivery-type*', 'admin/liquid-fragile*', 'admin/sms-settings*', 'admin/sms-send-settings*', 'admin/general-settings*', 'admin/notification-settings*', 'admin/googlemap-settings*', 'admin/asset-category*', 'admin/social-login-setting*', 'admin/pay-out/setup*', 'admin/settings/pay-out/setup*', 'admin/settings/invoice-generate-menually*') ? 'active' : '' }} "

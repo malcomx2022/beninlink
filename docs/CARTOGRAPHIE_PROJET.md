@@ -89,7 +89,7 @@ Volumétrie (au 2026-10-03) :
 D1 TVA société 18 % · D2 plan de comptes (tranché S73, numéros à valider) · D3 CAC · D4 zones (grille de départ en fichier, ajustable à l'écran — S72) · D5 fraude scopée ·
 D6 solde plancher à la création · D7 import Excel facture · D8 étape comptable une fois, chez soi, tout ou rien ·
 D9 le relevé est la vérité, le solde un cache · D10 module payout coupé · D11 push Expo ·
-D12 push navigateur retiré · D13 envois en file. Plus S21 (Aamarpay/SSLCommerz coupées) et
+D12 push navigateur retiré · D13 envois en file · D14 décisions produit R3–R9 (S75). Plus S21 (Aamarpay/SSLCommerz coupées) et
 S27 (éditeur `.env` fermé).
 
 ## 4. `mobile/` — app marchand
@@ -143,13 +143,13 @@ sécurité ouvert — les 32 constats S1-S32 et les 11 constats W/F sont fermés
 |---|---|---|---|
 | R1 | **Grille tarifaire** — tranché pour l'essentiel le 2026-10-03 (S72) : la grille de départ (tarifs du 2026-09-06) vit dans `web/database/bareme/grille-nationale.csv`, posée par `beninlink:zones-tarifaires --installer --grille=…` et lue par le jeu pilote ; les montants **ne sont pas figés**, le transporteur les réajuste à tout moment à l'écran et la commande ne les réécrit jamais. Délai global (+300 F jour même) confirmé. **Reste** : les forfaits des 5 autres pays CEDEAO (CI, NE, ML, SN, GH), le taux COD de la zone CEDEAO, la TVA à l'export (18 % ou exonération — un petit chantier si exonération). | D4 complément S72, `refonte-bareme.md` §1.3-1.5 | transporteur |
 | R2 | **Plan de comptes SYSCOHADA** — les 8 questions sont tranchées par le porteur (S73, 2026-10-03) et codées : auxiliaire par défaut, retour taxable, banque à la date du virement, recharges et remises journalisées. **Reste** à l'expert-comptable : le numéro du compte COD dédié, ceux des avances reçues et du transit livreurs, les codes de journaux du logiciel cible, et la régularisation des retours facturés sans TVA (chiffrée par `beninlink:retours-sans-tva`). | D2 décisions S73, `plan-de-comptes.md` § 6 | expert-comptable |
-| R3 | **Renouvellement d'abonnement avant échéance** : `switchPlan()` repart de `now()`, le reliquat est perdu (Stripe comme FedaPay). | `CARTOGRAPHIE.md` bloc E point 4 | porteur |
-| R4 | **Langue du destinataire des SMS** : aucune colonne ne la porte ; couture isolée dans `SmsTemplate::locale()`. | charte-web §15.5 | porteur |
-| R5 | **Garde du menu Réglages** : 5 permissions listées sur 15, un agent avec `general_settings_read` seul ne voit pas le menu. Changer la garde change qui voit quoi. | charte-web §13.7 | porteur |
-| R6 | **Catalogues de plateforme partagés et modifiables** (`currencies`, `categorys`) et **six catégories de livraison d'amorçage sans société**. | `CARTOGRAPHIE.md` S35 « reste à décider » | porteur |
-| R7 | **TVA** : sociétés hors Bénin, marchands exonérés (`0` = « pas saisi », pas « exonéré »). | D1 limite assumée | porteur |
-| R8 | **Signature du destinataire sur un retour** : utile ou superflue ? Tranché après recette. | recette §4 livreur | PME pilotes |
-| R9 | **Envoyer les relevés de règlement par courriel** : le mailable `InvoicePDFSend` est prêt (S69) mais volontairement non branché — cadence, destinataires et opposabilité du PDF restent à trancher. | CARTOGRAPHIE S69 | porteur, expert-comptable |
+| ~~R3~~ | ~~**Renouvellement d'abonnement avant échéance**~~ — ✅ **tranché le 2026-10-03 (S75, D14)** : pas de prorata, la règle est dite avant confirmation sur les deux écrans de changement de plan. | D14 | — |
+| ~~R4~~ | ~~**Langue du destinataire des SMS**~~ — ✅ **tranché (S75, D14)** : français seul pour le pilote, couture `SmsTemplate::locale()` conservée pour l'expansion anglophone. Aucun code. | D14 | — |
+| ~~R5~~ | ~~**Garde du menu Réglages**~~ — ✅ **livré (S75, D14)** : visibilité en OU sur les quatorze droits lus par le sous-menu ; gardes d'écriture inchangées (`SettingsMenuGuardTest`). | D14 | — |
+| ~~R6~~ | ~~**Catalogues de plateforme partagés et modifiables**~~ — ✅ **livré (S75, D14)** : `categorys` suit `currencies` (S55) sous `super-admin/`, `panel:super-admin` ; les six catégories de livraison d'amorçage restent ; pas de personnalisation par société pour l'instant. | D14 | — |
+| ~~R7~~ | ~~**TVA**~~ — ✅ **tranché (S75, D14)** : hors Bénin, taux configurable par société (D1) ; **exonéré** devient un statut explicite `merchants.vat_status`, distinct de « non renseigné », imprimé sur le relevé ; aucune reclassification rétroactive. | D1 complément, D14 | — |
+| R8 | **Signature du destinataire sur un retour** : **reporté** après la recette avec les PME pilotes (décision du 2026-10-03). | recette §4 livreur, D14 | PME pilotes |
+| ~~R9~~ | ~~**Envoyer les relevés de règlement par courriel**~~ — ✅ **activé (S75, D14)** : à l'émission de chaque relevé, en file, au courriel du compte marchand, PDF officiel joint (point de rendu unique) ; jamais de réémission modifiée. **Reste** : l'opposabilité juridique du PDF, à verser au dossier de l'expert-comptable (R2). | D14, `StatementEmailTest` | expert-comptable |
 
 ### 7.2 Dette technique `web/` (connue, consignée, non bloquante)
 | # | Sujet | Source |
@@ -190,6 +190,6 @@ sécurité ouvert — les 32 constats S1-S32 et les 11 constats W/F sont fermés
 
 Le code est **complet par rapport au périmètre défini** (7 chantiers, 15 + 7 écrans, 0 endpoint
 manquant, 0 constat de sécurité ouvert, 8 filets à arriéré nul) ; ce qui reste est d'abord
-**métier** (le reliquat CEDEAO de la grille R1, les numéros de comptes de R2) et **opérationnel**
+**métier** (le reliquat CEDEAO de la grille R1, les numéros de comptes de R2, la signature sur retour R8 après recette) et **opérationnel**
 (recette E1, mise en service E3, builds M3), puis un lot de dette technique consigné (T1-T10)
 qui n'empêche ni la recette ni la mise en production.

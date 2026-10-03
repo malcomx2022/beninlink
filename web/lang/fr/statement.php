@@ -37,6 +37,7 @@ return [
     'total_net' => 'Net à reverser au marchand',
     'vat_rate' => 'Taux de TVA appliqué',
     'vat_none' => 'Aucune TVA facturée sur ce relevé.',
+    'vat_exempt' => 'Marchand exonéré de TVA (statut déclaré) : aucune TVA n\'est facturée sur ce relevé.',
     'formula' => 'Net à reverser = Encaissé COD − Frais HT − TVA.',
     'inconsistent' => 'Attention : le net recalculé (:computed) diffère du net enregistré (:recorded).',
     'legal_footer' => ':name — IFU :ifu — RCCM :rccm — :address',

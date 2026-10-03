@@ -150,7 +150,11 @@ Les huit questions sont tranchées côté métier. Ce qui vous revient tient en
 3. la **régularisation du passé** sur les retours facturés sans TVA (question 6) —
    l'extrait de `beninlink:retours-sans-tva` chiffre ce qu'elle représente ;
 4. le numéro des **avances reçues** (question 8) ;
-5. le numéro du **transit livreurs** (question 8).
+5. le numéro du **transit livreurs** (question 8) ;
+6. et, depuis la décision **R9** (S75) : les relevés partent **par courriel** au marchand à
+   leur émission, avec le PDF officiel — identique au téléchargement, jamais réémis
+   modifié. Son **opposabilité juridique** (valeur probante du PDF, mentions, archivage)
+   relève de votre dossier : dire ce qu'il doit porter de plus, s'il manque quelque chose.
 
 Les numéros se changent en une ligne de `web/config/syscohada.php` et dans le
 test qui les fige — aucune migration, aucun code. La régularisation du passé,

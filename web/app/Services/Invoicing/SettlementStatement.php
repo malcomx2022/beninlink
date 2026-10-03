@@ -3,6 +3,8 @@
 namespace App\Services\Invoicing;
 
 use App\Enums\InvoiceStatus;
+use App\Enums\VatStatus;
+use App\Services\Parcel\VatRate;
 use App\Models\Backend\GeneralSettings;
 use App\Models\Backend\Merchantpanel\Invoice;
 use Carbon\Carbon;
@@ -104,6 +106,9 @@ class SettlementStatement
                 'rccm' => (string) ($merchant?->rccm ?? ''),
                 'address' => (string) ($merchant?->address ?? ''),
                 'phone' => (string) ($merchant?->user?->mobile ?? ''),
+                // R7 b (S75) : exonéré ≠ non renseigné, et le document le dit.
+                'vat_status' => $merchant ? VatRate::statut($merchant) : VatStatus::UNSET,
+                'vat_exempt' => $merchant ? VatRate::estExonere($merchant) : false,
             ],
             // Les clés numériques d'un tableau PHP redeviennent des entiers : on
             // renvoie des chaînes, telles qu'elles s'affichent (« 18 », « 5.5 »).

@@ -6,11 +6,12 @@
 
 | # | Sujet | État | Livré dans le code | Reste à trancher |
 |---|---|---|---|---|
-| D1 | TVA au niveau entreprise | ✅ tranché | taux société `configs.vat_rate` (18 %), surcharge par marchand | valeur par société hors Bénin, exonérations |
+| D1 | TVA au niveau entreprise | ✅ tranché | taux société `configs.vat_rate` (18 %), surcharge par marchand ; **statut explicite** `unset` / `taxable` / `exempt` (R7 b, S75) | valeur par société hors Bénin : configurable (D1), défaut 18 % |
 | D2 | Plan de comptes SYSCOHADA | ✅ tranché (S73) | les 8 questions tranchées par le porteur le 2026-10-03 : auxiliaire par défaut, COD dédié, 4431 / 18 %, journaux en config, banque à la date du virement (`paid_on`), **retour taxable** (+ constat `retours-sans-tva`), arrondi confirmé sans reprise, recharges et remises journalisées, SaaS hors livres | **3 numéros** (COD dédié, avances reçues, transit livreurs), **4 codes de journaux**, et la **régularisation du passé** des retours sans TVA — expert-comptable |
 | D3 | Dépenses d'acquisition (CAC) | ✅ tranché | chapitre « Marketing et acquisition clients » | discipline de saisie mensuelle |
 | D4 | Refonte du barème (zones, tranches) | ✅ tranché (S72) | zones/délais/forfaits pays **en base**, résolveur, écrans, API, apps ; **grille de départ dans un fichier versionné**, posée par la commande et le jeu pilote, **ajustable à tout moment à l'écran** | forfaits des 5 autres pays CEDEAO, taux COD CEDEAO, TVA à l'export (R1) |
 | D5 | Fiches de fraude sans `company_id` | ✅ tranché | migration de rattachement par l'auteur | — |
+| D14 | Décisions produit R3–R9 | ✅ tranché (S75) | pas de prorata mais **dit avant confirmation** (R3) ; SMS français seul (R4) ; menu Réglages visible en **OU** (R5) ; catalogue catégories **super-admin** (R6) ; statut TVA explicite (R7 b) ; relevés **par courriel** à l'émission (R9) | signature sur retour (R8) après la recette ; expansion anglophone des SMS ; personnalisation des catalogues par société |
 
 ---
 
@@ -40,6 +41,16 @@ ajouter un drapeau `vat_exempt` sur le marchand — pas avant.
 
 **Reste au métier.** Confirmer 18 % pour les sociétés pilotes ; fixer le taux des
 sociétés hors Bénin (CEDEAO) le jour venu.
+
+### Complément du 2026-10-03 (R7 b, S75) — l'exonération devient un statut
+
+La limite assumée ci-dessus (« un marchand exonéré ne peut pas se déclarer, 0 =
+pas saisi ») est levée : `merchants.vat_status` porte `unset`, `taxable` ou
+`exempt`. `VatRate::for()` rend 0 pour un exonéré **par statut**, jamais pour un
+0 non renseigné, qui prend toujours le taux de la société. La migration pose
+`taxable` là où un taux était saisi (comportement inchangé) et ne pose `exempt`
+nulle part. Le relevé imprime « Marchand exonéré de TVA (statut déclaré) » —
+distinct de « Aucune TVA facturée ». Décision D14 / R7 b.
 
 ## D2 — Plan de comptes SYSCOHADA ✅ (numéros à valider)
 
@@ -1019,7 +1030,29 @@ aurait exigé `php8.3-redis` et un serveur Redis que rien n'utilise :
 `CACHE_DRIVER`, pas `CACHE_STORE` (nom apparu en Laravel 11), donc le cache
 retombait sur `file` en silence. Le modèle suit désormais cette décision.
 
-**Ce qui reste inline, et pourquoi.** `InvoicePDFSend` : son expéditeur est
-codé en dur (`admin@example.com`) et le PDF voyagerait dans la charge du job.
-Le corriger est un chantier à part, pas un effet de bord de celui-ci.
+**Ce qui restait inline, et ce qu'il en est advenu.** `InvoicePDFSend` : son
+expéditeur était codé en dur (`admin@example.com`) et le PDF voyageait dans la
+charge du job. S69 l'a rendu juste (expéditeur = marque du destinataire, en
+file, PDF rendu à la sortie de la file), et **S75 (R9) l'a branché** : chaque
+relevé émis part au courriel du compte marchand par `StatementMailer`, hors
+transaction, avec le PDF de `SettlementPdf` — le même que le téléchargement.
+
+## D14 — Décisions produit R3 à R9 ✅ (2026-10-03, S75)
+
+Sept points de `docs/CARTOGRAPHIE_PROJET.md` § 7.1 tranchés en une séance par le
+porteur ; cinq ont du code, deux n'en ont pas et le disent.
+
+| # | Décision | Code |
+|---|---|---|
+| R3 | **Pas de prorata** au renouvellement : `switchPlan()` repart de la date du jour, le reliquat n'est pas reporté. La règle est **dite avant la confirmation**, sur l'écran des plans du locataire et sur celui du super-administrateur | `levels.plan_switch_notice` dans les deux vues ; `PlanSwitchNoticeTest` tient le texte **et** l'absence de calcul de crédit |
+| R4 | SMS en **français seul** pour le pilote. Pas de colonne de langue, pas de gabarits traduits ; la couture `SmsTemplate::locale()` reste pour l'expansion anglophone (Nigeria, Ghana) | aucun |
+| R5 | Menu Réglages visible dès qu'**une** entrée est accessible (OU sur les quatorze droits que lisent ses entrées). Les gardes d'écriture des routes ne bougent pas | `sidebar.blade.php` ; `SettingsMenuGuardTest` compare la garde aux droits du sous-menu, et vérifie qu'un lecteur seul voit le menu sans pouvoir écrire |
+| R6 | Catalogue des **catégories** (`categorys`, sans `company_id`) réservé au **super-administrateur**, comme les devises (S55) : routes sous `super-admin/category`, `panel:super-admin`, droit retiré des semences du locataire, migration pour les super-admins existants. Les six catégories de livraison d'amorçage restent | `routes/superadmin.php`, migration `2026_10_03_110000`, `CategoryPanelScopeTest` |
+| R7 a | Hors Bénin : taux par société, configurable (D1), défaut 18 % | aucun |
+| R7 b | **Exonéré ≠ non renseigné** : `merchants.vat_status` (`unset` / `taxable` / `exempt`, `App\Enums\VatStatus`). `exempt` → 0 et le relevé l'imprime ; `unset` → taux société ; un taux saisi avant devient `taxable` (même comportement) ; **personne** n'est reclassé exonéré par migration | `VatRate`, formulaire marchand, `SettlementStatement` / PDF, `MerchantVatStatusTest` |
+| R8 | Signature du destinataire sur un retour : **reporté** après la recette avec les PME pilotes | aucun |
+| R9 | **Relevés par courriel** : à l'émission de chaque relevé, en file (D13), au courriel du compte marchand, avec **le** PDF officiel (`SettlementPdf`, point de rendu unique). **Jamais de réémission modifiée** (D8) : aucune route n'écrit sur un relevé, un test l'affirme. Délivrabilité : file active à surveiller (`beninlink:file-attente`). Opposabilité juridique du PDF : dossier de l'expert-comptable (R2) | `StatementMailer`, `SettlementPdf`, `InvoiceRepository::store()`, `StatementEmailTest` |
+
+Hors de ce lot, et volontairement : le prorata d'abonnement, la colonne de langue
+des SMS, la personnalisation des catalogues par société, la signature sur retour.
 

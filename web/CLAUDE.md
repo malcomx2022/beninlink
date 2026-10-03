@@ -46,6 +46,9 @@ avant les apps.
 - **TVA** : taux **au niveau de la société** (`configs.vat_rate`, 18 % au Bénin), surcharge
   par marchand si `merchants.vat` > 0 — toujours via `VatRate::for()`. Registre des
   décisions métier : `docs/DECISIONS_METIER.md`.
+  **Exonéré ≠ non renseigné** (**R7 b**, S75) : `merchants.vat_status` (`App\Enums\VatStatus`)
+  porte `unset` / `taxable` / `exempt` ; `VatRate::for()` rend 0 pour un exonéré **par
+  statut**, jamais pour un 0 non renseigné. Ne jamais déduire une exonération d'un taux à zéro.
   Le **frais de retour est taxable** (**D2 q.6**, S73) : `ReturnVat` prélève sa TVA au
   retour, au franc, sur sa propre ligne de relevé marchand, et l'écrit sur
   `parcels.return_vat_amount` ; le relevé la facture telle quelle. Ne pas remettre le
@@ -352,6 +355,20 @@ avant les apps.
   cinq liens vivants répondaient 403. Et les scripts du back-office rejoués au panneau
   marchand lisent leurs globaux (`merchantUrl`, `hubUrl`) sous `typeof` — une
   `ReferenceError` dans un `document.ready` coupe tout ce qui suit.
+- Le **relevé de règlement part par courriel à l'émission** (**R9**, S75) : `StatementMailer`,
+  appelé par `InvoiceRepository::store()` **hors transaction** (D8), met `InvoicePDFSend` en file
+  (D13) avec la marque de la société **du relevé** (F4). Le PDF a **un seul point de rendu**,
+  `SettlementPdf` — téléchargement, lien signé et pièce jointe sont le même fichier, et un
+  test refuse un second `loadView` de la vue. **Aucune route n'écrit sur un relevé émis** : une
+  correction est un nouvel état, jamais un PDF remplacé (`StatementEmailTest`).
+- Les **catalogues de plateforme** (`currencies` depuis S55, `categorys` depuis **S75 / R6**)
+  vivent sous `super-admin/` avec `panel:super-admin` : la garantie est **structurelle**. Un
+  catalogue sans `company_id` ne se monte pas sous `admin/`. Les droits `category_*` ne sont
+  plus offerts au locataire (semences) ; une migration les a portés aux super-admins existants.
+- La garde d'un **menu** liste exactement les droits que ses entrées lisent (**R5**, S75) :
+  visibilité en **OU**, gardes d'écriture des routes inchangées. `SettingsMenuGuardTest`
+  compare la garde du menu Réglages à son sous-menu — ajouter une entrée, c'est ajouter son
+  droit à la garde.
 - Jamais de clés en dur : `FEDAPAY_*` dans `web/.env`.
 
 ## Étape 0 — cartographie (à lire AVANT de coder ici)

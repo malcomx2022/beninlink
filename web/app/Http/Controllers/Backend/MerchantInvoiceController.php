@@ -8,9 +8,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Backend\InvoiceParcel;
 use App\Models\Backend\Merchantpanel\Invoice;
 use App\Repositories\Invoice\InvoiceInterface;
+use App\Services\Invoicing\SettlementPdf;
 use App\Services\Invoicing\SettlementStatement;
 use App\Services\Invoicing\SyscohadaJournal;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Brian2694\Toastr\Facades\Toastr;
 use Carbon\Carbon;
 use Illuminate\Http\Request; 
@@ -116,11 +116,12 @@ class MerchantInvoiceController extends Controller
         );
     }
 
+    /** Le PDF officiel — `SettlementPdf`, le même que la pièce jointe du courriel (S75, R9). */
     private function pdfResponse(Invoice $invoice){
-        $statement = SettlementStatement::for($invoice);
-        $pdf = Pdf::loadView('backend.invoice.statement_pdf', compact('statement'))->setPaper('a4');
-
-        return $pdf->download('releve-'.$invoice->invoice_id.'.pdf');
+        return response(SettlementPdf::render($invoice), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.SettlementPdf::fileName($invoice).'"',
+        ]);
     }
 
     private function csvResponse(string $content, string $filename){

@@ -58,7 +58,7 @@ class InvoiceRepository implements InvoiceInterface
     public function store($merchant_id){
             
         try {  
-            return DB::transaction(function () use ($merchant_id) {
+            $releve = DB::transaction(function () use ($merchant_id) {
                   
                 $merchantFind         = Merchant::find($merchant_id);
 
@@ -196,6 +196,14 @@ class InvoiceRepository implements InvoiceInterface
 
                 return null;
             });
+
+            // R9 (S75) : le relevé émis part au marchand par courriel, en file (D13),
+            // HORS de la transaction (D8) — un courriel qui échoue ne défait rien.
+            if ($releve instanceof Invoice) {
+                app(\App\Services\Invoicing\StatementMailer::class)->envoyer($releve);
+            }
+
+            return $releve;
         } catch (\Throwable $th) { 
             Log::error('Relevé de règlement : génération en échec', [
                 'merchant_id' => $merchant_id,

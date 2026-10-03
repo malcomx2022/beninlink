@@ -402,4 +402,12 @@ return [
     'payout_unavailable' => 'Le retrait en ligne n\'est pas disponible. Les règlements se font par relevé de règlement.',
     'filter_period' => 'Période à afficher',
  
+    // R3 (S75) : pas de prorata — dit AVANT la confirmation, sur les deux écrans de changement de plan.
+    'plan_switch_notice' => 'Votre nouvel abonnement démarre aujourd\'hui : la période restante de l\'abonnement actuel n\'est pas reportée.',
+    // R7 b (S75) : statut TVA explicite du marchand.
+    'vat_status' => 'Statut TVA',
+    'vat_status_unset' => 'Taux de la société (non renseigné)',
+    'vat_status_taxable' => 'Taux propre au marchand',
+    'vat_status_exempt' => 'Exonéré de TVA',
+    'vat_status_help' => 'Un taux à 0 ne veut pas dire exonéré : choisir « Exonéré » pour qu\'aucune TVA ne soit facturée, et que les relevés le disent.',
 ];
