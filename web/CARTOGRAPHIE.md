@@ -6707,3 +6707,90 @@ qui se vérifie sans téléphone est vérifié » ; l'exécution reste humaine.*
 | la boutique n'est plus « par défaut » | *verte* — l'API ne lit pas ce drapeau, seul l'écran web de création le fait (piège de S70) : la répétition joue l'API, pas Blade |
 
 Suite complète : **1 112 tests, 46 355 assertions**, verte (delta `+25 / +158` pour ce lot).
+
+## S72 — la grille de départ en un seul fichier, et des montants qui ne sont pas figés (2026-10-03)
+
+### D'où ça vient
+
+Le point R1 de `docs/CARTOGRAPHIE_PROJET.md` disait : « aucun montant de grille n'est
+écrit ». C'était vrai en production et faux en recette. La grille du 2026-09-06 vivait
+**deux fois** : dans une constante `GRID` de `PiloteDataset` (douze montants recopiés
+pour le jeu pilote), et dans la mémoire du transporteur, qui devait les ressaisir à
+l'écran *Réglages → Zones et barème* avant que `beninlink:tarification-prete` accepte
+de laisser partir un déploiement. Deux copies, deux occasions de dériver, et une
+ressaisie humaine de douze cases entre la recette et la production.
+
+Le brief R1 posait cinq questions ; la première (« la grille du 2026-09-06 est-elle le
+tarif, ou un point de départ ? ») a reçu sa réponse en cours de lot : **les montants ne
+sont pas figés, le transporteur doit pouvoir les réajuster à tout moment depuis le
+back-office.** Cette réponse fixe la règle de tout le lot.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `database/bareme/grille-nationale.csv` | **la** grille de départ : `categorie;poids_max;cotonou;peripherie;interieur`, FCFA entiers, lignes `#` de commentaire, pas de colonne CEDEAO (forfait par pays, `ZoneCatalog::PAYS`) |
+| `App\Services\Pricing\GridFile` | `lire()` valide tout ou rien (en-tête, zones admises, entiers, tranches uniques, nombre de colonnes ; « 1 500 » toléré, « 1500.5 » refusé) ; `installer()` crée la catégorie si elle manque et les lignes **si elles manquent, jamais réécrites** ; `manquantes()` sert le constat. Un chemin relatif se lit depuis `web/`, comme la doc l'écrit |
+| `beninlink:zones-tarifaires --grille=` | lit et valide le fichier **avant la première écriture** ; en constat annonce « N ligne(s) à créer » ; avec `--installer` pose le cadre puis la grille et dit « X créée(s), Y conservée(s) telle(s) qu'à l'écran » |
+| `PiloteDataset::grid()` | lit `GridFile::DEFAUT` — la constante `GRID` est partie ; un test refuse qu'elle revienne |
+
+La règle « créées si manquantes, jamais réécrites » n'est pas une prudence technique :
+c'est **la décision du métier traduite en code**. Le fichier est un point de départ ;
+l'écran garde le dernier mot ; la commande, relancée à chaque déploiement, crée ce qui
+manque et ne touche pas au reste. Changer le fichier ne change que ce qui n'a pas encore
+été posé — c'est voulu, et c'est documenté dans le fichier lui-même.
+
+Effet de bord assumé : `beninlink:pilote` **ne réécrit plus non plus** une ligne de grille
+déjà en base. Il écrasait les douze montants à chaque `--reset` ; il crée désormais ce qui
+manque. Sur une société de recette, `--reset` retire les zones et les lignes zonées, donc
+le résultat est le même ; sur une société où le transporteur a ajusté un montant, c'est ce
+montant que la recette exerce — ce qui est précisément ce qu'une recette doit faire.
+
+### Ce que le test fixe — `tests/Feature/GridFileTest` (16 tests, 107 assertions)
+
+- le fichier versionné **est** la grille documentée (4 tranches × 3 zones, les douze
+  montants du 2026-09-06) ; un chemin relatif se lit depuis `web/` ;
+- la commande pose cadre + grille sur une société nue, et `tarification-prete` **réussit**
+  derrière — c'est la première fois qu'un déploiement peut rendre une société facturable
+  sans passer par l'écran ;
+- la relance crée 0 et conserve 12, sans doubler ni la ligne ni la catégorie ;
+- **`test_un_montant_reajuste_a_l_ecran_survit_a_la_relance`** : Cotonou ≤ 1 kg passé de
+  800 à 950 F « à l'écran », relance, 950 reste et rien d'autre n'a bougé — la demande du
+  porteur, mot pour mot ;
+- le constat sans `--installer` n'écrit rien, pas même la catégorie ;
+- six fichiers fautifs (décimal, colonne `cedeao`, colonne manquante, tranche en double,
+  poids non entier, fichier vide) et un fichier introuvable : `FAILURE`, et **zéro zone
+  posée** — la validation précède la première écriture ;
+- le jeu pilote pose les mêmes douze montants que le fichier, sa source ne garde aucune
+  copie (`GridFile::DEFAUT` présent, `const GRID` absent), et il laisse lui aussi le
+  dernier mot à l'écran.
+
+Piège de test rencontré : `expectsOutputToContain()` consomme **une écriture par
+attente** (Mockery prend la première attente qui correspond), donc deux sous-chaînes
+sur la **même ligne** de sortie ne peuvent pas toutes deux passer. La commande écrit
+désormais le refus sur deux lignes (« Grille refusée, rien n'a été écrit. » puis le
+motif), ce qui est aussi plus lisible pour l'humain.
+
+### Vérification — quatre sabotages
+
+| Sabotage | Effet |
+|---|---|
+| `GridFile::installer()` met à jour le montant d'une ligne existante | **rouge** (2 : le montant ajusté revient à 800, le jeu pilote réécrit) |
+| le CSV versionné dévie (800 → 850) | **rouge** (4 : fichier ≠ grille documentée, commande, relance, jeu pilote) |
+| la commande avale le fichier fautif (`SUCCESS` au lieu de `FAILURE`) | **rouge** (7 : les six fichiers fautifs et l'introuvable) |
+| une `const GRID` revient dans `PiloteDataset` | **rouge** (1) |
+
+Les voisins — `PiloteDatasetTest`, `DeliveryZoneGridTest`, `PricingReadinessAuditTest`,
+`DeliveryZoneApiTest`, `DeliveryZonePricingBaselineTest`, `DeliveryZoneScreensTest`,
+`ParcelZoneRouteTest`, `OffRequestScopeCoverageTest` — restent verts (91 tests ensemble).
+
+Suite complète : **1 128 tests, 46 462 assertions**, verte (delta `+16 / +107` pour ce lot).
+
+### Ce qui reste sur R1, hors du code
+
+Le fichier porte la grille **nationale**. Trois réponses du métier manquent encore et
+n'ont pas de place dans ce lot : les forfaits des cinq autres pays CEDEAO (CI, NE, ML, SN,
+GH — tant qu'aucun forfait n'est fixé, la création vers ces pays est refusée), le taux
+COD de la zone CEDEAO (par marchand, `merchants.cod_charges.cedeao`), et la TVA à
+l'export (18 % comme partout, ou exonération — qui demanderait un petit chantier, D1 ne
+connaissant pas « exonéré »).

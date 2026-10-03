@@ -184,7 +184,12 @@ supplément, la **route** est le seul axe.
 
 Grille nationale, en FCFA (Cotonou / Périphérie / Intérieur) : 800 / 1 500 /
 2 500 à 1 kg, 1 200 / 2 000 / 3 500 à 3 kg, 1 700 / 2 800 / 4 500 à 5 kg,
-2 500 / 4 000 / 6 500 à 10 kg.
+2 500 / 4 000 / 6 500 à 10 kg. Ces montants viennent du fichier
+`web/database/bareme/grille-nationale.csv` (**S72**) — le même que celui que
+`beninlink:zones-tarifaires --installer --grille=…` pose en production : la
+recette et la production partent de la même grille. Le jeu ne réécrit pas une
+ligne déjà en base : si le transporteur a ajusté un montant à l'écran, c'est ce
+montant que la recette exerce.
 
 Les colis **tournent sur les trois zones nationales et sur les trois délais** :
 la recette les exerce tous, pas seulement le premier. La zone CEDEAO, elle, ne

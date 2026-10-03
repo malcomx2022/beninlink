@@ -9,7 +9,7 @@
 | D1 | TVA au niveau entreprise | ✅ tranché | taux société `configs.vat_rate` (18 %), surcharge par marchand | valeur par société hors Bénin, exonérations |
 | D2 | Plan de comptes SYSCOHADA | ⏳ à valider | config, export journal, **extrait de période**, auxiliaires par marchand, **fiche de validation** | signature de l'expert-comptable sur `docs/guides/comptabilite/plan-de-comptes.md` |
 | D3 | Dépenses d'acquisition (CAC) | ✅ tranché | chapitre « Marketing et acquisition clients » | discipline de saisie mensuelle |
-| D4 | Refonte du barème (zones, tranches) | ⏳ en cours | zones/délais/forfaits pays **en base**, résolveur, conversion, étalon | **la grille de prix** et les taux COD par zone ; puis écrans, API, apps |
+| D4 | Refonte du barème (zones, tranches) | ✅ tranché (S72) | zones/délais/forfaits pays **en base**, résolveur, écrans, API, apps ; **grille de départ dans un fichier versionné**, posée par la commande et le jeu pilote, **ajustable à tout moment à l'écran** | forfaits des 5 autres pays CEDEAO, taux COD CEDEAO, TVA à l'export (R1) |
 | D5 | Fiches de fraude sans `company_id` | ✅ tranché | migration de rattachement par l'auteur | — |
 
 ---
@@ -225,6 +225,31 @@ un test le fixe (`DeliveryZoneGridTest`).
 
 **Plus rien ne reste côté métier sur D4** : les cinq questions ouvertes du
 2026-09-06 au matin ont toutes reçu leur réponse.
+
+### Complément du 2026-10-03 (S72) — la grille a un point de départ, pas une valeur figée
+
+La question posée le 2026-10-03 était : la grille du 2026-09-06 est-elle **le**
+tarif, ou un point de départ ? Réponse du porteur : **les montants ne sont pas
+figés** ; le transporteur doit pouvoir **les réajuster à tout moment depuis le
+back-office**. Ce qui est tranché et écrit en code :
+
+- la grille de départ vit dans **un seul fichier versionné**,
+  `web/database/bareme/grille-nationale.csv` (`categorie;poids_max;cotonou;peripherie;interieur`,
+  FCFA entiers, une ligne par tranche « jusqu'à N kg », pas de colonne CEDEAO — elle se
+  facture au forfait par pays) ;
+- `beninlink:zones-tarifaires --installer --grille=<fichier>` la pose, et le jeu
+  `beninlink:pilote` lit **le même fichier** : la recette et la production partent de
+  la même grille, sans ressaisie ;
+- une ligne (société, catégorie, zone, tranche) **déjà en base n'est jamais réécrite**.
+  L'écran *Réglages → Zones et barème* garde le dernier mot ; la commande relancée à
+  chaque déploiement crée ce qui manque et ne touche pas au reste
+  (`GridFileTest::test_un_montant_reajuste_a_l_ecran_survit_a_la_relance`) ;
+- un fichier fautif (montant décimal, colonne `cedeao`, tranche en double, colonne
+  manquante) est refusé **avant la première écriture** : rien n'est posé, zones comprises.
+
+Reste ouvert, hors du code : les forfaits des cinq autres pays CEDEAO (CI, NE, ML, SN,
+GH — refusés tant qu'aucun forfait n'est fixé), le taux COD de la zone CEDEAO, et la
+TVA à l'export (R1 de `docs/CARTOGRAPHIE_PROJET.md`).
 
 ### Livré ensuite (étape 4) — les écrans de saisie
 

@@ -1,0 +1,11 @@
+# Grille nationale de livraison (D4) — FCFA entiers, une ligne par tranche « jusqu'à N kg ».
+# Colonnes : la catégorie de colis (créée si elle manque), la tranche, puis une colonne par zone nationale.
+# La zone CEDEAO n'est pas ici : elle se facture au forfait par pays (ZoneCatalog::PAYS).
+# Ce fichier est le POINT DE DÉPART (les tarifs du 2026-09-06), pas une référence :
+# le transporteur l'ajuste, puis `php artisan beninlink:zones-tarifaires --installer --grille=database/bareme/grille-nationale.csv`.
+# Règle : une ligne déjà présente en base n'est JAMAIS réécrite — l'écran « Zones et barème » garde le dernier mot.
+categorie;poids_max;cotonou;peripherie;interieur
+Colis standard (kg);1;800;1500;2500
+Colis standard (kg);3;1200;2000;3500
+Colis standard (kg);5;1700;2800;4500
+Colis standard (kg);10;2500;4000;6500

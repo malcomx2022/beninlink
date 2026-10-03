@@ -46,6 +46,15 @@ faut-il un délai par zone (pas de « jour même » vers Parakou, par exemple) ?
 À remplir en FCFA entiers. La colonne « aujourd'hui » rappelle le tarif en
 vigueur dans le jeu pilote, pour servir de point de départ — pas de référence.
 
+**Depuis S72 (2026-10-03), ce point de départ est un fichier** :
+`web/database/bareme/grille-nationale.csv`, une ligne par tranche, une colonne
+par zone nationale. `php artisan beninlink:zones-tarifaires --installer
+--grille=database/bareme/grille-nationale.csv` le pose ; le jeu pilote lit le
+même fichier. Décision du porteur : **les montants ne sont pas figés** — le
+transporteur les réajuste à tout moment dans *Réglages → Zones et barème*, et la
+commande, relancée à chaque déploiement, **ne réécrit jamais** une ligne déjà
+en base. Modifier le fichier ne change donc que ce qui n'a pas encore été posé.
+
 | Tranche | Aujourd'hui (jour même / lendemain / périphérie / intérieur) | Cotonou | Périphérie | Intérieur | CEDEAO |
 |---|---|---|---|---|---|
 | jusqu'à 1 kg | 1 000 / 800 / 1 500 / 2 500 | | | | |
@@ -168,6 +177,10 @@ Ce que la bascule change pour de bon :
   `delays` **à côté** de `deliveryCharges`, et `GET settings/cod-charges` gagne
   `zone_code`. `zones` vide = la société n'a rien configuré, l'app reste sur
   les colonnes. Spec régénérée. Reste les deux apps.
+- **S72 (2026-10-03)** : la grille de départ en **un seul fichier**
+  (`database/bareme/grille-nationale.csv`), posée par `--grille=` et lue par le
+  jeu pilote ; lignes **créées si manquantes, jamais réécrites** — l'écran garde
+  le dernier mot (`GridFileTest`).
 
 ## 5. Ce qu'il manque pour coder
 
