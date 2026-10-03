@@ -78,14 +78,22 @@ avant les apps.
   rapproche `merchants.current_balance` de son relevé (`merchant_statements`).
   Ne corrige que les écarts **entièrement expliqués** par les annulations de
   livraisons partielles ; les autres, il les montre. Décision **D9**.
-- `php artisan beninlink:zones-tarifaires [--societe=] [--supplement=] [--installer]` —
+- `php artisan beninlink:zones-tarifaires [--societe=] [--supplement=] [--installer] [--grille=]` —
   installe le modèle par **zones** (**D4**) : les quatre zones (Cotonou, Périphérie,
   Intérieur, CEDEAO), les trois délais avec le supplément « jour même » (300 F), et les
   **forfaits CEDEAO par pays** (Togo 12 000, Nigeria 18 000, Burkina Faso 15 000).
-  Elle n'écrit **aucun montant de grille** : les tranches × zones se saisissent dans
-  *Réglages → Zones et barème* (`admin/delivery-zone`) — ces montants appartiennent au
-  transporteur. Les forfaits CEDEAO sont l'exception (tranchés par le métier) et restent
-  **créés s'ils manquent, jamais réécrits**.
+  Sans `--grille`, elle n'écrit **aucun montant de grille** : les tranches × zones se
+  saisissent dans *Réglages → Zones et barème* (`admin/delivery-zone`) — ces montants
+  appartiennent au transporteur. Les forfaits CEDEAO sont l'exception (tranchés par le
+  métier) et restent **créés s'ils manquent, jamais réécrits**.
+  Avec `--grille=database/bareme/grille-nationale.csv` (**S72**), elle pose aussi la
+  grille nationale lue dans ce fichier (`categorie;poids_max;cotonou;peripherie;interieur`,
+  FCFA entiers), que le jeu `beninlink:pilote` lit **lui aussi** : recette et production
+  partent de la même grille. Même règle que les forfaits : une ligne **déjà en base n'est
+  jamais réécrite** — le fichier est un point de départ, le transporteur réajuste les
+  montants **à tout moment** depuis l'écran, et la relance au déploiement suivant ne les
+  ramène pas à la valeur du fichier (`GridFileTest`). Un fichier fautif refuse tout et
+  n'écrit rien, zones comprises. Lecture et pose : `App\Services\Pricing\GridFile`.
   Le **code** d'une zone se fixe à la création (il porte le rattachement du taux COD) et
   une zone qui porte des tarifs ne se supprime pas. Les définitions vivent en un seul
   endroit : `App\Services\Pricing\ZoneCatalog`.

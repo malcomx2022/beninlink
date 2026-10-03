@@ -26,6 +26,7 @@ use App\Repositories\Wallet\WalletInterface;
 use App\Services\Parcel\ChargeCalculator;
 use App\Models\Backend\DeliveryDelay;
 use App\Models\Backend\DeliveryZone;
+use App\Services\Pricing\GridFile;
 use App\Services\Pricing\ZoneCatalog;
 use App\Services\Parcel\WalletDebit;
 use Illuminate\Support\Facades\Auth;
@@ -71,22 +72,13 @@ class PiloteDataset
         ['Parakou', '0022921301005', 'Quartier Zongo, Parakou'],
     ];
 
-    /** Tranches « jusqu'à N kg » : jour même, lendemain, périphérie, intérieur. */
     /**
-     * Grille zonée du jeu pilote : poids => [Cotonou, Périphérie, Intérieur].
-     *
-     * Ce sont les montants de l'ancienne grille, à la correspondance actée en
-     * D4 : Cotonou ← `next_day`, Périphérie ← `sub_city`, Intérieur ←
-     * `outside_city`. Le « jour même » est devenu le supplément global de
-     * `ZoneCatalog::SAME_DAY_SURCHARGE`.
+     * La grille zonée du jeu pilote vient du MÊME fichier que la production
+     * (`GridFile::DEFAUT`, S72) : recette et production partent de la même grille,
+     * sans ressaisie. La correspondance historique est consignée en D4 : Cotonou ←
+     * `next_day`, Périphérie ← `sub_city`, Intérieur ← `outside_city`, et le
+     * « jour même » est devenu le supplément global de `ZoneCatalog::SAME_DAY_SURCHARGE`.
      */
-    private const GRID = [
-        1 => [800, 1500, 2500],
-        3 => [1200, 2000, 3500],
-        5 => [1700, 2800, 4500],
-        10 => [2500, 4000, 6500],
-    ];
-
     private const PACKAGING = [['Sachet', 100], ['Carton', 300], ['Carton renforcé', 500]];
 
     /** PME pilotes : enseigne, gérant·e, téléphone, IFU, RCCM, CNSS, adresse, agence. */
@@ -243,39 +235,14 @@ class PiloteDataset
 
     private function grid(int $companyId): Deliverycategory
     {
-        $category = Deliverycategory::where('company_id', $companyId)->where('title', 'Colis standard (kg)')->first() ?? new Deliverycategory();
-        $category->company_id = $companyId;
-        $category->title = 'Colis standard (kg)';
-        $category->status = Status::ACTIVE;
-        $category->position = 1;
-        $category->save();
-
         // Le cadre d'abord : sans zones, un colis n'a plus de tarif du tout
         // depuis l'étape 6, et le jeu de recette ne créerait pas un seul colis.
-        $zones = app(ZoneCatalog::class)->installer($companyId);
-        $nationales = [DeliveryZone::COTONOU, DeliveryZone::PERIPHERIE, DeliveryZone::INTERIEUR];
+        app(ZoneCatalog::class)->installer($companyId);
 
-        $position = 1;
-        foreach (self::GRID as $weight => $montants) {
-            foreach ($nationales as $rang => $code) {
-                $zoneId = $zones[$code]->id;
-                $row = DeliveryCharge::where('company_id', $companyId)
-                    ->where('category_id', $category->id)
-                    ->where('zone_id', $zoneId)
-                    ->where('weight', $weight)->first() ?? new DeliveryCharge();
-                $row->company_id = $companyId;
-                $row->category_id = $category->id;
-                $row->zone_id = $zoneId;
-                $row->weight = $weight;
-                $row->amount = $montants[$rang];
-                $row->position = $position;
-                $row->status = Status::ACTIVE;
-                $row->save();
-            }
-            $position++;
-        }
+        $fichier = app(GridFile::class);
+        $resultat = $fichier->installer($companyId, $fichier->lire(base_path(GridFile::DEFAUT)));
 
-        return $category;
+        return array_values($resultat['categories'])[0];
     }
 
     /** @return Packaging[] */
