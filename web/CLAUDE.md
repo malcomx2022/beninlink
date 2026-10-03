@@ -316,6 +316,12 @@ avant les apps.
   suit D13 et F4, la vue `invoice_pdf` délègue au relevé officiel), une méthode morte
   se retire. Un doublon « corps pour corps » n'est pas inoffensif : il avale les
   correctifs et les sabotages (S32).
+- Une vue d'un panneau ne **nomme** pas une route de l'autre : dixième filet,
+  `tests/Feature/MerchantPanelCrossLinkTest` (**S70**), qui lit les `route('…')` des vues
+  de `merchant_panel/` et refuse toute URI `admin/`. S41 l'avait affirmé sans le mesurer ;
+  cinq liens vivants répondaient 403. Et les scripts du back-office rejoués au panneau
+  marchand lisent leurs globaux (`merchantUrl`, `hubUrl`) sous `typeof` — une
+  `ReferenceError` dans un `document.ready` coupe tout ce qui suit.
 - Jamais de clés en dur : `FEDAPAY_*` dans `web/.env`.
 
 ## Étape 0 — cartographie (à lire AVANT de coder ici)

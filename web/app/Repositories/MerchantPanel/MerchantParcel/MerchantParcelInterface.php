@@ -25,6 +25,7 @@ interface MerchantParcelInterface {
     public function parcelTrack($track_id);
     public function subscribe($request);
     public function parcelExport($request);
+    public function parcelMultiplePrintLabel($request);
     public function statusWiseParcelList($status);
 
 }

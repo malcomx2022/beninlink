@@ -135,13 +135,11 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <script type="text/javascript" src="{{ static_asset('backend/js/date-range-picker/date-range-picker-custom.js') }}"></script>
     <script>
-        var merchantUrl = '{{ route('parcel.merchant.get') }}';
-        var merchantID = '{{ $request->parcel_merchant_id }}';
         var deliveryManID = '{{ $request->parcel_deliveryman_id }}';
         var pickupManID = '{{ $request->parcel_pickupman_id }}';
         var dateParcel = '{{ $request->parcel_date }}';
     </script>
-    <script src="{{ static_asset('backend/js/parcel/filter.js') }}"></script>
+    <script src="{{ static_asset('backend/js/merchant_panel/parcel/filter.js') }}"></script>
     <script src="{{ static_asset('backend/js/reports/print.js') }}"></script>
     <script src="{{ static_asset('backend/js/reports/jquery.table2excel.min.js') }}"></script>
     <script src="{{ static_asset('backend/js/reports/reports.js') }}"></script>

@@ -926,6 +926,9 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('parcel/import-parcel',  [MerchantParcelController::class, 'parcelImportExport'])->name('merchant-panel.parcel.parcel-import');
                         Route::post('parcel/file-import',   [MerchantParcelController::class, 'parcelImport'])->name('merchant-panel.parcel.file-import');
                         Route::get('parcel/file-export',    [MerchantParcelController::class, 'parcelExport'])->name('merchant-panel.parcel.file-export');
+                        // S70 — le bouton « imprimer les étiquettes » de la liste visait la route `admin/`
+                        // (403 pour un marchand depuis S41). Même vue que l'administration, périmètre du MARCHAND.
+                        Route::get('parcel/multiple/print/label', [MerchantParcelController::class, 'parcelMultiplePrintLabel'])->name('merchant-panel.parcel.multiple.print-label');
                         Route::get('reports/parcel-reports',                [MerchantReportsController::class, 'parcelReports'])->name('merchant-panel.parcel.reports');
                         Route::get('reports/parcel-filter-reports',         [MerchantReportsController::class, 'parcelSReports'])->name('merchant-panel.parcel.filter.reports');
                         Route::get('parcel-reports-print-page/{array}',     [MerchantReportsController::class, 'parcelReportsPrint'])->name('merchant-panel.parcel.reports.print.page');

@@ -164,6 +164,7 @@ sécurité ouvert — les 32 constats S1-S32 et les 11 constats W/F sont fermés
 | T8 | **Taille de page = contrat implicite** (douane 20, notifications 20, relevés 10) : gardé par `MerchantAppCustomsContractTest`, mais rien dans la réponse HTTP ne la porte. | CARTOGRAPHIE S68 |
 | T9 | **Re-fusion We Courier** : méthode écrite, jamais jouée ; question « faut-il monter ? » ouverte. | `docs/guides/socle/` |
 | T10 | En-têtes datés en retard : `web/CARTOGRAPHIE.md` dit « dernière mise à jour 2026-08-16 » (contenu à S68), `CLAUDE.md` racine « dernière revue 2026-07-06 », `DECISIONS_METIER.md` « 2026-09-06 » (D6-D13 depuis). | ce relevé |
+| ~~T11~~ | ~~**Liens du panneau marchand vers le back-office**~~ — ✅ **livré le 2026-10-03 (S70)** : cinq routes `admin/` nommées par des vues marchandes vivantes (Annuler, fil d'Ariane, Effacer, étiquettes en lot) répondaient 403 depuis S41 ; recâblées, route marchande d'étiquettes en lot scopée au marchand, scripts partagés sans global indéfini, et un **dixième filet** (`MerchantPanelCrossLinkTest`). Le `parcel.merchant.get` relevé en S69 n'était que latent. | CARTOGRAPHIE S70 |
 
 ### 7.3 Apps mobiles
 | # | Sujet | Source |

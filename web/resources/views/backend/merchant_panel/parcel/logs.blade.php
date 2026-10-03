@@ -13,7 +13,7 @@
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="{{route('dashboard.index')}}" class="breadcrumb-link">{{ __('levels.dashboard') }}</a></li>
-                            <li class="breadcrumb-item"><a href="{{route('parcel.index')}}" class="breadcrumb-link">{{ __('parcel.title') }}</a></li>
+                            <li class="breadcrumb-item"><a href="{{route('merchant-panel.parcel.index')}}" class="breadcrumb-link">{{ __('parcel.title') }}</a></li>
                             <li class="breadcrumb-item"><a href="" class="breadcrumb-link active">{{__('levels.logs')}}</a></li>
                         </ol>
                     </nav>

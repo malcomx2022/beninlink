@@ -127,6 +127,10 @@ class SearchSurfaceCoverageTest extends TestCase
         'GET merchant/parcel/filter' => RemainingSurfaceScopeTest::class,
         'GET merchant/reports/parcel-filter-reports' => RemainingSurfaceScopeTest::class,
         'GET merchant/reports/total-summery-filter' => RemainingSurfaceScopeTest::class,
+
+        // S70 — l'impression d'étiquettes en lot du panneau marchand : le bouton existait,
+        // il visait la route `admin/` (403). Périmètre du MARCHAND, prouvé par HTTP.
+        'GET merchant/parcel/multiple/print/label' => MerchantPanelCrossLinkTest::class,
     ];
 
     /**

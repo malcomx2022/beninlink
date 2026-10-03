@@ -57,7 +57,8 @@ $(document).ready(function(){
 
     $( "#parcelMerchantid_" ).select2({
         ajax: {
-            url: merchantUrl,
+            // (S70) Le panneau marchand charge aussi ce script sans définir `merchantUrl`.
+            url: typeof merchantUrl !== 'undefined' ? merchantUrl : undefined,
             type: "POST",
             dataType: 'json',
             delay: 250,
@@ -84,7 +85,8 @@ $(document).ready(function(){
 
     $( "#income_hub_id" ).select2({
         ajax: {
-            url: hubUrl,
+            // (S70) Idem pour `hubUrl`.
+            url: typeof hubUrl !== 'undefined' ? hubUrl : undefined,
             type: "POST",
             dataType: 'json',
             delay: 250,

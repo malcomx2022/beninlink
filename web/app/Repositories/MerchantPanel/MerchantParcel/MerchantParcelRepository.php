@@ -106,6 +106,16 @@ class MerchantParcelRepository implements MerchantParcelInterface {
         return Parcel::companywise()->where('merchant_id', Auth::user()->merchant?->id);
     }
 
+    /**
+     * Les étiquettes en lot (S70) : même forme que `ParcelRepository::parcelMultiplePrintLabel()`,
+     * mais le périmètre est celui du MARCHAND connecté. Règle de S38 pour un lot : un
+     * identifiant hors périmètre est ignoré, le reste du lot passe.
+     */
+    public function parcelMultiplePrintLabel($request){
+        return $this->ownedParcels()->whereIn('id', (array) $request->parcels)
+            ->with('merchant', 'merchant.user', 'merchantShop', 'deliveryCategory', 'packaging')->get();
+    }
+
     public function parcelEvents($id){
         return ParcelEvent::where('parcel_id',$id)
             ->whereIn('parcel_id', $this->ownedParcels()->select('id'))

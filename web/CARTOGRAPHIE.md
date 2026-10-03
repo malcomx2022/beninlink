@@ -6540,3 +6540,93 @@ Un test qui mesure un fichier doit savoir ce qu'est du code dedans.
 Suite complète : **1 076 tests, 46 169 assertions**, verte (delta `+7 / +36` pour ce lot) ;
 les cinq sabotages ci-dessus ont chacun fait rougir le test visé, puis les fichiers ont
 été remis.
+
+## S70 — les liens du panneau marchand qui visaient l'autre panneau (2026-10-03)
+
+### D'où il vient, et ce qui était faux dans le relevé de S69
+
+S69 avait noté, hors lot : « deux vues du panneau marchand appellent
+`route('parcel.merchant.get')`, une route `admin/` gardée par `panel:back-office` ;
+un marchand y reçoit 403 ». La première moitié est vraie, la conclusion **ne l'était
+pas** : ces vues ne portent **aucun** sélecteur `#parcelMerchantid`, donc le `select2`
+qui aurait appelé l'URL ne s'initialise sur rien, et l'appel ne part jamais. Le 403
+était **latent**. Un lien que personne ne suit ne produit pas d'erreur — il attend.
+
+Ce que la lecture complète a trouvé est plus lourd, et **S41 l'avait affirmé absent** :
+« aucune vue marchande n'appelle une URL `admin/` ». Cinq routes `admin/` étaient
+nommées par des vues **vivantes** du panneau marchand, et la garde de S41 les a
+transformées en 403 :
+
+| Vue (`merchant_panel/`) | `route()` nommée | Ce que le marchand touchait | Recâblé vers |
+|---|---|---|---|
+| `parcel/create`, `parcel/edit` | `parcel.index` | le bouton **Annuler** | `merchant-panel.parcel.index` |
+| `parcel/logs` | `parcel.index` | le fil d'Ariane « Colis » | `merchant-panel.parcel.index` |
+| `reports/total_summery` | `parcel.reports`, `parcel.total.summery.index` | le fil d'Ariane, le bouton **Effacer** | `merchant.total.summery` |
+| `parcel/index` | `parcel.multiple.print-label` | **Imprimer les étiquettes** en lot | une route marchande **neuve** (ci-dessous) |
+| `reports/*` | `parcel.merchant.get` | rien (latent) | retiré |
+
+Les quatorze autres noms hors espace `merchant` relevés dans ces vues sont soit des
+routes **du** panneau marchand nommées sans préfixe (`payment.account.*`, lignes
+880-884, dans le groupe `merchant/`), soit le module payout coupé par **D10**
+(`online.payment.*`, `skrill.*`, `aamarpay.*`, `bkash.*`, derrière `onlinePayoutEnabled()`),
+soit les deux routes partagées (`dashboard.index`, `logout`).
+
+### La seconde famille : les scripts du back-office rejoués sans leurs globaux
+
+Les deux vues de rapport chargeaient `parcel/filter.js` et `reports.js`, écrits pour
+l'administration, qui lisent `merchantUrl` et `hubUrl` **en variables globales**. Les
+vues marchandes définissaient la première (sur la route `admin/`) et pas la seconde ;
+`merchant_panel/parcel/filter.js`, lui, lisait `merchantUrl` que **ni** `parcel/index`
+**ni** `parcel_bank` ne définissent. Une `ReferenceError` dans un `document.ready`
+**coupe tout ce qui suit** dans la fermeture. Rien de visible ne manquait — les
+éléments concernés n'existent pas dans ces pages — mais c'est la même maladie que les
+liens : **le panneau marchand réutilise les routes et les scripts du back-office
+comme s'il en faisait partie.**
+
+Correctif : le bloc marchand sort de `merchant_panel/parcel/filter.js` (un marchand ne
+cherche pas un marchand) ; les vues de rapport chargent ce script-là et ne définissent
+plus de route `admin/` ; `reports.js` lit `merchantUrl` et `hubUrl` sous `typeof`,
+parce qu'il reste partagé.
+
+### Les étiquettes en lot : une route marchande, périmètre du marchand
+
+Le bouton existait, avec son script, et n'a **jamais** pu fonctionner pour un marchand
+depuis S41. `GET merchant/parcel/multiple/print/label` →
+`MerchantParcelController::parcelMultiplePrintLabel()` : même vue que l'administration
+(`backend.parcel.multiple-print-label`), mais la lecture passe par `ownedParcels()`
+— société **et** marchand connecté. Règle de lot de **S38** : l'identifiant d'un autre
+marchand est **ignoré**, le reste du lot s'imprime. La route est inscrite au filet S58
+(`SearchSurfaceCoverageTest`, prouvée par HTTP).
+
+### Le dixième filet
+
+`MerchantPanelCrossLinkTest` lit chaque vue de `resources/views/backend/merchant_panel/`,
+en extrait les `route('…')`, et refuse tout nom dont l'URI servie commence par `admin/`.
+Il ne juge pas les intentions : il lit ce qu'une vue **nomme**. Six écrans sont de
+plus appelés par HTTP en tant que marchand (200, et aucune URL `pme.test/admin/` dans
+la page), la route `admin/` que visait le bouton d'étiquettes est mesurée à **403**
+pour un marchand (la prémisse), et les scripts sont lus sans leurs commentaires.
+
+⚠️ Deux pièges de fixture, utiles à qui écrira le prochain écran marchand par HTTP :
+`parcel/create` et `parcel/edit` lisent `$shops[0]->id` et
+`$merchant->cod_charges['inside_city']` **sans les vérifier**. Un marchand semé sans
+boutique par défaut ni taux COD rend ces écrans en **500** — ce que l'inscription ne
+produit jamais, mais qu'une fixture produit à coup sûr.
+
+### Vérification — quatre sabotages
+
+| Sabotage | Effet |
+|---|---|
+| le bouton Annuler de `parcel/create` revient sur `route('parcel.index')` | **rouge** (`names a back office route`) |
+| les étiquettes lisent `Parcel::companywise()` au lieu d'`ownedParcels()` | **rouge** (`renders only its own`) — le colis du voisin s'imprime |
+| `reports.js` relit `url: merchantUrl` nu | **rouge** (`read no undefined global`) |
+| `total_summery` redéfinit `var merchantUrl` sur la route `admin/` | **rouge** (`names a back office route`) |
+
+Deux sabotages involontaires ont corrigé le test lui-même avant qu'il passe : un
+marchand semé **sans boutique par défaut** et **sans taux COD** rend `parcel/create` et
+`parcel/edit` en 500 (voir le piège de fixture ci-dessus), et le test des scripts lisait
+mon propre commentaire — il lit désormais le code sans ses `//`, leçon de S69.
+
+Onze filets voisins relancés après le lot : **139 tests, 781 assertions**, verts. Suite
+complète : voir la ligne ci-dessous.
+Suite complète : **1 087 tests, 46 197 assertions**, verte (delta `+11 / +28` pour ce lot).
