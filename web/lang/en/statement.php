@@ -45,6 +45,8 @@ return [
     'journal_sales' => 'Statement :number — delivery services — :merchant',
     'journal_settlement' => 'Statement :number — fees / COD offset — :merchant',
     'journal_payout' => 'Statement :number — net payout — :merchant',
+    'journal_wallet_recharge' => 'Wallet top-up :reference — advance received — :merchant',
+    'journal_cash_remittance' => 'Cash remittance :reference — courier :deliveryman',
     'not_found' => 'Statement not found.',
     'link_ready' => 'Download link ready.',
 ];

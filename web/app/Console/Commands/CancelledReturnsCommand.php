@@ -67,6 +67,9 @@ class CancelledReturnsCommand extends Command
     /** La note portée par les écritures de retour du marchand. */
     public const NOTE_MARCHAND = 'statementNote.return_received_by_merchant_statment';
 
+    /** La TVA du frais de retour (D2 q.6, S73) : prélevée et rendue avec lui. */
+    public const NOTE_TVA = 'statementNote.return_vat_merchant_statement';
+
     /** Celle du livreur, pour sa course de retour. */
     public const NOTE_LIVREUR = 'statementNote.return_to_merchant_deliveryman_statement';
 
@@ -185,6 +188,7 @@ class CancelledReturnsCommand extends Command
                     // Sans quoi le prochain relevé refacturerait le retour annulé.
                     $frais = Parcel::whereKey($parcel->id)->lockForUpdate()->first();
                     $frais->return_charges = 0;
+                    $frais->return_vat_amount = 0;
                     $frais->save();
                 }
             });
@@ -207,13 +211,16 @@ class CancelledReturnsCommand extends Command
      */
     private function ecartMarchand(Parcel $parcel): float
     {
-        $lignes = MerchantStatement::where('parcel_id', $parcel->id)->where('note', self::NOTE_MARCHAND);
+        // Le frais et sa TVA (S73) vont ensemble : prélevés ensemble au retour,
+        // rendus ensemble à l'annulation, dus ensemble si le retour tient.
+        $lignes = MerchantStatement::where('parcel_id', $parcel->id)
+            ->whereIn('note', self::notesDuRetour());
 
         $preleve = (float) (clone $lignes)->where('type', StatementType::EXPENSE)->sum('amount')
                  - (float) (clone $lignes)->where('type', StatementType::INCOME)->sum('amount');
 
         $du = (int) $parcel->status === ParcelStatus::RETURN_RECEIVED_BY_MERCHANT
-            ? (float) $parcel->return_charges
+            ? (float) $parcel->return_charges + (float) $parcel->return_vat_amount
             : 0.0;
 
         return round($preleve - $du, 2);
@@ -249,6 +256,26 @@ class CancelledReturnsCommand extends Command
         }
 
         return $ecarts;
+    }
+
+    /**
+     * Les notes qui marquent une ligne de retour du marchand.
+     *
+     * `NOTE_MARCHAND` est stable parce que sa traduction n'existe pas (la clé
+     * est écrite telle quelle). `NOTE_TVA`, elle, est traduite — la ligne porte
+     * donc le texte de la locale au moment du retour. On accepte toutes ses
+     * formes, plutôt que de parier sur la locale de la commande.
+     *
+     * @return list<string>
+     */
+    private static function notesDuRetour(): array
+    {
+        $notes = [self::NOTE_MARCHAND, self::NOTE_TVA];
+        foreach (['fr', 'en'] as $locale) {
+            $notes[] = __(self::NOTE_TVA, [], $locale);
+        }
+
+        return array_values(array_unique($notes));
     }
 
     /** Un frais laissé sur un colis dont le retour ne tient plus. */

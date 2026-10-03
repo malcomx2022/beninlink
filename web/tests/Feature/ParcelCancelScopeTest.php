@@ -53,7 +53,7 @@ use Tests\TestCase;
  * | Méthode | Ce que le chemin non gardé écrirait |
  * |---|---|
  * | `parcelPartialDeliveredCancel` | un `VatStatement` à **notre** `company_id` sur **leur** colis, le statut ramené à `DELIVERY_MAN_ASSIGN`, l'évènement de livraison partielle **supprimé** |
- * | `returnReceivedByMerchant` | un `ParcelEvent` de retour reçu, un `MerchantStatement` débitant **leur** marchand, le solde de **leur** livreur modifié |
+ * | `returnReceivedByMerchant` | un `ParcelEvent` de retour reçu, deux `MerchantStatement` (frais et TVA, S73) débitant **leur** marchand, le solde de **leur** livreur modifié |
  */
 class ParcelCancelScopeTest extends TestCase
 {
@@ -131,7 +131,8 @@ class ParcelCancelScopeTest extends TestCase
         $this->assertSame(1, ParcelEvent::where([
             'parcel_id' => $mien->id, 'parcel_status' => ParcelStatus::RETURN_RECEIVED_BY_MERCHANT,
         ])->count());
-        $this->assertSame(1, MerchantStatement::where('parcel_id', $mien->id)->count());
+        // Deux lignes depuis S73 (D2 q.6) : le frais de retour, et sa TVA.
+        $this->assertSame(2, MerchantStatement::where('parcel_id', $mien->id)->count());
     }
 
     /* ────────────────────────────── fixtures ───────────────────────────────── */

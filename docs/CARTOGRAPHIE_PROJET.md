@@ -72,7 +72,7 @@ Volumétrie (au 2026-10-03) :
 | 1 | Francisation + FCFA entier | 2026-08-16 | colonnes `decimal(…,2)` toujours en base |
 | 2 | IFU / RCCM / CNSS | 2026-08-17 | — |
 | 3 | FedaPay (wallet + abonnement + panneau web) | 2026-09-04/05 | renouvellement avant échéance |
-| 4 | Relevés SYSCOHADA (PDF, CSV, journal) | 2026-09-04 | signature du plan de comptes (D2) |
+| 4 | Relevés SYSCOHADA (PDF, CSV, journal) ; plan de comptes tranché (S73) | 2026-09-04 → 2026-10-03 | 3 numéros + 4 codes de journaux à confirmer, régularisation des retours sans TVA (D2) |
 | 5 | Alertes douanières (3 niveaux, push + courriel) | 2026-08-19 → S67 | alerte sur le détail colis |
 | 6 | Reporting SaaS (MRR, ARR, churn, LTV, CAC) | 2026-09-04 | discipline de saisie CAC |
 | 7 | OpenAPI `/api/v10` | 2026-09-04 | — |
@@ -86,7 +86,7 @@ Volumétrie (au 2026-10-03) :
 `HERITAGE` doit rester vide partout.
 
 ### 3.4 Décisions actées en code
-D1 TVA société 18 % · D2 plan de comptes (⏳) · D3 CAC · D4 zones (grille de départ en fichier, ajustable à l'écran — S72) · D5 fraude scopée ·
+D1 TVA société 18 % · D2 plan de comptes (tranché S73, numéros à valider) · D3 CAC · D4 zones (grille de départ en fichier, ajustable à l'écran — S72) · D5 fraude scopée ·
 D6 solde plancher à la création · D7 import Excel facture · D8 étape comptable une fois, chez soi, tout ou rien ·
 D9 le relevé est la vérité, le solde un cache · D10 module payout coupé · D11 push Expo ·
 D12 push navigateur retiré · D13 envois en file. Plus S21 (Aamarpay/SSLCommerz coupées) et
@@ -142,7 +142,7 @@ sécurité ouvert — les 32 constats S1-S32 et les 11 constats W/F sont fermés
 | # | Sujet | Source | Qui |
 |---|---|---|---|
 | R1 | **Grille tarifaire** — tranché pour l'essentiel le 2026-10-03 (S72) : la grille de départ (tarifs du 2026-09-06) vit dans `web/database/bareme/grille-nationale.csv`, posée par `beninlink:zones-tarifaires --installer --grille=…` et lue par le jeu pilote ; les montants **ne sont pas figés**, le transporteur les réajuste à tout moment à l'écran et la commande ne les réécrit jamais. Délai global (+300 F jour même) confirmé. **Reste** : les forfaits des 5 autres pays CEDEAO (CI, NE, ML, SN, GH), le taux COD de la zone CEDEAO, la TVA à l'export (18 % ou exonération — un petit chantier si exonération). | D4 complément S72, `refonte-bareme.md` §1.3-1.5 | transporteur |
-| R2 | **Plan de comptes SYSCOHADA** : fiche de validation (7 questions) à retourner signée. Le journal est produit, mais reste une proposition. | D2, `plan-de-comptes.md` | expert-comptable |
+| R2 | **Plan de comptes SYSCOHADA** — les 8 questions sont tranchées par le porteur (S73, 2026-10-03) et codées : auxiliaire par défaut, retour taxable, banque à la date du virement, recharges et remises journalisées. **Reste** à l'expert-comptable : le numéro du compte COD dédié, ceux des avances reçues et du transit livreurs, les codes de journaux du logiciel cible, et la régularisation des retours facturés sans TVA (chiffrée par `beninlink:retours-sans-tva`). | D2 décisions S73, `plan-de-comptes.md` § 6 | expert-comptable |
 | R3 | **Renouvellement d'abonnement avant échéance** : `switchPlan()` repart de `now()`, le reliquat est perdu (Stripe comme FedaPay). | `CARTOGRAPHIE.md` bloc E point 4 | porteur |
 | R4 | **Langue du destinataire des SMS** : aucune colonne ne la porte ; couture isolée dans `SmsTemplate::locale()`. | charte-web §15.5 | porteur |
 | R5 | **Garde du menu Réglages** : 5 permissions listées sur 15, un agent avec `general_settings_read` seul ne voit pas le menu. Changer la garde change qui voit quoi. | charte-web §13.7 | porteur |
@@ -190,6 +190,6 @@ sécurité ouvert — les 32 constats S1-S32 et les 11 constats W/F sont fermés
 
 Le code est **complet par rapport au périmètre défini** (7 chantiers, 15 + 7 écrans, 0 endpoint
 manquant, 0 constat de sécurité ouvert, 8 filets à arriéré nul) ; ce qui reste est d'abord
-**métier** (le reliquat CEDEAO de la grille R1, la signature du plan de comptes R2) et **opérationnel**
+**métier** (le reliquat CEDEAO de la grille R1, les numéros de comptes de R2) et **opérationnel**
 (recette E1, mise en service E3, builds M3), puis un lot de dette technique consigné (T1-T10)
 qui n'empêche ni la recette ni la mise en production.

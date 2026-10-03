@@ -26,4 +26,5 @@ return [
     'returned_to_merchant_expense'                              => 'Parcel Returned To Merchant Expense',
     'returned_to_merchant_income_cancel'                        => 'Parcel Returned To Merchant Cancel Income',
     'returned_to_merchant_expense_cancel'                       => 'Parcel Returned To Merchant Cancel Expense',
+    'return_vat_merchant_statement' => 'Expense: VAT on return charges (D2, question 6)',
 ];

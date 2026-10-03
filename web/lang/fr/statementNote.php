@@ -25,5 +25,6 @@ return [
     'returned_to_merchant_expense' => 'Dépenses : colis retourné au marchand',
     'returned_to_merchant_income_cancel' => 'Revenus : annulation de colis retourné au marchand',
     'returned_to_merchant_expense_cancel' => 'Dépenses : annulation de colis retourné au marchand',
+    'return_vat_merchant_statement' => 'Dépenses : TVA sur frais de retour (D2, question 6)',
 ];
 

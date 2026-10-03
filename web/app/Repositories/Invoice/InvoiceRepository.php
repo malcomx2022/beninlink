@@ -104,13 +104,16 @@ class InvoiceRepository implements InvoiceInterface
                         $total_d_charge_amount = $parcelDelivered->sum('total_delivery_amount');
                         $total_vat_amount      = $parcelDelivered->sum('vat_amount'); 
                         $total_return_charges  = $returnparcels->sum('return_charges'); 
-                        $total_charges_amount  = ($total_d_charge_amount + $total_vat_amount  + $total_return_charges);
+                        // D2 q.6 (S73) : le retour est taxable — sa TVA, prélevée au
+                        // retour (`return_vat_amount`), entre au relevé avec le frais.
+                        $total_return_vat      = $returnparcels->sum('return_vat_amount');
+                        $total_charges_amount  = ($total_d_charge_amount + $total_vat_amount  + $total_return_charges + $total_return_vat);
                         //end total delivery charge amount 
                         
                         //total current payable                        
                         $parcel_currenct_payable      =  $parcelDelivered->sum('current_payable');//delivered + return parcel  
                         $return_charge                =  $returnparcels->sum('return_charges');//return  charges 
-                        $total_current_payable        = ($parcel_currenct_payable - $return_charge); 
+                        $total_current_payable        = ($parcel_currenct_payable - $return_charge - $total_return_vat); 
                         //end total current payable
                            
                         $issuedOn                 = Carbon::today();
@@ -142,9 +145,11 @@ class InvoiceRepository implements InvoiceInterface
                             if( in_array($parcel->status,$returnStatus) || $parcel->return_to_courier == BooleanStatus::YES){
                                 $d_charge   =  0;
                                 $r_charge   = $parcel->return_charges;
-                                $vat_amount = 0;
+                                // D2 q.6 : plus de `vat_amount = 0` forcé — la TVA du
+                                // retour est celle prélevée au retour, au franc.
+                                $vat_amount = $parcel->return_vat_amount;
                                 $cod_amount = 0;
-                                $total_charge_amount = $r_charge;
+                                $total_charge_amount = $r_charge + $vat_amount;
                                
                                 if($parcel->partial_delivered == BooleanStatus::YES):
                                     $amount     =  $parcel->current_payable; 
@@ -152,7 +157,7 @@ class InvoiceRepository implements InvoiceInterface
                                     $cod_amount = $parcel->cod_amount;
                                     $total_charge_amount = $parcel->total_delivery_amount + $vat_amount; 
                                 else: 
-                                    $amount = (string) - $parcel->return_charges;
+                                    $amount = (string) - ($parcel->return_charges + $parcel->return_vat_amount);
                                     $cash_collection = 0; 
                                     $status    = ParcelStatus::RETURN_TO_COURIER;
                                 endif;
@@ -224,6 +229,14 @@ class InvoiceRepository implements InvoiceInterface
 
             if ($invoice) :
                 $invoice->status  = $request->status;
+                // D2, question 5 (S73) : la date de l'écriture de banque est celle
+                // de l'ordre de virement — c'est-à-dire le jour où l'on marque le
+                // relevé payé. Posée une fois ; effacée si le statut recule.
+                if ((int) $request->status === InvoiceStatus::PAID) {
+                    $invoice->paid_on = $invoice->paid_on ?: Carbon::today()->toDateString();
+                } else {
+                    $invoice->paid_on = null;
+                }
                 $invoice->save();
             else :
                 return false;

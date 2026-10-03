@@ -6794,3 +6794,107 @@ GH — tant qu'aucun forfait n'est fixé, la création vers ces pays est refusé
 COD de la zone CEDEAO (par marchand, `merchants.cod_charges.cedeao`), et la TVA à
 l'export (18 % comme partout, ou exonération — qui demanderait un petit chantier, D1 ne
 connaissant pas « exonéré »).
+
+## S73 — le plan de comptes signé : huit décisions, et un retour qui devient taxable (2026-10-03)
+
+### D'où ça vient
+
+La fiche `docs/guides/comptabilite/plan-de-comptes.md` posait huit questions à
+l'expert-comptable depuis le 2026-09-06 ; le porteur les a tranchées le 2026-10-03,
+et ce lot les traduit en code. Règle d'or reçue avec le brief : **un relevé émis ne se
+modifie jamais directement** (D8) — tout correctif passe par un constat, puis une
+régularisation explicite.
+
+Cinq des huit réponses tiennent dans `config/syscohada.php`. Trois demandaient du code :
+la date de l'écriture de banque (q.5), la TVA du frais de retour (q.6) et les deux flux
+hors relevé à journaliser (q.8).
+
+### Ce qui est écrit
+
+| Question | Décision | Où |
+|---|---|---|
+| 1 | auxiliaire par marchand **par défaut** | `env('SYSCOHADA_AUXILIARY', 'merchant_code')` ; `collectif` pour revenir en arrière ; `syscohada.auxiliarised` nomme les comptes de tiers suffixés (clients, COD, avances) |
+| 2 | compte COD **dédié** acté, numéro à venir | `cod_liability` reste `4712`, libellé « numéro à valider », figé |
+| 3 | 4431, 18 % | figés par le test |
+| 4 | journaux en paramétrage | `VE` / `OD` / `BQ` + **`CA`** (caisse) |
+| 5 | **date de l'ordre de virement** | `invoices.paid_on`, posée par `statusUpdate()` au passage à payé, effacée si le statut recule ; `SyscohadaJournal::reversement()` la prend ; `periode()` range chaque écriture dans la période de sa date |
+| 6 | **retour taxable** | `App\Services\Parcel\ReturnVat` ; `parcels.return_vat_amount` ; ligne marchand `statementNote.return_vat_merchant_statement` + `VatStatement` au retour, inversées à l'annulation ; `InvoiceRepository` facture `return_charges + return_vat_amount` ; `beninlink:retours-sans-tva` constate le passé |
+| 7 | arrondi confirmé, pas de reprise | rien à coder ; la règle est figée (302 pour 18 % de 1 680) |
+| 8 | recharges → avances reçues ; remises → transit ; SaaS → rien | `SyscohadaJournal::recharges()` (D 521 / C 4191 + code, à l'approbation du `Wallet`) et `::remises()` (D 571 / C 4713, `CashReceivedFromDeliveryman`) |
+
+Le service journal a changé de forme sans changer de contrat : `linesFor(Invoice)` sert
+toujours l'export relevé par relevé du back-office, et **`periode(société, du, au)`**
+sert l'extrait de l'expert-comptable — la commande et `JournalPeriod` l'appellent. Un
+relevé émis en août et payé en septembre a désormais ses ventes dans l'extrait d'août et
+sa banque dans celui de septembre ; avant, tout suivait `issued_on`.
+
+### Le point délicat : la TVA du retour touche trois moments, pas un
+
+Mettre la TVA dans le relevé seul aurait suffi à « répondre » à la question 6 — et
+aurait cassé **D9** : le relevé aurait facturé 590 F quand le solde du marchand n'en
+aurait vu que 500, et `beninlink:ecarts-marchands` l'aurait signalé comme un écart. La
+TVA se prélève donc **au retour**, sur sa propre ligne (comme la livraison écrit sa TVA à
+part), se **rend à l'annulation** au montant prélevé, et le relevé **relit** ce qui a été
+prélevé. `CancelledReturnsCommand` suit : ce qui est dû à un retour qui tient, c'est le
+frais **et** sa TVA.
+
+Le taux est celui du **colis** (`parcels.vat`, fixé à la création), à défaut celui du
+marchand ou de la société — pas `settingHelper()` seul, qui résout par la société ambiante.
+
+Trois tests existants ont changé de chiffres, et c'est le signe que la décision mord :
+le retour d'un colis à 1 000 F coûte désormais **590 F** (500 HT + 90 de TVA) et non
+500 ; le relevé de démonstration de la fiche passe de 1 987 à **2 077 F TTC** (TVA 317),
+net **77 923** ; les lignes de relevé marchand d'un retour annulé sont quatre, pas deux.
+
+### Ce que les tests fixent
+
+`tests/Feature/ReturnVatTest` (10 tests) : prélèvement du frais et de sa TVA au franc sur
+deux lignes ; taux société quand le colis n'en a pas ; annulation qui rend les deux et
+efface `return_vat_amount` ; relevé TTC et journal (7061 500, 4431 90) ; constat d'un
+relevé ancien **sans rien toucher** (relevé, ligne, colis, solde) ; TVA manquante au taux
+du colis (302 pour 1 680) ; rien à constater quand les retours portent leur TVA ; filtre
+par société ; et **la commande n'a pas d'option de correction** — un test lit sa
+définition et refuse `--corriger` et `--force`.
+
+`tests/Feature/PlanDeComptesSigneTest` (9 tests) : comptes et journaux **égaux** au plan
+signé, placeholders compris ; auxiliaire par défaut sur les seuls comptes de tiers ;
+4431 et `vat_rate = 18` ; arrondi au franc (302, 434) ; aucun abonnement dans le journal ;
+banque datée du virement (relevé émis le 28/08, payé le 03/09 : août porte VE et OD,
+septembre porte BQ ; reculer le statut efface la date) ; relevé payé sans date retombe
+sur l'émission ; recharge approuvée = avance reçue auxiliarisée, recharge en attente
+ignorée ; remise d'espèces en transit collectif ; extrait de période équilibré sur les
+quatre flux, `--payes` sans recharges ni remises, commande sur toutes les sociétés, et
+une autre société qui ne voit rien.
+
+Trois fichiers mis à jour : `SettlementStatementTest` (2 077 / 317, collectif → auxiliaire
+par défaut), `DeliveryCancellationAccountingTest` (590, quatre lignes),
+`CancelledReturnsCommandTest` (590, 1 180).
+
+Piège rencontré : `NOTE_MARCHAND` de `retours-annules` est stable parce que sa
+traduction **n'existe pas** (la clé est écrite telle quelle). La note de la TVA du retour,
+elle, est traduite — donc dépend de la locale au moment du retour. La commande accepte
+toutes ses formes (`notesDuRetour()`) plutôt que de parier sur la locale.
+
+### Vérification — cinq sabotages
+
+| Sabotage | Effet |
+|---|---|
+| le relevé force à nouveau `vat_amount = 0` sur un retour | **rouge** (2) |
+| le passage à payé ne pose plus `paid_on` | **rouge** (1) |
+| `cod_liability` passe de 4712 à 4718 sans changer le test | **rouge** (2) |
+| le retour ne pose plus sa TVA sur le colis | **rouge** (4) |
+| `retours-sans-tva` gagne une option `--corriger` | **rouge** (1) |
+
+Filets et voisins (huit filets, répétition pilote, jeu pilote, relevés, isolation) :
+156 tests verts. Suite complète : **1 147 tests, 46 565 assertions**, verte — après un seul
+rouge, le contrôle positif de `ParcelCancelScopeTest` qui comptait **une** ligne de relevé
+marchand au retour : il y en a deux désormais, et c'est la décision qui mord.
+
+### Ce qui reste, et à qui
+
+À l'expert-comptable, sans code ni migration : trois numéros (COD dédié, avances reçues,
+transit livreurs), quatre codes de journaux, et la **régularisation du passé** des
+retours facturés sans TVA — `beninlink:retours-sans-tva` en chiffre l'enjeu. Quand il
+aura tranché, la régularisation sera un lot à part, sur le modèle de
+`retours-annules --corriger`. Les reversements aux livreurs (courses payées) ne sont pas
+journalisés : ils restent dans les soldes internes, à ouvrir s'il le demande.

@@ -106,15 +106,12 @@ class MerchantInvoiceController extends Controller
         $from = $request->filled('from') ? Carbon::parse($request->from)->startOfDay() : now()->startOfMonth();
         $to = $request->filled('to') ? Carbon::parse($request->to)->endOfDay() : now()->endOfMonth();
 
-        // `issued_on` est renseignée sur toutes les factures (reprise par la
-        // migration du chantier 4) : c'est la date comptable, pas la création.
-        $invoices = Invoice::companywise()
-            ->whereBetween('issued_on', [$from->toDateString(), $to->toDateString()])
-            ->orderBy('fiscal_year')->orderBy('sequence')->orderBy('id')
-            ->get();
-
+        // Chaque écriture dans la période de SA date (S73) : ventes et
+        // compensation à l'émission du relevé, reversement à la date de l'ordre
+        // de virement, recharges et remises à la leur. La société est celle du
+        // compte connecté — on est dans une requête.
         return $this->csvResponse(
-            SyscohadaJournal::csv($invoices),
+            SyscohadaJournal::csvLignes(SyscohadaJournal::periode((int) settings()->id, $from, $to)),
             'journal-syscohada-'.$from->format('Ymd').'-'.$to->format('Ymd').'.csv'
         );
     }

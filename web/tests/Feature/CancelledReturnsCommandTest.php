@@ -58,6 +58,8 @@ class CancelledReturnsCommandTest extends TestCase
         $this->livreur->return_charge = 400;
         $this->livreur->save();
 
+        // Depuis S73 (D2 q.6) le retour est taxable : 50 % de 1 000 F = 500 F HT,
+        // + 90 F de TVA = 590 F prélevés. Le frais et sa TVA vont ensemble.
         $this->colis = $this->colisConfie($this->marchand, $this->livreur, 'BL-RETOUR-PASSE');
         $this->colis->status = ParcelStatus::RETURN_ASSIGN_TO_MERCHANT;
         $this->colis->save();
@@ -106,7 +108,7 @@ class CancelledReturnsCommandTest extends TestCase
             ->assertExitCode(0);
 
         // Le constat n'écrit rien.
-        $this->assertSame(-500.0, $this->soldeMarchand());
+        $this->assertSame(-590.0, $this->soldeMarchand());
     }
 
     public function test_un_retour_qui_tient_encore_n_est_pas_touche(): void
@@ -132,7 +134,7 @@ class CancelledReturnsCommandTest extends TestCase
         $this->recevoirLeRetour();
         $this->annulerALAncienne();
 
-        $this->assertSame(-500.0, $this->soldeMarchand());
+        $this->assertSame(-590.0, $this->soldeMarchand());
 
         $this->artisan('beninlink:retours-annules --corriger')->assertExitCode(0);
 
@@ -202,12 +204,12 @@ class CancelledReturnsCommandTest extends TestCase
         $this->annulerALAncienne();
         $this->recevoirLeRetour();
 
-        $this->assertSame(-1000.0, $this->soldeMarchand());
+        $this->assertSame(-1180.0, $this->soldeMarchand());
         $this->assertSame(800.0, $this->soldeLivreur());
 
         $this->artisan('beninlink:retours-annules --corriger')->assertExitCode(0);
 
-        $this->assertSame(-500.0, $this->soldeMarchand(), 'un retour tient : un frais reste dû');
+        $this->assertSame(-590.0, $this->soldeMarchand(), 'un retour tient : un frais reste dû');
         $this->assertSame(400.0, $this->soldeLivreur());
         // Le retour tient toujours : son frais ne doit pas être effacé.
         $this->assertSame(500.0, (float) Parcel::find($this->colis->id)->return_charges);
@@ -229,7 +231,7 @@ class CancelledReturnsCommandTest extends TestCase
             ->expectsOutputToContain('Aucun retour annulé sans réversion')
             ->assertExitCode(0);
 
-        $this->assertSame(-500.0, $this->soldeMarchand(), 'le colis de la société voisine reste intact');
+        $this->assertSame(-590.0, $this->soldeMarchand(), 'le colis de la société voisine reste intact');
 
         $this->artisan('beninlink:retours-annules --societe=' . $this->marchand->company_id . ' --corriger')
             ->assertExitCode(0);
@@ -266,7 +268,7 @@ class CancelledReturnsCommandTest extends TestCase
             ->expectsOutputToContain('figés')
             ->assertExitCode(1);
 
-        $this->assertSame(-500.0, $this->soldeMarchand());
+        $this->assertSame(-590.0, $this->soldeMarchand());
         $this->assertSame(500.0, (float) Parcel::find($this->colis->id)->return_charges);
     }
 }

@@ -46,6 +46,15 @@ avant les apps.
 - **TVA** : taux **au niveau de la société** (`configs.vat_rate`, 18 % au Bénin), surcharge
   par marchand si `merchants.vat` > 0 — toujours via `VatRate::for()`. Registre des
   décisions métier : `docs/DECISIONS_METIER.md`.
+  Le **frais de retour est taxable** (**D2 q.6**, S73) : `ReturnVat` prélève sa TVA au
+  retour, au franc, sur sa propre ligne de relevé marchand, et l'écrit sur
+  `parcels.return_vat_amount` ; le relevé la facture telle quelle. Ne pas remettre le
+  `vat_amount = 0` du socle dans `InvoiceRepository`.
+- **Plan de comptes SYSCOHADA** (**D2**, tranché S73) : `config/syscohada.php` est **figé**
+  par `PlanDeComptesSigneTest` — on change le test avec la décision. Auxiliaire par
+  marchand **par défaut** ; trois numéros restent « à valider » par l'expert-comptable.
+  Un relevé **marqué payé** reçoit `invoices.paid_on` : c'est la date de l'écriture de
+  banque, donc on marque payé **le jour du virement**.
 - Statuts colis : En attente → Ramassage assigné → Entrepôt → Livreur assigné → Livré ;
   + Livraison partielle, Retour, Annulé.
 
@@ -115,9 +124,18 @@ avant les apps.
   reprend au livreur. Un colis dont le **relevé est déjà émis** est montré, jamais
   touché : un avoir se décide avec l'expert-comptable (**D8**, **D9**).
 - `php artisan beninlink:journal-syscohada [--du=] [--au=] [--societe=] [--payes] [--fichier=]` —
-  extrait des écritures d'une période, équilibre vérifié avant écriture. Le plan de
-  comptes vit dans `config/syscohada.php` et reste une **proposition** tant que
-  `docs/guides/comptabilite/plan-de-comptes.md` n'est pas signé (**D2**).
+  extrait des écritures d'une période, équilibre vérifié avant écriture. Depuis **S73**
+  chaque écriture tombe dans la période de **sa** date (`SyscohadaJournal::periode()`) :
+  ventes et compensation à l'émission, banque à `paid_on`, **recharges de portefeuille**
+  (avances reçues) à l'approbation, **remises d'espèces des livreurs** (transit) à leur
+  date ; aucune écriture pour les abonnements SaaS. Sociétés lues dans la liste, jamais
+  `settings()` (F4). Le plan de comptes vit dans `config/syscohada.php`
+  (`docs/guides/comptabilite/plan-de-comptes.md`, **D2**).
+- `php artisan beninlink:retours-sans-tva [--societe=] [--marchand=]` — **constate** les
+  relevés émis avant S73 qui ont facturé un frais de retour **sans TVA** (D2 q.6) : frais,
+  TVA manquante au taux du colis, statut. **Aucune option d'écriture**, et un test
+  l'interdit : un relevé émis ne se modifie pas (D8, D9), la régularisation attend
+  l'expert-comptable.
 - `php artisan invoice:generate [--societe=]` — les relevés de règlement dus,
   **société par société**. Sans option, toutes les sociétés actives : c'est ce que
   fait le planificateur (13 h). La cadence reste celle du marchand

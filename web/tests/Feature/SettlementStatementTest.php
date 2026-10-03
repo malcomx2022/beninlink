@@ -93,6 +93,11 @@ class SettlementStatementTest extends TestCase
             'delivery_type_id' => 1,
             'cash_collection' => 8000,
             'return_charges' => $returnFee,
+            // D2 q.6 (S73) : la TVA du retour est prélevée AU RETOUR, au franc,
+            // et le relevé la relit telle quelle. La fixture la pose comme le
+            // flux de retour l'aurait fait (`ReturnVat`).
+            'return_vat_amount' => (int) round($returnFee * 0.18),
+            'vat' => 18,
             'tracking_id' => $tracking,
             'status' => ParcelStatus::RETURN_RECEIVED_BY_MERCHANT,
             'partial_delivered' => BooleanStatus::NO,
@@ -104,7 +109,8 @@ class SettlementStatementTest extends TestCase
     private function genererReleve(): Invoice
     {
         // 50 000 encaisses, 560 HT (500 livraison + 60 COD), 101 de TVA ; puis
-        // 30 000 encaisses, 700 HT, 126 de TVA ; et un retour facture 500.
+        // 30 000 encaisses, 700 HT, 126 de TVA ; et un retour facture 500 HT
+        // + 90 de TVA (taxable depuis S73, D2 q.6).
         $this->colisLivre('BL-1', 50000, 560, 101, 60);
         $this->colisLivre('BL-2', 30000, 700, 126, 300);
         $this->colisRetourne('BL-3', 500);
@@ -144,12 +150,12 @@ class SettlementStatementTest extends TestCase
         $t = $s['totals'];
 
         $this->assertSame(80000, $t['collected']);
-        // Frais HT = 560 + 700 + 500 (retour) ; TVA = 101 + 126.
+        // Frais HT = 560 + 700 + 500 (retour) ; TVA = 101 + 126 + 90 (retour, D2 q.6).
         $this->assertSame(1760, $t['fees_ht']);
-        $this->assertSame(227, $t['vat']);
-        $this->assertSame(1987, $t['fees_ttc']);
+        $this->assertSame(317, $t['vat']);
+        $this->assertSame(2077, $t['fees_ttc']);
         // Net a reverser = encaisse − frais HT − TVA.
-        $this->assertSame(80000 - 1760 - 227, $t['net']);
+        $this->assertSame(80000 - 1760 - 317, $t['net']);
         // ... et c'est exactement ce que la facture enregistre.
         $this->assertSame($t['net'], $t['net_recorded']);
         $this->assertTrue($t['consistent']);
@@ -173,6 +179,9 @@ class SettlementStatementTest extends TestCase
 
     public function test_le_journal_syscohada_est_equilibre(): void
     {
+        // Les numéros nus se lisent en compte collectif ; l'auxiliaire (défaut
+        // depuis S73) a son propre test ci-dessous.
+        config(['syscohada.auxiliary' => 'collectif']);
         $invoice = $this->genererReleve();
 
         $lines = SyscohadaJournal::linesFor($invoice);
@@ -180,11 +189,11 @@ class SettlementStatementTest extends TestCase
         $this->assertCount(5, $lines);
         $this->assertSame(array_sum(array_column($lines, 'debit')), array_sum(array_column($lines, 'credit')));
         $this->assertSame('4111', $lines[0]['compte']);
-        $this->assertSame(1987, $lines[0]['debit']);
+        $this->assertSame(2077, $lines[0]['debit']);
         $this->assertSame('7061', $lines[1]['compte']);
         $this->assertSame(1760, $lines[1]['credit']);
         $this->assertSame('4431', $lines[2]['compte']);
-        $this->assertSame(227, $lines[2]['credit']);
+        $this->assertSame(317, $lines[2]['credit']);
 
         $invoice->status = InvoiceStatus::PAID;
         $invoice->save();
@@ -192,7 +201,7 @@ class SettlementStatementTest extends TestCase
         $lines = SyscohadaJournal::linesFor($invoice->fresh());
         $this->assertCount(7, $lines);
         $this->assertSame(array_sum(array_column($lines, 'debit')), array_sum(array_column($lines, 'credit')));
-        $this->assertSame(80000 - 1987, $lines[5]['debit']);
+        $this->assertSame(80000 - 2077, $lines[5]['debit']);
 
         $csv = SyscohadaJournal::csv([$invoice->fresh()]);
         $this->assertStringStartsWith("\xEF\xBB\xBF" . 'date;journal;piece', $csv);
@@ -224,12 +233,17 @@ class SettlementStatementTest extends TestCase
         $this->assertSame(array_sum(array_column($lines, 'debit')), array_sum(array_column($lines, 'credit')));
     }
 
-    public function test_le_compte_collectif_reste_le_defaut(): void
+    /** D2 q.1, tranchée le 2026-10-03 (S73) : l'auxiliaire par marchand est le DÉFAUT ; le collectif reste possible. */
+    public function test_l_auxiliaire_par_marchand_est_le_defaut_et_le_collectif_reste_possible(): void
     {
-        $this->assertNull(config('syscohada.auxiliary'));
+        $this->assertSame('merchant_code', config('syscohada.auxiliary'));
 
-        $lines = SyscohadaJournal::linesFor($this->genererReleve());
-        $this->assertSame('4111', $lines[0]['compte']);
+        $invoice = $this->genererReleve();
+        $code = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $this->merchant->merchant_unique_id));
+        $this->assertSame('4111' . $code, SyscohadaJournal::linesFor($invoice)[0]['compte']);
+
+        config(['syscohada.auxiliary' => 'collectif']);
+        $this->assertSame('4111', SyscohadaJournal::linesFor($invoice->fresh())[0]['compte']);
     }
 
     public function test_l_extrait_de_periode_verifie_l_equilibre_avant_d_ecrire(): void

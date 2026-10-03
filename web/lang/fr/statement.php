@@ -49,6 +49,8 @@ return [
     'journal_sales' => 'Relevé :number — prestations de livraison — :merchant',
     'journal_settlement' => 'Relevé :number — compensation frais / COD — :merchant',
     'journal_payout' => 'Relevé :number — reversement du net — :merchant',
+    'journal_wallet_recharge' => 'Recharge portefeuille :reference — avance reçue — :merchant',
+    'journal_cash_remittance' => 'Remise d\'espèces :reference — livreur :deliveryman',
     'not_found' => 'Relevé introuvable.',
 
     // Courriel d'envoi du relevé (`App\Mail\InvoicePDFSend`, S69).
