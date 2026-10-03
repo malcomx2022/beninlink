@@ -1492,7 +1492,11 @@ Couverts à ce jour : signature du webhook FedaPay, **S14** (facture d'un autre 
 | ~~`GET .../pdf/{invoice_id}`~~ | `MerchantInvoiceController::InvoicePdf` | ✅ **implémentée le 2026-09-04** (chantier 4) |
 | ~~`GET .../pdf/{merchant_id}/{invoice_id}`~~ | `MerchantInvoiceController::InvoicePdf` | ✅ **implémentée le 2026-09-04** (chantier 4) |
 
-⇒ Un passage `php artisan route:list` complet est recommandé avant d'ouvrir les chantiers.
+⇒ ~~Un passage `php artisan route:list` complet est recommandé avant d'ouvrir les chantiers.~~
+✅ **Depuis S69 (2026-10-03), la suite le lit à chaque commit** : `LegacyDeadCodeCleanupTest`
+monte les routes du locataire et vérifie que chaque route à contrôleur vise une classe et une
+méthode qui existent — `route:list` ne le dit pas, et c'est à la main que le bloc G avait
+trouvé les deux routes PDF ci-dessus.
 
 ## Ordre des chantiers — dépendances issues de la cartographie
 1. ~~**Chantier 1 (FCFA)** avant **chantier 7 (OpenAPI)**~~ — respecté : la spec
@@ -3125,16 +3129,16 @@ pas :
 - ✅ **les permissions** des routes de l'inventaire — **posées le 2026-09-20 (S36)**,
   après mesure rôle par rôle. Voir la section ci-dessous ;
 - ✅ `admin/profile/{id}` et `merchant/profile/{id}` — **corrigés le 2026-09-20 (S37)** ;
-- le **doublon mort** `InvoiceRepository::InvoicePdf()` (S32) ;
+- ✅ le **doublon mort** `InvoiceRepository::InvoicePdf()` (S32) — **retiré le 2026-10-03 (S69)** ;
 - les **catalogues communs** `currencies` (S32) et `categorys` (S35), partagés et
   modifiables ;
 - les six catégories de livraison du jeu d'amorçage, créées **sans société** : aucune
   société ne peut donc les modifier par son écran, sauf la n° 1 en lecture ;
 - ✅ la **destination du refus** de `PermissionCheckMiddleware` pour une navigation
   de page — **corrigée le 2026-09-20 (S38)** ;
-- `IncomeController::searchAccount()` est une **méthode morte** : sa route a disparu
+- ✅ `IncomeController::searchAccount()` est une **méthode morte** : sa route a disparu
   et l'écran des revenus appelle celle des dépenses. Elle passe de plus l'objet
-  `Request` là où un identifiant est attendu.
+  `Request` là où un identifiant est attendu — **retirée le 2026-10-03 (S69)**.
 
 ---
 
@@ -6452,3 +6456,87 @@ lot, dans le bon ordre.
 de **source**, pas des rendus d'écran. Elles mordent si le code perd une
 propriété ; elles ne diraient pas qu'un compteur affiche un mauvais nombre. Le
 contrôle visuel humain reste dû — et il l'était déjà.
+
+## S69 — le lot de nettoyage T1 : quatre pièces mortes, et six routes qui visaient le vide (2026-10-03)
+
+### D'où il vient
+
+`docs/CARTOGRAPHIE_PROJET.md` (PR #137) a rangé sous **T1** ce que trois documents
+signalaient depuis septembre sans que personne n'y touche, parce qu'« aucun
+comportement n'était à corriger » :
+
+| Pièce | Signalée par | Défaut |
+|---|---|---|
+| `app/Mail/InvoicePDFSend.php` | bloc G, REVUE_FEDAPAY §24, charte-web §11.6 b | jamais instancié ; `from: admin@example.com` ; sujet « Invoice P D F Send » ; vue `invoice_mail_pdf` pour un fichier **`Invoice_mail_pdf.blade.php`** — résout sur WAMP, **pas sous Linux** |
+| `backend/merchant/invoice/invoice_pdf.blade.php` | bloc G (« ORPHELINE »), charte-web §11.6 a | rendue nulle part ; `ParcelStatus::RETURN_TRANSFER_BY_HUB` et `RETURN_RECEIVED_PARCEL` **n'existent pas** → `Undefined constant` pour tout colis livré ; quatrième copie de la table des statuts, en anglais, en taka, en violet |
+| `InvoiceRepository::InvoicePdf()` | S32 | doublon **corps pour corps** d'`invoiceGet()`, déclaré dans l'interface, appelé par personne ; a **avalé un sabotage** |
+| `IncomeController::searchAccount()` | S35 | sa route a disparu, l'écran des revenus appelle celle des dépenses, et elle passait l'objet `Request` là où `AccountRepository::get($id)` attend un identifiant |
+
+### Ce que le lot fait — neutraliser, pas effacer
+
+La règle du projet (`docs/guides/socle/`) : **0 fichier supprimé du socle**, parce
+qu'une re-fusion de We Courier rejouerait chaque suppression en conflit. D'où deux
+traitements :
+
+- **Un fichier mort est rendu juste.** `InvoicePDFSend` suit désormais les trois
+  règles de `MerchantFeedMail` : `ShouldQueue` (**D13** — le rendu du PDF aussi quitte
+  la requête), marque **passée** et résolue sur la société du destinataire (**F4** —
+  aucun `settings()`), et **un seul document** : la pièce jointe est le PDF de
+  `statement_pdf`, le relevé du chantier 4. La vue nommée l'est avec la casse du
+  fichier. `invoice_pdf.blade.php` ne porte plus de table des statuts : elle
+  **délègue** à `statement_pdf` via `SettlementStatement::for($invoice)`.
+  ⚠️ Le mailable reste **non branché** : envoyer les relevés par courriel est une
+  décision produit (cadence, destinataires, opposabilité) — **R9** de la cartographie
+  du projet, pas un correctif.
+- **Une méthode morte se retire.** `InvoicePdf()` sort de l'interface et du dépôt ;
+  `searchAccount()` sort du contrôleur ; `AccountInterface::get($request)` s'appelle
+  enfin `get($id)`, comme son implémentation depuis S24.
+
+### Le neuvième filet, et ce qu'il a trouvé du premier coup
+
+Le bloc G avait trouvé **à la main** deux routes PDF déclarées sur une méthode
+inexistante, et notait : « un passage `route:list` complet est recommandé ». Or
+`route:list` ne vérifie pas que la méthode existe. `LegacyDeadCodeCleanupTest` monte
+les routes du locataire (`MountsTenantRoutes`) et lit chaque `Classe@methode`.
+Première exécution : **six routes** du socle visaient le vide — un **500** garanti
+pour qui les atteignait.
+
+| Route | Cible absente | Appelants | Traitement |
+|---|---|---|---|
+| `GET admin/addons/{addon}` | `AddonController::show` | aucun | `Route::resource(...)->except(['show', 'destroy'])` |
+| `DELETE admin/addons/{addon}` | `AddonController::destroy` | aucun | idem |
+| `GET admin/parcel/file-export` | `ParcelController::parcelExport` (il vit sur **`MerchantParcelController`**) | aucun | retirée |
+| `POST admin/todo/momal` | `TodoController::todoModal` | la barre de navigation, par `data-url="{{ route('todo.modal') }}"` — **lu par aucun script** (les lecteurs de `.data('url')` visent d'autres éléments ; la fenêtre To-do est un `@include` statique qui poste sur `todo.store`) | retirée, et l'attribut avec elle (deux lignes de `navber.blade.php`) |
+| `POST merchant/parcel/merchant` | `MerchantParcelController::getMerchant` | aucun (le panneau marchand n'a pas à chercher un marchand : c'est le compte connecté) | retirée |
+| `GET merchant/online-payment-received-list` | `onlinePaymentReceivedList` | aucun (module payout, **D10**) | retirée |
+
+⚠️ **Deux inventaires de filets la croyaient vivante.** `WebAdminPermissionCoverageTest`
+tenait `GET admin/parcel/file-export` à l'arriéré avec la mention « leurs méthodes
+existent » — **fausse** pour celle-ci. Quatre lignes sortent de `HERITAGE` (22 → **18**,
+le cliquet baisse) et deux exemptions de `WebIsolationCoverageTest` disparaissent avec
+leurs routes. Un arriéré n'est pas une preuve d'existence : il recopie une déclaration.
+
+⚠️ Relevé au passage, **hors lot** : dix vues du socle, dont deux du **panneau marchand**
+(`merchant_panel/reports/*`), appellent `route('parcel.merchant.get')` — la route
+**`admin/`**, gardée par `panel:back-office` (S41). Un marchand qui ouvre ce sélecteur
+reçoit 403. À lire avec les écrans de rapport du panneau marchand, pas ici.
+
+### Vérification — cinq sabotages
+
+| Sabotage | Effet |
+|---|---|
+| remettre `InvoicePdf()` dans le dépôt | **rouge** (`single lookup`) |
+| remettre `invoice_mail_pdf` (minuscule) dans le mailable | **rouge** (`case sensitive`) |
+| remettre une condition `ParcelStatus::` dans la vue orpheline | **rouge** (`orphan view`) |
+| redéclarer `todo/momal` sur `todoModal` | **rouge** (`every declared route`) |
+| rendre le mailable synchrone (retirer `ShouldQueue`) | **rouge** (`queued`) |
+
+Un sixième a corrigé le test lui-même : la première version lisait le **fichier**
+du mailable et y cherchait l'absence d'`example.com` et de `settings()` — et les
+trouvait dans le **docbloc** qui raconte le défaut d'origine. Le test lit désormais
+le code sans ses commentaires (`token_get_all`), et le Blade sans ses `{{-- --}}`.
+Un test qui mesure un fichier doit savoir ce qu'est du code dedans.
+
+Suite complète : **1 076 tests, 46 169 assertions**, verte (delta `+7 / +36` pour ce lot) ;
+les cinq sabotages ci-dessus ont chacun fait rougir le test visé, puis les fichiers ont
+été remis.

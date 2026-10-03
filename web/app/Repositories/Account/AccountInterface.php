@@ -6,7 +6,7 @@ interface AccountInterface {
     public function all();
 
     public function getAll();
-    public function get($request);
+    public function get($id);
     public function filter($request);
     public function store($request);
     public function update($id, $request);

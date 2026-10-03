@@ -386,7 +386,7 @@
                                         <!---To-do list---->
                                         @if(hasPermission('todo_create')== true)
                                         <li class="nav-item dropdown connection mt-xl-2 mt-md-2 mt-lg-2 d-lg-block">
-                                            <label id="todoModal1" data-target="#todoModal" class="btn btn-primary btn-sm mr-2" data-toggle="modal" data-url="{{route('todo.modal')}}"><i class="fa fa-edit"></i> {{ __('to_do.to_do')}}</label>
+                                            <label id="todoModal1" data-target="#todoModal" class="btn btn-primary btn-sm mr-2" data-toggle="modal"><i class="fa fa-edit"></i> {{ __('to_do.to_do')}}</label>
                                         </li>
                                         @endif
                                         <!---To-do list---->
@@ -463,7 +463,7 @@
                         <!---To-do list---->
                         @if(hasPermission('todo_create')== true)
                         <li class="nav-item dropdown connection mt-lg-3 d-lg-none">
-                            <label    id="todoModal1" data-target="#todoModal" class="btn btn-primary btn-sm mr-2" data-toggle="modal" data-url="{{route('todo.modal')}}"><i class="fa fa-edit"></i> {{ __('to_do.to_do')}}</label>
+                            <label    id="todoModal1" data-target="#todoModal" class="btn btn-primary btn-sm mr-2" data-toggle="modal"><i class="fa fa-edit"></i> {{ __('to_do.to_do')}}</label>
                         </li>
                         @endif
                         <!---To-do list---->

@@ -307,6 +307,15 @@ avant les apps.
   vérifier que le fichier a changé ne suffit pas, il faut vérifier qu'il a changé **là**.
   Un ancrage non unique (`hasPermission:parcel_update`) frappe une autre ligne et rend le
   vert crédible.
+- Toute route déclarée vise une **méthode de contrôleur qui existe** : neuvième filet,
+  `tests/Feature/LegacyDeadCodeCleanupTest` (**S69**), qui monte les routes du locataire
+  et lit chaque `Classe@methode`. Le bloc G de la cartographie avait trouvé deux routes
+  PDF sur une méthode inexistante **à la main** ; `route:list` ne le signale pas.
+- Le **code mort du socle** se neutralise, il ne s'efface pas (0 fichier supprimé, cf.
+  `docs/guides/socle/`) : un fichier mort est rendu **juste** (S69 — `InvoicePDFSend`
+  suit D13 et F4, la vue `invoice_pdf` délègue au relevé officiel), une méthode morte
+  se retire. Un doublon « corps pour corps » n'est pas inoffensif : il avale les
+  correctifs et les sabotages (S32).
 - Jamais de clés en dur : `FEDAPAY_*` dans `web/.env`.
 
 ## Étape 0 — cartographie (à lire AVANT de coder ici)

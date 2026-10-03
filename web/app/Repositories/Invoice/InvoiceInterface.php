@@ -12,8 +12,8 @@ interface InvoiceInterface {
     public function merchantInvoiceGet($merchantId);
     public function merchantInvoiceDetails($merchantId,$invoiceId);
     public function statusUpdate($request,$merchant_id);
-    //both panel invoice print method
-    public function InvoicePdf($merchant_id,$invoice_id);
+    // (S69) `InvoicePdf($merchant_id, $invoice_id)` a été retiré : doublon mort,
+    // corps pour corps, de `invoiceGet()` — les deux panneaux passent par lui.
     public function getPaidInvoices();
     public function getProcessInvoices();
     public function getUnpaidInvoices();

@@ -38,18 +38,19 @@ use Tests\TestCase;
  * Un seul défaut trouvé, de la famille connue : `InvoiceDetails()` déréférençait
  * un `null` hors périmètre — **500** au lieu de 404.
  *
- * ⚠️ **Un piège à signaler pour qui touchera ce dépôt.**
+ * ⚠️ **Un piège, désormais levé (S69).**
  * `InvoiceRepository::InvoicePdf($merchant_id, $invoice_id)` et
- * `InvoiceRepository::invoiceGet($merchant_id, $invoice_id)` ont un corps
- * **identique, ligne pour ligne**. Seule `invoiceGet()` est appelée ; `InvoicePdf()`
- * est du code mort (déclaré dans l'interface, appelé par personne — l'action
+ * `InvoiceRepository::invoiceGet($merchant_id, $invoice_id)` avaient un corps
+ * **identique, ligne pour ligne**. Seule `invoiceGet()` était appelée ; `InvoicePdf()`
+ * était du code mort (déclaré dans l'interface, appelé par personne — l'action
  * `InvoicePdf` du contrôleur passe par `invoiceGet`).
  *
  * Ce doublon a avalé un de mes sabotages : le remplacement a touché le jumeau mort
- * et le test est resté vert alors que le fichier avait bien changé. Un correctif
- * appliqué au mauvais jumeau serait tout aussi silencieux. Le doublon est laissé en
- * place — il est scopé de la même façon, et retirer une méthode d'interface dépasse
- * le cadre d'une passe d'isolation — mais il est **signalé**.
+ * et le test est resté vert alors que le fichier avait bien changé. Il a été laissé
+ * en place par cette passe (retirer une méthode d'interface dépassait une passe
+ * d'isolation), puis **retiré par le lot de nettoyage S69** :
+ * `LegacyDeadCodeCleanupTest` garde qu'il ne revienne pas. Un sabotage ancré sur
+ * la requête ne peut plus toucher qu'une seule méthode.
  */
 class MerchantInvoiceScopeTest extends TestCase
 {

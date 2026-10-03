@@ -212,7 +212,8 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                     // Admin Routes
                     Route::group(['prefix' => 'admin', 'middleware' => 'panel:back-office'], function () {
 
-                        Route::resource('addons', AddonController::class);
+                        // (S69) `show` et `destroy` n'existent pas sur le contrôleur : la ressource les exclut.
+                        Route::resource('addons', AddonController::class)->except(['show', 'destroy']);
                         Route::post('/addons/activation', [AddonController::class, 'activation'])->name('addons.activation');
 
                         Route::get('logs',                   [ActiveLogController::class, 'index'])->name('logs.index')->middleware('hasPermission:log_read');
@@ -490,7 +491,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         //import
                         Route::get('parcel/import-parcel',                      [ParcelController::class, 'parcelImportExport'])->name('parcel.parcel-import')->middleware('hasPermission:parcel_create');
                         Route::post('parcel/file-import',                       [ParcelController::class, 'parcelImport'])->name('parcel.file-import')->middleware('hasPermission:parcel_create');
-                        Route::get('parcel/file-export',                        [ParcelController::class, 'parcelExport'])->name('parcel.file-export');
+                        // (S69) `parcel/file-export` retirée : `ParcelController::parcelExport` n'existe pas (l'export vit au panneau marchand), aucun appelant.
                         Route::post('parcel/import/merchant',                   [ParcelController::class, 'getImportMerchant'])->name('parcel.import.merchant.get')->middleware('hasPermission:parcel_create');
                         //merchant fetch using ajax
                         Route::post('get-merchant-cod',                         [parcelController::class, 'getMerchantCod'])->name('get.merchant.cod')->middleware('hasPermission:parcel_create|parcel_update');
@@ -579,7 +580,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         // To_do List route
                         Route::get('todo/todo_list',        [TodoController::class, 'index'])->name('todo.index')->middleware('hasPermission:todo_read');
                         Route::post('todo/todo_add',        [TodoController::class, 'store'])->name('todo.store')->middleware('hasPermission:todo_create');
-                        Route::post('todo/momal',           [TodoController::class, 'todoModal'])->name('todo.modal');
+                        // (S69) `todo/momal` retirée : `TodoController::todoModal` n'existe pas ; le `data-url` de la barre de navigation qui la nommait n'était lu par aucun script.
                         Route::post('todo/processing',      [TodoController::class, 'todoProcessing'])->name('todo.processing')->middleware('hasPermission:todo_update');
                         Route::post('todo/completed',       [TodoController::class, 'todoComplete'])->name('todo.completed')->middleware('hasPermission:todo_update');
                         Route::put('todo/update',           [TodoController::class, 'update'])->name('todo.update')->middleware('hasPermission:todo_update');
@@ -917,7 +918,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::put('parcel/update/{id}',     [MerchantParcelController::class, 'update'])->name('merchant-panel.parcel.update');
                         Route::get('parcel/status-update/{id}/{status_id}',   [MerchantParcelController::class, 'statusUpdate'])->name('merchant-panel.parcel.status-update');
                         Route::delete('parcel/delete/{id}',     [MerchantParcelController::class, 'destroy'])->name('merchant-panel.parcel.delete');
-                        Route::post('parcel/merchant',          [MerchantParcelController::class, 'getMerchant'])->name('merchant-panel.parcel.merchant.get');
+                        // (S69) `parcel/merchant` retirée : `MerchantParcelController::getMerchant` n'existe pas — au panneau marchand, le marchand est le compte connecté.
                         Route::post('parcel/merchant/shops',    [MerchantParcelController::class, 'merchantShops'])->name('merchant-panel.parcel.merchant.shops');
                         Route::post('parcel/delivery-category', [MerchantParcelController::class, 'deliveryWeight'])->name('merchant-panel.parcel.deliveryCategory.deliveryWeight');
                         Route::post('parcel/quote',             ParcelQuoteController::class)->name('merchant-panel.parcel.quote');
@@ -973,7 +974,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         //erchant online payment  received setup
                         Route::get('/settings/online-payment-setup',                            [MerchantOnlinePaymentSetupController::class, 'index'])->name('merchant.online.payment.setup.index');
                         Route::put('/settings/online-payment-setup/update/{paymentmethod}',     [MerchantOnlinePaymentSetupController::class, 'paymentReceivedSetupUpdate'])->name('merchant.online.payment.setup.update');
-                        Route::get('online-payment-received-list',                              [MerchantOnlinePaymentSetupController::class, 'onlinePaymentReceivedList'])->name('merchant.online.payment.list');
+                        // (S69) `online-payment-received-list` retirée : `onlinePaymentReceivedList` n'existe pas, aucun appelant (module payout coupé par D10).
                         //online payment module
                         Route::get('/payment/received',                            [OnlinePaymentController::class, 'merchantPaymentReceived'])->name('online.payment.received');
                         Route::prefix('online-payment')->name('online.payment.')->group(function () {

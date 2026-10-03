@@ -1194,5 +1194,9 @@ côtés.
 - ~~Le **push** hors service~~ ✅ **rebranché le 2026-09-05** (§21, décision
   **D11**), et le **push navigateur** du back-office ✅ **retiré le même jour**
   (§22, décision **D12**), et les envois ✅ **sortis de la requête le même
-  jour** (§23, décision **D13** — constat 7 de la cartographie fermé). Reste
-  `InvoicePDFSend`, dont l'expéditeur est codé en dur : un chantier à part.
+  jour** (§23, décision **D13** — constat 7 de la cartographie fermé). ~~Reste
+  `InvoicePDFSend`, dont l'expéditeur est codé en dur : un chantier à part.~~
+  ✅ **Corrigé le 2026-10-03 (S69, lot de nettoyage)** : expéditeur = la société du
+  destinataire (F4), `ShouldQueue` (D13), vue qui résout sous Linux, PDF du chantier 4
+  en pièce jointe. Toujours **non branché** — l'envoi des relevés par courriel est
+  une décision produit (R9 de `docs/CARTOGRAPHIE_PROJET.md`).

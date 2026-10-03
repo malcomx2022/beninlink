@@ -78,11 +78,6 @@ class IncomeController extends Controller
         return view('backend.income.create',compact('accounts','accountHeads','hubs'));
     }
 
-    public function searchAccount($id,Request $request){
-
-        return $this->account->get($request);
-    }
-
     public function balanceCheck(Request $request){
         $marchenHubDeliveryman = $this->repo->hubCheck($request);
         $users = $this->repo->hubUsers($marchenHubDeliveryman->id);

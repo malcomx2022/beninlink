@@ -872,6 +872,13 @@ Ces deux-là appartiennent à un lot de nettoyage, avec les **routes mortes** d�
 relevées dans `web/CARTOGRAPHIE.md`. Rien ne s'y décide seul : la règle du projet
 est **0 fichier supprimé du socle**.
 
+> ✅ **Lot de nettoyage livré le 2026-10-03 (S69).** Les deux fichiers sont conservés
+> et rendus justes : la vue orpheline **délègue** au relevé officiel
+> (`statement_pdf`) au lieu de porter une quatrième table des statuts, et le mailable
+> nomme la vue avec la casse du fichier, prend sa marque du destinataire (F4) et part
+> en file (D13). `LegacyDeadCodeCleanupTest` garde les deux, et ajoute le filet que ce
+> paragraphe appelait : toute route déclarée vise une méthode qui existe.
+
 ### 11.7 Le filet
 
 `ParcelStageTest` — 14 tests. Le principal **lit `mobile/src/domain/parcelStatus.ts`
