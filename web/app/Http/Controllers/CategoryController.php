@@ -62,7 +62,7 @@ class CategoryController extends Controller
         $category->save();
         if($category){
           Toastr::success('Success Title',__('message.success'));
-            return redirect('category/index')->with('success','Catagory Insert Successfully!');
+            return redirect()->route('category.index')->with('success','Catagory Insert Successfully!');
         }else{
             return redirect()->back()->with('danger','Oparation Failds!');
         }
@@ -117,7 +117,7 @@ class CategoryController extends Controller
         }
         $update->save();
         if($update){
-            return redirect('category/index')->with('success','Catagory Update Successfully!');
+            return redirect()->route('category.index')->with('success','Catagory Update Successfully!');
         }else{
             return redirect()->back()->with('danger','Oparation Failds!');
         }

@@ -53,6 +53,8 @@
                                     <label class="badge badge-danger mb-2">{{ __('levels.expired') }}</label><br />
                                 @endif
     
+                                {{-- R3 (S75) : pas de prorata au renouvellement — l'acheteur le sait AVANT de payer. --}}
+                                <p class="small text-muted mb-2 plan-switch-notice">{{ __('levels.plan_switch_notice') }}</p>
                                 @if ($stripe_status->value)
                                     <a class="btn btn-primary "
                                         href="{{ route('subscription.payment', ['plan_id' => $plan->id]) }}">Subscribe</a>

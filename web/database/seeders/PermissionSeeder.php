@@ -237,12 +237,6 @@ class PermissionSeeder extends Seeder
                 'update' => 'packaging_update',
                 'delete' => 'packaging_delete'
             ],
-            'category'             => [
-                'read'  => 'category_read',
-                'create' => 'category_create',
-                'update' => 'category_update',
-                'delete' => 'category_delete'
-            ],
             'account_heads'         => [
                 'read'  => 'account_heads_read',
             ],
@@ -482,6 +476,14 @@ class PermissionSeeder extends Seeder
                 'read'          => 'sms_settings_read',
                 'update'        => 'sms_settings_update',
                 'status_change' => 'sms_settings_status_change',
+            ],
+            // R6 (S75) : le catalogue des catégories est une surface de plateforme,
+            // comme les devises — le droit n'est plus offert au locataire.
+            'category' => [
+                'read'     => 'category_read',
+                'create'   => 'category_create',
+                'update'   => 'category_update',
+                'delete'   => 'category_delete',
             ],
             'currency' => [
                 'read'     => 'currency_read',

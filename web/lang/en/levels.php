@@ -401,4 +401,10 @@ return [
     'payout_unavailable' => 'Online payout is not available. Settlements are made through settlement statements.',
     'filter_period' => 'Period to display',
 
+    'plan_switch_notice' => 'Your new subscription starts today: the remaining period of the current one is not carried over.',
+    'vat_status' => 'VAT status',
+    'vat_status_unset' => 'Company rate (not set)',
+    'vat_status_taxable' => 'Merchant-specific rate',
+    'vat_status_exempt' => 'VAT exempt',
+    'vat_status_help' => 'A rate of 0 does not mean exempt: choose "VAT exempt" so that no VAT is charged and the statements say so.',
 ];

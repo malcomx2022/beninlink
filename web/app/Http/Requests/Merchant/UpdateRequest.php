@@ -36,6 +36,9 @@ class UpdateRequest extends FormRequest
             'status'                => ['required','numeric'], 
             'address'               => ['required','string','max:191'],
             'payment_period'        => ['numeric'],
+            // R7 b (S75) : statut TVA explicite — trois valeurs, rien d'autre.
+            'vat_status'            => ['nullable', 'in:unset,taxable,exempt'],
+            'vat'                   => ['nullable', 'numeric', 'min:0', 'max:100'],
             // Mise à jour : format vérifié, non exigé — permet de régulariser un
             // marchand existant sans bloquer toute autre modification de sa fiche.
             'ifu'                   => ['nullable', new LegalIdentifier(LegalIdentifier::IFU)],

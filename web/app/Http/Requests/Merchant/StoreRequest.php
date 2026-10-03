@@ -34,6 +34,9 @@ class StoreRequest extends FormRequest
             'password'              => ['required','min:6'],
             'address'               => ['required','string','max:191'],
             'payment_period'        => ['numeric'],
+            // R7 b (S75) : statut TVA explicite — trois valeurs, rien d'autre.
+            'vat_status'            => ['nullable', 'in:unset,taxable,exempt'],
+            'vat'                   => ['nullable', 'numeric', 'min:0', 'max:100'],
             // Création par un administrateur : le format est vérifié, mais rien
             // n'est exigé — un admin enregistre parfois une PME avant d'avoir ses
             // pièces. L'obligation ne porte que sur l'inscription en ligne.

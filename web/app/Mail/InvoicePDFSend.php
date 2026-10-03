@@ -3,8 +3,8 @@
 namespace App\Mail;
 
 use App\Models\Backend\Merchantpanel\Invoice;
+use App\Services\Invoicing\SettlementPdf;
 use App\Services\Invoicing\SettlementStatement;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -21,10 +21,10 @@ use Illuminate\Queue\SerializesModels;
  * 0 fichier supprimé du socle) et rendu juste, pour que le premier qui le
  * branche obtienne le relevé officiel, pas une panne en production.
  *
- * ⚠️ Il n'est **toujours branché nulle part**. Envoyer les relevés par courriel
- * est une décision produit (cadence, destinataires, opposabilité), pas un
- * correctif. Le jour où elle se prend, `EmailChannel::marqueDe()` montre
- * comment construire `$marque` à partir du destinataire.
+ * **Branché depuis S75 (R9, 2026-10-03)** : `StatementMailer` l'envoie à
+ * l'émission de chaque relevé, au courriel du compte marchand, avec le PDF de
+ * `SettlementPdf` — le même que le téléchargement. Jamais de réémission
+ * modifiée : un relevé émis ne change pas, une correction est un nouvel état.
  *
  * Trois règles du dépôt, les mêmes que `MerchantFeedMail` :
  * - **D13** — `ShouldQueue` : l'envoi, et le rendu du PDF, quittent la requête.
@@ -68,7 +68,8 @@ class InvoicePDFSend extends Mailable implements ShouldQueue
             $message = $message->from($this->marque['courriel']);
         }
 
-        $pdf = Pdf::loadView('backend.invoice.statement_pdf', compact('statement'))->setPaper('a4');
+        // S75 (R9) : LE PDF officiel, celui du téléchargement — un seul point de rendu.
+        $pdf = SettlementPdf::render($this->invoice);
 
         return $message
             ->view('backend.merchant.invoice.Invoice_mail_pdf', [
@@ -80,6 +81,6 @@ class InvoicePDFSend extends Mailable implements ShouldQueue
                 'telephone' => $this->marque['telephone'],
                 'mentions' => $this->marque['mentions'],
             ])
-            ->attachData($pdf->output(), 'releve-' . $numero . '.pdf', ['mime' => 'application/pdf']);
+            ->attachData($pdf, SettlementPdf::fileName($this->invoice), ['mime' => 'application/pdf']);
     }
 }

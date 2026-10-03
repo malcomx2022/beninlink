@@ -202,13 +202,9 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                     // Route::get('/home',[HomeController::class, 'index'])->name('home');
                     //Admin Dashbord Controller
                     Route::post('search-charts',         [DashbordController::class, 'searchCharts'])->name('search-charts');
-                    //Admin Category Controller
-                    Route::get('category/index',         [CategoryController::class, 'index'])->name('category.index')->middleware('hasPermission:category_read');
-                    Route::get('category/create',        [CategoryController::class, 'create'])->name('category.create')->middleware('hasPermission:category_create');
-                    Route::post('category/store',        [CategoryController::class, 'store'])->name('category.store')->middleware('hasPermission:category_create');
-                    Route::get('category/edit/{id}',     [CategoryController::class, 'edit'])->name('category.edit')->middleware('hasPermission:category_update');
-                    Route::put('category/update',        [CategoryController::class, 'update'])->name('category.update')->middleware('hasPermission:category_update');
-                    Route::delete('category/delete/{id}', [CategoryController::class, 'destroy'])->name('category.delete')->middleware('hasPermission:category_delete');
+                    // R6 (S75) — le catalogue `categorys` est un catalogue de PLATEFORME sans
+                    // `company_id` : ses six routes vivent désormais sous `super-admin/category`
+                    // (routes/superadmin.php), derrière `panel:super-admin`, comme `currency` (S55).
                     // Admin Routes
                     Route::group(['prefix' => 'admin', 'middleware' => 'panel:back-office'], function () {
 

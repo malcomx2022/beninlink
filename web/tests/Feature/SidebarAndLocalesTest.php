@@ -81,6 +81,14 @@ class SidebarAndLocalesTest extends TestCase
         // Le menu de l'operateur, lui, ne le mentionne plus du tout.
         $this->assertStringNotContainsString("route('currency.index')", $this->source(self::SIDEBAR),
             'le menu de l\'operateur annonce encore un ecran de plateforme');
+
+        // R6 (S75) : le catalogue des catégories a suivi le même chemin. Il n'était
+        // lié depuis AUCUN menu (atteignable par l'URL seule) ; il l'est désormais,
+        // du seul côté où il a sa place.
+        $this->assertContains('category.index', $this->routes(self::SIDEBAR_SUPER_ADMIN),
+            'le catalogue des catégories n\'est atteignable depuis aucun menu');
+        $this->assertStringContainsString("'super-admin/category*'", $this->source(self::SIDEBAR_SUPER_ADMIN));
+        $this->assertStringNotContainsString("route('category.index')", $this->source(self::SIDEBAR));
     }
 
     public function test_the_operator_menu_still_reaches_every_screen(): void

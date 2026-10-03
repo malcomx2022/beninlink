@@ -303,10 +303,6 @@ class UserSeeder extends Seeder
             'packaging_delete',
             'parcel_status_update',
 
-            'category_read',
-            'category_create',
-            'category_update',
-            'category_delete',
 
             'asset_category_read',
             'asset_category_create',
@@ -515,7 +511,6 @@ class UserSeeder extends Seeder
 
             'packaging_read',
 
-            'category_read',
 
             'asset_category_read',
 

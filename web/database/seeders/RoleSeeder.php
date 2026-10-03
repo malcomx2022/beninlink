@@ -219,11 +219,6 @@ class RoleSeeder extends Seeder
                     'packaging_update',
                     'packaging_delete',
 
-                    'category_read',
-                    'category_create',
-                    'category_update',
-                    'category_delete',
-
                     'account_heads_read',
 
                     // 'database_backup_read',

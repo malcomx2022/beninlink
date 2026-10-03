@@ -352,8 +352,8 @@ class WebIsolationCoverageTest extends TestCase
         // pas 403 ni 404. Un refus d'accès annoncé comme une panne serveur :
         // signalé, pas corrigé ici (ce lot ne touche pas au socle du profil).
         // S35 — les trois derniers cas qui ne designent pas la ressource d'autrui
-        'GET category/edit/{id}' => 'catalogue de plateforme : `categorys` ne porte AUCUN `company_id` et rien ne la consomme hors de son propre CRUD (même cas que `currencies`, S32). Réserve : catalogue partagé et modifiable',
-        'DELETE category/delete/{id}' => 'catalogue de plateforme : `categorys` ne porte AUCUN `company_id` (même cas que `currencies`, S32). Réserve : catalogue partagé et modifiable',
+        'GET super-admin/category/edit/{id}' => 'catalogue de plateforme : `categorys` ne porte AUCUN `company_id` et rien ne la consomme hors de son propre CRUD (même cas que `currencies`, S32). Réserve : catalogue partagé et modifiable',
+        'DELETE super-admin/category/delete/{id}' => 'catalogue de plateforme : `categorys` ne porte AUCUN `company_id` (même cas que `currencies`, S32). Réserve : catalogue partagé et modifiable',
         'PUT admin/sms-settings/update/{id}' => 'le `{id}` est le NOM DE LA PASSERELLE (reve, twilio, nexmo), pas une ressource ; l\'écriture est `companywise()` clé par clé',
     ];
 

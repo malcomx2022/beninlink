@@ -85,7 +85,19 @@
                                     @enderror
                                 </div>
                                 <div class="form-group">
-                                    <label for="opening_balance">{{ __('levels.vat') }}</label>
+                                    <label for="vat_status">{{ __('levels.vat_status') }}</label>
+                                    <select id="vat_status" name="vat_status" class="form-control @error('vat_status') is-invalid @enderror">
+                                        @foreach (\App\Enums\VatStatus::TOUS as $statut)
+                                            <option value="{{ $statut }}" @selected(old('vat_status', \App\Services\Parcel\VatRate::statut($merchant)) === $statut)>{{ __('levels.vat_status_' . $statut) }}</option>
+                                        @endforeach
+                                    </select>
+                                    <small class="text-muted">{{ __('levels.vat_status_help') }}</small>
+                                    @error('vat_status')
+                                        <small class="text-danger mt-2">{{ $message }}</small>
+                                    @enderror
+                                </div>
+                                <div class="form-group">
+                                    <label for="vat">{{ __('levels.vat') }}</label>
                                     <input id="vat" type="number" name="vat" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_vat') }}" autocomplete="off" class="form-control @error('vat') is-invalid @enderror" value="{{ old('vat',$merchant->vat) }}">
                                     @error('vat')
                                     <small class="text-danger mt-2">{{ $message }}</small>
