@@ -343,6 +343,9 @@ class DeliveryCancellationAccountingTest extends TestCase
      * Le retour facturé au marchand : `merchants.return_charges` est un
      * **pourcentage** du tarif de livraison du colis (50 % de 1 000 F ici), et
      * le livreur touche un forfait pour la course de retour.
+     *
+     * Depuis S73 (**D2, question 6**), le retour est une prestation taxable :
+     * 500 F HT + 90 F de TVA (18 %, au franc) = **590 F** prélevés au marchand.
      */
     private function colisEnRetour(string $suivi = 'BL-RETOUR'): Parcel
     {
@@ -384,7 +387,7 @@ class DeliveryCancellationAccountingTest extends TestCase
         $this->colisEnRetour();
 
         $this->assertTrue($this->retourRecu());
-        $this->assertSame(-500.0, $this->soldeMarchand(), 'le retour coûte 50 % de 1 000 F');
+        $this->assertSame(-590.0, $this->soldeMarchand(), 'le retour coûte 50 % de 1 000 F, plus 18 % de TVA (D2 q.6)');
         $this->assertSame(400.0, $this->soldeLivreur(), 'le livreur touche sa course de retour');
 
         $this->assertTrue($this->annulerRetour());
@@ -407,7 +410,7 @@ class DeliveryCancellationAccountingTest extends TestCase
         $this->annulerRetour();
         $this->assertTrue($this->retourRecu());
 
-        $this->assertSame(-500.0, $this->soldeMarchand());
+        $this->assertSame(-590.0, $this->soldeMarchand());
         $this->assertSame(400.0, $this->soldeLivreur());
     }
 
@@ -419,7 +422,7 @@ class DeliveryCancellationAccountingTest extends TestCase
         $this->assertTrue($this->retourRecu());
         $this->assertFalse($this->retourRecu(), 'le second appel ne doit rien écrire');
 
-        $this->assertSame(-500.0, $this->soldeMarchand());
+        $this->assertSame(-590.0, $this->soldeMarchand());
         $this->assertSame(400.0, $this->soldeLivreur());
     }
 
@@ -537,8 +540,9 @@ class DeliveryCancellationAccountingTest extends TestCase
         $this->assertSame(0.0, $this->solde(MerchantStatement::class));
         $this->assertSame(0.0, $this->solde(DeliverymanStatement::class));
         $this->assertSame(0.0, $this->solde(CourierStatement::class));
-        // Les lignes restent : on inverse, on n'efface pas.
-        $this->assertSame(2, MerchantStatement::where('parcel_id', $this->colis->id)->count());
+        // Les lignes restent : on inverse, on n'efface pas. Quatre depuis S73 :
+        // le frais et sa TVA, chacun avec sa contrepartie (D2 q.6).
+        $this->assertSame(4, MerchantStatement::where('parcel_id', $this->colis->id)->count());
     }
 
     /** L'événement de ramassage, que l'annulation d'entrepôt relit. */

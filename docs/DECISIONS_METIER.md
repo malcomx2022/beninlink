@@ -7,7 +7,7 @@
 | # | Sujet | État | Livré dans le code | Reste à trancher |
 |---|---|---|---|---|
 | D1 | TVA au niveau entreprise | ✅ tranché | taux société `configs.vat_rate` (18 %), surcharge par marchand | valeur par société hors Bénin, exonérations |
-| D2 | Plan de comptes SYSCOHADA | ⏳ à valider | config, export journal, **extrait de période**, auxiliaires par marchand, **fiche de validation** | signature de l'expert-comptable sur `docs/guides/comptabilite/plan-de-comptes.md` |
+| D2 | Plan de comptes SYSCOHADA | ✅ tranché (S73) | les 8 questions tranchées par le porteur le 2026-10-03 : auxiliaire par défaut, COD dédié, 4431 / 18 %, journaux en config, banque à la date du virement (`paid_on`), **retour taxable** (+ constat `retours-sans-tva`), arrondi confirmé sans reprise, recharges et remises journalisées, SaaS hors livres | **3 numéros** (COD dédié, avances reçues, transit livreurs), **4 codes de journaux**, et la **régularisation du passé** des retours sans TVA — expert-comptable |
 | D3 | Dépenses d'acquisition (CAC) | ✅ tranché | chapitre « Marketing et acquisition clients » | discipline de saisie mensuelle |
 | D4 | Refonte du barème (zones, tranches) | ✅ tranché (S72) | zones/délais/forfaits pays **en base**, résolveur, écrans, API, apps ; **grille de départ dans un fichier versionné**, posée par la commande et le jeu pilote, **ajustable à tout moment à l'écran** | forfaits des 5 autres pays CEDEAO, taux COD CEDEAO, TVA à l'export (R1) |
 | D5 | Fiches de fraude sans `company_id` | ✅ tranché | migration de rattachement par l'auteur | — |
@@ -41,7 +41,7 @@ ajouter un drapeau `vat_exempt` sur le marchand — pas avant.
 **Reste au métier.** Confirmer 18 % pour les sociétés pilotes ; fixer le taux des
 sociétés hors Bénin (CEDEAO) le jour venu.
 
-## D2 — Plan de comptes SYSCOHADA ⏳
+## D2 — Plan de comptes SYSCOHADA ✅ (numéros à valider)
 
 **Ce qui existe.** `config/syscohada.php` propose : 4111 Clients, 7061 Prestations de
 services de livraison, 4431 TVA facturée, 4712 Créditeurs divers (COD encaissé pour
@@ -114,8 +114,24 @@ désormais donné colis par colis — 18 % se recompose sur les deux livrés, et
 ligne de retour porte zéro. C'est en cherchant d'où venait l'écart qu'on a trouvé
 la sixième question : elle était cachée dans un total.
 
-Tant que ce n'est pas validé, l'export sert à la revue, pas à l'import comptable.
-Ce qui manque n'est plus du logiciel : c'est une signature au bas de la fiche.
+### Décisions du 2026-10-03 (S73) — les huit questions, tranchées par le porteur
+
+| # | Décision | Traduction en code |
+|---|---|---|
+| 1 | Auxiliaire par marchand **par défaut** | `config('syscohada.auxiliary')` vaut `merchant_code` sans variable d'environnement ; `SYSCOHADA_AUXILIARY=collectif` pour revenir à une racine unique. Seuls les comptes de tiers (`syscohada.auxiliarised`) sont suffixés |
+| 2 | Compte COD **dédié** acté ; numéro à venir | `accounts.cod_liability` reste `4712`, libellé « compte dédié — numéro à valider » ; figé par le test |
+| 3 | 4431, taux société 18 % | figés par `PlanDeComptesSigneTest` |
+| 4 | Journaux en paramétrage | `VE` / `OD` / `BQ`, plus **`CA`** (caisse) pour les remises ; codes à aligner sur le logiciel cible |
+| 5 | **Date de l'ordre de virement** | `invoices.paid_on`, posée quand le relevé est **marqué payé** (effacée si le statut recule) ; l'écriture `BQ` la prend, et l'extrait de période range chaque écriture dans la période de **sa** date (`SyscohadaJournal::periode()`). Règle d'usage : *marquer payé le jour du virement* |
+| 6 | Frais de retour **taxable** au taux normal | `ReturnVat` : TVA au franc, au taux du colis, prélevée **au retour** sur sa propre ligne (`statementNote.return_vat_merchant_statement`) et écrite sur `parcels.return_vat_amount` ; rendue à l'annulation ; facturée par le relevé (plus de `vat_amount = 0` forcé). **`beninlink:retours-sans-tva`** constate les relevés émis avant — aucune option d'écriture ; la régularisation attend l'expert-comptable |
+| 7 | Arrondi au franc confirmé, **pas de reprise du passé** | rien à coder ; la règle est figée par le test (302 pour 18 % de 1 680) |
+| 8 | Recharges → **avances reçues** ; remises livreurs → **compte de transit** ; SaaS → **aucune écriture** | `SyscohadaJournal::recharges()` (D 521 / C 4191 + code marchand, à l'approbation) et `::remises()` (D 571 / C 4713, à la date) ; numéros **à valider** ; le test vérifie qu'aucun abonnement n'entre dans le journal |
+
+Ce qui reste à l'expert-comptable, et qui ne demande ni code ni migration :
+trois numéros (COD dédié, avances reçues, transit livreurs), quatre codes de
+journaux, et la décision de régularisation des retours facturés sans TVA — dont
+`beninlink:retours-sans-tva` chiffre l'enjeu. Jusque-là l'extrait sert à la
+revue ; après, il s'importe.
 
 ## D3 — Dépenses d'acquisition pour le CAC ✅
 

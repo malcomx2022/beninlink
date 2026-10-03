@@ -2082,7 +2082,35 @@ class ParcelRepository implements ParcelInterface {
             //return delivery charge calculation
             $return_delivery_charge = ($parcel->delivery_charge / 100) * $merchantCost->return_charges;
             //end return  delivery charge calculation
-            $current=((double)$merchantCost->current_balance - $return_delivery_charge);
+
+            // D2, question 6 (S73) : le retour est une prestation TAXABLE. La TVA
+            // suit le frais, au franc, sur sa propre ligne — comme la livraison
+            // écrit sa TVA à part — et s'inscrit sur le colis pour que le relevé
+            // facture ce qui a été prélevé, jamais un recalcul.
+            $tvaRetour = \App\Services\Parcel\ReturnVat::montant($parcel, $merchantCost, (float) $return_delivery_charge);
+            if ($tvaRetour > 0) {
+                $tvaStatement                   = new MerchantStatement();
+                $tvaStatement->company_id       = settings()->id;
+                $tvaStatement->merchant_id      = $parcel->merchant_id;
+                $tvaStatement->parcel_id        = $id;
+                $tvaStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
+                $tvaStatement->amount           = $tvaRetour;
+                $tvaStatement->type             = StatementType::EXPENSE;
+                $tvaStatement->date             = date('Y-m-d H:i:s');
+                $tvaStatement->note             = __('statementNote.return_vat_merchant_statement');
+                $tvaStatement->save();
+
+                $vat                            = new VatStatement();
+                $vat->company_id                = settings()->id;
+                $vat->parcel_id                 = $id;
+                $vat->amount                    = $tvaRetour;
+                $vat->type                      = StatementType::INCOME;
+                $vat->date                      = date('Y-m-d H:i:s');
+                $vat->note                      = __('statementNote.return_vat_merchant_statement');
+                $vat->save();
+            }
+
+            $current=((double)$merchantCost->current_balance - $return_delivery_charge - $tvaRetour);
             $merchantCost->current_balance = $current;
             $merchantCost->save();
             //end merchant expense vat + total charge amount
@@ -2097,6 +2125,7 @@ class ParcelRepository implements ParcelInterface {
             $courier_statement->note            = __('statementNote.return_received_by_statement');
             $courier_statement->save();
             $parcel->return_charges = $return_delivery_charge;
+            $parcel->return_vat_amount = $tvaRetour;
             $parcel->status = ParcelStatus::RETURN_RECEIVED_BY_MERCHANT;
             $parcel->save();
 
@@ -2201,8 +2230,32 @@ class ParcelRepository implements ParcelInterface {
             $merchantStatement->note             = __('statementNote.return_received_by_merchant_statment');
             $merchantStatement->save();
 
+            // ... et sa TVA (D2 q.6, S73), au montant prélevé lui aussi.
+            $tvaRetour = (float) $parcel->return_vat_amount;
+            if ($tvaRetour > 0) {
+                $tvaStatement                   = new MerchantStatement();
+                $tvaStatement->company_id       = settings()->id;
+                $tvaStatement->merchant_id      = $parcel->merchant_id;
+                $tvaStatement->parcel_id        = $id;
+                $tvaStatement->delivery_man_id  = $deliveryManStatement->delivery_man_id;
+                $tvaStatement->amount           = $tvaRetour;
+                $tvaStatement->type             = StatementType::INCOME;
+                $tvaStatement->date             = date('Y-m-d H:i:s');
+                $tvaStatement->note             = __('statementNote.return_vat_merchant_statement');
+                $tvaStatement->save();
+
+                $vat                            = new VatStatement();
+                $vat->company_id                = settings()->id;
+                $vat->parcel_id                 = $id;
+                $vat->amount                    = $tvaRetour;
+                $vat->type                      = StatementType::EXPENSE;
+                $vat->date                      = date('Y-m-d H:i:s');
+                $vat->note                      = __('statementNote.return_vat_merchant_statement');
+                $vat->save();
+            }
+
             $merchantCost                  = Merchant::find($parcel->merchant_id);
-            $merchantCost->current_balance = ((double) $merchantCost->current_balance + $return_delivery_charge);
+            $merchantCost->current_balance = ((double) $merchantCost->current_balance + $return_delivery_charge + $tvaRetour);
             $merchantCost->save();
 
             $courier_statement                  = new CourierStatement();
@@ -2223,6 +2276,7 @@ class ParcelRepository implements ParcelInterface {
             }
             // Sans quoi le prochain releve refacturerait le retour annule.
             $parcel->return_charges = 0;
+            $parcel->return_vat_amount = 0;
             $parcel->save();
 
             return true;

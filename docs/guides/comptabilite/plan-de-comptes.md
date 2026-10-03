@@ -4,7 +4,9 @@
 > le paramétrage comptable de BeninLink (décision **D2**). Tout ce qui y est
 > proposé est modifiable dans un fichier de configuration — jamais dans le code.
 >
-> Établi le 2026-09-06 · à retourner signé.
+> Établi le 2026-09-06 · **décisions du porteur consignées le 2026-10-03 (lot S73)**
+> · il reste à l'expert-comptable **trois numéros de comptes** et **quatre codes de
+> journaux** à confirmer (§ 6).
 
 ## 1. Ce que le logiciel fait aujourd'hui
 
@@ -14,101 +16,114 @@ transporteur, la TVA, et le net à reverser. De ce relevé, il tire trois écrit
 
 Exemple réel, un relevé de **trois colis** (montants en FCFA entiers). Le détail
 est donné colis par colis parce que le total, seul, ne se recompose pas au taux
-de 18 % — et c'est la première chose qu'un comptable vérifie :
+de 18 % sans ce détail — et c'est la première chose qu'un comptable vérifie :
 
 | Colis | Encaissé COD | Frais HT | TVA | Taux | Frais TTC |
 |---|---|---|---|---|---|
 | `BL-1` livré | 50 000 | 560 | 101 | 18 % | 661 |
 | `BL-2` livré | 30 000 | 700 | 126 | 18 % | 826 |
-| `BL-3` **retourné** | — | 500 | **0** | **aucun** | 500 |
-| **Relevé n° `CO-2026-000001`** | **80 000** | **1 760** | **227** | *12,9 % apparent* | **1 987** |
+| `BL-3` **retourné** | — | 500 | **90** | 18 % | 590 |
+| **Relevé n° `CO-2026-000001`** | **80 000** | **1 760** | **317** | 18 % | **2 077** |
 
-**Net à reverser : 80 000 − 1 987 = 78 013.**
+**Net à reverser : 80 000 − 2 077 = 77 923.**
 
 Les TVA de ce tableau sont **arrondies au franc** : 18 % de 560 F font
 100,80 F, arrondis à 101. Depuis le **2026-09-18**, la base porte le même 101 —
-l'arrondi est appliqué au calcul (**question 7**). Les colis créés *avant* cette
-date gardent leurs centimes : voir la case « reprise du passé ».
+l'arrondi est appliqué au calcul (**question 7**).
 
-Le taux apparent du relevé (12,9 %) n'est pas une erreur de calcul : il vient de
-la troisième ligne. **Les frais de retour sortent de l'assiette de TVA** —
-`InvoiceRepository` force `vat_amount = 0` sur un colis retourné et retient le
-seul `return_charges`. C'est le comportement du socle repris tel quel, et il fait
-l'objet de la **question 6** ci-dessous : un retour est une prestation
-effectivement rendue, la traiter hors champ n'a rien d'évident.
+La ligne de retour porte sa TVA depuis le **2026-10-03** (**question 6**) : le
+retour est une prestation rendue contre rémunération, **taxable au taux normal**.
+Jusque-là le logiciel la forçait à zéro ; les relevés émis avant cette date l'ont
+donc facturée hors champ, et `beninlink:retours-sans-tva` les montre (§ 4).
 
-**Écriture 1 — journal des ventes (`VE`)** : la prestation facturée au marchand.
+**Écriture 1 — journal des ventes (`VE`)** : la prestation facturée au marchand,
+livraison **et** retour.
 
 | Compte | Libellé | Débit | Crédit |
 |---|---|---|---|
-| 4111 | Clients | 1 987 | |
+| 4111 + code marchand | Clients | 2 077 | |
 | 7061 | Prestations de services de livraison | | 1 760 |
-| 4431 | État, TVA facturée sur ventes | | 227 |
+| 4431 | État, TVA facturée sur ventes | | 317 |
 
 **Écriture 2 — opérations diverses (`OD`)** : les frais sont retenus sur le COD
-encaissé pour le compte du marchand, dette constatée au 4712.
+encaissé pour le compte du marchand, dette constatée au compte COD.
 
 | Compte | Libellé | Débit | Crédit |
 |---|---|---|---|
-| 4712 | Créditeurs divers — COD encaissé pour compte de marchands | 1 987 | |
-| 4111 | Clients | | 1 987 |
+| 4712 + code marchand *(numéro à valider)* | COD encaissé pour compte de marchands | 2 077 | |
+| 4111 + code marchand | Clients | | 2 077 |
 
-**Écriture 3 — banque (`BQ`)**, émise **seulement quand le relevé est payé** :
-le reversement du net.
+**Écriture 3 — banque (`BQ`)**, émise **seulement quand le relevé est payé**, à
+la **date de l'ordre de virement** : le reversement du net.
 
 | Compte | Libellé | Débit | Crédit |
 |---|---|---|---|
-| 4712 | Créditeurs divers | 78 013 | |
-| 521 | Banques locales | | 78 013 |
+| 4712 + code marchand *(numéro à valider)* | COD encaissé pour compte de marchands | 77 923 | |
+| 521 | Banques locales | | 77 923 |
 
 Chaque pièce est équilibrée, et l'extrait vérifie l'équilibre **avant** d'écrire
 le fichier : un lot déséquilibré n'est jamais produit.
 
-## 2. Les six points à trancher
+## 2. Les huit points — tranchés par le porteur le 2026-10-03
 
-Cocher, ou corriger dans la colonne de droite. Chaque réponse se traduit par une
-ligne de `web/config/syscohada.php`.
+Chaque réponse est traduite dans `web/config/syscohada.php` et figée par
+`tests/Feature/PlanDeComptesSigneTest` : un changement ultérieur se fait **dans
+les deux**, jamais l'un sans l'autre. Les cases « à valider » sont celles de
+l'expert-comptable.
 
-| # | Question | Proposition du logiciel | Décision de l'expert-comptable |
+| # | Question | Décision | Ce qui reste à l'expert-comptable |
 |---|---|---|---|
-| 1 | **Sous-comptes par marchand ?** Un compte collectif 4111, ou un auxiliaire par marchand (`4111PIL001`) pour lettrer sans dépouiller les libellés ? | Auxiliaire **recommandé** dès que le transporteur dépasse quelques marchands. Déjà implémenté : `SYSCOHADA_AUXILIARY=merchant_code`. Seuls les comptes de **tiers** (4111, 4712) sont suffixés ; produits et TVA restent collectifs. | ☐ collectif ☐ auxiliaire · racine : ______ |
-| 2 | **COD encaissé pour compte de tiers** : 4712 « Créditeurs divers » convient-il, ou faut-il un compte dédié (4713 / 4718), voire un 419 « Clients créditeurs » ? | 4712 par défaut. Le point n'est pas cosmétique : ces fonds **ne sont pas** un produit du transporteur, ils lui sont dus par nature. Le compte retenu doit être lisible en balance âgée. | Compte : ______ |
-| 3 | **TVA** : 4431 (TVA facturée sur ventes) ou un sous-compte propre aux prestations, selon le régime retenu pour le transport au Bénin. | 4431, taux **18 %** au niveau de la société (surchargeable par marchand). | Compte : ______ · taux : ____ % |
-| 4 | **Codes de journaux** : `VE` / `OD` / `BQ` correspondent-ils au paramétrage du logiciel comptable cible (Sage, Saari, autre) ? | VE / OD / BQ. | VE : ____ OD : ____ BQ : ____ |
-| 5 | **Date de l'écriture de banque** : elle est émise au passage du relevé au statut **payé**. Est-ce la date de valeur attendue, ou faut-il la date de l'ordre de virement ? | Date du relevé payé. | ☐ conforme ☐ autre : ______ |
-| 6 | **Frais de retour dans l'assiette de TVA ?** Un colis retourné est facturé au marchand (`return_charges`) mais **sans TVA** : le logiciel force le montant à zéro et ne retient que le frais. | Comportement hérité du socle, **non arbitré**. Un retour est pourtant une prestation rendue contre rémunération ; s'il est taxable, l'assiette déclarée est aujourd'hui sous-évaluée du montant des retours. | ☐ hors champ ☐ taxable au taux normal · si taxable : reprise du passé ☐ oui ☐ non |
-| 7 | **Arrondi de la TVA au franc ?** Le FCFA n'a pas de subdivision, mais la TVA est calculée en pourcentage : 18 % de 1 680 F donne **302,40 F**, et le logiciel conserve cette décimale en base. Arrondi **au franc le plus proche**, appliqué **depuis le 2026-09-18** au seul endroit où un taux devient des francs (`ChargeCalculator::percentage()`) — la TVA comme la commission COD. Aucun chiffre imprimé n'a changé : le relevé arrondissait déjà au même franc. Une autre règle (toujours au-dessus, toujours en dessous) reste possible ; elle se change là, en un point. | ☐ conforme ☐ autre règle : ______ · reprise du passé ☐ oui ☐ non |
+| 1 | **Sous-comptes par marchand ?** | **Auxiliaire par marchand, par défaut** : `4111PIL001`. Seuls les comptes de **tiers** sont suffixés (clients, COD, avances reçues) ; produits, TVA, banque et caisse restent collectifs. `SYSCOHADA_AUXILIARY=collectif` pour revenir à une racine unique. | — |
+| 2 | **COD encaissé pour compte de tiers** | Le principe d'un compte **dédié** est acté : ces fonds ne sont pas un produit du transporteur, ils doivent se lire en balance âgée. | ☐ le **numéro** (4713 ? 4718 ? 419 ?) — 4712 reste posé en attendant : ______ |
+| 3 | **TVA** | **4431**, taux **18 %** au niveau de la société (surchargeable par marchand, D1). Figés. | — |
+| 4 | **Codes de journaux** | `VE` / `OD` / `BQ`, plus `CA` (caisse, pour les remises d'espèces de la question 8). Lus dans la configuration. | ☐ les codes du logiciel comptable cible — VE : ____ OD : ____ BQ : ____ CA : ____ |
+| 5 | **Date de l'écriture de banque** | La **date de l'ordre de virement** fait foi. Le logiciel la prend au moment où le relevé est **marqué payé** (`invoices.paid_on`) : l'action « marquer payé » se fait **le jour du virement**, pas après coup. Un relevé payé avant le 2026-10-03 n'a pas cette date et garde celle de son émission. | — |
+| 6 | **Frais de retour dans l'assiette de TVA ?** | **Taxable au taux normal.** Le retour reçu prélève le frais **et** sa TVA au marchand, au franc (`parcels.return_vat_amount`), et le relevé la facture. Les relevés émis **avant** sont **constatés**, jamais modifiés : `beninlink:retours-sans-tva` (§ 4). | ☐ la **régularisation du passé** : avoir, relevé complémentaire, ou rien si non significatif — décision : ______ |
+| 7 | **Arrondi de la TVA au franc ?** | **Au franc le plus proche**, appliqué depuis le 2026-09-18 au seul endroit où un taux devient des francs (TVA et commission COD). **Pas de reprise du passé** : les écarts (0,40 F par colis au plus) ne sont pas significatifs. | — |
+| 8 | **Les trois flux hors relevé** | **Recharges de portefeuille** (Mobile Money, approuvées) : journalisées en **avances reçues** du marchand — D 521 / C avances. **Remises d'espèces des livreurs** au hub : journalisées par un **compte de transit** — D 571 Caisse / C transit livreurs. **Abonnements SaaS : aucune écriture** côté transporteur (livres de la société éditrice). | ☐ le numéro des **avances reçues** (4191 proposé) : ______ · ☐ le numéro du **transit livreurs** (4713 proposé) : ______ |
 
-## 3. Ce que l'export ne couvre pas (encore)
+## 3. Ce que l'extrait couvre, et ce qu'il ne couvre pas
 
-À confirmer aussi : faut-il des écritures pour ces flux, et lesquelles ?
+| Flux | Journal | Écriture | Statut |
+|---|---|---|---|
+| Relevé émis (livraisons et retours facturés) | `VE`, `OD` | § 1, écritures 1 et 2 | en place |
+| Relevé payé (reversement du net) | `BQ` | § 1, écriture 3, à la date de l'ordre de virement | en place |
+| Recharge de portefeuille approuvée | `BQ` | D 521 Banques / C 4191 avances reçues (+ code marchand) | en place, **numéro à valider** |
+| Remise d'espèces d'un livreur au hub | `CA` | D 571 Caisse / C 4713 transit livreurs | en place, **numéro à valider** |
+| Abonnements SaaS de la plateforme | — | aucune | décidé : hors des livres du transporteur |
+| Reversements aux livreurs (courses payées) | — | aucune | suivis dans les soldes internes du logiciel ; à ouvrir si l'expert-comptable le demande |
 
-| Flux | Aujourd'hui | Remarque |
-|---|---|---|
-| Recharges de portefeuille marchand (Mobile Money) | non journalisées | ce sont des **avances reçues** du marchand, pas un produit |
-| Reversements aux livreurs, remises d'espèces | non journalisés | suivis dans les comptes internes du logiciel (soldes livreurs) |
-| Abonnements SaaS de la plateforme | non journalisés | concernent la société éditrice, pas le transporteur |
-
-Tant que ces flux ne sont pas tranchés, l'extrait couvre **le cycle marchand**,
-qui est celui que la TVA et le relevé engagent.
+Chaque écriture tombe dans l'extrait de **sa** période : ventes et compensation à
+l'émission du relevé, banque à la date du virement, recharges à leur approbation,
+remises à leur date. Un relevé émis en août et payé en septembre a ses ventes
+dans l'extrait d'août et sa banque dans celui de septembre.
 
 ## 4. Obtenir un extrait à valider
 
 ```bash
-# le mois dernier, tous statuts, affichage seul
+# le mois dernier, toutes les sociétés, affichage seul
 php artisan beninlink:journal-syscohada
 
 # une période précise, une société, écriture du CSV
-php artisan beninlink:journal-syscohada --du=2026-08-01 --au=2026-08-31 \
-    --societe=2 --fichier=journal-aout.csv
+php artisan beninlink:journal-syscohada --du=2026-09-01 --au=2026-09-30 \
+    --societe=2 --fichier=journal-septembre.csv
 
-# seulement les relevés payés (les seuls à porter une écriture de banque)
+# seulement les relevés payés (sans recharges ni remises)
 php artisan beninlink:journal-syscohada --payes
+
+# les relevés émis AVANT le 2026-10-03 qui ont facturé un retour sans TVA (question 6)
+php artisan beninlink:retours-sans-tva [--societe=2] [--marchand=12]
 ```
 
-La commande affiche le nombre de pièces, le total débit, le total crédit et le
-détail par journal ; elle **refuse d'écrire** si une pièce ne s'équilibre pas.
-Le CSV est en point-virgule avec BOM UTF-8 (ce qu'Excel français attend).
+La première commande affiche le nombre de pièces, le total débit, le total
+crédit et le détail par journal ; elle **refuse d'écrire** si une pièce ne
+s'équilibre pas. Le CSV est en point-virgule avec BOM UTF-8 (ce qu'Excel
+français attend).
+
+La seconde **constate seulement** : relevé par relevé, le frais de retour
+facturé, la TVA manquante au taux du colis, et si le relevé est déjà payé. Elle
+n'a **aucune option d'écriture** — un relevé émis ne se modifie pas (**D8**,
+**D9**). La régularisation est la case restante de la question 6.
 
 ## 5. Ce qui ne dépend pas de vos réponses
 
@@ -116,37 +131,31 @@ Quelle que soit la décision, le logiciel garantit :
 
 - des montants **entiers en FCFA**, jamais de centimes — **des documents
   comme de la base** depuis le 2026-09-18 : l'arrondi s'applique au calcul, et
-  non plus seulement à l'impression. ⚠️ Seule réserve : les colis créés **avant**
-  cette date gardent leurs centimes en base. Les reprendre ou non est la case
-  « reprise du passé » de la **question 7** ;
+  non plus seulement à l'impression ;
 - une **numérotation continue** des relevés par société et par exercice
   (`PREFIXE-2026-000001`), sans trou ni doublon ;
 - l'**équilibre** de chaque pièce, vérifié avant export ;
 - le taux de TVA lu au niveau de la société, surchargeable par marchand (**D1**) ;
-- l'IFU du marchand porté sur chaque ligne, pour le rapprochement tiers.
+- l'IFU du marchand porté sur chaque ligne, pour le rapprochement tiers ;
+- un relevé émis **ne se modifie jamais** après coup : les correctifs passent par
+  un constat, puis une régularisation explicite (**D8**, **D9**).
 
-## 6. Retour
+## 6. Retour attendu
 
-Une fois cette fiche complétée, les questions **1 à 5** se règlent en deux
-lignes côté logiciel : les numéros dans `web/config/syscohada.php`, l'auxiliaire
-dans le `.env` (`SYSCOHADA_AUXILIARY=merchant_code`). Aucune modification de
-code, aucune migration.
+Les huit questions sont tranchées côté métier. Ce qui vous revient tient en
+**sept cases** du tableau du § 2 :
 
-Les **questions 6 et 7** sont les exceptions, et c'est pourquoi elles sont
-posées à part : toutes deux touchent le **calcul**, pas le paramétrage.
+1. le numéro du compte **COD dédié** (question 2) ;
+2. les **codes de journaux** VE / OD / BQ / CA du logiciel cible (question 4) ;
+3. la **régularisation du passé** sur les retours facturés sans TVA (question 6) —
+   l'extrait de `beninlink:retours-sans-tva` chiffre ce qu'elle représente ;
+4. le numéro des **avances reçues** (question 8) ;
+5. le numéro du **transit livreurs** (question 8).
 
-Répondre « taxable » à la **6** change l'assiette — une TVA sur le frais de
-retour dans `InvoiceRepository`, et, si la reprise du passé est demandée, une
-régularisation des relevés déjà émis.
-
-La **7** a déjà été appliquée, le 2026-09-18 : le franc entier est désormais
-produit au calcul et non plus seulement à l'impression. Aucun document émis n'en
-a changé d'apparence — le relevé arrondissait déjà —, mais le **net réellement
-porté au solde** du marchand vaut maintenant ce que le relevé annonce, à moins
-d'un franc près par colis. Ce qui reste à trancher : confirmer la règle (au plus
-proche), et dire si le passé doit être repris.
-
-Ni l'une ni l'autre n'est un paramétrage ; ce sont deux chantiers courts mais
-réels, à chiffrer une fois les réponses connues.
+Les numéros se changent en une ligne de `web/config/syscohada.php` et dans le
+test qui les fige — aucune migration, aucun code. La régularisation du passé,
+elle, sera un lot à part, écrit **après** votre réponse, sur le modèle de
+`beninlink:retours-annules --corriger` : constat d'abord, écriture ensuite,
+jamais en production sans `--force`.
 
 Nom et signature : ______________________  ·  Date : ____________
