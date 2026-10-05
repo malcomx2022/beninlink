@@ -121,7 +121,13 @@ Rien de tout ceci ne peut être versionné — ce sont des secrets et des liens 
   `danger` (BLOQUANT), `warning` (AVERTISSEMENT) et `info` (INFO) pour la douane. L'ocre
   est réservé aux **actions clés**, et le vert primaire se lit « tout va bien » : les
   employer pour une alerte ment sur sa gravité (S68).
-- **Pas de lanceur de tests ici.** Les garanties de l'app se posent en PHPUnit dans
-  `web/tests/` — précédents : `OpenApiSpecTest` (endpoints), `ParcelStageTest` (statuts),
-  `MerchantAppCustomsContractTest` (douane). Avant tout commit : `npx tsc --noEmit` et
-  `npx expo lint`, qui ne prouvent que la forme.
+- **Deux niveaux de tests, deux rôles** (**S84 / M2**). `npm test` (Jest, préréglage
+  `jest-expo`, `@testing-library/react-native` 14 — `await render`, `await fireEvent`) **exécute**
+  ce qui est à l'app : les modules purs de `src/domain/` et `src/api/pagination.ts`, et les
+  composants extraits pour être rendus (`CustomsAlertCard`). Le **contrat** avec `web/` reste
+  tenu en PHPUnit dans `web/tests/` — `OpenApiSpecTest` (endpoints), `ParcelStageTest`
+  (statuts), `MerchantAppCustomsContractTest` (tailles de page, valeurs des enums, la carte
+  bien branchée) — parce qu'un test d'app ne peut pas lire `web/`. Un écran `expo-router`
+  ne se rend pas en test : on en **extrait** le morceau à prouver en composant. Avant tout
+  commit : `npx tsc --noEmit`, `npx expo lint`, `npm test` ; le job `apps` du workflow les
+  rejoue sur la pull request (sans conditionner le déploiement serveur).

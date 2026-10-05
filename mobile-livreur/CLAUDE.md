@@ -80,7 +80,9 @@ Icônes Ionicons ; visuels d'app générés depuis `assets/source/generate.py`.
 - Un refus de permission ne bloque rien — les courses restent visibles dans l'onglet.
 
 ## Commandes
-- `npm install` · `npx expo start` · `npm run typecheck` · `npx expo lint`
+- `npm install` · `npx expo start` · `npm run typecheck` · `npx expo lint` · `npm test`
+  (**S84** : Jest `jest-expo`, les modules purs `money` et `parcelStatus` ; le job `apps` du
+  workflow rejoue typage, lint et tests sur la pull request).
 - **`npx expo-doctor` avant tout build** : il attrape les erreurs de configuration qui,
   sinon, font échouer EAS après dix minutes de file d'attente. 21/21 au 2026-09-06.
 - Build : `eas build -p android` (APK/AAB) · `eas build -p ios`.

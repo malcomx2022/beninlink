@@ -83,7 +83,9 @@ avant les apps.
   `docs/guides/infra/deploy/deploy.sh`, dont le chemin vient de `DEPLOY_PATH`. Avant de
   couper le site, `verifier-env.sh` refuse un `.env` hors production qui porterait
   FedaPay en live ou une clé `_live_`, et depuis **S77** tout `.env` **sans `API_KEY`**
-  ou portant la clé publique du socle (`RecetteDeploymentTest` l'exécute).
+  ou portant la clé publique du socle (`RecetteDeploymentTest` l'exécute). Depuis **S84** un
+  job `apps` (matrice `mobile` / `mobile-livreur`) rejoue `tsc`, `expo lint` et `npm test` sur
+  chaque pull request ; il **ne conditionne pas** `deploy` — les apps partent par EAS.
 - `php artisan openapi:generate` après tout changement de `routes/api.php` ou de
   `resources/openapi/overlay.php` (régénère `public/openapi/v10.json`, versionné).
 - `php artisan beninlink:pilote [--company=] [--reset]` : jeu de données béninois de recette

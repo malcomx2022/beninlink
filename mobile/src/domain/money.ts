@@ -19,7 +19,8 @@ export const CURRENCY_SYMBOL = 'FCFA';
  * passent pas par un Resource et pourraient encore en produire.
  */
 export function toAmount(value: unknown): number {
-  if (typeof value === 'number') return Math.round(value);
+  // S84 — un nombre non fini (NaN, Infinity) rendait `NaN`, donc « NaN FCFA » à l'écran.
+  if (typeof value === 'number') return Number.isFinite(value) ? Math.round(value) : 0;
   if (typeof value === 'string' && value.trim() !== '') {
     const n = Number(value);
     return Number.isFinite(n) ? Math.round(n) : 0;
