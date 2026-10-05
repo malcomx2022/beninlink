@@ -3896,6 +3896,7 @@
                     "Colis"
                 ],
                 "summary": "Détail d'un colis",
+                "description": "Depuis S82, `customs_alerts` porte les alertes douanières **de ce colis** (vide pour un colis domestique) : l'écran de détail les lit là, sans filtrer la liste paginée de `customs/alerts`.",
                 "parameters": [
                     {
                         "name": "id",
@@ -3924,6 +3925,18 @@
                                                     "properties": {
                                                         "parcel": {
                                                             "$ref": "#/components/schemas/Parcel"
+                                                        },
+                                                        "parcelEvents": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/ParcelEvent"
+                                                            }
+                                                        },
+                                                        "customs_alerts": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/CustomsAlert"
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -4204,6 +4217,7 @@
                     "Colis"
                 ],
                 "summary": "Suivi (timeline) d'un colis",
+                "description": "Le colis, ses événements de statut et, depuis S82, ses alertes douanières (`customs_alerts`, vide pour un colis domestique). C'est la lecture de l'écran de détail de l'app marchand.",
                 "parameters": [
                     {
                         "name": "id",
@@ -4230,10 +4244,19 @@
                                                 "data": {
                                                     "type": "object",
                                                     "properties": {
-                                                        "parcelLogs": {
+                                                        "parcel": {
+                                                            "$ref": "#/components/schemas/Parcel"
+                                                        },
+                                                        "parcelEvents": {
                                                             "type": "array",
                                                             "items": {
                                                                 "$ref": "#/components/schemas/ParcelEvent"
+                                                            }
+                                                        },
+                                                        "customs_alerts": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/CustomsAlert"
                                                             }
                                                         }
                                                     }

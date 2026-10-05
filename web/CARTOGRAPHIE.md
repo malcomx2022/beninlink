@@ -2,10 +2,10 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-05 (S81 — identifiants au nom libre : dix noms donnés au
-> filet S38, lectures nues resserrées, le virement modifié et la demande de retrait gardés ;
-> S80 — répétition de déploiement en intégration continue ; S79 — installation `--no-dev`
-> réparée ; S78 — bloc `page` sur les réponses paginées ; S77 — clé d'API sans repli). Les blocs A-K décrivent le socle **tel que trouvé** ; les
+> Dernière mise à jour : 2026-10-05 (S82 — l'alerte douanière sur le détail du colis, M1 :
+> `customs_alerts` avec le colis, spec, écran ; S81 — identifiants au nom libre dans les
+> filets ; S80 — répétition de déploiement en intégration continue ; S79 — installation
+> `--no-dev` réparée ; S78 — bloc `page` sur les réponses paginées). Les blocs A-K décrivent le socle **tel que trouvé** ; les
 > sections `## S<nn>` qui suivent racontent chaque lot, avec ses sabotages et le compte
 > de la suite. Le 2026-08-16 : chantier 1 (langue et devise — helpers XOF, 278 affichages
 > et 32 sorties d'API en FCFA entier) ; avant : blocs J — tarifs et K — notifications.
@@ -7443,3 +7443,57 @@ Suite complète : **1 211 tests, 46 896 assertions**, verte.
   modification d'une demande de retrait est donc cassé dans le socle, indépendamment de ce
   lot ; le dépôt qu'il appellerait est gardé (testé directement). À corriger dans un lot
   qui reprend cet écran, pas en passant.
+
+## S82 — l'alerte douanière sur le détail du colis (M1), dans l'ordre web → OpenAPI → app (2026-10-05)
+
+### D'où ça vient
+
+S68 avait rendu l'écran « Alertes douanières » et le tableau de bord, et **écarté à dessein** un
+septième cas : montrer l'alerte sur le colis lui-même. `customs/alerts` n'a pas de filtre par
+colis, et filtrer côté client une liste paginée mentirait dès la deuxième page. Le relevé le
+portait depuis comme **M1**. Un marchand qui ouvrait un colis export ne voyait ni le niveau de
+l'alerte ni le document exigé ; il devait aller le chercher dans une autre liste.
+
+### Le choix : un bloc avec le colis, pas un filtre sur la liste
+
+S68 nommait un filtre `parcel_id` sur `customs/alerts` parce qu'il regardait depuis l'app. Vu
+depuis `web/`, c'est un **paramètre d'identifiant de plus sur une route d'API** : une entrée de
+plus à classer dans `IsolationCoverageTest`, à prouver, à tenir. Le bloc `customs_alerts` sur
+`parcel/details/{id}` et `parcel/logs/{id}` s'adosse à une ressource dont la portée est **déjà
+établie** (S17 : le colis est au marchand connecté, `ParcelScopeTest`) : ses alertes le
+suivent, personne d'autre ne les lit, et l'app a une seule lecture, sans pagination. Un colis
+domestique rend `[]`, pas une clé absente : l'app lit sans condition.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `Parcel::customsAlerts()` | relation `hasMany` — extension du modèle, le socle n'en avait pas |
+| `Api\V10\ParcelController::details()` et `logs()` | `customs_alerts` dans la réponse, par `alertesDouanieresDe($parcel)` (`CustomsAlertResource`, libellés traduits) |
+| `resources/openapi/overlay.php`, spec régénérée | les deux réponses documentent `customs_alerts`. **Au passage** : `parcel/logs/{id}` annonçait `{parcelLogs: [...]}` alors que le contrôleur sert `{parcel, parcelEvents}` depuis toujours — corrigé |
+| `CustomsAlertTest` (+1) | deux exports, un domestique : chaque colis porte **sa** seule alerte sur les deux lectures (id, `parcel_id`, niveau, statut, document), le domestique un tableau vide |
+| `mobile/src/api/parcels.ts` | `fetchParcelTimeline()` rend aussi `customsAlerts` (`customs_alerts ?? []`, un serveur d'avant S82 n'envoie pas la clé) |
+| `mobile/app/(app)/parcel/[id].tsx` | une carte « Alertes douanières », absente sur un domestique ; par alerte : pays et catégorie, badge et bord gauche par `customsLevelColorName` (la table de S68), message, document requis, « Marquer traitée » si en cours (`resolveCustomsAlert`, l'alerte rendue à jour remplace la ligne), sinon le statut |
+| `MerchantAppCustomsContractTest` (+1) | le module des colis **lit** `customs_alerts` (la lecture, pas le mot) et aucun des deux fichiers n'appelle `fetchCustomsAlerts` ; l'écran traverse la table des couleurs, offre « marquer traitée » et regarde le statut |
+| `mobile/CLAUDE.md`, `web/CLAUDE.md` | la règle : les alertes d'un colis voyagent avec le colis ; jamais de filtre côté app sur la liste paginée |
+
+### Vérification
+
+`npx tsc --noEmit` et `npx expo lint` verts sur `mobile/`. Quatre sabotages, relancés depuis `web/`
+(un premier passage lancé depuis la racine n'avait **rien mesuré** : `artisan test` hors de
+`web/` ne trouve pas `phpunit.xml` et ne dit rien — relu, rejoué) :
+
+| Sabotage | Effet |
+|---|---|
+| `logs()` sans `customs_alerts` | **rouge** |
+| les alertes de toute la société au lieu de celles du colis | **rouge** (le second export verrait l'alerte du premier) |
+| l'écran de détail perd sa carte douane | **rouge** |
+| le suivi ne lit plus `customs_alerts` | **vert** d'abord — le test cherchait le **mot**, qu'un commentaire portait encore ; resserré à la lecture `data?.customs_alerts ?? []`, **rouge** |
+
+Suite complète : **1 213 tests, 46 933 assertions**, verte.
+
+### Ce que ce lot ne garantit pas
+
+Comme S68 : `mobile/` n'a pas de lanceur de tests (M2), la propriété de l'écran est une lecture
+de source. Le rendu de la carte sur un téléphone reste à voir à la recette (E1), avec un colis
+export TG + textile du jeu pilote.

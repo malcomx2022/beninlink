@@ -316,4 +316,38 @@ class MerchantAppCustomsContractTest extends TestCase
         $this->assertStringContainsString('customsLevelColorName', $tableau,
             'le tableau de bord ne dit plus la gravité — un blocage se lirait comme un conseil');
     }
+
+    /* ─────────── 7. S82 (M1) : l'alerte sur le colis lui-même ──────────── */
+
+    /**
+     * S68 avait écarté ce cas parce que `customs/alerts` n'a pas de filtre par
+     * colis. Depuis S82 le colis **porte** ses alertes (`customs_alerts` sur
+     * `parcel/logs/{id}` et `parcel/details/{id}`, `CustomsAlertTest`) ; l'app
+     * les lit là, et nulle part ailleurs : un filtre côté client sur la liste
+     * paginée mentirait dès la deuxième page.
+     *
+     * Même honnêteté que le test précédent : présence, pas comportement.
+     */
+    public function test_the_parcel_detail_carries_the_parcel_s_own_customs_alerts(): void
+    {
+        $api = $this->source('src/api/parcels.ts');
+        // ⚠️ La LECTURE, pas le mot : un commentaire qui nomme `customs_alerts`
+        // laissait un sabotage vert (mesuré en écrivant ce test).
+        $this->assertMatchesRegularExpression('/data\?\.customs_alerts\s*\?\?\s*\[\]/', $api,
+            'le suivi du colis ne lit plus `customs_alerts` (avec `[]` en repli) : l\'écran de détail n\'a plus d\'alerte');
+        $this->assertStringNotContainsString('fetchCustomsAlerts', $api,
+            'le module des colis filtre la liste paginée des alertes : S68 l\'avait écarté, elle ment dès la page 2');
+
+        $ecran = $this->source('app/(app)/parcel/[id].tsx');
+        $this->assertStringContainsString('customsAlerts', $ecran,
+            'l\'écran de détail ne rend plus les alertes douanières du colis');
+        $this->assertStringNotContainsString('fetchCustomsAlerts', $ecran,
+            'l\'écran de détail filtre la liste paginée des alertes au lieu de lire celles du colis');
+        $this->assertStringContainsString('customsLevelColorName', $ecran,
+            'l\'écran de détail peint les niveaux lui-même : la table de S68 n\'est plus traversée');
+        $this->assertStringContainsString('resolveCustomsAlert', $ecran,
+            'l\'écran de détail ne permet plus de marquer l\'alerte traitée');
+        $this->assertStringContainsString('CustomsAlertStatus.PENDING', $ecran,
+            'l\'écran de détail offre « marquer traitée » sans regarder le statut');
+    }
 }

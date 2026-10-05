@@ -33,12 +33,16 @@ Chercher un écran dans `src/` ne trouve rien — et ne prouve rien (S68).
 ## Écrans (référence maquette validée)
 - Auth : connexion, **inscription PME (IFU/RCCM/CNSS)**, récupération mot de passe (SMS).
 - Tableau de bord (KPIs, solde wallet, alerte douane, colis récents).
-- Colis : liste (En cours/Livrés/Retours), **détail + timeline de suivi**, **création**
+- Colis : liste (En cours/Livrés/Retours), **détail + timeline de suivi + alertes douanières du colis** (S82), **création**
   (Boutique, destinataire, Catégorie, Type Jour même/Lendemain/Sous-ville/Hors-ville,
   **Cash Collection/COD**, Prix de vente, N° facture).
 - Portefeuille : solde, **Recharger** (FedaPay), **Retrait** (payout), historique.
 - **Factures = relevés de règlement** (Encaissé COD − Frais − TVA = Net à reverser · PDF/CSV).
 - **Alerte douanière** (déclenchée à la création export · 3 niveaux Info/Avertissement/Bloquant).
+  Depuis **S82 (M1)** elle se lit aussi **sur le colis** : `parcel/logs/{id}` porte
+  `customs_alerts`, les alertes **de ce colis**, et le détail les rend par la même table de
+  couleurs (`customsLevelColorName`) avec « Marquer traitée ». Ne jamais filtrer côté app la
+  liste paginée de `customs/alerts` pour retrouver celles d'un colis : elle ment dès la page 2.
 - Boutiques (multi-shop), Tarifs (poids × zone), Notifications, Profil.
   L'écran **Tarifs** sert **les deux formes** (**D4**) : le barème par zones dès que
   `zones` n'est pas vide, sinon les quatre colonnes héritées. Ne jamais supprimer le

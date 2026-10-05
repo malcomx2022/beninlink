@@ -12,6 +12,7 @@
 import { ApiError, api } from './client';
 import { endpoints } from './endpoints';
 import type {
+  CustomsAlert,
   Parcel,
   ParcelEvent,
   ParcelFormData,
@@ -34,14 +35,26 @@ export async function fetchParcelDetails(id: number): Promise<Parcel> {
   return (data as { parcel?: Parcel }).parcel ?? (data as Parcel);
 }
 
-/** Suivi d'un colis : le colis et ses événements de statut. */
+/**
+ * Suivi d'un colis : le colis, ses événements de statut et, depuis S82 (M1),
+ * ses alertes douanières.
+ *
+ * Les alertes viennent **avec le colis** (`customs_alerts`), pas d'un filtre sur
+ * la liste paginée de `customs/alerts` : c'est `web/` qui dit lesquelles sont
+ * celles de ce colis. Un colis domestique en porte zéro ; un serveur d'avant
+ * S82 n'envoie pas la clé, et l'écran n'affiche alors rien.
+ */
 export async function fetchParcelTimeline(
   id: number,
-): Promise<{ parcel: Parcel | null; events: ParcelEvent[] }> {
-  const data = await api.get<{ parcel: Parcel; parcelEvents: ParcelEvent[] }>(
+): Promise<{ parcel: Parcel | null; events: ParcelEvent[]; customsAlerts: CustomsAlert[] }> {
+  const data = await api.get<{ parcel: Parcel; parcelEvents: ParcelEvent[]; customs_alerts?: CustomsAlert[] }>(
     endpoints.parcelLogs(id),
   );
-  return { parcel: data?.parcel ?? null, events: data?.parcelEvents ?? [] };
+  return {
+    parcel: data?.parcel ?? null,
+    events: data?.parcelEvents ?? [],
+    customsAlerts: data?.customs_alerts ?? [],
+  };
 }
 
 /** Référentiels du formulaire de création (boutiques, catégories, emballages…). */

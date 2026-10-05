@@ -84,6 +84,18 @@ class Parcel extends Model
         return $this->belongsTo(DeliveryDelay::class, 'delay_id', 'id');
     }
 
+    /**
+     * Alertes douanieres emises a la creation de ce colis (chantier 5, **S82 / M1**).
+     *
+     * Un colis domestique n'en a aucune ; un export en porte une par regle
+     * appliquee. La portee est celle du colis : qui peut lire le colis peut lire
+     * ses alertes, et personne d'autre.
+     */
+    public function customsAlerts()
+    {
+        return $this->hasMany(CustomsAlert::class, 'parcel_id', 'id');
+    }
+
     public function deliveryCategory()
     {
         return $this->belongsTo(Deliverycategory::class, 'category_id', 'id');

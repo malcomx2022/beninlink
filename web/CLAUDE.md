@@ -220,6 +220,11 @@ avant les apps.
   filet qui l'a mesuré. Côté app, un module lit `page` par `api.getPaged()` et rend
   `{items, hasMore}` (`mobile/src/api/pagination.ts`) ; une liste affichée entière passe par
   `fetchAllPages()` ; un écran ne compare jamais une longueur à une constante.
+- Les **alertes douanières d'un colis voyagent avec le colis** (**S82 / M1**) : `parcel/details/{id}`
+  et `parcel/logs/{id}` portent `customs_alerts` (vide pour un colis domestique), rendu par
+  `CustomsAlertResource`, portée du colis (S17). Un besoin « les alertes de X » s'ajoute à la
+  ressource X déjà bornée plutôt que par un paramètre d'identifiant sur `customs/alerts`, qui
+  serait une entrée de plus à prouver dans les filets. `CustomsAlertTest` le fixe.
 - Toute route `/api/v10` à identifiant est inscrite dans `tests/Feature/IsolationCoverageTest`
   avec le test prouvant qu'un compte n'atteint pas la ressource d'un autre (S7).
 - Toute route **web** à paramètre est inscrite dans `tests/Feature/WebIsolationCoverageTest` :

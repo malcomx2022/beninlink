@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V10;
 use App\Enums\Status;
 use App\Exceptions\InsufficientWalletBalance;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\v10\CustomsAlertResource;
 use App\Http\Resources\v10\DeliveryChargeResource;
 use App\Http\Resources\v10\ParcelLogsResource;
 use App\Http\Resources\v10\ParcelResource;
@@ -248,7 +249,11 @@ class ParcelController extends Controller
                 return $this->responseWithError(__('parcel.not_found'), [], 404);
             }
             $parcelevents = $this->repo->parcelEvents($id);
-            return $this->responseWithSuccess(__('parcel.parcel_logs'), ['parcel'=> new ParcelResource ($parcel),'parcelEvents'=>ParcelLogsResource::collection($parcelevents) ], 200);
+            return $this->responseWithSuccess(__('parcel.parcel_logs'), [
+                'parcel'         => new ParcelResource($parcel),
+                'parcelEvents'   => ParcelLogsResource::collection($parcelevents),
+                'customs_alerts' => $this->alertesDouanieresDe($parcel), // S82 (M1)
+            ], 200);
         }catch (\Exception $exception){
             return $this->responseWithError(__('parcel.parcel_logs'), [], 500);
 
@@ -265,11 +270,32 @@ class ParcelController extends Controller
                 return $this->responseWithError(__('parcel.not_found'), [], 404);
             }
             $parcelEvents = $this->repo->parcelEvents($id);
-            return $this->responseWithSuccess(__('parcel.parcel_details'), ['parcel'=> new ParcelResource ($parcel),'parcelEvents'=>ParcelLogsResource::collection($parcelEvents) ], 200);
+            return $this->responseWithSuccess(__('parcel.parcel_details'), [
+                'parcel'         => new ParcelResource($parcel),
+                'parcelEvents'   => ParcelLogsResource::collection($parcelEvents),
+                'customs_alerts' => $this->alertesDouanieresDe($parcel), // S82 (M1)
+            ], 200);
         }catch (\Exception $exception){
             return $this->responseWithError(__('parcel.parcel_details'), [], 500);
 
         }
+    }
+
+    /**
+     * S82 (M1) — les alertes douanieres DU colis, sur son detail et son suivi.
+     *
+     * S68 avait ecarte « l'alerte sur le detail du colis » : `customs/alerts` n'a
+     * pas de filtre par colis, et filtrer cote client une liste paginee mentirait
+     * des la deuxieme page. Plutot qu'un parametre d'identifiant de plus sur une
+     * route d'API (une entree de plus a classer dans les filets), le bloc s'adosse
+     * a une ressource dont la portee est deja etablie : le colis est au marchand
+     * connecte (S17), ses alertes le suivent. Un colis domestique rend `[]`.
+     */
+    private function alertesDouanieresDe($parcel)
+    {
+        return CustomsAlertResource::collection(
+            $parcel->customsAlerts()->orderByDesc('id')->get()
+        );
     }
 
 
