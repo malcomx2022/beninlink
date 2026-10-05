@@ -7,6 +7,7 @@ use App\Models\Backend\MerchantDeliveryCharge;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use App\Services\Install\SeedAccounts;
 use App\Models\Backend\Merchant;
 use App\Models\User;
 use App\Enums\Status;
@@ -27,12 +28,13 @@ class MerchantSeeder extends Seeder
         $merchantUser->mobile          = "01912938003";
         $merchantUser->email           = "merchant@wemaxdevs.com";
         $merchantUser->address         = "Mirpur-2,Dhaka";
-        $merchantUser->password        = Hash::make('12345678');
+        $merchantUser->password        = Hash::make(SeedAccounts::motDePasse($merchantUser->email)); // S87
         $merchantUser->user_type       = UserType::MERCHANT;
         $merchantUser->hub_id          = 4;
         $merchantUser->image_id        = 2;
         $merchantUser->unique_id       = 2024;
         $merchantUser->save();
+        SeedAccounts::annoncer($this->command, $merchantUser->email);
 
         $merchant                      = new Merchant();
         $merchant->user_id             = $merchantUser->id;

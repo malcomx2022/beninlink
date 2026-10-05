@@ -166,6 +166,10 @@ avant les apps.
   recette pilote (**S71**) : la moitié serveur de 25 des 34 scénarios du guide, jouée sur le
   jeu `beninlink:pilote` par les routes des deux apps. À relancer sur la version déployée
   avant de distribuer les APK ; un rouge est un défaut du serveur, pas de l'app.
+- `php artisan beninlink:comptes-amorcage` — **constate** les comptes d'amorçage du socle
+  (`App\Services\Install\SeedAccounts::COMPTES`) dont le mot de passe est encore celui de son
+  code source (`12345678`) ; **sort en erreur** s'il en reste. `deploy.sh` l'exécute **avant**
+  de couper le site (**S87**). Ne lit aucune société, n'écrit rien.
 - `php artisan beninlink:file-attente [--seuil=5]` — état de la file des envois
   (SMS, push, e-mails) et détection d'un **worker arrêté** : la panne que la file
   introduit est silencieuse. Décision **D13**.
@@ -246,6 +250,15 @@ avant les apps.
   la semence, jamais dans un script de déploiement. ⚠️ En test, **une zone se cherche par société
   et code, jamais par code seul** (`unique(['company_id', 'code'])`) : onze fixtures
   `DeliveryZone::where('code', COTONOU)` ont trouvé la zone de la société 1 dès qu'elle en a eu.
+- **Les comptes d'amorçage n'ont pas de mot de passe public hors `local` et `testing`** (**S87**).
+  Une semence qui crée un compte pose `Hash::make(SeedAccounts::motDePasse($email))` et
+  l'annonce par `SeedAccounts::annoncer($this->command, $email)` : le public du socle en local et
+  en test, un mot de passe tiré au sort partout ailleurs, affiché une fois dans `db:seed`, gardé
+  nulle part. Un compte ajouté aux semences s'inscrit dans `SeedAccounts::COMPTES`, sinon le
+  constat ne le voit pas. `SeedAccountsPasswordTest` joue les semences en production simulée
+  (`$this->app->detectEnvironment(fn () => 'production')`, `db:seed --force`). ⚠️ Un
+  `PendingCommand` de test ne s'exécute qu'à `run()` ou à sa destruction : assigné à une
+  variable, il tourne **après** les lignes qui le suivent.
 - **Les deux apps ont leur filet de contrat** (**S85**). L'app marchand : `OpenApiSpecTest`
   (inventaire), `ParcelStageTest` (statuts), `MerchantAppCustomsContractTest` (pages, douane).
   L'app livreur : `DeliverymanAppContractTest` — inventaire dans la spec et jamais réservé au
