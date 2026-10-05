@@ -27,7 +27,7 @@ use Tests\TestCase;
  * | critère | pourquoi |
  * |---|---|
  * | **position** | une garde en aval n'a rien empêché |
- * | **même identifiant** | une garde sur A ne protège pas B — la famille S45→S53 |
+ * | **même identifiant** | une garde sur A ne protège pas B — la famille S45→S53 ; et depuis **S81** le nom doit être lu sur `$request`, pas sur une colonne du même nom |
  * | **carte des aides** | `contrepartieHorsPerimetre($request)` ne nomme aucun champ : sa carte est lue dans `app/Traits/` |
  *
  * ⚠️ **Ce filet ne dit pas qu'une occurrence est une faille.** Il dit qu'aucune
@@ -198,7 +198,12 @@ class NakedReadCoverageTest extends TestCase
 
                     $entre = substr($corps, $g, $l[0][1] - $g);
 
-                    if (str_contains($entre, $c[1])
+                    // S81 — le MEME CHAMP, lu DANS LA REQUETE. `str_contains($entre, $c[1])`
+                    // tenait pour garde toute occurrence du nom entre la garde et la lecture,
+                    // y compris `$fund_transfer->from_account` — la colonne d'un modele deja
+                    // charge. C'est ainsi que `FundTransferRepository::update()` est reste
+                    // « classe » pendant que ses deux comptes etaient lus nus (T5).
+                    if (preg_match('/(?:\$request|request\(\))->' . preg_quote($c[1], '/') . '\b/', $entre)
                         || (in_array($c[1], $this->champsDesAides(), true) && preg_match($aide, $entre))) {
                         $protegee = true;
                         break;
@@ -308,6 +313,10 @@ class NakedReadCoverageTest extends TestCase
                 abort_if(blank(Merchant::companywise()->find($request->merchant_id)), 404);
                 return $m;
             }
+            public function gardeSurUneColonne($request, $ligne) {
+                if (blank(Merchant::companywise()->find($ligne->merchant_id))) { return false; }
+                return Merchant::find($request->merchant_id);
+            }
         }
         PHP;
 
@@ -321,6 +330,10 @@ class NakedReadCoverageTest extends TestCase
         $this->assertContains('Temoin::gardeApres', $trouves,
             'l\'analyse absout une garde posée APRÈS la lecture : elle n\'a pourtant rien empêché — '
             . 'c\'est le resserrement de S59');
+
+        $this->assertContains('Temoin::gardeSurUneColonne', $trouves,
+            'l\'analyse absout une garde qui porte le MÊME NOM sur une COLONNE (`$ligne->merchant_id`), '
+            . 'pas sur la requête : c\'est ce qui a caché `FundTransferRepository::update()` — resserrement de S81');
     }
 
     /**

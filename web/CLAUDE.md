@@ -292,11 +292,17 @@ avant les apps.
   24 occurrences, toutes classées — 19 derrière `online_payout` (**inatteignables**,
   pas correctes : rouvrir le module les rend failles), 3 flux OTP, 1 super-admin,
   1 sûre **par l'ordre**. Une garde compte si elle **précède** la lecture, porte sur
-  le **même champ**, ou est une aide dont la **carte** (lue dans `app/Traits/`) le couvre.
+  le **même champ lu sur `$request`** (**S81** : `$fund_transfer->from_account`, la colonne
+  d'un modèle déjà chargé, absolvait `Account::find($request->from_account)`), ou est une
+  aide dont la **carte** (lue dans `app/Traits/`) le couvre.
 - ⚠️ **`estIdentifiant()` reconnaît une CONVENTION DE NOM, pas un rôle.** `id`, `ids`,
-  `*_id`, `*_ids`, et depuis **S65** `key` et `slug` — élargissement mesuré, venu d'un
-  défaut que le filet avait laissé passer (`delivery-type/status`, S64). Un identifiant
-  au nom libre (`from`, `token`, `reference`) **échappe encore**.
+  `*_id`, `*_ids`, depuis **S65** `key` et `slug`, et depuis **S81 (T5)** une **liste
+  explicite** des dix noms libres du socle (`NOMS_LIBRES` : `account`, `from_account`,
+  `to_account`, `merchant`, `merchant_account`, `editid`, `hub`, `account_head`, `merchantId`,
+  `accountId`). Règle : un champ de requête qui désigne une ressource s'appelle `*_id`, ou
+  s'ajoute à la liste **avec sa ressource** — jamais un troisième nom. Mesuré en l'ajoutant :
+  `FundTransferRepository::update()` lisait ses deux comptes nus, le panneau marchand
+  écrivait le compte de versement d'un autre marchand (`FreeNamedIdentifierScopeTest`).
 - ⚠️ **Le piège du `orWhere` — `companywise()` peut être là et ne rien couvrir.**
   `companywise()->where(A)->orWhere(B)` donne `company_id = X AND A OR B` : le `OR`
   de premier niveau **sort** du périmètre (**S57**, puis **S60**). Le groupe de `OR`
