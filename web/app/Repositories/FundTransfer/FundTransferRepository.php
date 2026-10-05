@@ -110,6 +110,30 @@ class FundTransferRepository implements FundTransferInterface
     public function update($id, $request)
     {
         try {
+            // S81 (T5) — LE MEME DEFAUT QUE `store()` EN S64, ONZE LIGNES PLUS BAS
+            // QUE SA GARDE. Le virement est bien lu par `companywise()` (S30), mais
+            // les deux comptes de la NOUVELLE ecriture etaient lus nus :
+            //
+            //     $from_account = Account::find($request->from_account);
+            //     $to_account   = Account::find($request->to_account);
+            //
+            // puis debites et credites. Depuis S64, « modifier » un virement de la
+            // maison suffisait donc a sortir de l'argent du compte d'un concurrent,
+            // ce que « creer » ne permettait plus. Et le filet des lectures nues
+            // (S65) l'absolvait : il tenait pour garde toute occurrence du NOM du
+            // champ entre la garde et la lecture — ici `$fund_transfer->from_account`,
+            // une colonne du modele deja charge, pas la requete. Le filet exige
+            // desormais que le nom soit lu sur `$request` (S81).
+            //
+            // La garde precede `beginTransaction` : un refus ne laisse rien derriere
+            // lui, ni solde rendu ni ecriture effacee.
+            if ($this->identifiantsHorsPerimetre($request, [
+                'from_account' => Account::class,
+                'to_account'   => Account::class,
+            ])) {
+                return false;
+            }
+
             DB::beginTransaction();
             // select fund transfer row
             // S30 — lecture NUE avant un VIREMENT : cette methode deplace un montant
@@ -134,7 +158,7 @@ class FundTransferRepository implements FundTransferInterface
             $transactions           = BankTransaction::where('fund_transfer_id', $fund_transfer->id)->pluck('id')->all();
             BankTransaction::whereIn('id', $transactions)->delete();
             // from account check balance and minus balance
-            $from_account = Account::find($request->from_account);
+            $from_account = Account::companywise()->find($request->from_account);
             if($from_account->balance < $request->amount){
                 return 2;
             }
@@ -144,7 +168,7 @@ class FundTransferRepository implements FundTransferInterface
             $from_account->balance              = $from_account->balance - $request->amount;
             $from_account->save();
             // To account add balance
-            $to_account = Account::find($request->to_account);
+            $to_account = Account::companywise()->find($request->to_account);
             $to_account->balance                = $to_account->balance + $request->amount;
             $to_account->save();
             // fund transfer row update

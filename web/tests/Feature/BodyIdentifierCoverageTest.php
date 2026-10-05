@@ -219,6 +219,16 @@ class BodyIdentifierCoverageTest extends TestCase
 
         'POST admin/parcel/partial-delivered/cancel' => ParcelCancelScopeTest::class,
         'POST admin/parcel/return-received-by-merchant' => ParcelCancelScopeTest::class,
+
+        // S81 (T5) — les cinq routes que les dix NOMS LIBRES de `estIdentifiant()`
+        // font entrer. Deux etaient deja prouvees par S64 sans etre inscrites
+        // (le filet ne les voyait pas) ; trois ne l'etaient par rien, et l'une
+        // d'elles ecrivait le compte de versement d'un AUTRE marchand.
+        'POST admin/fund-transfer/store' => NakedReadRemainderScopeTest::class,
+        'POST admin/income/balance-check' => NakedReadRemainderScopeTest::class,
+        'POST admin/bank-transaction/filter' => FreeNamedIdentifierScopeTest::class,
+        'POST merchant/accounts/account-transaction-filter' => FreeNamedIdentifierScopeTest::class,
+        'POST merchant/payment-request/store' => FreeNamedIdentifierScopeTest::class,
 ];
 
     /**
@@ -294,13 +304,30 @@ class BodyIdentifierCoverageTest extends TestCase
      * `fcm_secret_key` sont des **valeurs**, pas des identifiants. On n'élargit
      * que de ce que la preuve justifie.
      *
-     * ⚠️ **L'angle mort n'est pas refermé** : un identifiant au nom libre —
-     * `from`, `reference`, `token` — échappe encore. Ce filet reconnaît une
-     * CONVENTION DE NOM, pas un rôle.
+     * **S81 (T5) — les noms libres, en liste explicite.** Ce filet reconnaît
+     * toujours une CONVENTION DE NOM, pas un rôle ; mais le socle appelle ses
+     * ressources par d'autres noms que `*_id`, et la liste ci-dessous les tient.
+     * Elle a été établie en lisant chaque `Model::find($request->x)` et
+     * `where('…', $request->x)` de `app/` dont le `x` n'est pas de la convention :
+     * **dix noms**, qui font entrer **cinq** routes, toutes classées ci-dessus.
+     * Mesuré en les ajoutant : `FundTransferRepository::update()` lisait ses deux
+     * comptes nus, et le panneau marchand écrivait le compte de versement d'un
+     * autre marchand. Un nom qui apparaît ici s'ajoute avec sa ressource ; un
+     * nom qu'on retire doit avoir disparu de `app/`.
      */
+    private const NOMS_LIBRES = [
+        'account', 'from_account', 'to_account',   // un compte bancaire (`accounts`)
+        'merchant', 'merchantId',                   // un marchand
+        'merchant_account', 'editid',               // un compte de versement d'un marchand (`merchant_payments`)
+        'accountId',                                // un compte bancaire, dans le module de paiement en ligne (coupe, D10)
+        'hub',                                      // un entrepot
+        'account_head',                             // un poste comptable (catalogue de PLATEFORME, sans societe)
+    ];
+
     private function estIdentifiant(string $nom): bool
     {
-        return (bool) preg_match('/^(id|ids|key|slug)$|_ids?_?$/i', $nom);
+        return (bool) preg_match('/^(id|ids|key|slug)$|_ids?_?$/i', $nom)
+            || in_array($nom, self::NOMS_LIBRES, true);
     }
 
     /** Les identifiants qu'un morceau de source lit dans la requête. */

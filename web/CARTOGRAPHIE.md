@@ -2,9 +2,10 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-05 (S80 — répétition de déploiement en intégration
-> continue ; S79 — installation `--no-dev` réparée ; S78 — bloc `page` sur les réponses
-> paginées ; S77 — clé d'API sans repli). Les blocs A-K décrivent le socle **tel que trouvé** ; les
+> Dernière mise à jour : 2026-10-05 (S81 — identifiants au nom libre : dix noms donnés au
+> filet S38, lectures nues resserrées, le virement modifié et la demande de retrait gardés ;
+> S80 — répétition de déploiement en intégration continue ; S79 — installation `--no-dev`
+> réparée ; S78 — bloc `page` sur les réponses paginées ; S77 — clé d'API sans repli). Les blocs A-K décrivent le socle **tel que trouvé** ; les
 > sections `## S<nn>` qui suivent racontent chaque lot, avec ses sabotages et le compte
 > de la suite. Le 2026-08-16 : chantier 1 (langue et devise — helpers XOF, 278 affichages
 > et 32 sorties d'API en FCFA entier) ; avant : blocs J — tarifs et K — notifications.
@@ -7372,3 +7373,73 @@ Le job coûte quelques minutes par run ; c'est le prix d'un S79 vu sur la pull r
 premier run réel se lit dans l'onglet Actions : si le service MySQL 8 refuse quelque chose
 que MariaDB a accepté ici, c'est à corriger dans le job, pas à contourner. Et le jour où
 `deploy.sh` change, l'inventaire du test le dit avant le serveur.
+
+## S81 — les identifiants au nom libre : l'angle mort T5, mesuré puis fermé (2026-10-05)
+
+### D'où ça vient
+
+Depuis S65, `BodyIdentifierCoverageTest::estIdentifiant()` disait lui-même sa limite : il
+reconnaît une **convention de nom** (`id`, `*_id`, `key`, `slug`), pas un rôle. Un champ qui
+désigne une ressource sous un autre nom lui est invisible, et le relevé portait T5 : « un
+identifiant au nom libre échappe ». Ce lot mesure ce que « libre » veut dire dans ce socle :
+chaque `Model::find($request->x)` et `where('…', $request->x)` de `app/` dont le `x` n'est pas
+de la convention. **Dix noms** : `account`, `from_account`, `to_account` (un compte bancaire),
+`merchant`, `merchantId` (un marchand), `merchant_account`, `editid` (un compte de versement
+d'un marchand), `accountId` (module de paiement en ligne, coupé D10), `hub` (un entrepôt),
+`account_head` (un poste comptable, catalogue de plateforme). Donnés au filet, ils font entrer
+**cinq routes d'écriture** qu'aucune liste ne classait.
+
+### Ce que la mesure a trouvé
+
+| Trouvaille | Où | Depuis quand |
+|---|---|---|
+| **Un virement MODIFIÉ déplaçait les soldes d'en face.** S64 avait gardé `store()` — le défaut « le plus lourd de la série », sortir de l'argent du compte d'un concurrent — mais pas `update()`, qui lit les mêmes `from_account` / `to_account` **nus** onze lignes sous sa garde S30 sur le virement. Modifier un virement de la maison en nommant un compte d'en face le débitait ou le créditait. | `FundTransferRepository::update()` | le socle ; S64 n'avait fermé que la création |
+| **Le filet des lectures nues l'absolvait.** Son critère « même champ » cherchait le **nom** du champ entre la garde et la lecture : `$fund_transfer->from_account` — la colonne du virement déjà chargé — suffisait. Une garde sur un objet absolvait une lecture sur la requête. | `NakedReadCoverageTest::lecturesNues()` | S65 |
+| **Une demande de retrait pouvait nommer le compte d'un AUTRE marchand.** Le panneau web écrivait `merchant_account` tel quel ; l'écran de traitement du back-office rend ensuite les coordonnées bancaires ou Mobile Money de ce compte-là. L'API l'avait fermé dès S7 (`ownsAccount()`) ; le panneau web est un autre contrôleur. | `MerchantPanel\PaymentRequest\PaymentRequestRepository::store()` et `update()` | le socle |
+
+Les deux filtres (`admin/bank-transaction/filter` par `account`, `merchant/accounts/
+account-transaction-filter` par `account`) étaient bornés. Ils sont **prouvés**, pas lus
+(règle S58), par un marqueur que seule une ligne de résultat produit (règle S60 : la liste
+déroulante des comptes rend `account_no` et `account_holder_name` de tous nos comptes).
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `FundTransferRepository::update()` | `identifiantsHorsPerimetre($request, [from_account, to_account])` **avant** `beginTransaction`, comme `store()` ; les deux lectures passent par `companywise()` |
+| `PaymentRequestRepository` (panneau marchand) | `compteDeVersementEtranger()` : `merchant_account` doit être un compte du marchand connecté ; refus avant toute écriture, dans `store()` et `update()` — le pendant web de `ownsAccount()` |
+| `BodyIdentifierCoverageTest` | `NOMS_LIBRES`, liste explicite et commentée, chaque nom avec sa ressource ; `estIdentifiant()` = convention **ou** liste ; cinq routes dans `PROUVEES` (`fund-transfer/store` et `income/balance-check` → `NakedReadRemainderScopeTest`, déjà prouvées par S64 sans être vues ; les trois autres → le test de ce lot). `HERITAGE` reste vide, plafond `0` |
+| `NakedReadCoverageTest` | le « même champ » doit être lu **sur `$request`** (`preg_match('/(?:\$request\|request\(\))->x\b/')`), plus une colonne du même nom ; un cinquième témoin dans le test de détection, `gardeSurUneColonne`, que l'analyse doit **signaler** |
+| `tests/Feature/FreeNamedIdentifierScopeTest` (4 tests) | le virement modifié vers un compte d'en face (source, puis destination) : refusé, aucun solde ni écriture de banque ne bouge ; le filtre des transactions par compte d'en face : rien ; la demande de retrait vers le compte d'un autre marchand, par la route puis par le dépôt (`update`) : rien d'écrit, rien de changé ; le filtre du marchand par le compte d'un autre : rien, pas même son numéro Mobile Money |
+
+### Vérification
+
+Neuf sabotages, chacun relancé sur le seul fichier qu'il doit faire tomber :
+
+| Sabotage | Effet |
+|---|---|
+| `update()` ramené au socle (ni garde ni `companywise()`) | **rouge** — le test du lot, **et** le filet des lectures nues resserré |
+| `update()` sans garde, `companywise()` gardé | **vert** — honnête : `find()` rend `null` sur un compte d'en face, le `null->balance` devient une `ErrorException`, le `catch` annule. La garde est la ceinture sur les bretelles : refus propre **avant** la transaction, et la même forme que `store()` |
+| `update()` avec garde, lectures nues remises | **rouge** au filet des lectures nues — c'est exactement la ligne que S65 absolvait (mesuré avant de resserrer : seul `FundTransferRepository::update` apparaît, rien d'autre ne change) |
+| demande de retrait sans garde, `store()` | **rouge** |
+| demande de retrait sans garde, `update()` | **rouge** |
+| filtre banque par compte sans `companywise()` | **rouge** |
+| filtre marchand par compte sans `where('merchant_id')` | **rouge** |
+| `account` retiré de `NOMS_LIBRES` | **rouge** (deux routes déclarées ne sont plus vues) |
+| le filet S65 revenu à `str_contains` | **rouge** (témoin `gardeSurUneColonne`) |
+
+Suite complète : **1 211 tests, 46 896 assertions**, verte.
+
+### Ce qui reste
+
+- La liste est **fermée par construction** : un onzième nom libre (`from`, `token`,
+  `reference`…) échappe tant qu'il n'y est pas. La règle est écrite dans `web/CLAUDE.md` :
+  un champ qui désigne une ressource s'appelle `*_id`, ou entre dans `NOMS_LIBRES` avec sa
+  ressource. Le filet le dit aussi : une route nouvelle qui lit un nom de la liste doit se
+  classer.
+- Lu au passage, **non touché** : `MerchantPanel\PaymentRequestController::update()` relit
+  la demande par `$this->repo->get(Auth::user()->merchant->id)` — l'identifiant du
+  **marchand**, pas celui de la demande — et déréférence le résultat. L'écran web de
+  modification d'une demande de retrait est donc cassé dans le socle, indépendamment de ce
+  lot ; le dépôt qu'il appellerait est gardé (testé directement). À corriger dans un lot
+  qui reprend cet écran, pas en passant.
