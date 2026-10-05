@@ -17,6 +17,26 @@ export type ApiEnvelope<T> = {
   success?: boolean;
   message?: string;
   data?: T;
+  /** Présent sur les réponses paginées (S78) : où finit la liste. */
+  page?: ApiPage;
+};
+
+/**
+ * Bloc `page` d'une réponse paginée (`ApiReturnFormatTrait::responseWithPage`,
+ * S78). Il vit à la **racine** de l'enveloppe, à côté de `data`, parce que
+ * `data` est tantôt un objet, tantôt un tableau. `current < last` : il en reste.
+ */
+export type ApiPage = {
+  current: number;
+  per_page: number;
+  last: number;
+  total: number;
+};
+
+/** Charge utile et bloc `page` d'une réponse paginée ; `page` vaut null sur un serveur d'avant S78. */
+export type PagedResponse<T> = {
+  data: T;
+  page: ApiPage | null;
 };
 
 /** Erreur d'API porteuse du statut HTTP et des erreurs de validation. */
@@ -110,6 +130,49 @@ function extractValidationErrors(payload: unknown): Record<string, string[]> {
 }
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const payload = await perform(path, options);
+
+  // Certains endpoints renvoient l'objet nu, d'autres l'enveloppent dans `data`.
+  if (payload && typeof payload === 'object' && 'data' in (payload as object)) {
+    return (payload as ApiEnvelope<T>).data as T;
+  }
+  return payload as T;
+}
+
+/**
+ * Comme `request`, mais garde le bloc `page` de l'enveloppe (S78).
+ *
+ * `page` est lu seulement s'il a la forme attendue : un serveur d'avant S78 ne le
+ * renvoie pas, et l'appelant retombe alors sur « une page incomplète est la
+ * dernière » (`src/api/pagination.ts`).
+ */
+export async function requestPaged<T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<PagedResponse<T>> {
+  const payload = await perform(path, options);
+  if (payload && typeof payload === 'object' && 'data' in (payload as object)) {
+    const envelope = payload as ApiEnvelope<T>;
+    return { data: envelope.data as T, page: readPage(envelope.page) };
+  }
+  return { data: payload as T, page: null };
+}
+
+function readPage(candidate: unknown): ApiPage | null {
+  if (!candidate || typeof candidate !== 'object') return null;
+  const p = candidate as Record<string, unknown>;
+  const ints = [p.current, p.per_page, p.last, p.total];
+  if (!ints.every((v) => typeof v === 'number' && Number.isFinite(v))) return null;
+  return {
+    current: p.current as number,
+    per_page: p.per_page as number,
+    last: p.last as number,
+    total: p.total as number,
+  };
+}
+
+/** Envoie la requête et rend la réponse JSON brute (enveloppe comprise), ou lève `ApiError`. */
+async function perform(path: string, options: RequestOptions = {}): Promise<unknown> {
   const { method = 'GET', body, authenticated = true, query, signal } = options;
 
   const headers: Record<string, string> = {
@@ -171,16 +234,15 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     );
   }
 
-  // Certains endpoints renvoient l'objet nu, d'autres l'enveloppent dans `data`.
-  if (payload && typeof payload === 'object' && 'data' in (payload as object)) {
-    return (payload as ApiEnvelope<T>).data as T;
-  }
-  return payload as T;
+  return payload;
 }
 
 export const api = {
   get: <T>(path: string, options?: Omit<RequestOptions, 'method' | 'body'>) =>
     request<T>(path, { ...options, method: 'GET' }),
+  /** `GET` qui garde le bloc `page` (listes paginées, S78). */
+  getPaged: <T>(path: string, options?: Omit<RequestOptions, 'method' | 'body'>) =>
+    requestPaged<T>(path, { ...options, method: 'GET' }),
   post: <T>(path: string, body?: unknown, options?: Omit<RequestOptions, 'method' | 'body'>) =>
     request<T>(path, { ...options, method: 'POST', body }),
   put: <T>(path: string, body?: unknown, options?: Omit<RequestOptions, 'method' | 'body'>) =>

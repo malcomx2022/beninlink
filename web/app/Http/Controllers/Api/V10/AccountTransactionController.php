@@ -87,7 +87,8 @@ class AccountTransactionController extends Controller
 
             $accounts = MerchantPayment::where('merchant_id',$id)->get();
 
-          return $this->responseWithSuccess(__('menus.account_transaction'), ['accounts'=> AccountResource::collection($accounts),'transactions'=>TransactionsResource::collection($transactions)], 200);
+          // S78 : la liste filtrée est paginée (10), la réponse le dit.
+          return $this->responseWithPage(__('menus.account_transaction'), ['accounts'=> AccountResource::collection($accounts),'transactions'=>TransactionsResource::collection($transactions)], $transactions);
         }catch (\Exception $exception){
             return $this->responseWithError(__('menus.account_transaction'), [], 500);
 

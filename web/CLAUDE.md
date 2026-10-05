@@ -197,6 +197,16 @@ avant les apps.
   la seule alerte douanière) : brancher les six familles enverrait un courriel par
   changement de statut de colis. Et sa marque vient du **destinataire**, pas de
   `settings()` — l'observer peut se déclencher hors requête (**F4**).
+- Toute route `/api/v10` qui **pagine** répond par `responseWithPage()` (**S78**) : l'enveloppe
+  gagne un bloc `page` **à la racine** (`current`, `per_page`, `last`, `total`), `data` garde sa
+  forme. Onzième filet, `tests/Feature/ApiPaginationContractTest`, qui **énumère** les méthodes
+  d'API paginant directement **ou par leur dépôt** (un niveau suivi) : l'inscrire dans
+  `PAGINEES`, répondre par `responseWithPage()`, documenter par `$paged` dans l'overlay et
+  régénérer la spec. ⚠️ Un dépôt partagé avec les tables du back-office pagine par 10 : quatre
+  routes (boutiques, hubs, fraudes, tickets) servaient dix lignes **sans le dire** — c'est ce
+  filet qui l'a mesuré. Côté app, un module lit `page` par `api.getPaged()` et rend
+  `{items, hasMore}` (`mobile/src/api/pagination.ts`) ; une liste affichée entière passe par
+  `fetchAllPages()` ; un écran ne compare jamais une longueur à une constante.
 - Toute route `/api/v10` à identifiant est inscrite dans `tests/Feature/IsolationCoverageTest`
   avec le test prouvant qu'un compte n'atteint pas la ressource d'un autre (S7).
 - Toute route **web** à paramètre est inscrite dans `tests/Feature/WebIsolationCoverageTest` :

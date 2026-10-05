@@ -8,7 +8,6 @@ import {
   fetchInvoiceDetails,
   fetchInvoicePdfLink,
   fetchInvoices,
-  INVOICES_PER_PAGE,
 } from '../../src/api/merchant';
 import type { BalanceDetails, Invoice, InvoiceDetails } from '../../src/api/types';
 import { Button, Card, ErrorText, Muted, Title } from '../../src/components/ui';
@@ -66,12 +65,12 @@ export default function InvoicesScreen() {
   const load = useCallback(async () => {
     setError('');
     try {
-      const [list, b] = await Promise.all([fetchInvoices(1), fetchBalanceDetails()]);
-      setInvoices(list);
+      const [first, b] = await Promise.all([fetchInvoices(1), fetchBalanceDetails()]);
+      setInvoices(first.items);
       setBalance(b);
       setPage(1);
-      // Une page incomplète est la dernière : le paginateur en sert 10 par page.
-      setHasMore(list.length >= INVOICES_PER_PAGE);
+      // S78 : le serveur dit où finit la liste ; repli sur « page pleine » sinon.
+      setHasMore(first.hasMore);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
     }
@@ -83,10 +82,9 @@ export default function InvoicesScreen() {
     setLoadingMore(true);
     try {
       const next = await fetchInvoices(page + 1);
-      // Le serveur peut renvoyer une page vide : ne pas boucler dessus.
-      setInvoices((current) => [...current, ...next]);
+      setInvoices((current) => [...current, ...next.items]);
       setPage((p) => p + 1);
-      setHasMore(next.length >= INVOICES_PER_PAGE);
+      setHasMore(next.hasMore);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
       setHasMore(false);

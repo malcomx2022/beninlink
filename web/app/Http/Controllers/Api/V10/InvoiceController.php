@@ -21,11 +21,18 @@ class InvoiceController extends Controller
         $this->repo    = $repo;
      }
      
-    //invoice list
-    public function invoiceLists() { 
-        $invoice_list = $this->repo->invoiceLists(); 
-        $invoice = InvoiceResource::collection($invoice_list);
-        return $invoice;
+    /**
+     * Relevés de règlement émis, 10 par page.
+     *
+     * Le socle renvoyait le paginateur **nu** (`{data, links, meta}`), seule route
+     * de l'app sans enveloppe. Depuis **S78** elle rejoint `{success, message, data,
+     * page}` : `data` reste le tableau des relevés — l'app installée lisait `data`
+     * et n'en lit toujours que lui — et `page` dit où finit la liste, comme
+     * partout ailleurs.
+     */
+    public function invoiceLists() {
+        $invoice_list = $this->repo->invoiceLists();
+        return $this->responseWithPage(__('menus.invoice'), InvoiceResource::collection($invoice_list), $invoice_list);
     }
     public function invoiceDetails($invoice_id){   
         

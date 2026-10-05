@@ -24,10 +24,10 @@ class NotificationController extends Controller
         $user = Auth::user();
         $notifications = $user->notifications()->orderByDesc('created_at')->paginate(20);
 
-        return $this->responseWithSuccess(__('notification.title'), [
+        return $this->responseWithPage(__('notification.title'), [
             'notifications' => NotificationResource::collection($notifications),
             'unread_count' => $user->unreadNotifications()->count(),
-        ], 200);
+        ], $notifications);
     }
 
     public function unreadCount()

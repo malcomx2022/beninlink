@@ -2,11 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '../../src/api/client';
-import {
-  CUSTOMS_ALERTS_PER_PAGE,
-  fetchCustomsAlerts,
-  resolveCustomsAlert,
-} from '../../src/api/customs';
+import { fetchCustomsAlerts, resolveCustomsAlert } from '../../src/api/customs';
 import type { CustomsAlert } from '../../src/api/types';
 import { Button, ErrorText, Muted } from '../../src/components/ui';
 import { CustomsAlertStatus, customsLevelColorName } from '../../src/domain/customsLevel';
@@ -56,11 +52,12 @@ export default function CustomsScreen() {
   const load = useCallback(async () => {
     setError('');
     try {
-      const list = await fetchCustomsAlerts(tab, 1);
-      setAlerts(list);
+      const first = await fetchCustomsAlerts(tab, 1);
+      setAlerts(first.items);
       setPage(1);
-      // Une page incomplète est la dernière : le serveur en sert 20 par page.
-      setHasMore(list.length >= CUSTOMS_ALERTS_PER_PAGE);
+      // S78 : le serveur dit où finit la liste (`page`) ; le module d'API retombe
+      // sur « page incomplète = dernière » si le serveur ne le dit pas.
+      setHasMore(first.hasMore);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
     }
@@ -81,10 +78,9 @@ export default function CustomsScreen() {
     setLoadingMore(true);
     try {
       const next = await fetchCustomsAlerts(tab, page + 1);
-      // Le serveur peut renvoyer une page vide : ne pas boucler dessus.
-      setAlerts((current) => [...current, ...next]);
+      setAlerts((current) => [...current, ...next.items]);
       setPage((p) => p + 1);
-      setHasMore(next.length >= CUSTOMS_ALERTS_PER_PAGE);
+      setHasMore(next.hasMore);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
       setHasMore(false);

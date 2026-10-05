@@ -12,18 +12,22 @@
  */
 import { api } from './client';
 import { endpoints } from './endpoints';
+import { toPaged, type Paged } from './pagination';
 import type { PaymentAccount, PaymentRequest, WalletEntry } from './types';
+
+/** Mouvements servis par page ; fixé côté serveur par `paginate(10)`. Repli si `page` manque (S78). */
+export const WALLET_HISTORY_PER_PAGE = 10;
 
 /**
  * Mouvements du porte-monnaie, du plus récent au plus ancien.
- * Paginé par 10 côté serveur ; comme pour les factures, la collection arrive
- * en tableau nu : une page incomplète est la dernière.
+ * Paginé par 10 côté serveur ; depuis S78 la réponse dit où finit la liste.
  */
-export async function fetchWalletHistory(page = 1): Promise<WalletEntry[]> {
-  const data = await api.get<{ entries: WalletEntry[] }>(endpoints.walletHistory, {
-    query: { page },
-  });
-  return data?.entries ?? [];
+export async function fetchWalletHistory(page = 1): Promise<Paged<WalletEntry>> {
+  const { data, page: pageInfo } = await api.getPaged<{ entries: WalletEntry[] }>(
+    endpoints.walletHistory,
+    { query: { page } },
+  );
+  return toPaged(data?.entries ?? [], pageInfo, WALLET_HISTORY_PER_PAGE);
 }
 
 export async function fetchPaymentAccounts(): Promise<PaymentAccount[]> {

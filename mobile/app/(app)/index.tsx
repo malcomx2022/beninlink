@@ -3,7 +3,7 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native
 import { Link } from 'expo-router';
 
 import { ApiError } from '../../src/api/client';
-import { CUSTOMS_ALERTS_PER_PAGE, fetchCustomsAlerts } from '../../src/api/customs';
+import { fetchCustomsAlerts } from '../../src/api/customs';
 import { fetchBalanceDetails, fetchDashboard } from '../../src/api/merchant';
 import { fetchUnreadCount } from '../../src/api/notifications';
 import type { BalanceDetails, DashboardData } from '../../src/api/types';
@@ -47,14 +47,15 @@ export default function DashboardScreen() {
         fetchDashboard(),
         fetchBalanceDetails(),
         fetchUnreadCount().catch(() => 0),
-        fetchCustomsAlerts(CustomsAlertStatus.PENDING, 1).catch(() => []),
+        fetchCustomsAlerts(CustomsAlertStatus.PENDING, 1).catch(() => ({ items: [], hasMore: false })),
       ]);
       setDashboard(d);
       setBalance(b);
       setUnread(n);
-      setCustomsPending(alerts.length);
-      setCustomsLevel(highestCustomsLevel(alerts));
-      setCustomsCapped(alerts.length >= CUSTOMS_ALERTS_PER_PAGE);
+      setCustomsPending(alerts.items.length);
+      setCustomsLevel(highestCustomsLevel(alerts.items));
+      // « 20+ » : la première page est pleine et le serveur dit qu'il en reste (S78).
+      setCustomsCapped(alerts.hasMore);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
     }

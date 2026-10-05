@@ -2,8 +2,8 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-05 (S77 — clé d'API sans repli, refus fermé ; garde
-> `verifier-env.sh` étendu). Les blocs A-K décrivent le socle **tel que trouvé** ; les
+> Dernière mise à jour : 2026-10-05 (S78 — bloc `page` sur les réponses paginées, onzième
+> filet ; S77 — clé d'API sans repli). Les blocs A-K décrivent le socle **tel que trouvé** ; les
 > sections `## S<nn>` qui suivent racontent chaque lot, avec ses sabotages et le compte
 > de la suite. Le 2026-08-16 : chantier 1 (langue et devise — helpers XOF, 278 affichages
 > et 32 sorties d'API en FCFA entier) ; avant : blocs J — tarifs et K — notifications.
@@ -7121,3 +7121,90 @@ Rien côté code pour T7. Côté exploitation, la fiche P1 du guide de recette d
 désormais une `API_KEY` **propre à la recette** (ni celle de la production, ni celle du
 socle), et P6 rappelle que `EXPO_PUBLIC_API_KEY` du profil de build la reprend. La règle
 pour T10 : chaque lot met à jour les trois en-têtes avec sa section `## S<nn>`.
+
+## S78 — une liste paginée dit où elle finit, et quatre routes paginaient sans le dire (2026-10-05)
+
+### D'où ça vient
+
+**T8** du relevé de projet : la taille de page était un **contrat implicite**. Quatre routes de
+l'app marchand paginent (alertes douanières 20, notifications 20, relevés 10, portefeuille 10) ;
+trois passent la collection dans l'enveloppe `{success, message, data}` du projet, et le
+paginateur y **perd ses compteurs** à la sérialisation — l'app recevait un tableau nu et
+déduisait « il en reste » d'une page pleine. La quatrième, la liste des relevés, renvoyait le
+paginateur **nu** (`{data, links, meta}`), seule route sans enveloppe, et l'app ne gardait que
+`data`. `MerchantAppCustomsContractTest` comparait les constantes de l'app aux `paginate(n)` du
+serveur, fichier contre fichier : un filet qui lit du code, pas une réponse. Et il ne couvrait
+pas le portefeuille, dont l'écran écrivait son `10` en dur.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `ApiReturnFormatTrait::responseWithPage()` | la même enveloppe, plus un bloc **`page` à la racine** : `current`, `per_page`, `last` (1 au minimum), `total`. À la racine et pas dans `data`, parce que `data` est tantôt un objet, tantôt un tableau — et parce que les apps installées lisent `data` tel quel : rien ne change pour elles |
+| 9 méthodes d'API | répondent par `responseWithPage()` ; leurs clés dans `data` ne bougent pas |
+| `InvoiceController::invoiceLists()` | rejoint l'enveloppe : `data` reste le **tableau** des relevés (l'app ne lisait que lui), `meta` laisse place à `page` |
+| `resources/openapi/overlay.php` | schéma `Page`, aide `$paged`, les neuf opérations ; `Envelope.page` documenté ; spec régénérée |
+| `mobile/src/api/client.ts` | `ApiPage`, `api.getPaged()` : garde `page` **seulement s'il a la forme attendue** (quatre entiers) |
+| `mobile/src/api/pagination.ts` | la règle : `page` présent → `current < last` ; sinon « page incomplète = dernière » (serveur d'avant S78). `fetchAllPages()` pour une liste affichée entière |
+| cinq modules d'API, cinq écrans | les modules rendent `{items, hasMore}` ; un écran ne compare plus une longueur à une constante |
+
+### Ce que le filet a trouvé en l'écrivant
+
+Le onzième filet, `ApiPaginationContractTest`, **énumère** les méthodes d'API qui paginent —
+directement, ou par la méthode de dépôt qu'elles appellent, suivie d'un niveau (`invoiceLists()`
+délègue à `get()`). Attendues : cinq. Trouvées : **neuf**. `FraudController`, `HubController`,
+`ShopsController` et `SupportController` appellent `$this->repo->all()`, et ces `all()` font
+`paginate(10)` pour les **tables du back-office**, avec qui le dépôt est partagé. L'API servait
+donc **dix lignes** et aucune réponse ne le disait. Un marchand à onze boutiques en voyait dix
+dans l'app, sur l'écran qui sert à créer un colis. Les quatre répondent désormais par
+`responseWithPage()`, et `fetchShops()` **parcourt toutes les pages** (`fetchAllPages`, plafonné
+à 50). Hubs, fraudes et tickets ne sont pas encore lus par un écran de l'app.
+
+Même famille de défaut que S68 (l'écran douane lisait 20 sur N) : une **perte silencieuse**,
+sans erreur, sans compteur. La différence : S68 l'avait vue à l'œil, S78 l'a mesurée.
+
+### Ce que les tests fixent
+
+`tests/Feature/ApiPaginationContractTest` (8 tests) : la liste des méthodes qui paginent est
+exactement `PAGINEES` (ajouter une route paginée = l'inscrire, la faire répondre par
+`responseWithPage()`, documenter `Page`) ; chacune contient `responseWithPage(` et pas
+`responseWithSuccess(` ; chaque route correspondante référence `#/components/schemas/Page`
+dans la spec **générée** et dans la spec **publiée** (`openapi:generate` oublié = rouge) ; puis
+le comportement — 25 alertes : page 1 en sert 20 avec `{1, 20, 2, 25}`, page 2 en sert 5 ;
+liste vide : `last` vaut 1 ; 25 notifications ; 12 mouvements ; 12 relevés avec `data` en
+tableau et `meta` absent.
+
+`MerchantAppCustomsContractTest` : la paire **portefeuille** rejoint les trois autres
+(`WALLET_HISTORY_PER_PAGE`) ; l'écran douane lit `first.hasMore` / `next.hasMore` et ne compare
+plus une longueur à `CUSTOMS_ALERTS_PER_PAGE` ; `pagination.ts` porte la règle **et** le repli ;
+les cinq modules passent par `api.getPaged<` et `toPaged(`/`hasNextPage(` ; `fetchShops()`
+appelle `fetchAllPages(fetchShopsPage)` ; `readPage()` valide les quatre entiers.
+
+### Vérification — sept sabotages
+
+| Sabotage | Effet |
+|---|---|
+| `customs/alerts` revient à `responseWithSuccess` | **rouge** (3 : forme, page 1, liste vide) |
+| l'overlay de `wallet/history` oublie `Page` | **rouge** (1, spec générée) |
+| la liste des relevés redevient le paginateur nu | **rouge** (2) |
+| une route paginée disparaît de `PAGINEES` | **rouge** (1) |
+| `customs.ts` repasse par `api.get` (perd `page`) | **rouge** (1) |
+| `fetchShops()` ne lit plus que la première page | **rouge** (1) |
+| la constante du portefeuille dit 20, le serveur sert 10 | **rouge** (1) |
+
+Piège rencontré en l'écrivant : la conversion de `AccountTransactionController` a d'abord touché
+`index()` — qui ne pagine pas — au lieu de `filter()`, parce que les deux `return` avaient le même
+texte. Le filet l'a dit (`filter` sans `responseWithPage`) ; sans lui, `index()` aurait levé une
+erreur de type en production. Second piège : `SupportController@index` existe aussi dans le
+back-office ; la résolution des routes se limite à `App\Http\Controllers\Api\V10\`.
+
+Côté app : `tsc --noEmit` et `eslint` verts sur les fichiers touchés.
+
+Suite complète : **1 198 tests, 46 811 assertions**, verte.
+
+### Ce qui reste
+
+Les trois autres listes trouvées (hubs, fraudes, tickets) disent désormais où elles finissent,
+mais aucun écran de l'app ne les lit encore : le jour où un écran les prend, il passe par
+`getPaged` ou `fetchAllPages`, jamais par `api.get`. Pas de changement de taille de page dans ce
+lot, et rien dans `mobile-livreur/`, qui ne consomme aucune liste paginée.

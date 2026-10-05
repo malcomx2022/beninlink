@@ -8,9 +8,10 @@
  */
 import { api } from './client';
 import { endpoints } from './endpoints';
+import { toPaged, type Paged } from './pagination';
 import type { CustomsAlert, CustomsReference } from './types';
 
-/** Alertes servies par page ; fixé côté serveur par `paginate(20)`. */
+/** Alertes servies par page ; fixé côté serveur par `paginate(20)`. Repli si `page` manque (S78). */
 export const CUSTOMS_ALERTS_PER_PAGE = 20;
 
 /** Pays et catégories couverts — sert à peupler les listes de création. */
@@ -21,14 +22,16 @@ export function fetchCustomsReference(): Promise<CustomsReference> {
 /**
  * Alertes du marchand. `status` : 1 en cours, 2 traitées, absent = toutes.
  *
- * La collection est imbriquée dans l'enveloppe côté serveur : elle arrive donc
- * en tableau nu, sans les compteurs du paginateur.
+ * Depuis S78 la réponse porte `page` à la racine : `hasMore` vient de
+ * `page.current < page.last`, et retombe sur la constante si le serveur ne le
+ * dit pas (`src/api/pagination.ts`).
  */
-export async function fetchCustomsAlerts(status?: number, page = 1): Promise<CustomsAlert[]> {
-  const data = await api.get<{ alerts: CustomsAlert[] }>(endpoints.customsAlerts, {
-    query: { status, page },
-  });
-  return data?.alerts ?? [];
+export async function fetchCustomsAlerts(status?: number, page = 1): Promise<Paged<CustomsAlert>> {
+  const { data, page: pageInfo } = await api.getPaged<{ alerts: CustomsAlert[] }>(
+    endpoints.customsAlerts,
+    { query: { status, page } },
+  );
+  return toPaged(data?.alerts ?? [], pageInfo, CUSTOMS_ALERTS_PER_PAGE);
 }
 
 /** Le marchand déclare avoir réuni le document. */

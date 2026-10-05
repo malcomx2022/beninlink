@@ -27,8 +27,8 @@ class WalletController extends Controller
     public function history(Request $request)
     {
         try {
-            $entries = WalletResource::collection($this->repo->get($request));
-            return $this->responseWithSuccess(__('wallet.history'), ['entries' => $entries], 200);
+            $page = $this->repo->get($request);
+            return $this->responseWithPage(__('wallet.history'), ['entries' => WalletResource::collection($page)], $page);
         } catch (\Exception $exception) {
             return $this->responseWithError(__('wallet.history'), [], 500);
         }

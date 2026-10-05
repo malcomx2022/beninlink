@@ -197,8 +197,8 @@ export type BalanceDetails = {
 /**
  * `GET /invoice-list/index` — une ligne de la liste (`InvoiceResource`).
  *
- * ⚠️ Le backend pagine (10 par page) et renvoie l'enveloppe d'un paginateur ;
- * le client ne conserve que `data`. Les 10 dernières factures suffisent au MVP.
+ * Le backend pagine (10 par page). Depuis S78 la réponse est enveloppée et porte
+ * `page` à la racine ; `data` reste le tableau des relevés.
  */
 export type Invoice = {
   id: number;
@@ -380,9 +380,8 @@ export type CustomsReference = {
 /**
  * `GET customs/alerts` — une alerte émise.
  *
- * ⚠️ Le backend pagine (20) mais la collection est imbriquée dans l'enveloppe :
- * elle arrive donc en tableau nu, sans compteurs. Même règle que les factures —
- * une page incomplète est la dernière.
+ * Le backend pagine (20). La collection arrive dans `data.alerts` ; depuis S78
+ * le bloc `page` à la racine de l'enveloppe dit où finit la liste.
  */
 export type CustomsAlert = {
   id: number;

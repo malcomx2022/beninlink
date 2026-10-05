@@ -44,7 +44,7 @@ export default function WalletScreen() {
 
   const balance = user?.merchant?.wallet_balance ?? 0;
 
-  // Historique paginé par 10 : une page incomplète est la dernière.
+  // Historique paginé par 10 ; depuis S78 le serveur dit s'il en reste (`page`).
   const [entries, setEntries] = useState<WalletEntry[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -53,10 +53,10 @@ export default function WalletScreen() {
   const loadHistory = useCallback(async (pageToLoad: number) => {
     setHistoryError('');
     try {
-      const items = await fetchWalletHistory(pageToLoad);
-      setEntries((current) => (pageToLoad === 1 ? items : [...current, ...items]));
+      const result = await fetchWalletHistory(pageToLoad);
+      setEntries((current) => (pageToLoad === 1 ? result.items : [...current, ...result.items]));
       setPage(pageToLoad);
-      setHasMore(items.length >= 10);
+      setHasMore(result.hasMore);
     } catch (e) {
       setHistoryError(e instanceof ApiError ? e.message : t('errors.unexpected'));
     }
