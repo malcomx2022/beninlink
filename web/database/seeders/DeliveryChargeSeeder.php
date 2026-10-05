@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\Status;
 use App\Models\Backend\DeliveryCharge;
 use App\Models\Backend\DeliveryZone;
+use App\Models\Backend\GeneralSettings;
 use App\Services\Pricing\ZoneCatalog;
 use Illuminate\Database\Seeder;
 
@@ -21,6 +22,15 @@ use Illuminate\Database\Seeder;
  * démonstration reprenant les montants d'origine, colonne par zone selon la
  * correspondance actée : Cotonou ← `next_day`, Périphérie ← `sub_city`,
  * Intérieur ← `outside_city`.
+ *
+ * **S86** — le cadre est posé pour **chaque** société que les semences ont
+ * créée, pas pour la seule société de démonstration. `GeneralSettingsSeeder`
+ * en crée deux ; n'en équiper qu'une laissait « We Courier » sans zone, et
+ * `beninlink:tarification-prete`, que `deploy.sh` exécute avant de migrer,
+ * refusait le **premier** déploiement de toute installation neuve. La grille
+ * de démonstration, elle, reste sur la société 2 : des montants appartiennent
+ * au transporteur, un cadre sans montants est « prête » pour l'audit
+ * (`FreshInstallReadinessTest`).
  */
 class DeliveryChargeSeeder extends Seeder
 {
@@ -44,7 +54,16 @@ class DeliveryChargeSeeder extends Seeder
 
     public function run(): void
     {
-        $zones = app(ZoneCatalog::class)->installer(self::SOCIETE);
+        $catalogue = app(ZoneCatalog::class);
+
+        // Le cadre (zones, délais, forfaits CEDEAO) pour chaque société semée :
+        // `installer()` crée ce qui manque et ne réécrit rien.
+        $cadres = [];
+        foreach (GeneralSettings::orderBy('id')->pluck('id') as $societe) {
+            $cadres[(int) $societe] = $catalogue->installer((int) $societe);
+        }
+
+        $zones = $cadres[self::SOCIETE] ?? $catalogue->installer(self::SOCIETE);
 
         $nationales = [
             DeliveryZone::COTONOU,

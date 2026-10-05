@@ -177,12 +177,17 @@ d'unicité (`tenants.id`), après avoir écrit une partie de ce qu'il rejouait. 
 se joue **une fois, sur une base vide** — et si l'on doit recommencer, on repart
 d'une base vide, pas d'un second passage.
 
-### c. Deux sociétés sont créées, **une seule a des zones** — et le premier déploiement s'arrête dessus
+### c. Deux sociétés sont créées — chacune a son cadre de zones (piège fermé en S86)
 
-C'est le piège de cette page. `GeneralSettingsSeeder` crée deux sociétés (« We
-Courier » et « Company »), mais `DeliveryChargeSeeder` ne pose zones et grille
-que pour la seconde. Or, depuis l'étape 6 de **D4**, une société sans zone ne
-facture plus rien — et `deploy.sh` le vérifie **avant** de migrer :
+`GeneralSettingsSeeder` crée deux sociétés (« We Courier » et « Company »). Depuis
+l'étape 6 de **D4**, une société sans zone ne facture plus rien — et `deploy.sh` le
+vérifie **avant** de migrer, par `beninlink:tarification-prete`, qui sort en erreur
+dès qu'une société n'a aucune zone.
+
+Jusqu'au **2026-10-05 (S86)**, `DeliveryChargeSeeder` ne posait zones et grille que
+pour la seconde société, et le premier déploiement automatique de toute installation
+neuve s'arrêtait là, à chaque tentative, sans qu'un mot du message dise « votre base
+vient d'être amorcée » :
 
 ```
 We Courier — pas prête
@@ -194,23 +199,24 @@ Company — prête
 code de sortie: 1
 ```
 
-Sortie réelle de `php artisan beninlink:tarification-prete` sur une base
-fraîchement migrée et amorcée. Le déploiement s'arrêterait donc là, à chaque
-tentative, sans que rien dans le message ne dise « votre installation est
-neuve ». Deux issues, avant de pousser :
+Depuis S86 les semences posent le **cadre** (quatre zones, trois délais, forfaits
+CEDEAO) de **chaque** société qu'elles créent ; la grille de démonstration reste sur
+la société 2, parce que des montants appartiennent au transporteur. Un cadre sans
+montants est « prête » pour le constat : sur une base qui vient d'être amorcée,
+`beninlink:tarification-prete` sort en **succès** (`FreshInstallReadinessTest` le
+tient, et le job de répétition le rejoue sur chaque pull request, sans contournement).
+
+Si la société 1 est celle que vous exploitez, sa grille se saisit dans *Réglages →
+Zones et barème*, ou se pose depuis le fichier de départ :
 
 ```bash
-# soit on garde la société 1 et on lui pose son cadre
-sudo -u deploy php artisan beninlink:zones-tarifaires --societe=1 --installer
-# puis la grille se saisit dans Réglages → Zones et barème (les montants
-# appartiennent au transporteur, pas au logiciel)
-
-# soit on n'exploite qu'une société, et on retire l'autre depuis
-# l'écran super-admin « Sociétés »
+sudo -u deploy php artisan beninlink:zones-tarifaires --societe=1 --installer \
+  --grille=database/bareme/grille-nationale.csv
 ```
 
-Puis relancer le constat jusqu'à ce qu'il sorte en **succès**. Tant qu'il est
-rouge, aucun déploiement automatique n'ira au bout.
+Une base amorcée **avant** S86 garde sa société sans zone : la même commande (avec ou
+sans `--grille`) lui pose son cadre, puis relancer le constat jusqu'au succès. Tant
+qu'il est rouge, aucun déploiement automatique n'ira au bout.
 
 ## 6. Le premier déploiement — à la main, une fois
 

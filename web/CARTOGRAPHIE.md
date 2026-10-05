@@ -2,7 +2,8 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-05 (S85 — le contrat de l'app livreur tenu en PHPUnit ;
+> Dernière mise à jour : 2026-10-05 (S86 — une installation neuve réussit son premier
+> déploiement ; S85 — le contrat de l'app livreur tenu en PHPUnit ;
 > S84 — un lanceur de tests dans les deux apps, M2, et le job CI `apps` ; S83 — l'écran de
 > modification d'une demande de retrait réparé ; S82 — l'alerte douanière sur le détail du
 > colis, M1 ; S81 — identifiants au nom libre dans les filets). Les blocs A-K décrivent le socle **tel que trouvé** ; les
@@ -7678,3 +7679,64 @@ Aucun écran ni endpoint n'est touché : c'est un lot de filets, et la mesure n'
 corriger. Les cinq entrées sans appelant restent dans l'inventaire par choix (documentation du
 tag), pas par oubli ; les retirer est une décision d'app, à prendre avec le rafraîchissement du
 jeton si l'on y vient.
+
+## S86 — une installation neuve réussit son premier déploiement (2026-10-05)
+
+### D'où ça vient
+
+L'installateur web (`InstallerController`) enchaîne `migrate:refresh` puis `db:seed`. Les
+semences créent **deux** sociétés, « We Courier » (n° 1) et « Company » (n° 2), et
+`DeliveryChargeSeeder` ne posait zones et grille que pour la seconde (`SOCIETE = 2`). Or
+`deploy.sh` exécute `beninlink:tarification-prete` **avant** de migrer, et la commande sort en
+erreur dès qu'une société n'a aucune zone (D4, étape 6). Le premier déploiement automatique de
+toute installation neuve s'arrêtait donc là, à chaque tentative, sans qu'un mot du message dise
+« votre base vient d'être amorcée ». Le guide de mise en service (§ 5 c, « le piège de cette
+page ») et le job de répétition de S80 contournaient tous deux le piège **à la main** :
+`zones-tarifaires --societe=1 --installer` après `db:seed`. La répétition rejouait donc le
+contournement, pas l'installation que l'installateur fait.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `database/seeders/DeliveryChargeSeeder` | pose le **cadre** (quatre zones, trois délais, forfaits CEDEAO, par `ZoneCatalog::installer()`, qui crée ce qui manque et ne réécrit rien) pour **chaque** société de `general_settings` ; la grille de démonstration reste sur la société 2 — des montants appartiennent au transporteur, et un cadre sans montants est « prête » pour l'audit |
+| `tests/Feature/FreshInstallReadinessTest` (4 tests) | les semences créent plus d'une société (sinon le piège n'existe pas) ; chaque société a son cadre ; `beninlink:tarification-prete`, **sans option**, sort en succès et passe chaque société en revue ; la grille n'est posée que pour la société de démonstration |
+| `.github/workflows/deploy.yml` (job `repetition`) | **perd** le contournement : `db:seed` puis le jeu pilote, et le constat de `deploy.sh` mesure les semences seules |
+| `DeploymentRehearsalTest` | le constat suit `db:seed`, et **aucun** `zones-tarifaires` dans le job — un contournement cacherait une régression du seeder |
+| Huit tests existants | leurs fixtures cherchaient la zone Cotonou **par code seul** et trouvaient désormais celle de la société 1, créée en premier : la zone se cherche **par société et code** (voir ci-dessous) |
+| Docs | `mise-en-service` § 5 c (piège fermé ; les commandes restent comme remède pour une base amorcée **avant** S86) ; `recette-pilote` § 1 ; grand livre E3 et T13 ; `web/CLAUDE.md` |
+
+### Ce que la mesure a dit
+
+La suite a mordu **dix fois** au premier passage, dans quatre fichiers (`CustomsAlertTest`,
+`BusinessDecisionsTest`, `BackofficeCustomsGuardTest`, `DeliveryChargeResolverTest`), et le
+grep en a montré huit : onze fixtures écrivaient `DeliveryZone::where('code', COTONOU)` sans
+société, et une douzième cherchait « la zone d'un autre locataire » par
+`company_id != settings()->id` — qui, depuis que la société 1 a des zones, rend la sienne avant
+celle du voisin fabriqué. Aucun défaut de produit : les écrans et l'API refusaient bien une zone
+d'une autre société (`Zone introuvable.`), c'est **la fixture** qui désignait une zone étrangère.
+Forme retenue : `DeliveryZone::where('company_id', Merchant::firstOrFail()->company_id)
+->where('code', …)`, et pour le voisin, sa société par son nom. ⚠️ Règle : **une zone de test se
+cherche par société et code, jamais par code seul** — un code n'est unique que par société
+(`unique(['company_id', 'code'])`).
+
+### Vérification
+
+Quatre sabotages, chacun relancé sur le seul fichier qu'il doit faire tomber :
+
+| Sabotage | Effet |
+|---|---|
+| le seeder ne pose le cadre que pour la société 2 (forme d'avant S86) | **rouge** (2 tests : le cadre et le constat) |
+| la grille de démonstration posée pour chaque société | **rouge** |
+| `zones-tarifaires --societe=1 --installer` remis dans le job de répétition | **rouge** |
+| le constat de tarification joué avant `db:seed` dans le job | **rouge** (2 tests : l'ordre de `deploy.sh` et le constat) |
+
+Suite complète : **1 226 tests, 47 016 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne touche ni l'installateur, ni `GeneralSettingsSeeder` (deux sociétés restent créées : la
+seconde porte l'abonnement et les utilisateurs de démonstration), ni `deploy.sh`. Une base amorcée
+avant S86 garde sa société 1 sans zone : le guide dit la commande qui la rattrape. La grille de la
+société 1 reste à saisir à l'écran ou à poser depuis `grille-nationale.csv` si c'est elle qu'on
+exploite — un choix du transporteur, pas une semence.

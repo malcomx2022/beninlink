@@ -98,10 +98,9 @@ composer install --no-dev --optimize-autoloader
 php artisan migrate --force
 php artisan db:seed --force            # socle We Courier (société, rôles, permissions)
 php artisan beninlink:pilote           # jeu de données béninois — voir §3
-# S80 — les zones de la société du socle (« We Courier », id 1) : sans elles,
-# `beninlink:tarification-prete`, que deploy.sh exécute, refuse TOUT déploiement
-# de cette installation. Le jeu pilote pose celles de sa propre société seulement.
-php artisan beninlink:zones-tarifaires --societe=1 --installer --grille=database/bareme/grille-nationale.csv
+# Depuis S86 les semences posent le cadre de zones de CHAQUE société du socle :
+# plus rien à poser à la main avant le constat (S80 l'ajoutait ici pour la
+# société 1, sans quoi `tarification-prete` refusait tout déploiement).
 php artisan beninlink:tarification-prete   # doit sortir en succès pour toutes les sociétés
 php artisan config:cache && php artisan route:cache
 ```

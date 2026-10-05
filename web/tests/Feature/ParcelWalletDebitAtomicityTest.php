@@ -57,7 +57,7 @@ class ParcelWalletDebitAtomicityTest extends TestCase
         return $this->postJson('/api/v10/parcel/store', [
             'category_id' => 1,
             'delivery_type_id' => 1,
-            'zone_id' => DeliveryZone::where('code', DeliveryZone::COTONOU)->value('id'),
+            'zone_id' => DeliveryZone::where('company_id', Merchant::firstOrFail()->company_id)->where('code', DeliveryZone::COTONOU)->value('id'),
             'cash_collection' => 50000,
             'weight' => 1,
             'shop_id' => MerchantShops::firstOrFail()->id,

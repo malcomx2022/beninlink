@@ -125,7 +125,7 @@ class BusinessDecisionsTest extends TestCase
             'cash_collection' => 10000,
             'weight' => 1,
             // D4, étape 6 : le devis se refuse sans route.
-            'zone_id' => DeliveryZone::where('code', DeliveryZone::COTONOU)->firstOrFail()->id,
+            'zone_id' => DeliveryZone::where('company_id', Merchant::firstOrFail()->company_id)->where('code', DeliveryZone::COTONOU)->firstOrFail()->id,
         ], ['apiKey' => self::API_KEY])->assertOk()->assertJsonPath('data.vat', 18);
     }
 
