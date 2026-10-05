@@ -183,15 +183,16 @@ jobs:
           bash ../docs/guides/infra/deploy/verifier-env.sh .env
 
       # L'installation d'une recette, telle que le guide la décrit (§1) : base,
-      # semences du socle, jeu pilote, et les zones de la société du socle —
-      # sans elles, `beninlink:tarification-prete` refuse le déploiement.
-      - name: Base de recette (migrate, db:seed, jeu pilote, zones)
+      # semences du socle, jeu pilote. Depuis S86 les semences posent le cadre
+      # de zones de CHAQUE société qu'elles créent : aucun contournement ici,
+      # sinon le job cacherait une régression du seeder que
+      # `beninlink:tarification-prete` doit mesurer (DeploymentRehearsalTest).
+      - name: Base de recette (migrate, db:seed, jeu pilote)
         working-directory: web
         run: |
           php artisan migrate --force
           php artisan db:seed --force
           php artisan beninlink:pilote
-          php artisan beninlink:zones-tarifaires --societe=1 --installer --grille=database/bareme/grille-nationale.csv
 
       # Les commandes de deploy.sh, dans son ordre.
       - name: Les commandes de deploy.sh, dans l'ordre

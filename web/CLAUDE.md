@@ -86,6 +86,8 @@ avant les apps.
   ou portant la clé publique du socle (`RecetteDeploymentTest` l'exécute). Depuis **S84** un
   job `apps` (matrice `mobile` / `mobile-livreur`) rejoue `tsc`, `expo lint` et `npm test` sur
   chaque pull request ; il **ne conditionne pas** `deploy` — les apps partent par EAS.
+  ⚠️ Le job **ne pose aucune zone à la main** (**S86**) : les semences posent le cadre de
+  chaque société, et c'est précisément ce que `tarification-prete` mesure là.
 - `php artisan openapi:generate` après tout changement de `routes/api.php` ou de
   `resources/openapi/overlay.php` (régénère `public/openapi/v10.json`, versionné).
 - `php artisan beninlink:pilote [--company=] [--reset]` : jeu de données béninois de recette
@@ -233,6 +235,17 @@ avant les apps.
   rien, parfois une AUTRE demande du marchand, jamais celle ouverte. Forme S7 : `get()`,
   `abort_if(blank(...), 404)`, puis les règles. Un dépôt gardé ne rend pas un écran juste ;
   `MerchantPayoutRequestEditTest` le prouve par la route.
+- **Une installation neuve réussit son premier déploiement** (**S86**). `db:seed` crée deux
+  sociétés ; `DeliveryChargeSeeder` pose le **cadre** de zones (zones, délais, forfaits CEDEAO,
+  par `ZoneCatalog::installer()`) pour **chacune**, et la grille de démonstration pour la seule
+  société 2 — les montants appartiennent au transporteur. Jusqu'à S86 la société 1 restait sans
+  zone et `tarification-prete`, exécuté par `deploy.sh` avant de migrer, refusait **tout** premier
+  déploiement ; guide et job de répétition le contournaient à la main. `FreshInstallReadinessTest`
+  joue le constat sur une base qui vient d'être amorcée ; `DeploymentRehearsalTest` refuse qu'un
+  `zones-tarifaires` revienne dans le job. Une société créée par une semence reçoit son cadre dans
+  la semence, jamais dans un script de déploiement. ⚠️ En test, **une zone se cherche par société
+  et code, jamais par code seul** (`unique(['company_id', 'code'])`) : onze fixtures
+  `DeliveryZone::where('code', COTONOU)` ont trouvé la zone de la société 1 dès qu'elle en a eu.
 - **Les deux apps ont leur filet de contrat** (**S85**). L'app marchand : `OpenApiSpecTest`
   (inventaire), `ParcelStageTest` (statuts), `MerchantAppCustomsContractTest` (pages, douane).
   L'app livreur : `DeliverymanAppContractTest` — inventaire dans la spec et jamais réservé au

@@ -46,7 +46,7 @@ class ParcelQuoteTest extends TestCase
             'cash_collection' => 50000,
             'weight' => 1,
             // D4, étape 6 : un devis sans route n'a pas de réponse possible.
-            'zone_id' => DeliveryZone::where('code', DeliveryZone::COTONOU)->firstOrFail()->id,
+            'zone_id' => DeliveryZone::where('company_id', Merchant::firstOrFail()->company_id)->where('code', DeliveryZone::COTONOU)->firstOrFail()->id,
         ];
     }
 

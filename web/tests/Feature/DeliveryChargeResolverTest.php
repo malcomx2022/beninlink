@@ -139,7 +139,7 @@ class DeliveryChargeResolverTest extends TestCase
     {
         $this->assertSame(1500.0, $this->tarif(10));
 
-        $ailleurs = DeliveryZone::where('company_id', '!=', settings()->id)->firstOrFail();
+        $ailleurs = DeliveryZone::where('company_id', GeneralSettings::where('name', 'Autre locataire')->value('id'))->firstOrFail();
         $this->assertSame(100.0, $this->tarif(10, $ailleurs->id), 'la zone du voisin sert bien son propre barème');
     }
 

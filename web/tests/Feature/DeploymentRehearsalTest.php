@@ -113,22 +113,35 @@ class DeploymentRehearsalTest extends TestCase
         $this->assertLessThan(strpos($script, 'php artisan'), strpos($script, 'composer install'), 'composer avant artisan — `package:discover` est le premier à tomber');
 
         $this->assertStringContainsString('verifier-env.sh .env', $script, 'le garde du .env de deploy.sh est répété aussi');
-        foreach (['migrate --force', 'db:seed --force', 'beninlink:pilote', 'beninlink:zones-tarifaires --societe=1 --installer'] as $installation) {
+        foreach (['migrate --force', 'db:seed --force', 'beninlink:pilote'] as $installation) {
             $this->assertStringContainsString($installation, $script, "l'installation d'une recette, telle que le guide la décrit : {$installation}");
         }
         $this->assertStringContainsString('api/v10/general-settings', $script, 'et l\'application répond, caches en place');
     }
 
-    /** Les zones de la société du socle : sans elles, `tarification-prete` refuse le déploiement d'une installation neuve. */
-    public function test_l_installation_pose_les_zones_avant_le_constat_de_tarification(): void
+    /**
+     * **S86** — les semences posent le cadre de zones de CHAQUE société qu'elles créent ;
+     * le constat de tarification les suit, et rien entre les deux ne pose de zone à la main.
+     *
+     * Jusqu'à S86 le job répétait le contournement du guide
+     * (`zones-tarifaires --societe=1 --installer` après `db:seed`) : il rejouait ainsi une
+     * installation que personne ne fait par l'installateur web, et aurait caché une
+     * régression du seeder — précisément ce que `tarification-prete` doit mesurer ici.
+     */
+    public function test_le_constat_de_tarification_suit_les_semences_sans_contournement(): void
     {
         $script = $this->scriptDuJob();
-        $zones = strpos($script, 'beninlink:zones-tarifaires --societe=1 --installer');
+        $semences = strpos($script, 'php artisan db:seed --force');
         $constat = strpos($script, 'php artisan beninlink:tarification-prete');
 
-        $this->assertNotFalse($zones);
+        $this->assertNotFalse($semences);
         $this->assertNotFalse($constat);
-        $this->assertLessThan($constat, $zones, 'les zones avant le constat, sinon la société « We Courier » du socle est refusée');
+        $this->assertLessThan($constat, $semences, 'le constat se joue sur une base amorcée');
+        $this->assertStringNotContainsString(
+            'beninlink:zones-tarifaires',
+            $script,
+            'le job pose des zones à la main : il ne mesure plus que les semences suffisent (S86, FreshInstallReadinessTest)'
+        );
     }
 
     public function test_rien_ne_part_sur_un_serveur_sans_la_repetition(): void
