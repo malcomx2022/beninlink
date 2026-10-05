@@ -142,20 +142,32 @@ sudo -u deploy php artisan db:seed --force
 
 Trois conséquences, toutes vérifiées, et aucune n'est évidente.
 
-### a. Le seed pose des comptes dont le mot de passe est public
+### a. Le seed pose des comptes d'amorçage — sans mot de passe public depuis S87
 
-`UserSeeder` crée trois comptes, tous à `12345678` :
+Cinq semences du socle créent des comptes, et jusqu'au **2026-10-05 (S87)** tous à
+`12345678`, le mot de passe du code source que d'autres installations We Courier
+partagent :
 
 | Compte | Rôle |
 |---|---|
 | `admin@wemaxdevs.com` | super-administrateur |
 | `company@wemaxdevs.com` | administrateur de la société de démonstration |
 | `branch@wemaxdevs.com` | agence |
+| `merchant@wemaxdevs.com` | marchand de démonstration |
+| `deliveryman@wemaxit.com` | livreur de démonstration |
 
-Ce ne sont pas des identifiants de test cachés dans un fichier : ils sont dans
-le code source du socle, que d'autres installations partagent. **Les changer
-avant que le site soit joignable**, ou supprimer ceux dont vous n'avez pas
-l'usage.
+Depuis S87, hors `local` et `testing`, chaque semence **tire** un mot de passe par
+compte (20 caractères, lettres et chiffres) et l'affiche **une seule fois** dans la
+sortie de `db:seed` — il n'est conservé nulle part. **Notez ces lignes au moment où
+elles passent** ; sinon, réinitialisez le mot de passe depuis le back-office ou par
+`php artisan tinker`. La liste des comptes et la règle vivent dans
+`App\Services\Install\SeedAccounts`.
+
+Et `deploy.sh` le **vérifie** : `php artisan beninlink:comptes-amorcage`, avant de
+couper le site, sort en erreur tant qu'un de ces comptes porte encore `12345678`. Une
+base amorcée **avant** S87 s'arrête donc là, intacte et toujours servie, jusqu'à ce
+que vous les ayez changés (back-office) ou supprimés ceux dont vous n'avez pas
+l'usage. Un compte renommé n'y échappe pas : c'est le mot de passe qui est lu.
 
 Le seed crée aussi une société de démonstration « Company » et son sous-domaine
 — et ce sous-domaine est **dérivé d'`APP_URL` au moment où le seed tourne** :

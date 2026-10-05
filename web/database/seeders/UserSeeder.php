@@ -7,6 +7,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Services\Install\SeedAccounts;
 use App\Enums\UserType;
 use App\Models\Backend\Subscription;
 use App\Models\RoleUser;
@@ -32,7 +33,7 @@ class UserSeeder extends Seeder
         $user                        = new User();
         $user->name                  = "Admin";
         $user->email                 = "admin@wemaxdevs.com";
-        $user->password              = Hash::make('12345678');
+        $user->password              = Hash::make(SeedAccounts::motDePasse($user->email)); // S87
         $user->mobile                = "01912938002";
         $user->nid_number            = "12345678912";
         $user->user_type             = UserType::SUPER_ADMIN;
@@ -43,13 +44,14 @@ class UserSeeder extends Seeder
         $user->role_id               = 1;
         $user->permissions           = (new RoleSeeder)->superadminPermission();
         $user->save();
+        SeedAccounts::annoncer($this->command, $user->email);
 
         $user                        = new User();
         $user->name                  = "Company";
         $user->company_owner         = BooleanStatus::YES;
         $user->company_id            = 2;
         $user->email                 = "company@wemaxdevs.com";
-        $user->password              = Hash::make('12345678');
+        $user->password              = Hash::make(SeedAccounts::motDePasse($user->email)); // S87
         $user->mobile                = "01912938002";
         $user->nid_number            = "12345678912";
         $user->user_type             = UserType::ADMIN;
@@ -60,6 +62,7 @@ class UserSeeder extends Seeder
         $user->role_id               = 2;
         $user->permissions           = $this->AdminPermissions();
         $user->save();
+        SeedAccounts::annoncer($this->command, $user->email);
 
         $tenant1 =  Tenant::create(['id' => 'company','company_id'=>2]);
         $tenant1->domains()->create(['domain' => 'company.'.get_host(),'domain_name'=>'company']);
@@ -84,7 +87,7 @@ class UserSeeder extends Seeder
         $user->name                  = "Branch";
         $user->company_id            = 2;
         $user->email                 = "branch@wemaxdevs.com";
-        $user->password              = Hash::make('12345678');
+        $user->password              = Hash::make(SeedAccounts::motDePasse($user->email)); // S87
         $user->mobile                = "01478523690";
         $user->nid_number            = "12345678910";
         $user->designation_id        = 2;
@@ -98,6 +101,7 @@ class UserSeeder extends Seeder
         $user->role_id               = 2;
         $user->permissions           = $this->userPermissions();
         $user->save();
+        SeedAccounts::annoncer($this->command, $user->email);
  
     }
 

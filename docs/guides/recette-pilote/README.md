@@ -97,6 +97,9 @@ composer check-platform-reqs --no-dev   # PHP 8.3 + extensions : tout doit dire 
 composer install --no-dev --optimize-autoloader
 php artisan migrate --force
 php artisan db:seed --force            # socle We Courier (société, rôles, permissions)
+# S87 — en recette (APP_ENV=staging) les cinq comptes d'amorçage reçoivent un mot de
+# passe tiré au sort, affiché UNE fois ici : le noter. `deploy.sh` refuse ensuite
+# toute base où l'un d'eux porterait encore `12345678` (beninlink:comptes-amorcage).
 php artisan beninlink:pilote           # jeu de données béninois — voir §3
 # Depuis S86 les semences posent le cadre de zones de CHAQUE société du socle :
 # plus rien à poser à la main avant le constat (S80 l'ajoutait ici pour la

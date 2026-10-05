@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use App\Services\Install\SeedAccounts;
 use App\Models\Backend\DeliveryMan;
 
 class DeliveryManSeeder extends Seeder
@@ -27,12 +28,13 @@ class DeliveryManSeeder extends Seeder
         $deliveryUser->email                    = "deliveryman@wemaxit.com";
         $deliveryUser->address                  = "Mirpur-2,Dhaka";
         $deliveryUser->hub_id                   = 1;
-        $deliveryUser->password                 = Hash::make('12345678');
+        $deliveryUser->password                 = Hash::make(SeedAccounts::motDePasse($deliveryUser->email)); // S87
         $deliveryUser->user_type                = UserType::DELIVERYMAN;
         $deliveryUser->salary                   = 7000;
         $deliveryUser->image_id                 = 3;
         $deliveryUser->unique_id                = 20241;
         $deliveryUser->save();
+        SeedAccounts::annoncer($this->command, $deliveryUser->email);
 
         $deliveryMan                             = new DeliveryMan();
         $deliveryMan->company_id                = 2;

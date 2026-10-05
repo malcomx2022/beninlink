@@ -70,7 +70,7 @@ class DeploymentRehearsalTest extends TestCase
     public function test_les_commandes_artisan_de_deploy_sh_sont_celles_attendues(): void
     {
         $this->assertSame(
-            ['up', 'down', 'optimize:clear', 'beninlink:tarification-prete', 'migrate', 'config:cache', 'route:cache', 'view:cache', 'queue:restart', 'up'],
+            ['beninlink:comptes-amorcage', 'up', 'down', 'optimize:clear', 'beninlink:tarification-prete', 'migrate', 'config:cache', 'route:cache', 'view:cache', 'queue:restart', 'up'],
             $this->commandesDuScript(),
             'deploy.sh a changé : mettre à jour cette liste ET le job de répétition'
         );

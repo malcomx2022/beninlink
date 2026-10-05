@@ -2,8 +2,8 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-05 (S86 — une installation neuve réussit son premier
-> déploiement ; S85 — le contrat de l'app livreur tenu en PHPUnit ;
+> Dernière mise à jour : 2026-10-05 (S87 — plus de mot de passe public sur les comptes
+> d'amorçage ; S86 — une installation neuve réussit son premier déploiement ; S85 — le contrat de l'app livreur tenu en PHPUnit ;
 > S84 — un lanceur de tests dans les deux apps, M2, et le job CI `apps` ; S83 — l'écran de
 > modification d'une demande de retrait réparé ; S82 — l'alerte douanière sur le détail du
 > colis, M1 ; S81 — identifiants au nom libre dans les filets). Les blocs A-K décrivent le socle **tel que trouvé** ; les
@@ -7740,3 +7740,61 @@ seconde porte l'abonnement et les utilisateurs de démonstration), ni `deploy.sh
 avant S86 garde sa société 1 sans zone : le guide dit la commande qui la rattrape. La grille de la
 société 1 reste à saisir à l'écran ou à poser depuis `grille-nationale.csv` si c'est elle qu'on
 exploite — un choix du transporteur, pas une semence.
+
+## S87 — les comptes d'amorçage n'ont plus de mot de passe public en production (2026-10-05)
+
+### D'où ça vient
+
+Cinq semences du socle créent des comptes au mot de passe `12345678`, écrit dans le code
+source que toutes les installations We Courier partagent : le super-administrateur
+`admin@wemaxdevs.com`, l'administrateur `company@…` et l'agence `branch@…` (`UserSeeder`), un
+marchand (`MerchantSeeder`) et un livreur (`DeliveryManSeeder`). Le guide de mise en service le
+disait en § 5 a — « les changer avant que le site soit joignable » — et ne nommait que trois des
+cinq. Une consigne, que rien ne mesurait, alors que `db:seed --force` est la deuxième commande de
+la première installation. Les boutons « comptes de démonstration » de la page de connexion
+portent les mêmes identifiants, mais derrière `env('DEMO')`, vide en production : relu, pas un
+défaut.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `app/Services/Install/SeedAccounts` | un seul endroit : la liste des cinq comptes, le mot de passe public, `motDePasse($email)` (le public en `local`/`testing`, un tirage de 20 caractères lettres et chiffres partout ailleurs), `annoncer()` qui l'affiche **une fois** dans la sortie de la semence |
+| `UserSeeder`, `MerchantSeeder`, `DeliveryManSeeder` | `Hash::make(SeedAccounts::motDePasse(…))` puis `annoncer($this->command, …)` — rien d'autre ne change dans le socle |
+| `beninlink:comptes-amorcage` (`SeedAccountsCommand`) | **constate** : les comptes d'amorçage dont le mot de passe vérifie encore le public, par `Hash::check` ; sort en erreur s'il en reste. Un compte supprimé n'est pas un blocage ; un compte renommé en est un |
+| `deploy.sh` | l'exécute **avant** `artisan down`, à côté du garde du `.env` : une base refusée reste servie, intacte |
+| Job `repetition` | rejoue la commande en tête des commandes de `deploy.sh` ; en `staging`, les semences ont tiré au sort, le constat passe — il mesure donc la règle, pas un contournement |
+| `tests/Feature/SeedAccountsPasswordTest` (6 tests) | en test, les cinq comptes gardent le public (la liste est bien celle des semences) ; en production simulée, un mot de passe distinct par compte, affiché, et c'est celui posé ; le constat rouge tant qu'un compte reste public, nommé ; vert une fois changés ou supprimés ; il lit le mot de passe, pas le nom ; `deploy.sh` le joue avant la coupure |
+| `DeploymentRehearsalTest` | la liste des commandes de `deploy.sh` gagne `beninlink:comptes-amorcage` en tête |
+| Docs | `mise-en-service` § 5 a (les cinq comptes, la règle, le remède pour une base amorcée avant S87), `recette-pilote` § 1, grand livre E3, `web/CLAUDE.md` |
+
+### Ce que l'écriture a appris
+
+- **Un `PendingCommand` de test ne s'exécute qu'à `run()` ou à sa destruction.** Assigné à une
+  variable pour lui ajouter des attentes dans une boucle, il a tourné **après** les lignes qui
+  changeaient les mots de passe, et l'attente « la sortie nomme `company@…` » est tombée sur une
+  sortie qui ne le nommait plus. D'où le `->run()` explicite, et la règle dans `web/CLAUDE.md`.
+- `PlanSeeder` vit dans `Database\Seeders\Backend\SuperAdmin`, pas à la racine des semences :
+  `SeedsTenant` le sait, un import copié de mémoire ne le savait pas.
+- En production, `db:seed` demande `--force` : le test le passe, comme `deploy.sh`.
+
+### Vérification
+
+Quatre sabotages, chacun relancé sur le seul fichier qu'il doit faire tomber :
+
+| Sabotage | Effet |
+|---|---|
+| `motDePasse()` rend le public dans tous les environnements | **rouge** (production simulée : les comptes vérifient le public) |
+| `UserSeeder` remet `Hash::make('12345678')` sur le super-administrateur | **rouge** (le super-administrateur vérifie le public, rien d'affiché pour lui) |
+| le constat sort en succès même avec des comptes publics | **rouge** (2 tests : comptes publics et compte renommé) |
+| `beninlink:comptes-amorcage` retiré de `deploy.sh` | **rouge** (2 fichiers : `SeedAccountsPasswordTest` et la liste de `DeploymentRehearsalTest`) |
+
+Suite complète : **1 232 tests, 47 072 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne renomme pas les comptes (`@wemaxdevs.com`, « Mirpur-10, Dhaka ») ni ne touche le jeu
+pilote, dont le mot de passe commun est un choix de recette, refusé en production par sa
+commande. Il ne vérifie que les **comptes d'amorçage** : un utilisateur qui choisit lui-même
+`12345678` relève d'une politique de mots de passe, pas de ce lot. Et il ne change rien à
+`local` : le poste de développement garde les identifiants du socle.
