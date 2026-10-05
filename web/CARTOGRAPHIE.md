@@ -2,8 +2,9 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-05 (S79 — installation `--no-dev` réparée, douzième filet ;
-> S78 — bloc `page` sur les réponses paginées ; S77 — clé d'API sans repli). Les blocs A-K décrivent le socle **tel que trouvé** ; les
+> Dernière mise à jour : 2026-10-05 (S80 — répétition de déploiement en intégration
+> continue ; S79 — installation `--no-dev` réparée ; S78 — bloc `page` sur les réponses
+> paginées ; S77 — clé d'API sans repli). Les blocs A-K décrivent le socle **tel que trouvé** ; les
 > sections `## S<nn>` qui suivent racontent chaque lot, avec ses sabotages et le compte
 > de la suite. Le 2026-08-16 : chantier 1 (langue et devise — helpers XOF, 278 affichages
 > et 32 sorties d'API en FCFA entier) ; avant : blocs J — tarifs et K — notifications.
@@ -7296,3 +7297,78 @@ serveur ; à savoir le jour où un test voudrait jouer `db:seed` entier.
 et le filet le dirait s'il migrait vers du code de production. Le job `tests` du workflow
 installe toujours **avec** les dépendances de dev — c'est ce que la suite exige ; le filet
 remplace, pour cette famille, l'installation `--no-dev` que l'intégration ne fait pas.
+
+## S80 — la répétition de déploiement : ce que `deploy.sh` fait sur le serveur, rejoué avant (2026-10-05)
+
+### D'où ça vient
+
+S79 a laissé un constat : la suite tourne **avec** les dépendances de dev et sur SQLite, et
+`deploy.sh` est le seul endroit qui installe `--no-dev` et parle à MySQL. Entre les deux,
+tout ce qui ne se voit qu'en production. Les deux fuites de paquets de dev n'ont mordu que
+sur le VPS ; `DevDependencyLeakTest` ferme cette famille, pas les autres. Lues dans
+`deploy.sh`, les étapes que personne ne rejouait : `optimize:clear`,
+`beninlink:tarification-prete`, `migrate --force`, `config:cache`, `route:cache`,
+`view:cache`, `queue:restart`. `route:cache` refuse une route à fermeture, `view:cache`
+compile toutes les vues et lève la première erreur Blade, `config:cache` fige un `env()`
+lu hors des fichiers de configuration. Aucune ne tournait dans la suite.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `deploy.yml`, job `repetition` « Répétition de déploiement » | après `tests`, **sur une pull request comme sur `main`** (pas de `if`) ; service **MySQL 8** ; `composer install --no-dev` ; `.env` de recette (`APP_ENV=staging`, FedaPay sandbox, `API_KEY` propre) passé au **garde** `verifier-env.sh` ; installation d'une recette (`migrate`, `db:seed`, `beninlink:pilote`, zones de la société 1) ; **les commandes de `deploy.sh` dans son ordre** ; puis l'API répond — `general-settings` 200 avec la clé, 400 sans |
+| `deploy` et `deploy-recette` | `needs: [tests, repetition]` — rien ne part sur un serveur si la répétition échoue ; les deux restent sautés sans leurs secrets |
+| guide de recette §1 | la séquence d'installation gagne les **zones de la société du socle** et le constat de tarification — voir ci-dessous |
+
+### Ce que la répétition a trouvé en l'écrivant
+
+Rejouée d'abord ici, sur la copie `--no-dev` de S79 : après `db:seed` puis
+`beninlink:pilote`, **`beninlink:tarification-prete` refuse** — « We Courier — pas prête :
+aucune zone configurée ». Le jeu pilote pose les zones de **sa** société (id 2, « Company ») ;
+la société du socle (id 1), créée par les semences, n'en a aucune. Or `deploy.sh` exécute
+le constat pour **toutes** les sociétés, avant de migrer : sur une installation neuve montée
+selon le guide de recette, **le premier déploiement s'arrêtait là**, et le `trap` remontait le
+site. `beninlink:zones-tarifaires --societe=1 --installer --grille=…` règle la société du
+socle ; le guide et le job le font désormais, et un test exige que les zones précèdent le
+constat. Exactement le genre de défaut que S80 est fait pour voir avant le serveur.
+
+### Ce que le test fixe — `tests/Feature/DeploymentRehearsalTest` (5 tests)
+
+Il lit `deploy.sh` (commentaires exclus, `a && b && c` découpé) et en tire la liste des
+`php artisan …` dans l'ordre : c'est un **inventaire** figé — `up`, `down`, `optimize:clear`,
+`tarification-prete`, `migrate`, `config:cache`, `route:cache`, `view:cache`,
+`queue:restart`, `up`. Puis le job : chaque commande (hors `down` / `up`, qui pilotent le site
+vivant) est rejouée **après la précédente** dans les `run:` du job ; `composer install` porte
+`--no-dev` et précède tout `artisan` ; service MySQL ; pas de `if` ; `verifier-env.sh`,
+l'installation d'une recette et `general-settings` sont là ; les zones précèdent le constat ;
+`deploy` et `deploy-recette` attendent `repetition`. `RecetteDeploymentTest` suit (`needs`).
+
+### Vérification
+
+Le job a été **rejoué ici avant d'être poussé**, à l'identique, sur la copie `--no-dev` de S79
+contre une MariaDB 10.11 locale (MySQL 8 n'était pas installable dans cet environnement) :
+`composer install --no-dev`, `.env` de recette accepté par `verifier-env.sh`, `migrate`,
+**`db:seed` complet** (les semences à `\'` du socle passent — la réserve de S79 est levée pour
+la famille MySQL), `beninlink:pilote`, zones de la société 1, puis `optimize:clear`,
+`tarification-prete` (« chaque société tarife par zones »), `migrate`, les trois caches,
+`queue:restart`, et `general-settings` : **200 avec la clé, 400 sans**. Le premier run du job
+dans GitHub Actions, sur MySQL 8, est la preuve qui reste à lire.
+
+Cinq sabotages :
+
+| Sabotage | Effet |
+|---|---|
+| le job oublie `tarification-prete` | **rouge** (2) |
+| `deploy` ne dépend plus de la répétition | **rouge** |
+| le job installe avec les dépendances de dev | **rouge** |
+| `deploy.sh` gagne `storage:link` sans que le job le répète | **rouge** (2 : inventaire et ordre) |
+| les caches passent avant `tarification-prete` | **rouge** (ordre) |
+
+Suite complète : **1 207 tests, 46 863 assertions**, verte.
+
+### Ce qui reste
+
+Le job coûte quelques minutes par run ; c'est le prix d'un S79 vu sur la pull request. Le
+premier run réel se lit dans l'onglet Actions : si le service MySQL 8 refuse quelque chose
+que MariaDB a accepté ici, c'est à corriger dans le job, pas à contourner. Et le jour où
+`deploy.sh` change, l'inventaire du test le dit avant le serveur.

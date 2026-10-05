@@ -62,11 +62,122 @@ jobs:
         working-directory: web
         run: php artisan test
 
+  # S80 — la RÉPÉTITION de déploiement : ce que `deploy.sh` fait sur le serveur,
+  # rejoué ici avant, sur une pull request comme sur `main`.
+  #
+  # La suite de tests tourne AVEC les dépendances de dev et sur SQLite en mémoire ;
+  # `deploy.sh` installe `--no-dev` et parle à MySQL. Entre les deux, tout ce qui
+  # ne se voit qu'en production : un paquet de dev enregistré sans condition
+  # (S79 — `package:discover` tombait pendant `composer install`), une semence
+  # qui lit un paquet absent, une route à fermeture que `route:cache` refuse, une
+  # vue que `view:cache` ne compile pas, une société sans zones que
+  # `beninlink:tarification-prete` refuse. Ce job les voit sur la pull request.
+  #
+  # Les commandes artisan rejouées sont CELLES de `deploy.sh`, dans son ordre
+  # (`php artisan down` / `up`, qui pilotent le site vivant, exceptées) :
+  # `DeploymentRehearsalTest` lit le script et ce fichier, et refuse qu'une étape
+  # ajoutée au déploiement ne soit pas répétée ici.
+  repetition:
+    name: Répétition de déploiement
+    needs: tests
+    runs-on: ubuntu-latest
+    services:
+      # La vraie base, pas une approximation : les semences du socle insèrent du
+      # SQL MySQL (`CurrencySeeder` échappe une apostrophe à la façon MySQL, que
+      # SQLite refuse — constaté en S79).
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: beninlink
+          MYSQL_ROOT_PASSWORD: repetition
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -prepetition"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, gd, json, mbstring, mysqli, pdo, pdo_mysql, bcmath, intl, zip
+          coverage: none
+
+      # `--no-dev`, comme deploy.sh : c'est tout l'objet de ce job. Le script
+      # `package:discover` de composer tourne ici, sans les paquets de dev.
+      - name: Dépendances de production (--no-dev)
+        working-directory: web
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+
+      # Un `.env` de recette : APP_ENV=staging (le jeu pilote est refusé en
+      # production), FedaPay en sandbox, une API_KEY propre — ce que
+      # `verifier-env.sh` exige avant de laisser deploy.sh couper le site.
+      - name: .env de recette, vérifié par le garde de deploy.sh
+        working-directory: web
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+          poser() { if grep -q "^$1=" .env; then sed -i "s|^$1=.*|$1=$2|" .env; else echo "$1=$2" >> .env; fi; }
+          poser APP_ENV staging
+          poser APP_DEBUG false
+          poser APP_INSTALLED yes
+          poser API_KEY blk_repetition_ci
+          poser DB_CONNECTION mysql
+          poser DB_HOST 127.0.0.1
+          poser DB_PORT 3306
+          poser DB_DATABASE beninlink
+          poser DB_USERNAME root
+          poser DB_PASSWORD repetition
+          poser QUEUE_CONNECTION sync
+          poser MAIL_MAILER log
+          poser FEDAPAY_ENVIRONMENT sandbox
+          bash ../docs/guides/infra/deploy/verifier-env.sh .env
+
+      # L'installation d'une recette, telle que le guide la décrit (§1) : base,
+      # semences du socle, jeu pilote, et les zones de la société du socle —
+      # sans elles, `beninlink:tarification-prete` refuse le déploiement.
+      - name: Base de recette (migrate, db:seed, jeu pilote, zones)
+        working-directory: web
+        run: |
+          php artisan migrate --force
+          php artisan db:seed --force
+          php artisan beninlink:pilote
+          php artisan beninlink:zones-tarifaires --societe=1 --installer --grille=database/bareme/grille-nationale.csv
+
+      # Les commandes de deploy.sh, dans son ordre.
+      - name: Les commandes de deploy.sh, dans l'ordre
+        working-directory: web
+        run: |
+          php artisan optimize:clear
+          php artisan beninlink:tarification-prete
+          php artisan migrate --force
+          php artisan config:cache && php artisan route:cache && php artisan view:cache
+          php artisan queue:restart
+
+      # Et l'application répond, caches en place, sans les dépendances de dev :
+      # la porte de l'API (S77) avec la clé du .env, puis sans — 200 puis 400.
+      - name: L'application répond
+        working-directory: web
+        run: |
+          php artisan route:list --path=api/v10 > /dev/null
+          php artisan serve --host=127.0.0.1 --port=8099 > serve.log 2>&1 &
+          for i in $(seq 1 20); do curl -s -o /dev/null http://127.0.0.1:8099/ && break; sleep 1; done
+          reponse=$(curl -s -H 'apiKey: blk_repetition_ci' http://127.0.0.1:8099/api/v10/general-settings)
+          echo "$reponse" | head -c 300; echo
+          echo "$reponse" | grep -q '"success":true' || { echo "::error::L'API ne répond pas avec la clé du .env"; cat serve.log; exit 1; }
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8099/api/v10/general-settings)
+          [ "$code" = "400" ] || { echo "::error::Sans clé d'API, attendu 400, reçu $code"; exit 1; }
+
   deploy:
     name: Déploiement sur le VPS
     # Rien ne part en production sans que la suite soit passée. Le dépôt n'a
-    # jamais eu de garde automatique : c'est ici qu'il en gagne un.
-    needs: tests
+    # jamais eu de garde automatique : c'est ici qu'il en gagne un. Depuis S80,
+    # la répétition de déploiement doit passer aussi.
+    needs: [tests, repetition]
     # Une pull request exerce les tests, jamais le déploiement.
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -120,7 +231,7 @@ jobs:
   # clés FedaPay live, et tout `.env` sans API_KEY (`verifier-env.sh`, S76 / S77).
   deploy-recette:
     name: Déploiement sur le serveur de recette
-    needs: tests
+    needs: [tests, repetition]
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:

@@ -73,7 +73,11 @@ avant les apps.
 ## Commandes
 - `composer install` · `php artisan migrate` · `php artisan test` (avant tout commit) · `php -l <fichier>`
   La suite tourne aussi dans GitHub Actions : **rien ne part en production sans
-  elle** (`.github/workflows/deploy.yml`, un push sur `main` déploie). Depuis **S76**
+  elle** (`.github/workflows/deploy.yml`, un push sur `main` déploie) — **ni sans la
+  répétition de déploiement** (**S80**) : un job `--no-dev` contre MySQL qui déroule
+  l'installation d'une recette puis les commandes de `deploy.sh` dans son ordre, sur
+  chaque pull request. `DeploymentRehearsalTest` lit `deploy.sh` et le workflow : une
+  étape ajoutée au script se répète dans le job, sinon rouge. Depuis **S76**
   le même workflow déploie aussi le **vhost de recette** (`/var/www/beninlink-recette`,
   secrets `RECETTE_SSH_*`, job qui se saute sans eux) par le même
   `docs/guides/infra/deploy/deploy.sh`, dont le chemin vient de `DEPLOY_PATH`. Avant de
