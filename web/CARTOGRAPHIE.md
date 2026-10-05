@@ -2,9 +2,11 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-08-16 (chantier 1 : volet langue **et** volet devise
-> — helpers XOF, 278 affichages et 32 sorties d'API basculés en FCFA entier).
-> Antérieurement : blocs J — tarifs et K — notifications ; `lang/fr/` complété.
+> Dernière mise à jour : 2026-10-05 (S77 — clé d'API sans repli, refus fermé ; garde
+> `verifier-env.sh` étendu). Les blocs A-K décrivent le socle **tel que trouvé** ; les
+> sections `## S<nn>` qui suivent racontent chaque lot, avec ses sabotages et le compte
+> de la suite. Le 2026-08-16 : chantier 1 (langue et devise — helpers XOF, 278 affichages
+> et 32 sorties d'API en FCFA entier) ; avant : blocs J — tarifs et K — notifications.
 
 ---
 
@@ -866,6 +868,8 @@ vestige du squelette Laravel.
      Valeur **unique, partagée par toutes les installations We Courier, identique
      pour tous les locataires, embarquée dans les APK des deux apps.**
      Elle n'authentifie rien — c'est un filtre, pas un secret.
+     → S3 l'a passée en `env('API_KEY', …)`, repli conservé ; **S77** retire le repli
+     et ferme la porte (`hash_equals`, refus si clé vide) — voir `## S77`.
   2. **Laravel Sanctum** (`laravel/sanctum ^3.2`), jetons personnels émis dans
      `app/Http/Controllers/Api/V10/AuthController.php` :
      `:102` `createToken($request->merchant_id)` (signin marchand) ·
@@ -7036,3 +7040,84 @@ Tout ce lot est inerte tant que l'exploitation n'a pas : renseigné les **six** 
 avec le dépôt cloné, posé sa base et son `.env` (`APP_ENV=staging`, FedaPay sandbox), et
 repointé `recette.beninlink.app` vers la vraie adresse. La fiche P0-P1 du guide de recette
 le dit ligne par ligne. Le premier run vert des **deux** jobs de déploiement est le critère.
+
+## S77 — la clé d'API sans repli, une porte qui refuse fermé, et des en-têtes à jour (2026-10-05)
+
+### D'où ça vient
+
+Deux lignes de dette du relevé de projet (`docs/CARTOGRAPHIE_PROJET.md` §7.2) : **T7** et
+**T10**.
+
+**T7.** S3 avait sorti la clé d'API du code (`env('API_KEY', …)`), mais en gardant la
+valeur du socle en **repli** « pour qu'une installation existante ne casse pas ». Le
+résultat : une installation sans variable `API_KEY` répondait à `123456rx-ecourier123456`,
+la clé publique de l'éditeur, identique pour toutes les installations We Courier et lisible
+dans ses APK (`courier_*_saas-main/lib/services/api-list.dart`). Et `CheckApiKeyMiddleware`
+comparait avec `==` : clé configurée vide, en-tête `apiKey` vide, requête acceptée. Le
+`.env.example` de `web/` ne mentionnait pas la variable — rien n'invitait à la poser.
+
+Ce n'est pas une authentification (les données restent derrière `auth:sanctum`, S4), mais
+un filtre qui laisse passer la clé que tout le monde connaît ne filtre rien.
+
+**T10.** Trois en-têtes datés en retard : `web/CARTOGRAPHIE.md` « 2026-08-16 » avec un
+contenu à S76, `CLAUDE.md` racine « 2026-07-06 », `DECISIONS_METIER.md` « 2026-09-06 »
+avec D6-D14 depuis.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `config/rxcourier.php` | `'api_key' => env('API_KEY')` — **plus de repli** ; sans variable, `null` |
+| `CheckApiKeyMiddleware` | **refus fermé** : clé configurée non-chaîne ou vide → 400 pour tous ; en-tête absent ou vide → 400 ; sinon `hash_equals` (strict, à temps constant). Message et code inchangés (`Invalid Api Key`, 400 — l'OpenAPI les documente déjà) |
+| `web/.env.example` | ligne `API_KEY=` avec la commande de génération et le rappel « la changer = republier les apps » |
+| `verifier-env.sh` | refuse, **dans tous les environnements** et avant la coupure, un `.env` sans `API_KEY` ou dont `API_KEY` vaut la clé publique du socle |
+| en-têtes | les trois fichiers de T10 datent du lot courant et disent ce qu'ils couvrent |
+
+Pourquoi le garde de déploiement, et pas seulement le middleware : sans repli, un `.env`
+sans clé fait **tomber les deux apps au remontage du site**, en production comme en
+recette. Le middleware est le filet ; le garde lit le problème là où il coûte le moins —
+avant `php artisan down`, comme il lit déjà FedaPay (S76). Côté apps, rien à changer :
+`mobile/src/api/config.ts` exige déjà `EXPO_PUBLIC_API_KEY` sans repli.
+
+Ce que ça change pour une installation existante : **rien si `API_KEY` est posée** (le
+guide `infra/env/` la demande depuis le début, et le `.env.example` d'infra la porte).
+Une installation qui vivait sur le repli perd l'API au premier déploiement — c'est le
+but, et `verifier-env.sh` le dit avant de couper.
+
+### Ce que les tests fixent
+
+`tests/Feature/ApiKeyFailClosedTest` (5 tests, 20 assertions) : la source de la config ne
+porte plus la clé du socle et appelle `env('API_KEY')` sans second argument (parce que les
+tests posent la clé par `config()`, un repli remis serait invisible au seul comportement) ;
+clé configurée `null` ou `''` → la clé du socle, un en-tête vide, un en-tête absent sont
+refusés ; clé posée → en-tête vide, absent, clé du socle, casse différente, espace en plus
+sont refusés ; la bonne clé passe (`/api/v10/general-settings`, derrière `CheckApiKey`
+seul) ; le middleware, **sans ses commentaires** (`php_strip_whitespace`), contient
+`hash_equals(` et aucun `==`.
+
+`RecetteDeploymentTest` (12 tests, 44 assertions) : les fixtures FedaPay portent toutes
+une clé ; deux cas neufs — `.env` sans `API_KEY` refusé en `staging` **et** en
+`production`, ligne vide comprise, message qui dit comment générer ; `API_KEY` égale à la
+clé du socle refusée, même en production live.
+
+### Vérification — quatre sabotages
+
+| Sabotage | Effet |
+|---|---|
+| repli `'123456rx-ecourier123456'` remis dans la config | **rouge** (1) |
+| `==` du socle remis, gardes retirées | **rouge** (2 : vide contre vide passe, forme) |
+| le garde n'exige plus `API_KEY` | **rouge** (1) |
+| `general-settings` sortie du groupe `CheckApiKey` (contrôle d'ancrage : la route lue est bien derrière la porte) | **rouge** (2) |
+
+Piège rencontré en l'écrivant : le test de forme cherchait `==` dans la source du
+middleware, et le trouvait… dans le **docbloc** qui raconte le `==` du socle. La
+comparaison se fait sur la source **sans commentaires**.
+
+Suite complète : **1 189 tests, 46 707 assertions**, verte.
+
+### Ce qui reste
+
+Rien côté code pour T7. Côté exploitation, la fiche P1 du guide de recette demande
+désormais une `API_KEY` **propre à la recette** (ni celle de la production, ni celle du
+socle), et P6 rappelle que `EXPO_PUBLIC_API_KEY` du profil de build la reprend. La règle
+pour T10 : chaque lot met à jour les trois en-têtes avec sa section `## S<nn>`.

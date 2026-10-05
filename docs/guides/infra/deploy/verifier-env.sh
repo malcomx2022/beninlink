@@ -1,17 +1,22 @@
 #!/usr/bin/env bash
-# Garde du `.env` avant déploiement — BeninLink (S76, E2).
+# Garde du `.env` avant déploiement — BeninLink (S76, E2 ; S77, T7).
 #
 # Usage : verifier-env.sh <chemin du .env>
 #
-# Le risque qu'il ferme : une recette (APP_ENV=staging) qui encaisse de l'argent
-# réel parce qu'une clé FedaPay « live » a été recopiée depuis la production.
-# `FedaPayGateway` lit FEDAPAY_ENVIRONMENT (live / sandbox) ; FedaPay préfixe
-# ses clés par `_live_` ou `_sandbox_`. Les deux sont vérifiés : l'un peut être
-# juste et l'autre faux.
+# Deux risques qu'il ferme :
+# - une recette (APP_ENV=staging) qui encaisse de l'argent réel parce qu'une clé
+#   FedaPay « live » a été recopiée depuis la production. `FedaPayGateway` lit
+#   FEDAPAY_ENVIRONMENT (live / sandbox) ; FedaPay préfixe ses clés par `_live_`
+#   ou `_sandbox_`. Les deux sont vérifiés : l'un peut être juste et l'autre faux ;
+# - (S77) un `.env` sans API_KEY, ou avec la clé publique du socle We Courier.
+#   Depuis S77 la config n'a plus de repli : sans clé, `CheckApiKeyMiddleware`
+#   refuse toute requête d'API et les deux apps sont coupées. Mieux vaut le lire
+#   ici, avant la coupure du site, que dans les téléphones.
 #
 # Sorties :
 #   0 — le .env est cohérent (un avertissement peut être imprimé) ;
-#   1 — refus : hors production avec FedaPay en live, ou une clé live ; ou .env absent.
+#   1 — refus : API_KEY absente ou égale à la clé publique du socle ; hors
+#       production avec FedaPay en live, ou une clé live ; ou .env absent.
 #
 # Il s'exécute AVANT `php artisan down` dans deploy.sh : mieux vaut ne pas
 # déployer que couper le site pour s'arrêter ensuite. Il est autonome pour
@@ -31,8 +36,20 @@ lire() {
 }
 
 app_env="$(lire APP_ENV)"
+api_key="$(lire API_KEY)"
 fedapay_env="$(lire FEDAPAY_ENVIRONMENT)"
 cles="$(lire FEDAPAY_PUBLIC_KEY) $(lire FEDAPAY_SECRET_KEY) $(lire FEDAPAY_WEBHOOK_SECRET)"
+
+# S77 (T7) — la clé d'API, dans tous les environnements.
+if [ -z "$api_key" ]; then
+    echo "❌ API_KEY absente du .env : sans elle l'API refuse toutes les requêtes (plus de repli depuis S77), les apps seraient coupées." >&2
+    echo "   Générer : php -r 'echo \"blk_\".bin2hex(random_bytes(16)), PHP_EOL;' puis la poser dans API_KEY et dans EXPO_PUBLIC_API_KEY des apps. Rien n'a été touché." >&2
+    exit 1
+fi
+if [ "$api_key" = "123456rx-ecourier123456" ]; then
+    echo "❌ API_KEY vaut la clé publique du socle We Courier, connue de toutes ses installations : à remplacer par une clé propre. Rien n'a été touché." >&2
+    exit 1
+fi
 
 if [ "$app_env" != "production" ]; then
     if [ "$fedapay_env" = "live" ]; then

@@ -17,12 +17,20 @@ use Tests\TestCase;
  * `.env` **avant la coupure** du site. Trois pièces d'infrastructure, trois
  * familles d'assertions : la forme du workflow, la forme du script, et le
  * **comportement** du garde, exécuté sur des `.env` fabriqués.
+ *
+ * **S77 (T7)** : le même garde exige `API_KEY` — la config n'a plus de repli sur
+ * la clé publique du socle, et un `.env` sans clé couperait les deux apps au
+ * remontage du site. Les fixtures FedaPay portent donc toutes une clé ; deux
+ * cas la font manquer ou valoir la clé publique.
  */
 class RecetteDeploymentTest extends TestCase
 {
     private const WORKFLOW = '.github/workflows/deploy.yml';
     private const DEPLOY = 'docs/guides/infra/deploy/deploy.sh';
     private const GARDE = 'docs/guides/infra/deploy/verifier-env.sh';
+
+    /** Une clé d'installation valide : les cas FedaPay ne doivent pas tomber sur le garde S77. */
+    private const CLE = "API_KEY=blk_0123456789abcdef\n";
 
     private function racine(string $relatif): string
     {
@@ -120,7 +128,7 @@ class RecetteDeploymentTest extends TestCase
 
     public function test_une_recette_avec_fedapay_en_live_est_refusee(): void
     {
-        [$code, $sortie] = $this->garde("APP_ENV=staging\nFEDAPAY_ENVIRONMENT=live\nFEDAPAY_SECRET_KEY=sk_sandbox_x\n");
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=staging\nFEDAPAY_ENVIRONMENT=live\nFEDAPAY_SECRET_KEY=sk_sandbox_x\n");
 
         $this->assertSame(1, $code);
         $this->assertStringContainsString('argent réel', $sortie);
@@ -129,7 +137,7 @@ class RecetteDeploymentTest extends TestCase
     /** L'environnement peut dire sandbox et une clé être live : la clé compte aussi. */
     public function test_une_recette_avec_une_cle_live_est_refusee_meme_en_environnement_sandbox(): void
     {
-        [$code, $sortie] = $this->garde("APP_ENV=staging\nFEDAPAY_ENVIRONMENT=sandbox\nFEDAPAY_PUBLIC_KEY=\"pk_live_abc\"\n");
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=staging\nFEDAPAY_ENVIRONMENT=sandbox\nFEDAPAY_PUBLIC_KEY=\"pk_live_abc\"\n");
 
         $this->assertSame(1, $code);
         $this->assertStringContainsString('clé FedaPay « live »', $sortie);
@@ -137,7 +145,7 @@ class RecetteDeploymentTest extends TestCase
 
     public function test_une_recette_en_sandbox_passe(): void
     {
-        [$code, $sortie] = $this->garde("APP_ENV=staging\nFEDAPAY_ENVIRONMENT=sandbox\nFEDAPAY_SECRET_KEY='sk_sandbox_x'\nFEDAPAY_PUBLIC_KEY=pk_sandbox_y\n");
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=staging\nFEDAPAY_ENVIRONMENT=sandbox\nFEDAPAY_SECRET_KEY='sk_sandbox_x'\nFEDAPAY_PUBLIC_KEY=pk_sandbox_y\n");
 
         $this->assertSame(0, $code, $sortie);
         $this->assertStringContainsString('hors production (staging)', $sortie);
@@ -146,20 +154,44 @@ class RecetteDeploymentTest extends TestCase
     /** Une recette sans aucune clé FedaPay (pas encore configurée) passe aussi : l'absence n'est pas un danger. */
     public function test_une_recette_sans_cle_fedapay_passe(): void
     {
-        [$code] = $this->garde("APP_ENV=staging\n");
+        [$code] = $this->garde(self::CLE . "APP_ENV=staging\n");
 
         $this->assertSame(0, $code);
     }
 
     public function test_la_production_en_live_passe_et_en_sandbox_avertit_sans_bloquer(): void
     {
-        [$code, $sortie] = $this->garde("APP_ENV=production\nFEDAPAY_ENVIRONMENT=live\nFEDAPAY_SECRET_KEY=sk_live_x\n");
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=production\nFEDAPAY_ENVIRONMENT=live\nFEDAPAY_SECRET_KEY=sk_live_x\n");
         $this->assertSame(0, $code, $sortie);
         $this->assertStringNotContainsString('⚠️', $sortie);
 
-        [$code, $sortie] = $this->garde("APP_ENV=production\nFEDAPAY_ENVIRONMENT=sandbox\n");
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=production\nFEDAPAY_ENVIRONMENT=sandbox\n");
         $this->assertSame(0, $code, 'une production en sandbox est un avertissement, pas un refus');
         $this->assertStringContainsString('ne seront pas réels', $sortie);
+    }
+
+    /** S77 (T7) — sans API_KEY, l'API refuserait tout : on s'arrête avant la coupure, en recette comme en production. */
+    public function test_un_env_sans_api_key_est_refuse_dans_tous_les_environnements(): void
+    {
+        foreach (['staging', 'production'] as $env) {
+            [$code, $sortie] = $this->garde("APP_ENV=$env\nFEDAPAY_ENVIRONMENT=sandbox\n");
+            $this->assertSame(1, $code, "$env : $sortie");
+            $this->assertStringContainsString('API_KEY absente', $sortie);
+            $this->assertStringContainsString('random_bytes', $sortie, 'le message dit comment la générer');
+        }
+
+        [$code, $sortie] = $this->garde("APP_ENV=production\nAPI_KEY=\n");
+        $this->assertSame(1, $code, 'une ligne vide vaut une absence');
+        $this->assertStringContainsString('API_KEY absente', $sortie);
+    }
+
+    /** S77 (T7) — la clé publique du socle We Courier n'est pas une clé : toutes ses installations la connaissent. */
+    public function test_la_cle_publique_du_socle_est_refusee(): void
+    {
+        [$code, $sortie] = $this->garde("APP_ENV=production\nAPI_KEY=\"123456rx-ecourier123456\"\nFEDAPAY_ENVIRONMENT=live\n");
+
+        $this->assertSame(1, $code);
+        $this->assertStringContainsString('clé publique du socle', $sortie);
     }
 
     public function test_un_env_absent_est_refuse(): void

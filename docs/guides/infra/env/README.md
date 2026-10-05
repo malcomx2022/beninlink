@@ -63,6 +63,11 @@ installations** (constat S3) ; il faut donc en générer une propre à celle-ci.
 et les données restent protégées par Sanctum. Sa rotation impose de republier
 les deux applications mobiles — à décider avant de la changer, pas après.
 
+Depuis **S77** elle n'a **plus de repli** : sans `API_KEY`, l'API refuse
+**toutes** les requêtes (y compris la clé publique du socle, que les anciennes
+APK We Courier présentent), et `verifier-env.sh` arrête le déploiement avant
+la coupure du site. La même valeur se pose côté apps dans `EXPO_PUBLIC_API_KEY`.
+
 ## 3. Les valeurs à obtenir ailleurs
 
 | Variable | Où la trouver | Ce qui arrive si elle manque |

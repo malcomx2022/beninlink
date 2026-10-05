@@ -131,6 +131,9 @@ Le script `docs/guides/infra/deploy/deploy.sh` lit son chemin dans `DEPLOY_PATH`
 production dont `FEDAPAY_ENVIRONMENT=live` ou dont une clé contient `_live_` est
 **refusé**, rien n'est déployé. C'est la réponse au premier risque du pilote — une clé
 live recopiée depuis la production, et une recette qui encaisse de l'argent réel.
+Depuis **S77**, le même garde refuse un `.env` **sans `API_KEY`** (ou portant la clé
+publique du socle We Courier) : la config n'a plus de repli, et une recette sans sa
+propre clé ne servirait aucune requête des apps — autant le lire avant la coupure.
 `RecetteDeploymentTest` exécute ce garde sur des `.env` fabriqués.
 
 Avant le premier déploiement, le dépôt doit être cloné dans `/var/www/beninlink-recette`
@@ -344,13 +347,13 @@ coche **avant** le jour J ; une ligne vide reporte la recette, elle ne la dégra
 | # | À réunir | Responsable | Vérification |
 |---|---|---|---|
 | P0 | **Déploiement** : les trois secrets de production (`SSH_HOST` / `SSH_USER` / `SSH_KEY`) **et** les trois de recette (`RECETTE_SSH_*`) renseignés dans Settings → Secrets → Actions ; dépôt cloné dans `/var/www/beninlink-recette` par l'utilisateur de recette ; `recette.beninlink.app` repointé vers la vraie adresse (il était parqué au 2026-10-03) | exploitation | le run du workflow sur `main` passe ses **deux** jobs de déploiement au vert (au 2026-10-03, tous échouaient au garde des secrets) |
-| P1 | Vhost de recette monté selon `infra/mise-en-service/` (PHP 8.3, MySQL `utf8mb4_unicode_ci`, `.env` avec `APP_INSTALLED=yes` et `APP_ENV=staging`, nginx, certificat `*.beninlink.app` — wildcard : validation **DNS-01**) | exploitation | `https://recette.beninlink.app/api/v10/general-settings` répond 200 avec `apiKey` ; `bash docs/guides/infra/deploy/verifier-env.sh web/.env` sort en 0 |
+| P1 | Vhost de recette monté selon `infra/mise-en-service/` (PHP 8.3, MySQL `utf8mb4_unicode_ci`, `.env` avec `APP_INSTALLED=yes`, `APP_ENV=staging` et **sa propre `API_KEY`** (générée, jamais celle de la production ni celle du socle — S77 : sans elle, aucune requête d'API n'est servie), nginx, certificat `*.beninlink.app` — wildcard : validation **DNS-01**) | exploitation | `https://recette.beninlink.app/api/v10/general-settings` répond 200 avec la clé de recette dans `apiKey`, **400** sans ; `bash docs/guides/infra/deploy/verifier-env.sh web/.env` sort en 0 |
 | P2 | Base séparée, `db:seed`, `beninlink:pilote`, société de recette ajoutée dans `domains` avec le sous-domaine `recette` | exploitation | `php artisan beninlink:tarification-prete --societe=<id>` sort en succès |
 | P3 | Compte **FedaPay sandbox** : clés publique/secrète/webhook dans `.env`, webhook pointé sur `https://recette.beninlink.app/fedapay/webhook` | porteur | une recharge de test crédite PIL-002 (`infra/supervision/fedapay-webhooks.md` pour les trois lectures) |
 | P4 | Worker de file installé et surveillé (`infra/supervisor/`), ou `QUEUE_CONNECTION=sync` assumé | exploitation | `php artisan beninlink:file-attente` sort en 0 |
 | P5 | Passerelle SMS configurée (ou `MAIL_MAILER=log` et lecture des codes dans `storage/logs/`) | porteur | M9 : le code OTP arrive, ou se lit dans le journal |
-| P6 | Compte **Expo / EAS** lié aux deux projets (`eas init`), **deux keystores**, variable `EXPO_PUBLIC_API_KEY` posée par profil | développement | `eas build -p android --profile recette` rend deux liens APK |
+| P6 | Compte **Expo / EAS** lié aux deux projets (`eas init`), **deux keystores**, variable `EXPO_PUBLIC_API_KEY` posée par profil (= l'`API_KEY` du `.env` de recette, S77) | développement | `eas build -p android --profile recette` rend deux liens APK |
 | P7 | **Deux téléphones Android** au moins, réseau mobile (pas seulement Wi-Fi), APK installés | porteur | connexion `PIL-001` et `LIV-001` réussie sur chacun |
 | P8 | Les 5 PME et 3 livreurs informés : identifiants, mot de passe commun, personne à appeler, fenêtre de recette | porteur | accusé de réception |
-| P9 | `php artisan test` vert sur la version déployée, dont `RecettePiloteRepetitionTest` | développement | 1 112 tests au 2026-10-03 |
+| P9 | `php artisan test` vert sur la version déployée, dont `RecettePiloteRepetitionTest` | développement | 1 189 tests au 2026-10-05 |
 | P10 | Tableau de collecte ouvert (§6) et partagé aux PME | porteur | une ligne d'essai saisie par chaque PME |
