@@ -16,6 +16,7 @@
         "brian2694/laravel-toastr": "^5.57",
         "cartalyst/stripe-laravel": "^15.0",
         "components/flag-icon-css": "^3.5",
+        "fakerphp/faker": "^1.9.1",
         "geo-sot/laravel-env-editor": "^2.1",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^10.10",
@@ -37,7 +38,6 @@
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.8",
-        "fakerphp/faker": "^1.9.1",
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.18",
         "mockery/mockery": "^1.4.4",
@@ -77,7 +77,9 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": []
+            "dont-discover": [
+                "barryvdh/laravel-debugbar"
+            ]
         }
     },
     "config": {

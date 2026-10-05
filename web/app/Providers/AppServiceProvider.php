@@ -26,6 +26,7 @@ use App\Repositories\Superadmin\Company\CompanyRepository;
 use App\Repositories\Superadmin\Plan\PlanInterface;
 use App\Repositories\Wallet\WalletInterface;
 use App\Repositories\Wallet\WalletRepository;
+use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Schema;
@@ -121,7 +122,34 @@ class AppServiceProvider extends ServiceProvider
                 ? new \App\Services\Push\ExpoPushGateway()
                 : new \App\Services\Push\NullPushGateway();
         });
-      
+
+        $this->registerDebugbar();
+    }
+
+    /**
+     * S79 — la barre de débogage, seulement si elle est installée ET si l'app est en débogage.
+     *
+     * `barryvdh/laravel-debugbar` est en `require-dev` : sur le serveur,
+     * `composer install --no-dev` ne l'installe pas, et son ancien enregistrement
+     * inconditionnel dans `config/app.php` faisait tomber `package:discover`
+     * (`Class "Barryvdh\Debugbar\ServiceProvider" not found`) — donc `deploy.sh`.
+     * Le paquet est aussi dans `extra.laravel.dont-discover` : la découverte
+     * automatique ne le rebranche pas dans le dos de cette garde. En production
+     * et en recette (`APP_DEBUG=false`), la barre ne se charge jamais.
+     *
+     * `DevDependencyLeakTest` interdit toute autre référence à une dépendance de
+     * dev hors de `tests/`.
+     */
+    private function registerDebugbar(): void
+    {
+        if (!config('app.debug') || !class_exists(\Barryvdh\Debugbar\ServiceProvider::class)) {
+            return;
+        }
+
+        // Le fournisseur pose lui-même le lien `debugbar` ; on ajoute la façade que
+        // `config/app.php` déclarait (chargée à la demande, comme les autres alias).
+        $this->app->register(\Barryvdh\Debugbar\ServiceProvider::class);
+        AliasLoader::getInstance()->alias('Debugbar', \Barryvdh\Debugbar\Facades\Debugbar::class);
     }
 
     /**

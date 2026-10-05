@@ -161,6 +161,15 @@ avant les apps.
 - `php artisan beninlink:file-attente [--seuil=5]` — état de la file des envois
   (SMS, push, e-mails) et détection d'un **worker arrêté** : la panne que la file
   introduit est silencieuse. Décision **D13**.
+- **Dépendances de dev** (**S79**) : `deploy.sh` installe `--no-dev`. Rien de ce qui tourne en
+  production — `app/`, `config/`, `database/` (les semences comprises : `db:seed` est du
+  déploiement), `routes/`, les vues — ne référence un paquet de `require-dev`. Douzième
+  filet, `tests/Feature/DevDependencyLeakTest`, qui le mesure depuis `composer.lock`. La
+  barre de débogage est la seule tolérance : `AppServiceProvider::registerDebugbar()`, sous
+  `class_exists` **et** `app.debug`, et le paquet est dans `dont-discover`. `fakerphp/faker`
+  est en `require` parce que sept semences le lisent. Avant tout ajout de paquet : il va
+  dans `require` s'il est lu hors de `tests/`. ⚠️ `laravel/pint` embarque un `App\` à lui :
+  un préfixe de dev qui est aussi l'un des nôtres n'est pas une fuite.
 - **Version PHP : 8.3.** Elle est écrite à **trois** endroits, et ils doivent
   rester d'accord : `config.platform.php` dans `composer.json` (ce que composer
   résout), `php-version` dans `.github/workflows/deploy.yml` (ce que l'intégration

@@ -162,7 +162,10 @@ return [
 
          Maatwebsite\Excel\ExcelServiceProvider::class,
          RealRashid\SweetAlert\SweetAlertServiceProvider::class,
-         Barryvdh\Debugbar\ServiceProvider::class,
+         // S79 — Debugbar n'est plus listée ici : `barryvdh/laravel-debugbar` est une
+         // dépendance de DEV, et une classe absente dans ce tableau casse
+         // `package:discover` sur une installation `--no-dev`. Elle s'enregistre dans
+         // AppServiceProvider::register(), sous `class_exists` et `app.debug`.
          Milon\Barcode\BarcodeServiceProvider::class, 
          Brian2694\Toastr\ToastrServiceProvider::class,
          Cartalyst\Stripe\Laravel\StripeServiceProvider::class ,
@@ -198,7 +201,7 @@ return [
         // 'Example' => App\Facades\Example::class,
 
         'Alert' => RealRashid\SweetAlert\Facades\Alert::class,
-        'Debugbar' => Barryvdh\Debugbar\Facades\Debugbar::class,
+        // 'Debugbar' : alias posé par AppServiceProvider quand la barre se charge (S79).
         'DNS1D' => Milon\Barcode\Facades\DNS1DFacade::class,
         'DNS2D' => Milon\Barcode\Facades\DNS2DFacade::class,
         'Toastr'  => Brian2694\Toastr\Facades\Toastr::class,
