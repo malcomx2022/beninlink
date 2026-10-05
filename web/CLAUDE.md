@@ -225,6 +225,12 @@ avant les apps.
   `CustomsAlertResource`, portée du colis (S17). Un besoin « les alertes de X » s'ajoute à la
   ressource X déjà bornée plutôt que par un paramètre d'identifiant sur `customs/alerts`, qui
   serait une entrée de plus à prouver dans les filets. `CustomsAlertTest` le fixe.
+- Un écran de **modification** relit la ressource par l'identifiant **que le formulaire envoie**
+  (`$request->id`, ou le paramètre d'URL), jamais par un identifiant ambiant (**S83**) : le
+  socle relisait une demande de retrait par `Auth::user()->merchant->id` — le plus souvent
+  rien, parfois une AUTRE demande du marchand, jamais celle ouverte. Forme S7 : `get()`,
+  `abort_if(blank(...), 404)`, puis les règles. Un dépôt gardé ne rend pas un écran juste ;
+  `MerchantPayoutRequestEditTest` le prouve par la route.
 - Toute route `/api/v10` à identifiant est inscrite dans `tests/Feature/IsolationCoverageTest`
   avec le test prouvant qu'un compte n'atteint pas la ressource d'un autre (S7).
 - Toute route **web** à paramètre est inscrite dans `tests/Feature/WebIsolationCoverageTest` :

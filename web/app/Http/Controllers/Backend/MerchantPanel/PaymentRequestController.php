@@ -59,7 +59,19 @@ class PaymentRequestController extends Controller
 
     public function update(StoreRequest $request){
 
-        $payment = $this->repo->get(Auth::user()->merchant->id);
+        // S83 — le socle relisait la demande par l'identifiant du MARCHAND
+        // (`get(Auth::user()->merchant->id)`), pas par celui de la demande que
+        // le formulaire envoie en champ cache `id`. Le depot cherchait donc,
+        // parmi les demandes du marchand, celle dont l'identifiant vaut le sien :
+        // le plus souvent rien (et `$payment->status` dereferencait un `null`,
+        // page d'erreur) ; par coincidence, une AUTRE de ses demandes, dont le
+        // STATUT decidait alors si la modification passait — une demande deja
+        // traitee redevenait modifiable. Le depot `update()` lisait deja
+        // `$request->id` et le gardait (S7, S81) : l'ecriture visait la bonne
+        // ligne, c'est la decision qui se prenait sur la mauvaise. Meme forme
+        // que `delete()` ci-dessous et que le jumeau de l'API.
+        $payment = $this->repo->get($request->id);
+        abort_if(blank($payment), 404); // S7
         if($payment->status == ApprovalStatus::PENDING){
 
             $account=Auth::user()->merchant;

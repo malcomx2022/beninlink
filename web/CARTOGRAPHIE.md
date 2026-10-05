@@ -2,10 +2,10 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-05 (S82 — l'alerte douanière sur le détail du colis, M1 :
-> `customs_alerts` avec le colis, spec, écran ; S81 — identifiants au nom libre dans les
-> filets ; S80 — répétition de déploiement en intégration continue ; S79 — installation
-> `--no-dev` réparée ; S78 — bloc `page` sur les réponses paginées). Les blocs A-K décrivent le socle **tel que trouvé** ; les
+> Dernière mise à jour : 2026-10-05 (S83 — l'écran web de modification d'une demande de
+> retrait relisait la demande par l'identifiant du marchand, réparé ; S82 — l'alerte douanière
+> sur le détail du colis, M1 ; S81 — identifiants au nom libre dans les filets ; S80 —
+> répétition de déploiement en intégration continue ; S79 — installation `--no-dev` réparée). Les blocs A-K décrivent le socle **tel que trouvé** ; les
 > sections `## S<nn>` qui suivent racontent chaque lot, avec ses sabotages et le compte
 > de la suite. Le 2026-08-16 : chantier 1 (langue et devise — helpers XOF, 278 affichages
 > et 32 sorties d'API en FCFA entier) ; avant : blocs J — tarifs et K — notifications.
@@ -7497,3 +7497,58 @@ Suite complète : **1 213 tests, 46 933 assertions**, verte.
 Comme S68 : `mobile/` n'a pas de lanceur de tests (M2), la propriété de l'écran est une lecture
 de source. Le rendu de la carte sur un téléphone reste à voir à la recette (E1), avec un colis
 export TG + textile du jeu pilote.
+
+## S83 — l'écran de modification d'une demande de retrait relisait la demande par l'identifiant du marchand (2026-10-05)
+
+### D'où ça vient
+
+Lu au passage en S81, consigné dans son « ce qui reste ». Sur le panneau marchand,
+`PaymentRequestController::update()` relisait la demande ainsi :
+
+```php
+$payment = $this->repo->get(Auth::user()->merchant->id);
+if($payment->status == ApprovalStatus::PENDING){
+```
+
+Le formulaire envoie pourtant `id` en champ caché, et le dépôt `get()` cherche **parmi les
+demandes du marchand** (S7). Il cherchait donc celle dont l'identifiant vaut celui du marchand.
+Deux issues, toutes deux mauvaises : le plus souvent **rien**, et `$payment->status`
+déréférençait un `null` en page d'erreur ; par coïncidence d'identifiants, **une autre** de ses
+demandes décidait, par **son** statut, si la modification passait — une demande déjà traitée
+redevenait modifiable si la demande n° (identifiant du marchand) était en cours. La relecture
+ne visait **jamais** celle qu'il avait ouverte. Le dépôt `update()`, lui, lisait déjà
+`$request->id`, gardé par `ownedPayments()` (S7) et `compteDeVersementEtranger()` (S81) : la
+frontière tenait, l'écriture visait la bonne ligne, c'est la **décision** qui était prise sur
+la mauvaise. Le jumeau de l'API fait juste (`get($id)`, 404 si vide, puis le statut). Un seul
+contrôleur porte ce motif dans `app/Http/Controllers` (mesuré par `grep`).
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `MerchantPanel\PaymentRequestController::update()` | `get($request->id)`, `abort_if(blank, 404)` (forme S7, comme `delete()` juste dessous), puis le statut et le solde comme avant |
+| `tests/Feature/MerchantPayoutRequestEditTest` (3 tests, par la route) | sans coïncidence d'identifiants, l'écran **répond** et modifie la demande ouverte (le socle : page d'erreur) ; la demande d'un autre marchand répond 404 et ne bouge pas ; une demande déjà **traitée** ne se modifie plus **même quand** une autre, en cours, porte par hasard l'identifiant du marchand (le socle : modifiée) |
+
+### Vérification
+
+Le **premier jet du test est tombé sur le hasard même du socle** : marchand n° 2, deuxième
+demande n° 2, un garde de fixture l'a dit — et, relu après un sabotage **resté vert** sur
+cette propriété, il m'a corrigé sur le défaut lui-même : le socle écrivait bien la demande
+ouverte (le dépôt lit `$request->id`), c'est le **statut d'une autre** qu'il consultait. Le
+test fabrique désormais les deux cas : deux marchands de bourrage pour qu'aucune demande ne
+porte l'identifiant du mien (propriété 1), et une coïncidence construite à dessein, une
+demande en cours au numéro du marchand devant une demande traitée (propriété 3).
+
+| Sabotage | Effet |
+|---|---|
+| retour au socle (identifiant du marchand, sans 404) | **rouge** (3 : page d'erreur, voisin, traitée modifiée) |
+| bon identifiant, sans le 404 | **rouge** (la demande du voisin : `null->status`) |
+
+Suite complète : **1 216 tests, 46 945 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne touche pas aux cinq autres méthodes du contrôleur ni à `PaymentAccountController`,
+relus pour le même motif et sains. Lancé pendant que la PR de S82 était encore ouverte, il
+a d'abord été poussé dessus — onze minutes après sa fusion, en fait : rebasé sur `main`, il
+part dans sa propre PR.
