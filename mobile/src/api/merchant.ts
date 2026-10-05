@@ -1,6 +1,7 @@
 /** Tableau de bord, profil, relevés de règlement et barème du marchand connecté. */
 import { api } from './client';
 import { endpoints } from './endpoints';
+import { toPaged, type Paged } from './pagination';
 import type {
   AuthUser,
   BalanceDetails,
@@ -32,20 +33,23 @@ export function fetchProfile(): Promise<AuthUser> {
   return api.get<AuthUser>(endpoints.profile);
 }
 
-/** Nombre de factures par page — fixé côté serveur par `paginate(10)`. */
+/** Nombre de factures par page — fixé côté serveur par `paginate(10)`. Repli si `page` manque (S78). */
 export const INVOICES_PER_PAGE = 10;
 
 /**
  * Relevés de règlement émis (factures marchand), page par page.
  *
- * `InvoiceResource::collection()` est renvoyée sur un paginateur : la réponse est
- * `{data: [...], links, meta}` et le client ne garde que `data`. Les compteurs de
- * `meta` sont donc hors de portée — d'où la règle simple côté écran : une page
+ * Jusqu'à S78 le serveur renvoyait le paginateur nu (`{data, links, meta}`) et
+ * le client ne gardait que `data`. Il renvoie désormais l'enveloppe du projet :
+ * `data` est toujours le tableau des relevés, et `page` à la racine dit où finit
+ * la liste. Un serveur d'avant S78 continue de marcher : sans `page`, une page
  * incomplète est la dernière.
  */
-export async function fetchInvoices(page = 1): Promise<Invoice[]> {
-  const data = await api.get<Invoice[]>(endpoints.invoiceList, { query: { page } });
-  return Array.isArray(data) ? data : [];
+export async function fetchInvoices(page = 1): Promise<Paged<Invoice>> {
+  const { data, page: pageInfo } = await api.getPaged<Invoice[]>(endpoints.invoiceList, {
+    query: { page },
+  });
+  return toPaged(Array.isArray(data) ? data : [], pageInfo, INVOICES_PER_PAGE);
 }
 
 /** Ventilation d'une facture : encaissé, frais, COD, retours, net à reverser. */

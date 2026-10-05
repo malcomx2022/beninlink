@@ -25,8 +25,11 @@ class ShopsController extends Controller
 
         try {
             $singleMerchant = $this->repo->getMerchant(auth()->user()->id);
-            $merchant_shops = ShopResource::collection($this->repo->all($singleMerchant->id));
-            return $this->responseWithSuccess(__('merchantshops.title'), ['shops'=>$merchant_shops], 200);
+            // S78 : le dépôt pagine (10) pour le back-office — un marchand à onze boutiques
+            // n'en voyait que dix dans l'app, sans rien qui le dise. `page` le dit ; l'app
+            // marchande parcourt désormais toutes les pages (mobile/src/api/shops.ts).
+            $page = $this->repo->all($singleMerchant->id);
+            return $this->responseWithPage(__('merchantshops.title'), ['shops'=>ShopResource::collection($page)], $page);
         }catch (\Exception $exception){
             return $this->responseWithError(__('merchantshops.title'), [], 500);
 

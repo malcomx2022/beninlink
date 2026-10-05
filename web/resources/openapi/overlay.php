@@ -40,15 +40,37 @@ $multipart = fn (array $props, array $required = []) => ['required' => true, 'co
 $file = fn (string $desc = '') => array_filter(['type' => 'string', 'format' => 'binary', 'description' => $desc ?: null]);
 $query = fn (string $name, string $desc, string $type = 'string') => ['name' => $name, 'in' => 'query', 'required' => false, 'description' => $desc, 'schema' => ['type' => $type]];
 $path = fn (string $name, string $desc, string $type = 'integer') => ['name' => $name, 'in' => 'path', 'required' => true, 'description' => $desc, 'schema' => ['type' => $type]];
-$page = $query('page', 'Numéro de page (10 ou 20 éléments par page selon l\'endpoint ; une page incomplète est la dernière)', 'integer');
+$page = $query('page', 'Numéro de page (10 ou 20 éléments par page selon l\'endpoint). Depuis S78 la réponse porte un bloc `page` à la racine (`current`, `per_page`, `last`, `total`) : c\'est lui qui dit où finit la liste.', 'integer');
+/**
+ * Réponse 200 enveloppée ET paginée (S78, T8) : `{success, message, data: <schéma>, page}`.
+ * `page` est à la racine, à côté de `data`, parce que `data` est tantôt un objet, tantôt
+ * un tableau. Toute route qui pagine la documente ainsi — `ApiPaginationContractTest`.
+ */
+$paged = fn (array $data, string $desc = 'Succès (paginé)') => ['200' => [
+    'description' => $desc,
+    'content' => ['application/json' => ['schema' => [
+        'allOf' => [['$ref' => '#/components/schemas/Envelope'], ['type' => 'object', 'properties' => ['data' => $data, 'page' => $ref('Page')], 'required' => ['page']]],
+    ]]],
+]];
 $empty = $ok(['type' => 'array', 'items' => ['type' => 'string'], 'maxItems' => 0, 'description' => 'Tableau vide']);
 
 $schemas = [
     'Envelope' => [
         'type' => 'object',
         'description' => 'Enveloppe d\'ApiReturnFormatTrait. `data` change de forme selon l\'endpoint.',
-        'properties' => ['success' => $bool(), 'message' => $str('Libellé déjà traduit (locale du serveur, FR)'), 'data' => ['description' => 'Charge utile, selon l\'endpoint']],
+        'properties' => ['success' => $bool(), 'message' => $str('Libellé déjà traduit (locale du serveur, FR)'), 'data' => ['description' => 'Charge utile, selon l\'endpoint'], 'page' => ['allOf' => [['$ref' => '#/components/schemas/Page']], 'description' => 'Présent seulement sur les réponses paginées (S78)']],
         'required' => ['success', 'message'],
+    ],
+    'Page' => [
+        'type' => 'object',
+        'description' => 'Position dans une liste paginée (S78). `current < last` : il reste des pages. Une page incomplète reste la dernière, mais l\'app n\'a plus à le deviner.',
+        'properties' => [
+            'current' => $int('Page servie (à partir de 1)'),
+            'per_page' => $int('Taille de page du serveur'),
+            'last' => $int('Dernière page (1 au minimum, même pour une liste vide)'),
+            'total' => $int('Nombre total d\'éléments'),
+        ],
+        'required' => ['current', 'per_page', 'last', 'total'],
     ],
     'ValidationError' => [
         'type' => 'object',
@@ -213,7 +235,7 @@ $operations = [
     'PUT update-password' => ['tag' => 'Profil', 'summary' => 'Changer le mot de passe', 'requestBody' => $body(['old_password' => $str(), 'new_password' => $str('6 caractères minimum'), 'confirm_password' => $str()], ['old_password', 'new_password', 'confirm_password']), 'responses' => $empty + ['422' => ['description' => 'Validation, ou ancien mot de passe incorrect']]],
 
     // — Référentiels -------------------------------------------------------
-    'GET hub' => ['tag' => 'Référentiels', 'summary' => 'Agences (hubs)', 'responses' => $ok($obj(['hubs' => $arr('Hub')]))],
+    'GET hub' => ['tag' => 'Référentiels', 'summary' => 'Agences (hubs)', 'description' => '10 par page (dépôt partagé avec le back-office) ; `page` à la racine depuis S78.', 'parameters' => [$page], 'responses' => $paged($obj(['hubs' => $arr('Hub')]))],
     'GET general-settings' => ['tag' => 'Référentiels', 'summary' => 'Paramètres généraux de l\'installation', 'responses' => $ok(['type' => 'object'])],
     'GET all-currencies' => ['tag' => 'Référentiels', 'summary' => 'Devises', 'responses' => $ok(['type' => 'object'])],
     'GET settings/cod-charges' => ['tag' => 'Référentiels', 'summary' => 'Taux d\'encaissement (COD) par zone, en pourcentage', 'responses' => $ok($obj(['codCharges' => $arr('CodCharge')]))],
@@ -236,7 +258,7 @@ $operations = [
     'POST fcm-unsubscribe' => ['tag' => 'Push', 'summary' => 'Désabonner un appareil', 'requestBody' => $body(['device_token' => $str()], ['device_token']), 'responses' => $empty],
 
     // — Boutiques ----------------------------------------------------------
-    'GET shops/index' => ['tag' => 'Boutiques', 'summary' => 'Boutiques du marchand', 'responses' => $ok($obj(['shops' => $arr('Shop')]))],
+    'GET shops/index' => ['tag' => 'Boutiques', 'summary' => 'Boutiques du marchand', 'description' => '10 par page (dépôt partagé avec le back-office) ; `page` à la racine depuis S78 — l\'app parcourt toutes les pages.', 'parameters' => [$page], 'responses' => $paged($obj(['shops' => $arr('Shop')]))],
     'POST shops/store' => ['tag' => 'Boutiques', 'summary' => 'Créer une boutique', 'requestBody' => $body(['name' => $str(), 'contact_no' => $str('11 à 14 chiffres'), 'address' => $str(), 'status' => $int('1 active')], ['name', 'contact_no', 'address', 'status']), 'responses' => $empty],
     'GET shops/edit/{id}' => ['tag' => 'Boutiques', 'summary' => 'Une boutique du marchand', 'responses' => $ok($obj(['shop' => $ref('Shop')]))],
     'PUT shops/update/{id}' => ['tag' => 'Boutiques', 'summary' => 'Modifier une boutique', 'requestBody' => $body(['name' => $str(), 'contact_no' => $str(), 'address' => $str(), 'status' => $int()], ['name', 'contact_no', 'address', 'status']), 'responses' => $empty],
@@ -259,11 +281,11 @@ $operations = [
 
     // — Douane -------------------------------------------------------------
     'GET customs/reference' => ['tag' => 'Douane', 'summary' => 'Pays et catégories couverts par les règles douanières', 'responses' => $ok($ref('CustomsReference'))],
-    'GET customs/alerts' => ['tag' => 'Douane', 'summary' => 'Alertes douanières du marchand', 'parameters' => [$query('status', '1 en cours · 2 traitées ; absent = toutes', 'integer'), $page], 'responses' => $ok($obj(['alerts' => $arr('CustomsAlert')]))],
+    'GET customs/alerts' => ['tag' => 'Douane', 'summary' => 'Alertes douanières du marchand', 'description' => '20 par page ; `page` à la racine (S78).', 'parameters' => [$query('status', '1 en cours · 2 traitées ; absent = toutes', 'integer'), $page], 'responses' => $paged($obj(['alerts' => $arr('CustomsAlert')]))],
     'PUT customs/alerts/{id}/resolve' => ['tag' => 'Douane', 'summary' => 'Marquer une alerte traitée', 'responses' => $ok($obj(['alert' => $ref('CustomsAlert')]))],
 
     // — Argent -------------------------------------------------------------
-    'GET invoice-list/index' => ['tag' => 'Factures', 'summary' => 'Relevés de règlement émis', 'description' => '10 par page ; `data` est le tableau des relevés (compteurs du paginateur hors de portée).', 'parameters' => [$page], 'responses' => $bare($obj(['data' => $arr('Invoice')]))],
+    'GET invoice-list/index' => ['tag' => 'Factures', 'summary' => 'Relevés de règlement émis', 'description' => '10 par page. Depuis S78 la réponse est enveloppée comme les autres : `data` reste le **tableau** des relevés (les apps installées ne lisaient que lui), et `page` dit où finit la liste. Le socle renvoyait le paginateur nu.', 'parameters' => [$page], 'responses' => $paged($arr('Invoice'))],
     'GET invoice-details/{id}' => ['tag' => 'Factures', 'summary' => 'Ventilation d\'un relevé', 'responses' => $bare($obj(['data' => $ref('InvoiceDetails')]))],
     'GET invoice-pdf-link/{id}' => ['tag' => 'Factures', 'summary' => 'Lien signé (15 min) vers le relevé en PDF', 'description' => 'L\'app ne peut pas joindre son jeton à un navigateur : elle ouvre cette URL signée. Mentions IFU/RCCM des deux parties (chantier 4).', 'responses' => $ok($ref('PdfLink'))],
     'GET payment-accounts/index' => ['tag' => 'Retraits', 'summary' => 'Comptes de règlement du marchand', 'responses' => $ok($obj(['accounts' => $arr('PaymentAccount')]))],
@@ -278,7 +300,7 @@ $operations = [
     'PUT payment-request/update/{id}' => ['tag' => 'Retraits', 'summary' => 'Modifier une demande encore en attente', 'requestBody' => $body(['amount' => $int(), 'merchant_account' => $int(), 'description' => $str('', true)], ['amount', 'merchant_account']), 'responses' => $empty],
     'DELETE payment-request/delete/{id}' => ['tag' => 'Retraits', 'summary' => 'Annuler une demande encore en attente', 'responses' => $empty],
     'GET account-transaction/index' => ['tag' => 'Argent', 'summary' => 'Transactions de compte', 'responses' => $ok($obj(['transactions' => $arr('Transaction')]))],
-    'POST account-transaction/filter' => ['tag' => 'Argent', 'summary' => 'Transactions filtrées', 'requestBody' => $body(['date' => $str('Plage « AAAA-MM-JJ To AAAA-MM-JJ »'), 'merchant_account' => $int()]), 'responses' => $ok($obj(['transactions' => $arr('Transaction')]))],
+    'POST account-transaction/filter' => ['tag' => 'Argent', 'summary' => 'Transactions filtrées', 'description' => '10 par page ; `page` à la racine (S78).', 'parameters' => [$page], 'requestBody' => $body(['date' => $str('Plage « AAAA-MM-JJ To AAAA-MM-JJ »'), 'merchant_account' => $int()]), 'responses' => $paged($obj(['accounts' => ['type' => 'array', 'items' => ['type' => 'object']], 'transactions' => $arr('Transaction')]))],
     'GET statements/index' => ['tag' => 'Argent', 'summary' => 'Relevés de compte', 'responses' => $ok($obj(['statements' => $arr('Statement')]))],
     'POST statements/filter' => ['tag' => 'Argent', 'summary' => 'Relevés de compte filtrés', 'requestBody' => $body(['date' => $str('Plage « AAAA-MM-JJ To AAAA-MM-JJ »')]), 'responses' => $ok($obj(['statements' => $arr('Statement')]))],
     'POST statement-reports' => ['tag' => 'Argent', 'summary' => 'Rapport de synthèse', 'requestBody' => $body(['date' => $str('Plage « AAAA-MM-JJ To AAAA-MM-JJ »')]), 'responses' => $ok(['type' => 'object'])],
@@ -286,23 +308,23 @@ $operations = [
     // — FedaPay et wallet --------------------------------------------------
     'POST fedapay/initiate' => ['tag' => 'Wallet', 'summary' => 'Initier une recharge du wallet par Mobile Money (FedaPay)', 'description' => 'Renvoie l\'URL de paiement à ouvrir. **Le solde n\'est crédité que par le webhook signé** : interroger `fedapay/status` au retour, ne rien déduire de la fermeture du navigateur. 503 si la passerelle n\'est pas configurée.', 'requestBody' => $body(['amount' => $int('Entier XOF ≥ 1')], ['amount']), 'responses' => $ok($ref('RechargeInitiation')) + ['403' => ['description' => 'Compte non marchand'], '502' => ['description' => 'FedaPay injoignable'], '503' => ['description' => 'Passerelle non configurée']]],
     'GET fedapay/status/{reference}' => ['tag' => 'Wallet', 'summary' => 'État d\'une recharge', 'parameters' => [$path('reference', 'Référence renvoyée par `fedapay/initiate`', 'string')], 'responses' => $ok($ref('RechargeStatus'))],
-    'GET wallet/history' => ['tag' => 'Wallet', 'summary' => 'Mouvements du porte-monnaie prépayé', 'parameters' => [$page], 'responses' => $ok($obj(['entries' => $arr('WalletEntry')]))],
+    'GET wallet/history' => ['tag' => 'Wallet', 'summary' => 'Mouvements du porte-monnaie prépayé', 'description' => '10 par page ; `page` à la racine (S78).', 'parameters' => [$page], 'responses' => $paged($obj(['entries' => $arr('WalletEntry')]))],
 
     // — Notifications ------------------------------------------------------
-    'GET notifications/index' => ['tag' => 'Notifications', 'summary' => 'Fil de notifications du marchand', 'parameters' => [$page], 'responses' => $ok($obj(['notifications' => $arr('Notification'), 'unread_count' => $int()]))],
+    'GET notifications/index' => ['tag' => 'Notifications', 'summary' => 'Fil de notifications du marchand', 'description' => '20 par page ; `page` à la racine (S78).', 'parameters' => [$page], 'responses' => $paged($obj(['notifications' => $arr('Notification'), 'unread_count' => $int()]))],
     'GET notifications/unread-count' => ['tag' => 'Notifications', 'summary' => 'Nombre de notifications non lues', 'responses' => $ok($obj(['unread_count' => $int()]))],
     'PUT notifications/read-all' => ['tag' => 'Notifications', 'summary' => 'Tout marquer comme lu', 'responses' => $ok($obj(['unread_count' => ['type' => 'integer', 'example' => 0]]))],
     'PUT notifications/{id}/read' => ['tag' => 'Notifications', 'summary' => 'Marquer une notification lue', 'parameters' => [$path('id', 'UUID de la notification', 'string')], 'responses' => $ok($obj(['notification' => $ref('Notification')]))],
 
     // — Relation -----------------------------------------------------------
-    'GET fraud/index' => ['tag' => 'Relation', 'summary' => 'Clients signalés (fraude)', 'responses' => $ok($obj(['frauds' => $arr('Fraud')]))],
+    'GET fraud/index' => ['tag' => 'Relation', 'summary' => 'Clients signalés (fraude)', 'description' => '10 par page ; `page` à la racine depuis S78.', 'parameters' => [$page], 'responses' => $paged($obj(['frauds' => $arr('Fraud')]))],
     'POST fraud/store' => ['tag' => 'Relation', 'summary' => 'Signaler un client', 'requestBody' => $body(['name' => $str(), 'phone' => $str(), 'description' => $str('', true)], ['phone']), 'responses' => $empty],
     'GET fraud/edit/{id}' => ['tag' => 'Relation', 'summary' => 'Un signalement', 'responses' => $ok($obj(['fraud' => $ref('Fraud')]))],
     'PUT fraud/update/{id}' => ['tag' => 'Relation', 'summary' => 'Modifier un signalement', 'requestBody' => $body(['name' => $str(), 'phone' => $str(), 'description' => $str('', true)], ['phone']), 'responses' => $empty],
     'DELETE fraud/delete/{id}' => ['tag' => 'Relation', 'summary' => 'Supprimer un signalement', 'responses' => $empty],
     'POST fraud/check' => ['tag' => 'Relation', 'summary' => 'Vérifier un numéro avant de créer un colis', 'requestBody' => $body(['phone' => $str()], ['phone']), 'responses' => $ok(['type' => 'object'])],
     'GET news-offer/index' => ['tag' => 'Relation', 'summary' => 'Actualités et offres', 'description' => 'Ce sont des **offres**, pas des notifications : voir `notifications/*`.', 'responses' => $ok($obj(['newsOffers' => $arr('NewsOffer')]))],
-    'GET support/index' => ['tag' => 'Relation', 'summary' => 'Tickets de support', 'responses' => $ok($obj(['supports' => $arr('Support')]))],
+    'GET support/index' => ['tag' => 'Relation', 'summary' => 'Tickets de support', 'description' => '10 par page ; `page` à la racine depuis S78.', 'parameters' => [$page], 'responses' => $paged($obj(['supports' => $arr('Support')]))],
     'GET support/create' => ['tag' => 'Relation', 'summary' => 'Référentiels du formulaire de ticket (départements, services)', 'responses' => $ok(['type' => 'object'])],
     'POST support/store' => ['tag' => 'Relation', 'summary' => 'Ouvrir un ticket', 'requestBody' => $body(['subject' => $str(), 'department_id' => $int(), 'service' => $str(), 'priority' => $str(), 'description' => $str()], ['subject', 'description']), 'responses' => $empty],
     'GET support/edit/{id}' => ['tag' => 'Relation', 'summary' => 'Un ticket', 'responses' => $ok($obj(['support' => $ref('Support')]))],

@@ -22,8 +22,9 @@ class SupportController extends Controller
     public function index()
     {
         try {
-            $supports = SupportResource::collection($this->repo->all());
-            return $this->responseWithSuccess(__('support.supprot_list'), ['supports'=>$supports], 200);
+            // S78 : le dépôt pagine (10) pour le back-office ; l'API le disait sans le dire.
+            $page = $this->repo->all();
+            return $this->responseWithPage(__('support.supprot_list'), ['supports'=>SupportResource::collection($page)], $page);
         }catch (\Exception $exception){
             return $this->responseWithError(__('support.supprot_list'), [], 500);
 

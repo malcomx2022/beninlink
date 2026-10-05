@@ -73,6 +73,18 @@
                     "Argent"
                 ],
                 "summary": "Transactions filtrées",
+                "description": "10 par page ; `page` à la racine (S78).",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "description": "Numéro de page (10 ou 20 éléments par page selon l'endpoint). Depuis S78 la réponse porte un bloc `page` à la racine (`current`, `per_page`, `last`, `total`) : c'est lui qui dit où finit la liste.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -94,7 +106,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Succès",
+                        "description": "Succès (paginé)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -108,6 +120,12 @@
                                                 "data": {
                                                     "type": "object",
                                                     "properties": {
+                                                        "accounts": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object"
+                                                            }
+                                                        },
                                                         "transactions": {
                                                             "type": "array",
                                                             "items": {
@@ -115,8 +133,14 @@
                                                             }
                                                         }
                                                     }
+                                                },
+                                                "page": {
+                                                    "$ref": "#/components/schemas/Page"
                                                 }
-                                            }
+                                            },
+                                            "required": [
+                                                "page"
+                                            ]
                                         }
                                     ]
                                 }
@@ -458,6 +482,7 @@
                     "Douane"
                 ],
                 "summary": "Alertes douanières du marchand",
+                "description": "20 par page ; `page` à la racine (S78).",
                 "parameters": [
                     {
                         "name": "status",
@@ -472,7 +497,7 @@
                         "name": "page",
                         "in": "query",
                         "required": false,
-                        "description": "Numéro de page (10 ou 20 éléments par page selon l'endpoint ; une page incomplète est la dernière)",
+                        "description": "Numéro de page (10 ou 20 éléments par page selon l'endpoint). Depuis S78 la réponse porte un bloc `page` à la racine (`current`, `per_page`, `last`, `total`) : c'est lui qui dit où finit la liste.",
                         "schema": {
                             "type": "integer"
                         }
@@ -480,7 +505,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Succès",
+                        "description": "Succès (paginé)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -501,8 +526,14 @@
                                                             }
                                                         }
                                                     }
+                                                },
+                                                "page": {
+                                                    "$ref": "#/components/schemas/Page"
                                                 }
-                                            }
+                                            },
+                                            "required": [
+                                                "page"
+                                            ]
                                         }
                                     ]
                                 }
@@ -2573,9 +2604,21 @@
                     "Relation"
                 ],
                 "summary": "Clients signalés (fraude)",
+                "description": "10 par page ; `page` à la racine depuis S78.",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "description": "Numéro de page (10 ou 20 éléments par page selon l'endpoint). Depuis S78 la réponse porte un bloc `page` à la racine (`current`, `per_page`, `last`, `total`) : c'est lui qui dit où finit la liste.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Succès",
+                        "description": "Succès (paginé)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2596,8 +2639,14 @@
                                                             }
                                                         }
                                                     }
+                                                },
+                                                "page": {
+                                                    "$ref": "#/components/schemas/Page"
                                                 }
-                                            }
+                                            },
+                                            "required": [
+                                                "page"
+                                            ]
                                         }
                                     ]
                                 }
@@ -2894,9 +2943,21 @@
                     "Référentiels"
                 ],
                 "summary": "Agences (hubs)",
+                "description": "10 par page (dépôt partagé avec le back-office) ; `page` à la racine depuis S78.",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "description": "Numéro de page (10 ou 20 éléments par page selon l'endpoint). Depuis S78 la réponse porte un bloc `page` à la racine (`current`, `per_page`, `last`, `total`) : c'est lui qui dit où finit la liste.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Succès",
+                        "description": "Succès (paginé)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2917,8 +2978,14 @@
                                                             }
                                                         }
                                                     }
+                                                },
+                                                "page": {
+                                                    "$ref": "#/components/schemas/Page"
                                                 }
-                                            }
+                                            },
+                                            "required": [
+                                                "page"
+                                            ]
                                         }
                                     ]
                                 }
@@ -3012,13 +3079,13 @@
                     "Factures"
                 ],
                 "summary": "Relevés de règlement émis",
-                "description": "10 par page ; `data` est le tableau des relevés (compteurs du paginateur hors de portée).",
+                "description": "10 par page. Depuis S78 la réponse est enveloppée comme les autres : `data` reste le **tableau** des relevés (les apps installées ne lisaient que lui), et `page` dit où finit la liste. Le socle renvoyait le paginateur nu.",
                 "parameters": [
                     {
                         "name": "page",
                         "in": "query",
                         "required": false,
-                        "description": "Numéro de page (10 ou 20 éléments par page selon l'endpoint ; une page incomplète est la dernière)",
+                        "description": "Numéro de page (10 ou 20 éléments par page selon l'endpoint). Depuis S78 la réponse porte un bloc `page` à la racine (`current`, `per_page`, `last`, `total`) : c'est lui qui dit où finit la liste.",
                         "schema": {
                             "type": "integer"
                         }
@@ -3026,19 +3093,32 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Succès (réponse nue, sans enveloppe)",
+                        "description": "Succès (paginé)",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/Invoice"
-                                            }
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Envelope"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Invoice"
+                                                    }
+                                                },
+                                                "page": {
+                                                    "$ref": "#/components/schemas/Page"
+                                                }
+                                            },
+                                            "required": [
+                                                "page"
+                                            ]
                                         }
-                                    }
+                                    ]
                                 }
                             }
                         }
@@ -3217,12 +3297,13 @@
                     "Notifications"
                 ],
                 "summary": "Fil de notifications du marchand",
+                "description": "20 par page ; `page` à la racine (S78).",
                 "parameters": [
                     {
                         "name": "page",
                         "in": "query",
                         "required": false,
-                        "description": "Numéro de page (10 ou 20 éléments par page selon l'endpoint ; une page incomplète est la dernière)",
+                        "description": "Numéro de page (10 ou 20 éléments par page selon l'endpoint). Depuis S78 la réponse porte un bloc `page` à la racine (`current`, `per_page`, `last`, `total`) : c'est lui qui dit où finit la liste.",
                         "schema": {
                             "type": "integer"
                         }
@@ -3230,7 +3311,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Succès",
+                        "description": "Succès (paginé)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3254,8 +3335,14 @@
                                                             "type": "integer"
                                                         }
                                                     }
+                                                },
+                                                "page": {
+                                                    "$ref": "#/components/schemas/Page"
                                                 }
-                                            }
+                                            },
+                                            "required": [
+                                                "page"
+                                            ]
                                         }
                                     ]
                                 }
@@ -6810,9 +6897,21 @@
                     "Boutiques"
                 ],
                 "summary": "Boutiques du marchand",
+                "description": "10 par page (dépôt partagé avec le back-office) ; `page` à la racine depuis S78 — l'app parcourt toutes les pages.",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "description": "Numéro de page (10 ou 20 éléments par page selon l'endpoint). Depuis S78 la réponse porte un bloc `page` à la racine (`current`, `per_page`, `last`, `total`) : c'est lui qui dit où finit la liste.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Succès",
+                        "description": "Succès (paginé)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -6833,8 +6932,14 @@
                                                             }
                                                         }
                                                     }
+                                                },
+                                                "page": {
+                                                    "$ref": "#/components/schemas/Page"
                                                 }
-                                            }
+                                            },
+                                            "required": [
+                                                "page"
+                                            ]
                                         }
                                     ]
                                 }
@@ -7848,9 +7953,21 @@
                     "Relation"
                 ],
                 "summary": "Tickets de support",
+                "description": "10 par page ; `page` à la racine depuis S78.",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "description": "Numéro de page (10 ou 20 éléments par page selon l'endpoint). Depuis S78 la réponse porte un bloc `page` à la racine (`current`, `per_page`, `last`, `total`) : c'est lui qui dit où finit la liste.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Succès",
+                        "description": "Succès (paginé)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -7871,8 +7988,14 @@
                                                             }
                                                         }
                                                     }
+                                                },
+                                                "page": {
+                                                    "$ref": "#/components/schemas/Page"
                                                 }
-                                            }
+                                            },
+                                            "required": [
+                                                "page"
+                                            ]
                                         }
                                     ]
                                 }
@@ -8378,12 +8501,13 @@
                     "Wallet"
                 ],
                 "summary": "Mouvements du porte-monnaie prépayé",
+                "description": "10 par page ; `page` à la racine (S78).",
                 "parameters": [
                     {
                         "name": "page",
                         "in": "query",
                         "required": false,
-                        "description": "Numéro de page (10 ou 20 éléments par page selon l'endpoint ; une page incomplète est la dernière)",
+                        "description": "Numéro de page (10 ou 20 éléments par page selon l'endpoint). Depuis S78 la réponse porte un bloc `page` à la racine (`current`, `per_page`, `last`, `total`) : c'est lui qui dit où finit la liste.",
                         "schema": {
                             "type": "integer"
                         }
@@ -8391,7 +8515,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Succès",
+                        "description": "Succès (paginé)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -8412,8 +8536,14 @@
                                                             }
                                                         }
                                                     }
+                                                },
+                                                "page": {
+                                                    "$ref": "#/components/schemas/Page"
                                                 }
-                                            }
+                                            },
+                                            "required": [
+                                                "page"
+                                            ]
                                         }
                                     ]
                                 }
@@ -8477,11 +8607,47 @@
                     },
                     "data": {
                         "description": "Charge utile, selon l'endpoint"
+                    },
+                    "page": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Page"
+                            }
+                        ],
+                        "description": "Présent seulement sur les réponses paginées (S78)"
                     }
                 },
                 "required": [
                     "success",
                     "message"
+                ]
+            },
+            "Page": {
+                "type": "object",
+                "description": "Position dans une liste paginée (S78). `current < last` : il reste des pages. Une page incomplète reste la dernière, mais l'app n'a plus à le deviner.",
+                "properties": {
+                    "current": {
+                        "type": "integer",
+                        "description": "Page servie (à partir de 1)"
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Taille de page du serveur"
+                    },
+                    "last": {
+                        "type": "integer",
+                        "description": "Dernière page (1 au minimum, même pour une liste vide)"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "description": "Nombre total d'éléments"
+                    }
+                },
+                "required": [
+                    "current",
+                    "per_page",
+                    "last",
+                    "total"
                 ]
             },
             "ValidationError": {

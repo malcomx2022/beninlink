@@ -60,14 +60,15 @@ class MerchantAppCustomsContractTest extends TestCase
     /* ─────────── 1. l'app et le serveur comptent la même page ─────────── */
 
     /**
-     * ⚠️ Une taille de page est un CONTRAT IMPLICITE, et c'est ce qui le rend
-     * dangereux : rien dans la réponse HTTP ne la porte (l'enveloppe du projet
-     * sert la collection sans les compteurs du paginateur). L'app en déduit
-     * « il en reste » d'une page pleine. Si un côté bouge seul, l'app s'arrête
-     * trop tôt — ou boucle sur une page vide — **sans erreur**.
+     * ⚠️ Une taille de page était un CONTRAT IMPLICITE, et c'est ce qui le
+     * rendait dangereux : rien dans la réponse HTTP ne la portait. L'app en
+     * déduisait « il en reste » d'une page pleine. Si un côté bougeait seul,
+     * l'app s'arrêtait trop tôt — ou bouclait sur une page vide — **sans erreur**.
      *
-     * Les trois paires concordent aujourd'hui ; ce test existe pour le jour où
-     * l'une bougera.
+     * Depuis **S78** la réponse porte `page` (`ApiPaginationContractTest`), et la
+     * constante n'est plus que le **repli** d'un serveur d'avant S78. Elle doit
+     * donc rester juste : les quatre paires concordent, ce test existe pour le
+     * jour où l'une bougera.
      */
     public function test_the_page_sizes_the_app_assumes_are_the_ones_the_server_serves(): void
     {
@@ -84,6 +85,11 @@ class MerchantAppCustomsContractTest extends TestCase
                 'INVOICES_PER_PAGE', 'src/api/merchant.ts',
                 // `invoiceLists()` délègue à `get()` : c'est `get()` qui pagine.
                 'app/Repositories/Invoice/InvoiceRepository.php', 'get',
+            ],
+            // S78 : la quatrième liste de l'app, qui écrivait son 10 en dur dans l'écran.
+            'portefeuille' => [
+                'WALLET_HISTORY_PER_PAGE', 'src/api/wallet.ts',
+                'app/Repositories/Wallet/WalletRepository.php', 'get',
             ],
         ];
 
@@ -118,8 +124,12 @@ class MerchantAppCustomsContractTest extends TestCase
     {
         $ecran = $this->source('app/(app)/customs.tsx');
 
-        $this->assertStringContainsString('CUSTOMS_ALERTS_PER_PAGE', $ecran,
-            "l'écran ne compare plus sa page à la taille servie : il ne peut plus savoir s'il en reste");
+        // S78 : l'écran ne compare plus une longueur à une constante — il lit le
+        // `hasMore` que le module d'API tire du bloc `page` du serveur.
+        $this->assertMatchesRegularExpression('/setHasMore\((first|next)\.hasMore\)/', $ecran,
+            "l'écran ne lit plus `hasMore` rendu par fetchCustomsAlerts() : il ne peut plus savoir s'il en reste");
+        $this->assertDoesNotMatchRegularExpression('/length\s*>=\s*CUSTOMS_ALERTS_PER_PAGE/', $ecran,
+            "l'écran redevine la fin de liste d'une constante : c'est le module d'API qui lit `page` (S78)");
         $this->assertStringContainsString('onEndReached', $ecran,
             "l'écran ne demande plus la page suivante : au-delà de la première, les alertes sont perdues en silence");
 
@@ -127,6 +137,54 @@ class MerchantAppCustomsContractTest extends TestCase
         // page 1 boucle sans rien ajouter.
         $this->assertMatchesRegularExpression('/fetchCustomsAlerts\([^)]*page \+ 1\)/', $ecran,
             "l'écran ne demande jamais une page au-delà de la première");
+    }
+
+    /* ─────────── 2 bis. S78 : l'app lit `page` et garde le repli ─────────── */
+
+    /**
+     * Depuis S78 le serveur dit où finit la liste (`page` à la racine de
+     * l'enveloppe). Les quatre modules d'API de l'app le lisent par `getPaged()`
+     * et le réduisent par `src/api/pagination.ts`, qui préfère `current < last`
+     * et retombe sur « page pleine » quand `page` manque. Un module qui
+     * repasserait par `api.get()` perdrait le compteur sans qu'aucun écran ne
+     * s'en aperçoive.
+     */
+    public function test_the_app_reads_the_page_block_and_keeps_the_full_page_fallback(): void
+    {
+        $regle = $this->source('src/api/pagination.ts');
+        $this->assertStringContainsString('page.current < page.last', $regle, 'la règle S78');
+        $this->assertStringContainsString('received >= perPage', $regle, 'le repli d’avant S78');
+
+        $modules = [
+            'src/api/customs.ts' => 'fetchCustomsAlerts',
+            'src/api/notifications.ts' => 'fetchNotifications',
+            'src/api/merchant.ts' => 'fetchInvoices',
+            'src/api/wallet.ts' => 'fetchWalletHistory',
+            // S78 : les boutiques paginaient par leur dépôt sans le dire ; l'app lit toutes les pages.
+            'src/api/shops.ts' => 'fetchShopsPage',
+        ];
+        foreach ($modules as $fichier => $fonction) {
+            $source = $this->source($fichier);
+            $depart = strpos($source, "function {$fonction}(");
+            $this->assertNotFalse($depart, "{$fichier} : {$fonction}() introuvable");
+            $fin = strpos($source, "\n}", $depart);
+            $corps = substr($source, $depart, $fin - $depart);
+
+            $this->assertStringContainsString('api.getPaged<', $corps,
+                "{$fonction}() ne lit plus le bloc `page` : repasser par api.getPaged()");
+            $this->assertMatchesRegularExpression('/toPaged\(|hasNextPage\(/', $corps,
+                "{$fonction}() n'applique plus la règle de src/api/pagination.ts");
+        }
+
+        // Les boutiques s'affichent entières : la liste parcourt toutes les pages.
+        $this->assertStringContainsString('fetchAllPages(fetchShopsPage)', $this->source('src/api/shops.ts'),
+            'fetchShops() ne lit plus toutes les pages : un marchand à onze boutiques en verrait dix');
+
+        // Et le client garde `page` seulement s'il a la forme attendue.
+        $client = $this->source('src/api/client.ts');
+        $this->assertStringContainsString('export type ApiPage', $client);
+        $this->assertStringContainsString("[p.current, p.per_page, p.last, p.total]", $client,
+            'readPage() valide les quatre entiers avant de se fier au bloc');
     }
 
     /* ─────────── 3. niveaux et couleurs ─────────── */

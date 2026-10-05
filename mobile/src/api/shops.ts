@@ -10,6 +10,7 @@
  */
 import { api } from './client';
 import { endpoints } from './endpoints';
+import { fetchAllPages, toPaged, type Paged } from './pagination';
 import type { Shop } from './types';
 
 export type ShopPayload = {
@@ -21,9 +22,27 @@ export type ShopPayload = {
 /** 1 = active (App\Enums\Status::ACTIVE). L'app ne gère pas la désactivation. */
 const ACTIVE = 1;
 
-export async function fetchShops(): Promise<Shop[]> {
-  const data = await api.get<{ shops: Shop[] }>(endpoints.shopsIndex);
-  return data?.shops ?? [];
+/** Boutiques servies par page — `paginate(10)` d'un dépôt partagé avec le back-office. Repli si `page` manque (S78). */
+export const SHOPS_PER_PAGE = 10;
+
+/** Une page de boutiques ; `page` à la racine de l'enveloppe depuis S78. */
+export async function fetchShopsPage(page = 1): Promise<Paged<Shop>> {
+  const { data, page: pageInfo } = await api.getPaged<{ shops: Shop[] }>(endpoints.shopsIndex, {
+    query: { page },
+  });
+  return toPaged(data?.shops ?? [], pageInfo, SHOPS_PER_PAGE);
+}
+
+/**
+ * Toutes les boutiques du marchand.
+ *
+ * ⚠️ Avant S78, l'app lisait la première page sans le savoir : le serveur
+ * servait dix boutiques et aucune réponse ne disait qu'il en restait. La liste
+ * et le choix de boutique à la création d'un colis parcourent désormais toutes
+ * les pages.
+ */
+export function fetchShops(): Promise<Shop[]> {
+  return fetchAllPages(fetchShopsPage);
 }
 
 export async function fetchShop(id: number): Promise<Shop> {

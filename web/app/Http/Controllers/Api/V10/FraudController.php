@@ -24,8 +24,9 @@ class FraudController extends Controller
     {
 
         try {
-            $frauds = FraudResource::collection($this->repo->all());
-            return $this->responseWithSuccess(__('fraud.title'), ['frauds'=>$frauds], 200);
+            // S78 : le dépôt pagine (10) pour le back-office ; l'API le disait sans le dire.
+            $page = $this->repo->all();
+            return $this->responseWithPage(__('fraud.title'), ['frauds'=>FraudResource::collection($page)], $page);
         }catch (\Exception $exception){
             return $this->responseWithError(__('fraud.title'), [], 500);
 

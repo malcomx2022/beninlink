@@ -100,13 +100,16 @@ Rien de tout ceci ne peut être versionné — ce sont des secrets et des liens 
 - Chaînes **natives** (nom d'app, demandes de permission iOS/Android) : `src/i18n/expo-fr.json`,
   déclaré par `expo.locales` dans `app.json`. Sans ce fichier, Expo ne fait qu'avertir au
   `prebuild` et les textes natifs restent en anglais.
-- **Une liste servie paginée se parcourt.** L'API expose sa taille de page en constante
-  (`*_PER_PAGE`) ; l'écran s'en sert pour `hasMore` et demande la suite sur `onEndReached`
-  — idiome de `app/(app)/invoices.tsx`. ⚠️ L'enveloppe du backend ne porte **pas** les
-  compteurs du paginateur : « une page pleine, donc il en reste » est la seule déduction
-  possible, et une constante fausse fait perdre des lignes **en silence** (S68 : l'écran
-  douane en lisait 20 sur N). `MerchantAppCustomsContractTest` compare ces constantes aux
-  `paginate()` du serveur.
+- **Une liste servie paginée se parcourt.** Depuis **S78** l'enveloppe porte un bloc
+  `page` à la racine (`current`, `per_page`, `last`, `total`) : le module d'API l'obtient
+  par `api.getPaged()`, rend `{items, hasMore}` (`src/api/pagination.ts`), et l'écran ne
+  lit que `hasMore` pour demander la suite sur `onEndReached` — idiome de
+  `app/(app)/invoices.tsx`. Les constantes `*_PER_PAGE` restent le **repli** quand `page`
+  manque (serveur d'avant S78) ; « une page pleine, donc il en reste » était avant S78 la
+  seule déduction possible, et une constante fausse faisait perdre des lignes **en
+  silence** (S68 : l'écran douane en lisait 20 sur N). `MerchantAppCustomsContractTest`
+  compare ces constantes aux `paginate()` du serveur et vérifie que les modules lisent
+  `page`. Un écran ne compare plus lui-même une longueur à une constante.
 - **`src/domain/` n'importe rien.** Les tables de correspondance y sont pures : elles
   rendent un code ou un **nom** de couleur, jamais une valeur de thème. L'écran résout le
   nom dans `colors`. C'est ce qui les garde lisibles depuis les tests de `web/`.

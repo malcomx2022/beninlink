@@ -48,10 +48,11 @@ class CustomsController extends Controller
             ->orderByDesc('id')
             ->paginate(20);
 
-        return $this->responseWithSuccess(
+        // S78 : `page` à la racine dit où finit la liste ; `data.alerts` ne change pas.
+        return $this->responseWithPage(
             __('customs.title'),
             ['alerts' => CustomsAlertResource::collection($alerts)],
-            200
+            $alerts
         );
     }
 

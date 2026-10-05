@@ -355,5 +355,5 @@ coche **avant** le jour J ; une ligne vide reporte la recette, elle ne la dégra
 | P6 | Compte **Expo / EAS** lié aux deux projets (`eas init`), **deux keystores**, variable `EXPO_PUBLIC_API_KEY` posée par profil (= l'`API_KEY` du `.env` de recette, S77) | développement | `eas build -p android --profile recette` rend deux liens APK |
 | P7 | **Deux téléphones Android** au moins, réseau mobile (pas seulement Wi-Fi), APK installés | porteur | connexion `PIL-001` et `LIV-001` réussie sur chacun |
 | P8 | Les 5 PME et 3 livreurs informés : identifiants, mot de passe commun, personne à appeler, fenêtre de recette | porteur | accusé de réception |
-| P9 | `php artisan test` vert sur la version déployée, dont `RecettePiloteRepetitionTest` | développement | 1 189 tests au 2026-10-05 |
+| P9 | `php artisan test` vert sur la version déployée, dont `RecettePiloteRepetitionTest` | développement | 1 198 tests au 2026-10-05 |
 | P10 | Tableau de collecte ouvert (§6) et partagé aux PME | porteur | une ligne d'essai saisie par chaque PME |

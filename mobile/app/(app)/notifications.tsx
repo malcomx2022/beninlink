@@ -4,7 +4,6 @@ import { useFocusEffect, useRouter } from 'expo-router';
 
 import { ApiError } from '../../src/api/client';
 import {
-  NOTIFICATIONS_PER_PAGE,
   fetchNotifications,
   markAllNotificationsRead,
   markNotificationRead,
@@ -68,7 +67,8 @@ export default function NotificationsScreen() {
       );
       setUnread(result.unread_count);
       setPage(pageToLoad);
-      setHasMore(result.notifications.length >= NOTIFICATIONS_PER_PAGE);
+      // S78 : lu dans `page` par le module d'API, repli sur la page pleine.
+      setHasMore(result.hasMore);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
     }
