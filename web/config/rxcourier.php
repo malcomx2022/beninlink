@@ -104,9 +104,13 @@ return [
     | données du marchand restent protégées par `auth:sanctum`. Ne jamais s'en
     | servir pour autoriser une écriture (cf. S4).
     |
-    | La valeur de repli est celle du socle : sans elle, toute installation
-    | existante casserait au déploiement. À remplacer par API_KEY dans le .env.
+    | S77 (T7) — plus de valeur de repli. Le socle en avait une pour qu'une
+    | installation sans variable continue de répondre ; elle répondait alors à la
+    | clé publique de l'éditeur, connue de tous. Sans API_KEY, la clé vaut null et
+    | `CheckApiKeyMiddleware` refuse TOUTE requête d'API (refus fermé) : le
+    | déploiement s'arrête avant, `verifier-env.sh` exigeant la variable.
+    | Générer : php -r 'echo "blk_".bin2hex(random_bytes(16)), PHP_EOL;'
     */
-    'api_key' => env('API_KEY', '123456rx-ecourier123456'),
+    'api_key' => env('API_KEY'),
 
 ];

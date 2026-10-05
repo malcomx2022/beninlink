@@ -78,7 +78,8 @@ avant les apps.
   secrets `RECETTE_SSH_*`, job qui se saute sans eux) par le même
   `docs/guides/infra/deploy/deploy.sh`, dont le chemin vient de `DEPLOY_PATH`. Avant de
   couper le site, `verifier-env.sh` refuse un `.env` hors production qui porterait
-  FedaPay en live ou une clé `_live_` (`RecetteDeploymentTest` l'exécute).
+  FedaPay en live ou une clé `_live_`, et depuis **S77** tout `.env` **sans `API_KEY`**
+  ou portant la clé publique du socle (`RecetteDeploymentTest` l'exécute).
 - `php artisan openapi:generate` après tout changement de `routes/api.php` ou de
   `resources/openapi/overlay.php` (régénère `public/openapi/v10.json`, versionné).
 - `php artisan beninlink:pilote [--company=] [--reset]` : jeu de données béninois de recette
@@ -374,7 +375,11 @@ avant les apps.
   visibilité en **OU**, gardes d'écriture des routes inchangées. `SettingsMenuGuardTest`
   compare la garde du menu Réglages à son sous-menu — ajouter une entrée, c'est ajouter son
   droit à la garde.
-- Jamais de clés en dur : `FEDAPAY_*` dans `web/.env`.
+- Jamais de clés en dur : `FEDAPAY_*` dans `web/.env`. La **clé d'API** des apps aussi
+  (**S77 / T7**) : `config('rxcourier.api_key')` vaut `env('API_KEY')` **sans repli**, et
+  `CheckApiKeyMiddleware` **refuse fermé** (clé configurée vide → 400 pour tous,
+  `hash_equals`, en-tête vide refusé). Ne pas remettre de valeur par défaut « pour que ça
+  marche » : c'est la clé publique du socle que ça remettrait (`ApiKeyFailClosedTest`).
 
 ## Étape 0 — cartographie (à lire AVANT de coder ici)
 Le relevé des points de branchement réels vit dans **`web/CARTOGRAPHIE.md`** (blocs A-K) :

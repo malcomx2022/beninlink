@@ -117,7 +117,7 @@ jobs:
   # Ses secrets sont les siens (`RECETTE_SSH_*`). Tant qu'ils sont vides, le job
   # se SAUTE au lieu d'échouer : la production ne dépend pas de la recette.
   # Sur le serveur, `deploy.sh` refuse un `.env` de recette qui porterait des
-  # clés FedaPay live (`verifier-env.sh`).
+  # clés FedaPay live, et tout `.env` sans API_KEY (`verifier-env.sh`, S76 / S77).
   deploy-recette:
     name: Déploiement sur le serveur de recette
     needs: tests

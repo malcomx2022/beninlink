@@ -160,10 +160,10 @@ sécurité ouvert — les 32 constats S1-S32 et les 11 constats W/F sont fermés
 | T4 | **PHP 8.4 fermé** par `nette/utils`, `ezyang/htmlpurifier`, `nette/schema` (remontent à `league/commonmark`). | `web/CLAUDE.md` |
 | T5 | **Angle mort du filet S65** : un identifiant au nom libre (`from`, `token`, `reference`) échappe à `estIdentifiant()`. | CARTOGRAPHIE S65 |
 | T6 | **L'API ne négocie pas la locale** (`Accept-Language` ignoré, FR par défaut). Acceptable tant que le produit est FR seul. | REVUE_FONCTIONNELLE §5 |
-| T7 | **`API_KEY`** : lue dans `.env` (S3), mais le repli `'123456rx-ecourier123456'` subsiste dans `config/rxcourier.php`. Une installation sans la variable retombe sur la clé publique de l'éditeur. | `config/rxcourier.php:110` |
+| ~~T7~~ | ~~**`API_KEY`** : repli `'123456rx-ecourier123456'` dans `config/rxcourier.php`~~ — ✅ **livré le 2026-10-05 (S77)** : `env('API_KEY')` sans repli, `CheckApiKeyMiddleware` **refuse fermé** quand la clé configurée est vide et compare par `hash_equals` (le `==` du socle acceptait vide contre vide) ; `verifier-env.sh` refuse un `.env` sans `API_KEY` ou portant la clé publique du socle **avant la coupure** ; `API_KEY` dans `.env.example` ; `ApiKeyFailClosedTest`. | CARTOGRAPHIE S77 |
 | T8 | **Taille de page = contrat implicite** (douane 20, notifications 20, relevés 10) : gardé par `MerchantAppCustomsContractTest`, mais rien dans la réponse HTTP ne la porte. | CARTOGRAPHIE S68 |
 | T9 | **Re-fusion We Courier** : méthode écrite, jamais jouée ; question « faut-il monter ? » ouverte. | `docs/guides/socle/` |
-| T10 | En-têtes datés en retard : `web/CARTOGRAPHIE.md` dit « dernière mise à jour 2026-08-16 » (contenu à S68), `CLAUDE.md` racine « dernière revue 2026-07-06 », `DECISIONS_METIER.md` « 2026-09-06 » (D6-D13 depuis). | ce relevé |
+| ~~T10~~ | ~~En-têtes datés en retard~~ — ✅ **livré le 2026-10-05 (S77)** : les trois en-têtes (`web/CARTOGRAPHIE.md`, `CLAUDE.md` racine, `DECISIONS_METIER.md`) datent du lot courant et disent ce qu'ils couvrent ; règle : chaque lot les met à jour avec sa section `## S<nn>`. | ce relevé |
 | ~~T11~~ | ~~**Liens du panneau marchand vers le back-office**~~ — ✅ **livré le 2026-10-03 (S70)** : cinq routes `admin/` nommées par des vues marchandes vivantes (Annuler, fil d'Ariane, Effacer, étiquettes en lot) répondaient 403 depuis S41 ; recâblées, route marchande d'étiquettes en lot scopée au marchand, scripts partagés sans global indéfini, et un **dixième filet** (`MerchantPanelCrossLinkTest`). Le `parcel.merchant.get` relevé en S69 n'était que latent. | CARTOGRAPHIE S70 |
 
 ### 7.3 Apps mobiles
@@ -191,5 +191,5 @@ sécurité ouvert — les 32 constats S1-S32 et les 11 constats W/F sont fermés
 Le code est **complet par rapport au périmètre défini** (7 chantiers, 15 + 7 écrans, 0 endpoint
 manquant, 0 constat de sécurité ouvert, 8 filets à arriéré nul) ; ce qui reste est d'abord
 **métier** (le reliquat CEDEAO de la grille R1, les numéros de comptes de R2, la signature sur retour R8 après recette) et **opérationnel**
-(recette E1, mise en service E3, builds M3), puis un lot de dette technique consigné (T1-T10)
+(recette E1, mise en service E3, builds M3), puis un lot de dette technique consigné (T2-T9, dont quatre lignes déjà barrées)
 qui n'empêche ni la recette ni la mise en production.
