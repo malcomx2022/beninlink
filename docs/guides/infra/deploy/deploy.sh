@@ -53,12 +53,6 @@ php -r 'exit(PHP_VERSION_ID >= 80300 && PHP_VERSION_ID < 80400 ? 0 : 1);' || {
 # ---------------------------------------------------------------------------
 bash "$DEPLOY_PATH/docs/guides/infra/deploy/verifier-env.sh" .env
 
-# S87 — aucun compte d'amorçage du socle ne garde le mot de passe de son code
-# source (`12345678`, partagé par toutes les installations We Courier). Avant de
-# couper le site : une base amorcée avant S87 s'arrête ici, intacte et toujours
-# servie, jusqu'à ce que ces comptes soient changés ou supprimés.
-php artisan beninlink:comptes-amorcage
-
 # ---------------------------------------------------------------------------
 # Le filet : si quoi que ce soit échoue après la coupure, le site remonte.
 #
@@ -85,6 +79,15 @@ composer install --no-dev --optimize-autoloader --no-interaction
 # l'ANCIEN code. Les vider avant d'exécuter la moindre commande artisan, sinon
 # la vérification ci-dessous et la migration tournent sur un décor périmé.
 php artisan optimize:clear
+
+# S87 — aucun compte d'amorçage du socle ne garde le mot de passe de son code
+# source (`12345678`, partagé par toutes les installations We Courier). Après la
+# mise à jour du code et le vidage des caches — la commande vit dans la version
+# qu'on déploie, pas dans celle du serveur (S88 l'a appris : appelée avant
+# `git pull`, « Command not defined ») — et avant de migrer : une base amorcée
+# avant S87 s'arrête ici, coupée puis remontée par le filet, intacte, jusqu'à
+# ce que ces comptes soient changés ou supprimés.
+php artisan beninlink:comptes-amorcage
 
 # Vérifier AVANT de migrer, pas pendant. La migration de l'étape 6 est
 # irréversible : si l'installation n'est pas convertie, mieux vaut s'arrêter

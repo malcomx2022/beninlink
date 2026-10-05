@@ -168,10 +168,10 @@ elles passent** ; sinon, réinitialisez le mot de passe depuis le back-office ou
 `php artisan tinker`. La liste des comptes et la règle vivent dans
 `App\Services\Install\SeedAccounts`.
 
-Et `deploy.sh` le **vérifie** : `php artisan beninlink:comptes-amorcage`, avant de
-couper le site, sort en erreur tant qu'un de ces comptes porte encore `12345678`. Une
-base amorcée **avant** S87 s'arrête donc là, intacte et toujours servie, jusqu'à ce
-que vous les ayez changés (back-office) ou supprimés ceux dont vous n'avez pas
+Et `deploy.sh` le **vérifie** : `php artisan beninlink:comptes-amorcage`, une fois le code
+mis à jour et avant de migrer, sort en erreur tant qu'un de ces comptes porte encore
+`12345678`. Une base amorcée **avant** S87 s'arrête donc là — coupée puis remontée par
+le filet du script, intacte — jusqu'à ce que vous les ayez changés (back-office) ou supprimés ceux dont vous n'avez pas
 l'usage. Un compte renommé n'y échappe pas : c'est le mot de passe qui est lu.
 
 Le seed crée aussi une société de démonstration « Company » et son sous-domaine

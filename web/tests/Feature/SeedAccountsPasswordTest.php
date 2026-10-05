@@ -148,15 +148,19 @@ class SeedAccountsPasswordTest extends TestCase
             ->assertExitCode(1);
     }
 
-    public function test_deploy_sh_checks_the_seeded_accounts_before_cutting_the_site(): void
+    /** Après la mise à jour du code (la commande vit dans la version déployée — S88), avant de migrer. */
+    public function test_deploy_sh_checks_the_seeded_accounts_once_the_code_is_updated_and_before_migrating(): void
     {
         $script = file_get_contents(dirname(base_path()) . '/' . self::DEPLOY);
 
         $constat = strpos($script, 'php artisan beninlink:comptes-amorcage');
-        $coupure = strpos($script, 'php artisan down');
+        $caches = strpos($script, 'php artisan optimize:clear');
+        $migration = strpos($script, 'php artisan migrate');
 
         $this->assertNotFalse($constat, 'deploy.sh exécute le constat des comptes d\'amorçage');
-        $this->assertNotFalse($coupure);
-        $this->assertLessThan($coupure, $constat, 'le constat précède la coupure du site : une base refusée reste servie');
+        $this->assertNotFalse($caches);
+        $this->assertNotFalse($migration);
+        $this->assertGreaterThan($caches, $constat, 'le constat suit `optimize:clear` : avant, le serveur exécute l\'ancien code, qui ne connaît pas la commande');
+        $this->assertLessThan($migration, $constat, 'le constat précède la migration : une base refusée reste intacte');
     }
 }

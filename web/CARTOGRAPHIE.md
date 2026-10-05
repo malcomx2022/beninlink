@@ -7763,7 +7763,7 @@ défaut.
 | `app/Services/Install/SeedAccounts` | un seul endroit : la liste des cinq comptes, le mot de passe public, `motDePasse($email)` (le public en `local`/`testing`, un tirage de 20 caractères lettres et chiffres partout ailleurs), `annoncer()` qui l'affiche **une fois** dans la sortie de la semence |
 | `UserSeeder`, `MerchantSeeder`, `DeliveryManSeeder` | `Hash::make(SeedAccounts::motDePasse(…))` puis `annoncer($this->command, …)` — rien d'autre ne change dans le socle |
 | `beninlink:comptes-amorcage` (`SeedAccountsCommand`) | **constate** : les comptes d'amorçage dont le mot de passe vérifie encore le public, par `Hash::check` ; sort en erreur s'il en reste. Un compte supprimé n'est pas un blocage ; un compte renommé en est un |
-| `deploy.sh` | l'exécute **avant** `artisan down`, à côté du garde du `.env` : une base refusée reste servie, intacte |
+| `deploy.sh` | l'exécute ~~avant `artisan down`~~ — **corrigé en S88** : après `git pull` et `optimize:clear`, avant `migrate`. Appelée avant la mise à jour du code, la commande n'existait pas sur le serveur (« Command not defined ») : le premier déploiement qui a atteint le VPS est tombé là, site non coupé, base intacte |
 | Job `repetition` | rejoue la commande en tête des commandes de `deploy.sh` ; en `staging`, les semences ont tiré au sort, le constat passe — il mesure donc la règle, pas un contournement |
 | `tests/Feature/SeedAccountsPasswordTest` (6 tests) | en test, les cinq comptes gardent le public (la liste est bien celle des semences) ; en production simulée, un mot de passe distinct par compte, affiché, et c'est celui posé ; le constat rouge tant qu'un compte reste public, nommé ; vert une fois changés ou supprimés ; il lit le mot de passe, pas le nom ; `deploy.sh` le joue avant la coupure |
 | `DeploymentRehearsalTest` | la liste des commandes de `deploy.sh` gagne `beninlink:comptes-amorcage` en tête |
@@ -7827,7 +7827,29 @@ le vérifiait pas.
 | `verifier-env.sh` | refuse un `.env` dont `APP_INSTALLED` n'est pas `yes`, dans tous les environnements, avant de couper le site (forme de S77) |
 | `tests/Feature/InstallerLockTest` (4 tests) | les trois routes portent le garde (lu dans `Route::getRoutes()`) ; base installée : `GET /finish` et `POST /installing` 404, `/install` redirige, **nombre de tables, d'utilisateurs et de sociétés inchangé**, aucun compte « pirate » ; sans drapeau, base peuplée : mêmes 404, 403 explicite ; base vierge : l'écran répond (le flux du socle survit) |
 | `RecetteDeploymentTest` (+1) | un `.env` sans `APP_INSTALLED=yes`, ou avec une autre valeur, est refusé ; les fixtures qui passent portent le drapeau |
+| `deploy.sh`, job `repetition`, `DeploymentRehearsalTest` (+1) | **correctif de S87** : `beninlink:comptes-amorcage` passe après `optimize:clear` et avant `tarification-prete` ; nouveau filet : toute commande `beninlink:*` du script suit `git pull`, `composer install` et `optimize:clear` (voir ci-dessous) |
 | Docs | `mise-en-service` § 5, grand livre E3, « Ne jamais casser » dans `web/CLAUDE.md`, tableau des constats de sécurité (S88) |
+
+### Ce que le premier déploiement réel a appris
+
+Le point de contrôle de 20 h a trouvé **`main` rouge** : la fusion de S87 (run 208) est le
+**premier déploiement à avoir atteint le VPS** — les secrets `SSH_*` sont désormais en place
+(E3 avance), `git fetch` a répondu, `verifier-env.sh` a validé le `.env` de production (FedaPay
+en sandbox, averti). Puis `php artisan beninlink:comptes-amorcage` : **« Command not defined »**.
+S87 l'avait placée **avant `git pull`**, à côté du garde du `.env` ; or seuls les scripts de
+`docs/guides/infra/deploy/` sont pris à la version déployée (`git checkout FETCH_HEAD -- …`), le
+code PHP du serveur est encore l'ancien, et il ne connaît pas la commande. Conséquence bénigne par
+construction — l'arrêt précède `artisan down`, le site n'a pas été coupé, rien n'a été migré —
+mais **plus aucun déploiement ne passait**. ⚠️ Le job de répétition ne pouvait pas le voir : il
+tourne sur le code neuf de bout en bout.
+
+Correctif porté dans ce lot : la commande passe après `optimize:clear`, avant
+`tarification-prete` (coupée puis remontée par le filet, comme elle). Et un filet neuf dans
+`DeploymentRehearsalTest` : **toute commande `beninlink:*` de `deploy.sh` suit `git pull`,
+`composer install` et `optimize:clear`** — sabotage (la commande remise avant `git pull`) :
+**rouge** sur deux fichiers. Règle dans `web/CLAUDE.md`. La CI de la PR #157 avait par ailleurs
+été **annulée** avant tout test (jobs `cancelled` à 19 h 35, sans échec) ; le push du correctif la
+relance.
 
 ### Ce que l'écriture a appris
 
@@ -7847,7 +7869,7 @@ Quatre sabotages, chacun relancé sur le seul fichier qu'il doit faire tomber :
 | `verifier-env.sh` sans le refus `APP_INSTALLED` | **rouge** (`RecetteDeploymentTest`) |
 | le garde laisse passer `installing` sur une base installée | **rouge** (2 tests : `POST /installing` passe le garde) |
 
-Suite complète : **1 237 tests, 47 098 assertions**, verte.
+Suite complète : **1 238 tests, 47 104 assertions**, verte (après le correctif de l'ordre de `deploy.sh`).
 
 ### Ce que ce lot ne fait pas
 

@@ -95,6 +95,11 @@ avant les apps.
   chaque pull request ; il **ne conditionne pas** `deploy` — les apps partent par EAS.
   ⚠️ Le job **ne pose aucune zone à la main** (**S86**) : les semences posent le cadre de
   chaque société, et c'est précisément ce que `tarification-prete` mesure là.
+  ⚠️ Une commande `beninlink:*` appelée par `deploy.sh` se place **après** `git pull`,
+  `composer install` et `optimize:clear` (**S88**) : elle vit dans la version qu'on déploie, pas
+  dans celle du serveur — le premier déploiement qui a atteint le VPS est tombé sur « Command
+  not defined ». Le job de répétition ne le voit pas (il tourne sur le code neuf) ;
+  `DeploymentRehearsalTest` le mesure sur le script.
 - `php artisan openapi:generate` après tout changement de `routes/api.php` ou de
   `resources/openapi/overlay.php` (régénère `public/openapi/v10.json`, versionné).
 - `php artisan beninlink:pilote [--company=] [--reset]` : jeu de données béninois de recette
@@ -175,8 +180,8 @@ avant les apps.
   avant de distribuer les APK ; un rouge est un défaut du serveur, pas de l'app.
 - `php artisan beninlink:comptes-amorcage` — **constate** les comptes d'amorçage du socle
   (`App\Services\Install\SeedAccounts::COMPTES`) dont le mot de passe est encore celui de son
-  code source (`12345678`) ; **sort en erreur** s'il en reste. `deploy.sh` l'exécute **avant**
-  de couper le site (**S87**). Ne lit aucune société, n'écrit rien.
+  code source (`12345678`) ; **sort en erreur** s'il en reste. `deploy.sh` l'exécute après
+  `optimize:clear` et avant `migrate` (**S87**, ordre corrigé en **S88**). Ne lit aucune société, n'écrit rien.
 - `php artisan beninlink:file-attente [--seuil=5]` — état de la file des envois
   (SMS, push, e-mails) et détection d'un **worker arrêté** : la panne que la file
   introduit est silencieuse. Décision **D13**.

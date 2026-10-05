@@ -198,8 +198,8 @@ jobs:
       - name: Les commandes de deploy.sh, dans l'ordre
         working-directory: web
         run: |
-          php artisan beninlink:comptes-amorcage
           php artisan optimize:clear
+          php artisan beninlink:comptes-amorcage
           php artisan beninlink:tarification-prete
           php artisan migrate --force
           php artisan config:cache && php artisan route:cache && php artisan view:cache

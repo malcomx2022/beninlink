@@ -11,10 +11,11 @@ use Illuminate\Support\Facades\Hash;
  * `php artisan beninlink:comptes-amorcage` — les comptes d'amorçage du socle
  * qui portent encore le mot de passe de son code source (**S87**).
  *
- * `deploy.sh` l'exécute **avant** de couper le site, à côté du garde du `.env` :
- * une base amorcée avant S87 qui garde `admin@wemaxdevs.com` à `12345678`
- * s'arrête là, intacte et toujours servie, jusqu'à ce que ces comptes soient
- * changés ou supprimés. Un compte supprimé n'est pas un blocage ; un compte
+ * `deploy.sh` l'exécute après `git pull` et `optimize:clear` — la commande vit
+ * dans la version déployée, pas dans celle du serveur (**S88**) — et avant de
+ * migrer : une base amorcée avant S87 qui garde `admin@wemaxdevs.com` à
+ * `12345678` s'arrête là, coupée puis remontée par le filet, intacte, jusqu'à
+ * ce que ces comptes soient changés ou supprimés. Un compte supprimé n'est pas un blocage ; un compte
  * renommé mais au mot de passe public non plus — c'est le mot de passe que la
  * commande vérifie, par courriel d'amorçage.
  *

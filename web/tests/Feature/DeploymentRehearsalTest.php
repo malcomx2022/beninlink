@@ -70,7 +70,7 @@ class DeploymentRehearsalTest extends TestCase
     public function test_les_commandes_artisan_de_deploy_sh_sont_celles_attendues(): void
     {
         $this->assertSame(
-            ['beninlink:comptes-amorcage', 'up', 'down', 'optimize:clear', 'beninlink:tarification-prete', 'migrate', 'config:cache', 'route:cache', 'view:cache', 'queue:restart', 'up'],
+            ['up', 'down', 'optimize:clear', 'beninlink:comptes-amorcage', 'beninlink:tarification-prete', 'migrate', 'config:cache', 'route:cache', 'view:cache', 'queue:restart', 'up'],
             $this->commandesDuScript(),
             'deploy.sh a changé : mettre à jour cette liste ET le job de répétition'
         );
@@ -142,6 +142,28 @@ class DeploymentRehearsalTest extends TestCase
             $script,
             'le job pose des zones à la main : il ne mesure plus que les semences suffisent (S86, FreshInstallReadinessTest)'
         );
+    }
+
+    /**
+     * **S88** — une commande `beninlink:*` de `deploy.sh` vit dans la version qu'on
+     * déploie, pas dans celle du serveur : elle se joue APRÈS `git pull`,
+     * `composer install` et `optimize:clear`. Le premier déploiement qui a atteint le
+     * serveur (fusion de S87) est tombé sur « Command "beninlink:comptes-amorcage" is
+     * not defined » : la commande était appelée avant la mise à jour du code. Le job
+     * de répétition ne peut pas le voir — il tourne sur le code neuf.
+     */
+    public function test_les_commandes_du_depot_suivent_la_mise_a_jour_du_code(): void
+    {
+        $script = file_get_contents($this->racine(self::DEPLOY));
+        $miseAJour = max(strpos($script, 'git pull origin main'), strpos($script, 'composer install'), strpos($script, 'php artisan optimize:clear'));
+        $this->assertNotFalse($miseAJour);
+
+        preg_match_all('/^php artisan (beninlink:[a-z-]+)/m', $script, $m, PREG_OFFSET_CAPTURE);
+        $this->assertNotEmpty($m[1], 'deploy.sh joue au moins une commande du dépôt');
+        foreach ($m[1] as [$commande, $position]) {
+            $this->assertGreaterThan($miseAJour, $position,
+                "`{$commande}` est appelée avant la mise à jour du code : le serveur exécute l'ancienne version, qui peut ne pas la connaître");
+        }
     }
 
     public function test_rien_ne_part_sur_un_serveur_sans_la_repetition(): void
