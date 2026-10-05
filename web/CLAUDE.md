@@ -233,6 +233,13 @@ avant les apps.
   rien, parfois une AUTRE demande du marchand, jamais celle ouverte. Forme S7 : `get()`,
   `abort_if(blank(...), 404)`, puis les règles. Un dépôt gardé ne rend pas un écran juste ;
   `MerchantPayoutRequestEditTest` le prouve par la route.
+- **Les deux apps ont leur filet de contrat** (**S85**). L'app marchand : `OpenApiSpecTest`
+  (inventaire), `ParcelStageTest` (statuts), `MerchantAppCustomsContractTest` (pages, douane).
+  L'app livreur : `DeliverymanAppContractTest` — inventaire dans la spec et jamais réservé au
+  type marchand (`x-user-type`, S5), appels ↔ inventaire, les trois issues (`ApiParcelStatus`,
+  `switch` de `parcelStatusUpdate`, table de l'app) identiques, aucune route livreur qui pagine,
+  couverture par la répétition de recette. ⚠️ Un chemin d'API se cherche **exactement**, pas par
+  préfixe : `deliveryman/parcel-status` est le début de `…-status-update`.
 - Toute route `/api/v10` à identifiant est inscrite dans `tests/Feature/IsolationCoverageTest`
   avec le test prouvant qu'un compte n'atteint pas la ressource d'un autre (S7).
 - Toute route **web** à paramètre est inscrite dans `tests/Feature/WebIsolationCoverageTest` :

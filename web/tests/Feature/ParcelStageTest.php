@@ -92,6 +92,37 @@ class ParcelStageTest extends TestCase
         }
     }
 
+    /**
+     * S85 — les DEUX apps recopient `ParcelStatus` mot pour mot.
+     *
+     * Le test ci-dessus compare la table 33 → 7 de l'app marchand ; il ne lisait
+     * pas les constantes elles-mêmes, et rien ne lisait l'app livreur. Or chaque
+     * app porte sa copie de `BackendParcelStatus`, et c'est par ces valeurs
+     * qu'elle parle au serveur (`status_action`, les onglets du livreur). Une
+     * constante décalée d'un côté ferait déclarer « livré » un colis « retour ».
+     */
+    public function test_both_apps_copy_the_thirty_three_codes_verbatim(): void
+    {
+        $codes = $this->codes();
+
+        foreach (['mobile', 'mobile-livreur'] as $app) {
+            $fichier = base_path("../{$app}/src/domain/parcelStatus.ts");
+            $this->assertFileExists($fichier);
+            $source = file_get_contents($fichier);
+
+            $bloc = substr($source, strpos($source, 'export const BackendParcelStatus'));
+            $bloc = substr($bloc, 0, strpos($bloc, '} as const;'));
+            preg_match_all('/^\s*([A-Z_]+):\s*(\d+),/m', $bloc, $m, PREG_SET_ORDER);
+
+            $copie = [];
+            foreach ($m as [, $nom, $valeur]) {
+                $copie[$nom] = (int) $valeur;
+            }
+
+            $this->assertSame($codes, $copie, "{$app} : la copie de ParcelStatus diffère de l'enum (noms, valeurs ou ordre)");
+        }
+    }
+
     /** Les 33 codes sont rangés. C'est le trou de 14 codes du socle qui se ferme. */
     public function test_every_one_of_the_thirty_three_codes_has_a_stage(): void
     {

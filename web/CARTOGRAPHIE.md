@@ -2,10 +2,10 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-05 (S84 — un lanceur de tests dans les deux apps, M2, et le
-> job CI `apps` ; S83 — l'écran de modification d'une demande de retrait réparé ; S82 —
-> l'alerte douanière sur le détail du colis, M1 ; S81 — identifiants au nom libre dans les
-> filets ; S80 — répétition de déploiement en intégration continue). Les blocs A-K décrivent le socle **tel que trouvé** ; les
+> Dernière mise à jour : 2026-10-05 (S85 — le contrat de l'app livreur tenu en PHPUnit ;
+> S84 — un lanceur de tests dans les deux apps, M2, et le job CI `apps` ; S83 — l'écran de
+> modification d'une demande de retrait réparé ; S82 — l'alerte douanière sur le détail du
+> colis, M1 ; S81 — identifiants au nom libre dans les filets). Les blocs A-K décrivent le socle **tel que trouvé** ; les
 > sections `## S<nn>` qui suivent racontent chaque lot, avec ses sabotages et le compte
 > de la suite. Le 2026-08-16 : chantier 1 (langue et devise — helpers XOF, 278 affichages
 > et 32 sorties d'API en FCFA entier) ; avant : blocs J — tarifs et K — notifications.
@@ -7612,3 +7612,69 @@ valeur est dans les modules purs et les composants extraits, et c'est la règle 
 `mobile/CLAUDE.md` — on extrait le morceau à prouver. Le contrôle visuel humain (E1) reste dû,
 et M3 (les builds EAS) demande un compte. Le premier run du job `apps` dans GitHub Actions est
 la preuve qui reste à lire : `expo lint` y tourne pour la première fois hors d'un poste.
+
+## S85 — le contrat de l'app livreur, tenu en PHPUnit (2026-10-05)
+
+### D'où ça vient
+
+Tous les filets de contrat entre `web/` et les apps regardaient l'app **marchand** :
+`OpenApiSpecTest` compare l'inventaire de `mobile/` à la spec, `ParcelStageTest` lit sa copie
+des statuts, `MerchantAppCustomsContractTest` ses tailles de page et ses niveaux douaniers.
+L'app **livreur** n'avait rien : aucun test ne comparait ses 18 endpoints à la spec ni aux
+routes, personne ne lisait sa copie de `ParcelStatus`, seule la répétition de recette
+l'exerçait, par les routes, sur le jeu pilote. Hors ligne 11, mais vivante et en recette avec
+l'autre. S84 l'a rendu visible en lui donnant un lanceur de tests.
+
+### Ce que la mesure a dit
+
+**Aucun défaut de contrat.** Les 18 endpoints existent dans la spec, et aucun n'est réservé au
+type marchand (`x-user-type`) ; la copie de `ParcelStatus` est identique à l'enum dans les deux
+apps (noms, valeurs, ordre) ; les trois issues que l'app déclare (`DELIVERED`,
+`PARTIAL_DELIVERED`, `RETURN_TO_COURIER`) sont exactement les trois du catalogue
+`ApiParcelStatus` et du `switch` de `parcelStatusUpdate` ; aucune route livreur ne pagine (les
+dépôts rendent `get()`), l'app n'a donc pas de `page` à lire.
+
+Trois choses à consigner, pas à corriger :
+
+- **Cinq entrées de l'inventaire n'ont aucun appelant** dans l'app : `refresh`, `parcelIndex`,
+  `parcelPartialDelivered`, `parcelStatuses`, `paymentLogs`. L'inventaire documente le tag
+  « Livreur » de la spec, pas seulement ce que l'app consomme ; chaque entrée a son motif dans
+  `SANS_APPELANT`. ⚠️ Dont `refresh` : **l'app livreur ne rafraîchit pas son jeton**, elle se
+  reconnecte. À relire si une session longue le demande.
+- **Sept endpoints ne sont pas joués par la répétition de recette** : les trois sans appelant
+  (`parcel/index`, `parcel-status`, `payment-logs`) et quatre routes communes aux deux apps
+  (`refresh`, `sign-out`, `push/register`, `push/forget`), exercées par leurs propres tests
+  (`ApiUserTypeTest`, `PushNotificationTest`, `TenantIsolationTest`). Listés dans
+  `HORS_REPETITION`, pas inventés.
+- **Un chemin d'API se cherche exactement, pas par préfixe** : le premier jet de la cinquième
+  propriété croyait `deliveryman/parcel-status` joué par la répétition parce que
+  `deliveryman/parcel-status-update` l'est. Écrit dans le test.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `tests/Feature/DeliverymanAppContractTest` (5 tests) | l'inventaire livreur dans la spec et jamais `x-user-type: merchant` ; appels ↔ inventaire (`SANS_APPELANT` motivé) ; les trois issues identiques dans l'app, le catalogue et le contrôleur ; aucune route `userType:deliveryman` qui pagine, contrôleur **et** dépôt appelé (un niveau, forme de S38) ; la couverture par la répétition (`HORS_REPETITION`) |
+| `ParcelStageTest` (+1) | `BackendParcelStatus` des **deux** apps recopie l'enum mot pour mot — le test existant ne comparait que la table 33 → 7 de l'app marchand |
+| `mobile-livreur/CLAUDE.md`, `web/CLAUDE.md` | la règle : chaque app a son filet ; ajouter un endpoint à l'inventaire, c'est l'appeler ou le motiver ; une issue nouvelle se fait accepter par `web/` d'abord |
+
+### Vérification
+
+Cinq sabotages, chacun relancé sur le seul fichier qu'il doit faire tomber :
+
+| Sabotage | Effet |
+|---|---|
+| un endpoint renommé dans l'inventaire livreur (`deliveryman/profil`) | **rouge** |
+| `DELIVERED: 10` dans la copie livreur de `ParcelStatus` | **rouge** |
+| le contrôleur accepte une quatrième issue (`DELIVER`) | **rouge** |
+| `parcelPaymentLogs()` se met à paginer | **rouge** |
+| l'app déclare `RETURN_WAREHOUSE` comme issue | **rouge** |
+
+Suite complète : **1 222 tests, 47 001 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Aucun écran ni endpoint n'est touché : c'est un lot de filets, et la mesure n'a rien trouvé à
+corriger. Les cinq entrées sans appelant restent dans l'inventaire par choix (documentation du
+tag), pas par oubli ; les retirer est une décision d'app, à prendre avec le rafraîchissement du
+jeton si l'on y vient.
