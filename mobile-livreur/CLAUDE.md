@@ -83,6 +83,14 @@ Icônes Ionicons ; visuels d'app générés depuis `assets/source/generate.py`.
 - `npm install` · `npx expo start` · `npm run typecheck` · `npx expo lint` · `npm test`
   (**S84** : Jest `jest-expo`, les modules purs `money` et `parcelStatus` ; le job `apps` du
   workflow rejoue typage, lint et tests sur la pull request).
+- **Le contrat avec `web/` est tenu en PHPUnit** (**S85**, `web/tests/Feature/DeliverymanAppContractTest`
+  et `ParcelStageTest`) : chaque entrée de `src/api/endpoints.ts` existe dans la spec et n'est
+  jamais réservée au type marchand ; l'app appelle ce qu'elle inventorie (les entrées sans
+  appelant sont nommées dans `SANS_APPELANT`, avec leur motif) ; les trois issues de
+  `reportOutcome()` sont exactement celles du catalogue `ApiParcelStatus` et du `switch` du
+  serveur ; `BackendParcelStatus` recopie l'enum mot pour mot ; aucune route livreur ne pagine.
+  Ajouter un endpoint à l'inventaire, c'est l'appeler quelque part ou le motiver ; déclarer une
+  issue nouvelle, c'est la faire accepter par `web/` d'abord.
 - **`npx expo-doctor` avant tout build** : il attrape les erreurs de configuration qui,
   sinon, font échouer EAS après dix minutes de file d'attente. 21/21 au 2026-09-06.
 - Build : `eas build -p android` (APK/AAB) · `eas build -p ios`.
