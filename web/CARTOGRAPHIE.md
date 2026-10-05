@@ -2,10 +2,10 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-05 (S83 — l'écran web de modification d'une demande de
-> retrait relisait la demande par l'identifiant du marchand, réparé ; S82 — l'alerte douanière
-> sur le détail du colis, M1 ; S81 — identifiants au nom libre dans les filets ; S80 —
-> répétition de déploiement en intégration continue ; S79 — installation `--no-dev` réparée). Les blocs A-K décrivent le socle **tel que trouvé** ; les
+> Dernière mise à jour : 2026-10-05 (S84 — un lanceur de tests dans les deux apps, M2, et le
+> job CI `apps` ; S83 — l'écran de modification d'une demande de retrait réparé ; S82 —
+> l'alerte douanière sur le détail du colis, M1 ; S81 — identifiants au nom libre dans les
+> filets ; S80 — répétition de déploiement en intégration continue). Les blocs A-K décrivent le socle **tel que trouvé** ; les
 > sections `## S<nn>` qui suivent racontent chaque lot, avec ses sabotages et le compte
 > de la suite. Le 2026-08-16 : chantier 1 (langue et devise — helpers XOF, 278 affichages
 > et 32 sorties d'API en FCFA entier) ; avant : blocs J — tarifs et K — notifications.
@@ -7552,3 +7552,63 @@ Il ne touche pas aux cinq autres méthodes du contrôleur ni à `PaymentAccountC
 relus pour le même motif et sains. Lancé pendant que la PR de S82 était encore ouverte, il
 a d'abord été poussé dessus — onze minutes après sa fusion, en fait : rebasé sur `main`, il
 part dans sa propre PR.
+
+## S84 — un lanceur de tests dans les deux apps (M2), et la CI qui les regarde (2026-10-05)
+
+### D'où ça vient
+
+Trois lots de suite se terminaient par la même phrase : « `mobile/` n'a pas de lanceur de
+tests, cette propriété est une lecture de source, pas un rendu ». S68, S78 et S82 ont posé
+leurs garanties d'app en PHPUnit, en lisant des fichiers TypeScript comme du texte. Ça mord
+quand une ligne disparaît ; ça ne dit pas qu'une couleur de gravité se trompe ni qu'un
+montant s'affiche mal. Et la CI ne lançait ni `tsc` ni `expo lint` sur les apps : seule la
+suite PHP tournait. Le relevé le portait comme **M2**.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `mobile/`, `mobile-livreur/` : `package.json`, `tsconfig.json` | `jest-expo` ~57 (aligné sur le SDK), `jest` 29, `@testing-library/react-native` 14, `@types/jest` ; script `test` ; `"jest": {preset: jest-expo}` ; `types: ["jest"]` pour que `tsc` connaisse `describe`/`it` |
+| `mobile/src/domain/*.test.ts`, `src/api/pagination.test.ts` | les modules purs **exécutés** : les trois niveaux douaniers et le niveau inconnu traité comme bloquant, le plus grave d'un lot ; montants FCFA (arrondi, espace insécable, signe, taux à la française) ; les 33 statuts rabattus sur 7 étapes, une annulation vers l'étape **amont**, les onglets qui couvrent les 7 étapes une fois chacune ; les identifiants de type de livraison ; `hasNextPage` (le bloc `page` gagne, le repli à la page pleine), `fetchAllPages` (ordre, arrêt sur page vide, plafond) |
+| `mobile/src/components/CustomsAlertCard.tsx` (+ `.test.tsx`) | la carte des alertes douanières **extraite** de l'écran de détail pour être **rendue** : rien sur un colis domestique ; BLOQUANT en `danger`, AVERTISSEMENT en `warning`, INFO en `info`, jamais l'ocre ni le vert primaire (le défaut de S68, enfin vu au rendu) ; message et document requis ; « Marquer traitée » sur une alerte en cours, qui remonte l'identifiant ; le statut à sa place sur une traitée |
+| `mobile-livreur/src/domain/{money,parcelStatus}.test.ts` | les mêmes modules, identiques dans l'app livreur |
+| `.github/workflows/deploy.yml`, job `apps` | matrice `mobile` / `mobile-livreur` : `npm ci`, `tsc --noEmit`, `expo lint`, `npm test -- --ci` ; sur pull request et sur `main` ; **ne conditionne pas** `deploy` (les apps partent par EAS) |
+| `MerchantAppCustomsContractTest` | lit la carte dans son composant ; exige que l'écran passe par `<CustomsAlertCard` et que le test de rendu existe — c'est le **contrat** qui reste côté PHP : un test d'app ne peut pas lire `web/` |
+
+### Ce que les tests ont trouvé en les écrivant
+
+- **`toAmount(NaN)` rendait `NaN`**, donc « NaN FCFA » à l'écran : la garde `Number.isFinite`
+  ne portait que sur la chaîne, pas sur le nombre. Corrigé dans les deux apps (même module).
+- `@testing-library/react-native` 14 rend en **asynchrone** : sans `await render`, `screen`
+  répond « render n'a pas été appelé ». Dit dans le test, pour le prochain.
+- Le préréglage **ne s'applique pas sans la clé `jest` dans `package.json`** : l'app livreur
+  l'a perdue une fois (une écriture concurrente avec `npm install`), et Jest a dit « Cannot use
+  import statement outside a module » — un message qui ne nomme pas sa cause.
+
+### Vérification
+
+Les trois commandes vertes dans chaque app. Quatre sabotages, chacun relancé sur le seul
+fichier qu'il doit faire tomber :
+
+| Sabotage | Effet |
+|---|---|
+| AVERTISSEMENT peint en ocre (le défaut de S68) | **rouge**, deux fois : la table, et la carte rendue |
+| `toAmount` sans la garde sur `NaN` | **rouge** |
+| la carte offre « Marquer traitée » quel que soit le statut | **rouge** |
+| une annulation de livraison rattachée à « livré » | **rouge** |
+
+| Compte | mobile | mobile-livreur |
+|---|---|---|
+| Suites | 6 | 2 |
+| Tests | 37 | 17 |
+
+Suite PHP complète : **1 216 tests, 46 948 assertions**, verte (`DeploymentRehearsalTest` et `RecetteDeploymentTest`
+acceptent le nouveau job : ils lisent `repetition`, `deploy` et `deploy-recette`, pas la liste).
+
+### Ce que ce lot ne fait pas
+
+Rendre les écrans d'`expo-router` entiers : le harnais de navigation est lourd et fragile ; la
+valeur est dans les modules purs et les composants extraits, et c'est la règle écrite dans
+`mobile/CLAUDE.md` — on extrait le morceau à prouver. Le contrôle visuel humain (E1) reste dû,
+et M3 (les builds EAS) demande un compte. Le premier run du job `apps` dans GitHub Actions est
+la preuve qui reste à lire : `expo lint` y tourne pour la première fois hors d'un poste.

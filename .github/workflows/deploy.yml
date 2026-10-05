@@ -62,6 +62,51 @@ jobs:
         working-directory: web
         run: php artisan test
 
+  # S84 (M2) — les deux apps Expo : typage, lint et tests, sur une pull request
+  # comme sur `main`. Elles ne partent PAS par ce workflow (EAS les compile), donc
+  # ce job ne conditionne pas `deploy` : une app rouge ne retient pas un correctif
+  # serveur. Il rend simplement sa couleur visible sur la pull request — jusqu'ici
+  # seul `php artisan test` tournait, et ni `tsc` ni `expo lint` n'étaient exécutés
+  # ailleurs que sur la machine de celui qui commettait.
+  #
+  # Les tests d'app (`jest-expo`) exécutent les modules purs (montants FCFA,
+  # statuts, niveaux douaniers, pagination) et rendent la carte des alertes
+  # douanières. Le CONTRAT avec le backend (tailles de page, valeurs des enums)
+  # reste tenu côté PHP par `MerchantAppCustomsContractTest` et consorts : un test
+  # d'app ne peut pas lire `web/`.
+  apps:
+    name: Apps Expo (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [mobile, mobile-livreur]
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
+
+      # `npm ci` : le lock fait foi, comme `composer install` côté PHP.
+      - name: Dépendances
+        run: npm ci
+
+      - name: Typage
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npx expo lint
+
+      - name: Tests
+        run: npm test -- --ci
+
   # S80 — la RÉPÉTITION de déploiement : ce que `deploy.sh` fait sur le serveur,
   # rejoué ici avant, sur une pull request comme sur `main`.
   #

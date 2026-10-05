@@ -343,11 +343,20 @@ class MerchantAppCustomsContractTest extends TestCase
             'l\'écran de détail ne rend plus les alertes douanières du colis');
         $this->assertStringNotContainsString('fetchCustomsAlerts', $ecran,
             'l\'écran de détail filtre la liste paginée des alertes au lieu de lire celles du colis');
-        $this->assertStringContainsString('customsLevelColorName', $ecran,
-            'l\'écran de détail peint les niveaux lui-même : la table de S68 n\'est plus traversée');
         $this->assertStringContainsString('resolveCustomsAlert', $ecran,
             'l\'écran de détail ne permet plus de marquer l\'alerte traitée');
-        $this->assertStringContainsString('CustomsAlertStatus.PENDING', $ecran,
-            'l\'écran de détail offre « marquer traitée » sans regarder le statut');
+        $this->assertStringContainsString('<CustomsAlertCard', $ecran,
+            'l\'écran de détail ne passe plus par le composant `CustomsAlertCard` (S84) : la carte rendue en test n\'est plus celle de l\'écran');
+
+        // S84 (M2) — la carte est un composant, RENDU par `CustomsAlertCard.test.tsx`
+        // (couleurs de charte, bouton selon le statut). Ici ne reste que le contrat :
+        // le composant traverse la table de S68 et regarde le statut du backend.
+        $carte = $this->source('src/components/CustomsAlertCard.tsx');
+        $this->assertStringContainsString('customsLevelColorName', $carte,
+            'la carte peint les niveaux elle-même : la table de S68 n\'est plus traversée');
+        $this->assertStringContainsString('CustomsAlertStatus.PENDING', $carte,
+            'la carte offre « marquer traitée » sans regarder le statut');
+        $this->assertFileExists($this->app('src/components/CustomsAlertCard.test.tsx'),
+            'le test de rendu de la carte a disparu : la propriété redevient une lecture de source');
     }
 }
