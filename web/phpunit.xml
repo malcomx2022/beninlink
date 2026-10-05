@@ -24,6 +24,7 @@
              uniquement pour les tests ; la mise a jour du framework est un autre sujet. -->
         <ini name="error_reporting" value="E_ALL &amp; ~E_DEPRECATED &amp; ~E_USER_DEPRECATED"/>
         <env name="APP_ENV" value="testing"/>
+        <server name="APP_URL" value="http://localhost" force="true"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_DRIVER" value="array"/>
         <env name="DB_CONNECTION" value="sqlite"/>
