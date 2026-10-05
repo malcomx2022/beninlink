@@ -2,8 +2,8 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-05 (S78 — bloc `page` sur les réponses paginées, onzième
-> filet ; S77 — clé d'API sans repli). Les blocs A-K décrivent le socle **tel que trouvé** ; les
+> Dernière mise à jour : 2026-10-05 (S79 — installation `--no-dev` réparée, douzième filet ;
+> S78 — bloc `page` sur les réponses paginées ; S77 — clé d'API sans repli). Les blocs A-K décrivent le socle **tel que trouvé** ; les
 > sections `## S<nn>` qui suivent racontent chaque lot, avec ses sabotages et le compte
 > de la suite. Le 2026-08-16 : chantier 1 (langue et devise — helpers XOF, 278 affichages
 > et 32 sorties d'API en FCFA entier) ; avant : blocs J — tarifs et K — notifications.
@@ -7208,3 +7208,91 @@ Les trois autres listes trouvées (hubs, fraudes, tickets) disent désormais où
 mais aucun écran de l'app ne les lit encore : le jour où un écran les prend, il passe par
 `getPaged` ou `fetchAllPages`, jamais par `api.get`. Pas de changement de taille de page dans ce
 lot, et rien dans `mobile-livreur/`, qui ne consomme aucune liste paginée.
+
+## S79 — deux dépendances de dev cassaient l'installation `--no-dev`, donc le déploiement (2026-10-05)
+
+### D'où ça vient
+
+Constat du porteur sur le VPS, le 2026-10-05 : `composer install --no-dev` — ce que fait
+`deploy.sh` — puis `php artisan` échouent. Reproduit ici dans une copie du dossier, sans
+`vendor/`, installée `--no-dev` : `composer install` s'arrête à son propre script
+`package:discover` avec `Class "Barryvdh\Debugbar\ServiceProvider" not found`.
+
+Deux fuites de dépendances de **développement** vers le code qui tourne en production :
+
+| Fuite | Où | Effet sur une installation `--no-dev` |
+|---|---|---|
+| `barryvdh/laravel-debugbar` (`require-dev`) | `config/app.php` l'enregistrait **sans condition** dans `providers`, et sa façade dans `aliases` | `package:discover` tombe, donc `composer install` lui-même, donc `deploy.sh` |
+| `fakerphp/faker` (`require-dev`) | sept semences lisent `Faker\Factory` (`ParcelSeeder`, `PlanSeeder`, `BlogSeeder`, `FaqSeeder`, `ServiceSeeder`, `PartnerSeeder`, `CompanyFrontendDataSeeder`), et `DatabaseSeeder` en appelle cinq | `db:seed` tombe (`Class "Faker\Factory" not found`) |
+
+Pourquoi ça n'avait jamais mordu : la suite tourne **avec** les dépendances de dev, en
+local comme dans l'intégration continue (`composer install` sans `--no-dev` dans le job
+`tests`), et aucun déploiement n'a jamais atteint un serveur par le workflow (S76). Le
+premier vrai `--no-dev` était celui du porteur.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `config/app.php` | les deux lignes Debugbar retirées (un commentaire dit où elle est partie) |
+| `AppServiceProvider::registerDebugbar()` | enregistre le fournisseur **et** la façade `Debugbar` seulement si `class_exists` **et** `config('app.debug')` ; en production et en recette (`APP_DEBUG=false`) la barre ne se charge jamais, même installée |
+| `composer.json` → `extra.laravel.dont-discover` | `barryvdh/laravel-debugbar` : la découverte automatique ne la rebranche pas dans le dos de la garde |
+| `composer.json` / `composer.lock` | `fakerphp/faker` passe en **`require`**, **même version** (v1.23.1 — déplacé dans le verrou sans monter de version, hash du verrou rafraîchi par `composer update --lock`) |
+
+Faker en production plutôt que des semences sans Faker : les semences **sont** du code de
+déploiement (`db:seed` fait partie de la mise en service et du jeu pilote), et sept fichiers
+du socle le lisent. Le paquet pèse peu et n'a aucune dépendance ; le réécrire était une
+réécriture du socle pour rien.
+
+### Ce que le test fixe — `tests/Feature/DevDependencyLeakTest` (4 tests, 19 assertions)
+
+Douzième filet. Il lit `composer.lock`, reconstruit les **espaces de noms** des paquets de
+`packages-dev` (`autoload.psr-4` / `psr-0`), et refuse toute référence à l'un d'eux — hors
+commentaires, `token_get_all` — dans `app/`, `bootstrap/app.php`, `config/`, `database/`,
+`routes/` et `resources/views/`. Une seule tolérance, nommée fichier par fichier : la barre
+de débogage dans `AppServiceProvider`, et le test dédié vérifie qu'elle vit derrière
+`!config('app.debug') || !class_exists(…)` **avant** l'enregistrement, et que le paquet est
+dans `dont-discover`. Faker : en `require` dans le json **et** dans le verrou, et la raison
+tient toujours (des semences le lisent — le jour où plus aucune ne le lit, le test le dit).
+Puis le comportement : deux applications démarrées avec `app.debug` forcé avant
+l'enregistrement des fournisseurs — `false` : `debugbar` n'est pas liée ; `true` : elle l'est,
+comme avant.
+
+⚠️ Piège rencontré en l'écrivant : `laravel/pint` embarque sa propre application sous
+`App\` — pris tel quel, le préfixe désignait **notre** code et le filet voyait 200 fuites. Un
+préfixe de paquet de dev qui est aussi l'un des nôtres (`autoload.psr-4` du projet) est écarté.
+Second piège : `bootstrap/cache/packages.php` est un **manifeste** régénéré par
+`package:discover` ; tant qu'il n'est pas régénéré, l'ancien y liste encore la barre. En
+déploiement, `composer install` le régénère toujours.
+
+### Vérification
+
+Dans la copie `--no-dev`, après correctif : `composer install --no-dev` (installe Faker,
+pas Debugbar), `package:discover` et `migrate` **passent** ; avec `APP_DEBUG=false`,
+`debugbar` n'est pas liée. `db:seed` : les cinq semences Faker appelées par `DatabaseSeeder`
+(`PlanSeeder`, `ServiceSeeder`, `FaqSeeder`, `PartnerSeeder`, `BlogSeeder`) **passent**, et
+`migrate:fresh --seed` déroule vingt-trois semences avant de s'arrêter sur `CurrencySeeder` —
+un `INSERT` brut du socle qui échappe une apostrophe à la façon MySQL (`'Pula\'s'`), que
+**SQLite** refuse. C'est un artefact de la reproduction (pas de MySQL ici), pas du serveur :
+sur MySQL, cette requête passe depuis l'origine. Faker n'y est pour rien. Quatre sabotages :
+
+| Sabotage | Effet |
+|---|---|
+| le fournisseur Debugbar revient dans `config/app.php` | **rouge** (3) |
+| Faker repasse en `require-dev` (json et verrou) | **rouge** (2 : les semences deviennent des fuites) |
+| la barre sort de `dont-discover` | **rouge** |
+| la garde oublie `app.debug` | **rouge** (2) |
+
+Suite complète : **1 202 tests, 46 830 assertions**, verte.
+
+### Ce qui reste
+
+`CurrencySeeder`, `PageSeeder`, `SectionSeeder` et `CompanyFrontendDataSeeder` insèrent par
+`DB::statement` avec des apostrophes échappées `\'` : du MySQL pur, jamais exécuté sur
+SQLite (la suite sème par `SeedsTenant`, qui ne les appelle pas). Sans conséquence sur le
+serveur ; à savoir le jour où un test voudrait jouer `db:seed` entier.
+
+`symfony/yaml` est en `packages-dev` et n'est lu que par `RecetteDeploymentTest` : correct,
+et le filet le dirait s'il migrait vers du code de production. Le job `tests` du workflow
+installe toujours **avec** les dépendances de dev — c'est ce que la suite exige ; le filet
+remplace, pour cette famille, l'installation `--no-dev` que l'intégration ne fait pas.
