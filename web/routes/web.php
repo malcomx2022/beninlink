@@ -125,11 +125,11 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 
 //installer
+// S88 — les TROIS routes sous `IsNotInstalled` : le socle n'y mettait que
+// l'écran, et `GET /finish` (qui supprime chaque table et réamorce la base)
+// restait joignable, sans authentification, sur une installation terminée.
 Route::middleware(['XSS', 'IsNotInstalled'])->group(function () {
     Route::get('install',                          [InstallerController::class, 'index']);
-});
-
-Route::middleware(['XSS'])->group(function () {
     Route::post('installing',                      [InstallerController::class, 'installing'])->name('installing');
     Route::get('finish',                           [InstallerController::class, 'finish'])->name('final');
 });

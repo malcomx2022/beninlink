@@ -2,8 +2,8 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-05 (S87 — plus de mot de passe public sur les comptes
-> d'amorçage ; S86 — une installation neuve réussit son premier déploiement ; S85 — le contrat de l'app livreur tenu en PHPUnit ;
+> Dernière mise à jour : 2026-10-05 (S88 — l'installateur fermé sur une base installée ; S87 — plus
+> de mot de passe public sur les comptes d'amorçage ; S86 — une installation neuve réussit son premier déploiement ; S85 — le contrat de l'app livreur tenu en PHPUnit ;
 > S84 — un lanceur de tests dans les deux apps, M2, et le job CI `apps` ; S83 — l'écran de
 > modification d'une demande de retrait réparé ; S82 — l'alerte douanière sur le détail du
 > colis, M1 ; S81 — identifiants au nom libre dans les filets). Les blocs A-K décrivent le socle **tel que trouvé** ; les
@@ -1229,6 +1229,7 @@ vestige du squelette Laravel.
 | ~~S30~~ | C | ~~L'argent du back-office : sept dépôts touchant à des comptes bancaires lisaient **nu**~~ — ✅ **corrigé le 2026-09-18** (5ᵉ passe sur l'arriéré). Pour six d'entre eux la lecture nue précédait un **mouvement d'argent** : `Income::update` touche le compte bancaire **et** le relevé du marchand rattachés à la recette lue ; `Expense::update` **rend le solde** au compte de la dépense lue ; `FundTransfer::update` rejoue un **virement** entre ses deux comptes ; `MerchantManage\Payment::update` réécrit la demande de versement et la **réaffecte** à un autre marchand ; `cancelReject` remet le versement rejeté **en attente de paiement** ; `Account::update` réécrit le compte bancaire ; `HubPaymentRequest::update` **rattache** la demande à l'entrepôt de l'agent connecté. Plus le **décaissement** d'un versement marchand, lu nu dans le contrôleur avec l'identifiant dans le corps — 3ᵉ occurrence de l'angle mort du filet | `Income` · `Expense` · `FundTransfer` · `MerchantManage\Payment` · `Account` · `HubPaymentRequest` · `ReceivedRepository` · `MerchantmanagePaymentController` |
 | ~~S31~~ | B | ~~Les responsables d'entrepôt : périmètre par `hub_id` **et par rien d'autre**~~ — ✅ **corrigé le 2026-09-18** (6ᵉ passe). `hub_incharges` ne porte pas de `company_id`, donc `where('hub_id', $hubID)` acceptait l'entrepôt de n'importe quelle société. **Neuf points dans un seul dépôt**, et le plus grave n'est pas une lecture : la rafle d'`assignedHub()` passe tous les autres responsables actifs de l'entrepôt à inactif — chez l'autre société, une **interruption de service**. Elle réécrivait aussi le `hub_id` d'un utilisateur sans vérifier qu'il est à nous, `delete()` était `destroy($id)` **sans même le `hub_id`**, et `users()` nommait les **administrateurs de tous les transporteurs** dans le menu déroulant | `HubInChargeRepository` · `HubInChargeController` |
 | ~~S32~~ | G | ~~Les relevés de règlement : neuf routes non prouvées~~ — ✅ **inscrites le 2026-09-20** (7ᵉ passe). **Passe de vérification, pas de correction** : les six méthodes du dépôt que ces routes atteignent étaient **déjà** `companywise()` (S14, S20, chantier 4). L'arriéré les tenait faute de test, pas faute de périmètre. Un seul défaut trouvé : `InvoiceDetails()` déréférençait un `null` hors périmètre — 500 au lieu de 404. Et un piège signalé : `InvoiceRepository::InvoicePdf()` est un **doublon mort** d'`invoiceGet()`, corps pour corps — il a avalé un de mes sabotages | `MerchantInvoiceController` · `InvoiceRepository` |
+| ~~S88~~ | A | ~~**`GET /finish` détruisait la base d'une installation terminée, sans authentification**~~ — 🔴 ✅ **corrigé le 2026-10-05 (S88)** : `routes/web.php` ne posait `IsNotInstalled` que sur l'écran `GET /install` ; `POST /installing` et `GET /finish` ne portaient que `XSS`, et `InstallerController::finish()` supprime **chaque table** (`SHOW TABLES` + `Schema::drop`), rejoue `migrate:refresh` et `db:seed`, pose nom, courriel et **mot de passe du compte n° 1** depuis la requête, et réécrit `APP_INSTALLED` et `APP_URL` dans le `.env`. Second maillon : le garde ne reconnaissait une installation que par `APP_INSTALLED=yes`, que l'installation prescrite par le guide (`migrate` + `db:seed`) n'écrit pas. Les trois routes portent le garde ; une base qui porte des utilisateurs est installée, drapeau ou pas ; les deux actions répondent **404** ; `verifier-env.sh` refuse un `.env` sans le drapeau. Relevé en relisant l'installateur pour S87 ; aucun test ne nommait l'installateur | `routes/web.php` · `App\Http\Middleware\IsNotInstalledMiddleware` · `docs/guides/infra/deploy/verifier-env.sh` · `InstallerLockTest` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
 
@@ -7798,3 +7799,60 @@ pilote, dont le mot de passe commun est un choix de recette, refusé en producti
 commande. Il ne vérifie que les **comptes d'amorçage** : un utilisateur qui choisit lui-même
 `12345678` relève d'une politique de mots de passe, pas de ce lot. Et il ne change rien à
 `local` : le poste de développement garde les identifiants du socle.
+
+## S88 — l'installateur n'est plus joignable sur une base installée (2026-10-05)
+
+### D'où ça vient
+
+Relu en préparant S87. `routes/web.php` monte trois routes d'installation, et seule `GET /install`
+portait le garde `IsNotInstalled`. `POST /installing` et **`GET /finish`** ne portaient que `XSS`,
+et `InstallerController::finish()` fait, sans authentification : `SHOW TABLES` et `Schema::drop`
+de **chaque table**, `migrate:refresh`, `db:seed`, puis écrit le nom, le courriel et le **mot de
+passe du compte n° 1** depuis la requête, et réécrit `APP_INSTALLED` et `APP_URL` dans le `.env`.
+Sur une installation terminée, une requête anonyme vidait la base et posait l'administrateur de
+son choix. Les routes sont montées sur tous les hôtes, avant le bloc conditionné par
+`app_installed`, et aucun test ne nommait l'installateur.
+
+Second maillon : le garde ne reconnaissait une installation que par `APP_INSTALLED=yes` dans le
+`.env`. La première installation que le guide prescrit (`migrate` + `db:seed`, « jamais par
+`/install` ») n'écrit pas ce drapeau — seul l'installateur web le fait — et `verifier-env.sh` ne
+le vérifiait pas.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `routes/web.php` | les **trois** routes sous `['XSS', 'IsNotInstalled']` |
+| `IsNotInstalledMiddleware` | `installee()` : tables présentes **et** (drapeau `yes` **ou** table `users` non vide) ; sur une base installée, `installing` et `final` répondent **404**, l'écran redirige vers `/` si le drapeau est posé, sinon **403** en texte nu qui dit quoi poser (une redirection bouclerait avec `IsInstalled`, et la page 403 du socle n'affiche pas le message d'un `abort()`) |
+| `verifier-env.sh` | refuse un `.env` dont `APP_INSTALLED` n'est pas `yes`, dans tous les environnements, avant de couper le site (forme de S77) |
+| `tests/Feature/InstallerLockTest` (4 tests) | les trois routes portent le garde (lu dans `Route::getRoutes()`) ; base installée : `GET /finish` et `POST /installing` 404, `/install` redirige, **nombre de tables, d'utilisateurs et de sociétés inchangé**, aucun compte « pirate » ; sans drapeau, base peuplée : mêmes 404, 403 explicite ; base vierge : l'écran répond (le flux du socle survit) |
+| `RecetteDeploymentTest` (+1) | un `.env` sans `APP_INSTALLED=yes`, ou avec une autre valeur, est refusé ; les fixtures qui passent portent le drapeau |
+| Docs | `mise-en-service` § 5, grand livre E3, « Ne jamais casser » dans `web/CLAUDE.md`, tableau des constats de sécurité (S88) |
+
+### Ce que l'écriture a appris
+
+- La vue `installer/index.blade.php` lit **`$_SERVER['HTTP_HOST']` et `SCRIPT_NAME` directement**,
+  pas la requête : hors nginx elle tombe en 500. Le test les pose comme le serveur le ferait.
+- La page 403 du socle (`errors/403.blade.php`) affiche un texte fixe, jamais le message d'un
+  `abort(403, …)` : un message qui doit être lu part en réponse nue.
+
+### Vérification
+
+Quatre sabotages, chacun relancé sur le seul fichier qu'il doit faire tomber :
+
+| Sabotage | Effet |
+|---|---|
+| `finish` ressort du groupe gardé (forme du socle) | **rouge** (3 tests : le garde manque sur `finish`, et `GET /finish` ne répond plus 404 — sur SQLite il tombe sur `SHOW TABLES`, en MySQL il aurait vidé la base) |
+| `installee()` ne regarde plus que le drapeau | **rouge** (sans drapeau, la base peuplée redevient « vierge ») |
+| `verifier-env.sh` sans le refus `APP_INSTALLED` | **rouge** (`RecetteDeploymentTest`) |
+| le garde laisse passer `installing` sur une base installée | **rouge** (2 tests : `POST /installing` passe le garde) |
+
+Suite complète : **1 237 tests, 47 098 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne retire ni ne réécrit l'installateur (0 fichier supprimé) : le flux du socle reste entier pour
+une base vierge, il cesse seulement d'être joignable une fois la base installée. Il ne touche pas
+`IsInstalledMiddleware`, qui redirige vers `/install` quand le drapeau manque — l'écran répond
+alors 403 avec la ligne à poser, et `verifier-env.sh` empêche qu'un déploiement parte sans elle.
+La vérification du code d'achat (`purchaseVerify`) et la vue d'installation restent telles quelles.

@@ -131,8 +131,13 @@ garde qui parle. C'est celui que le dépôt affiche à chaque fusion aujourd'hui
 ## 5. Remplir la base la première fois — jamais par `/install`
 
 L'installateur web du socle propose de **recréer la base** et réécrit le `.env`
-que vous venez de poser. Avec `APP_INSTALLED=yes`, il n'est de toute façon plus
-joignable. La première installation se fait en deux commandes :
+que vous venez de poser. Depuis le **2026-10-05 (S88)** il n'est plus joignable sur
+une base installée : ses trois routes portent le garde, et une base qui porte des
+utilisateurs compte comme installée, drapeau ou pas (jusque-là, `GET /finish`
+supprimait chaque table sans authentification, et seul `APP_INSTALLED=yes` fermait
+l'écran). Posez le drapeau quand même : `verifier-env.sh` refuse désormais un `.env`
+sans `APP_INSTALLED=yes`, parce que sans lui le site ne monte pas ses routes. La
+première installation se fait en deux commandes :
 
 ```bash
 cd /var/www/beninlink/web

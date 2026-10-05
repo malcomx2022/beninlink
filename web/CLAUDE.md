@@ -38,6 +38,13 @@ avant les apps.
   Ne pas retirer ce garde, et ne pas désinstaller le paquet : `InstallerController`
   écrit `.env` par sa **façade** pendant l'installation. C'est l'interface qui est
   coupée, pas la bibliothèque.
+- L'**installateur du socle** (**S88**, 2026-10-05) : ses trois routes (`install`, `installing`,
+  `finish`) portent `IsNotInstalled`, et le garde tient pour installée toute base dont la table
+  `users` n'est pas vide, drapeau `APP_INSTALLED` ou pas. Le socle ne gardait que l'écran :
+  `GET /finish` **supprimait chaque table** et réamorçait la base, sans authentification, sur une
+  installation terminée. Ne pas sortir une route de ce groupe ; ne pas ramener `installee()` au
+  seul drapeau. `verifier-env.sh` refuse un `.env` sans `APP_INSTALLED=yes` (`InstallerLockTest`,
+  `RecetteDeploymentTest`).
 
 ## Décisions actées
 - **FedaPay** = passerelle Mobile Money BJ. **Webhook signé = seule source de vérité**
