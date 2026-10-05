@@ -98,8 +98,17 @@ composer install --no-dev --optimize-autoloader
 php artisan migrate --force
 php artisan db:seed --force            # socle We Courier (société, rôles, permissions)
 php artisan beninlink:pilote           # jeu de données béninois — voir §3
+# S80 — les zones de la société du socle (« We Courier », id 1) : sans elles,
+# `beninlink:tarification-prete`, que deploy.sh exécute, refuse TOUT déploiement
+# de cette installation. Le jeu pilote pose celles de sa propre société seulement.
+php artisan beninlink:zones-tarifaires --societe=1 --installer --grille=database/bareme/grille-nationale.csv
+php artisan beninlink:tarification-prete   # doit sortir en succès pour toutes les sociétés
 php artisan config:cache && php artisan route:cache
 ```
+
+Cette séquence est **rejouée à chaque pull request** par le job « Répétition de
+déploiement » du workflow (S80), contre MySQL et sans les dépendances de dev : si elle
+casse, on le sait avant le serveur.
 
 Ajouter la société de recette dans `domains` (page super-admin « Sociétés ») avec le
 sous-domaine `recette`, puis régler sur la page « Liquide/Fragile & TVA » le taux de
@@ -135,6 +144,14 @@ Depuis **S77**, le même garde refuse un `.env` **sans `API_KEY`** (ou portant l
 publique du socle We Courier) : la config n'a plus de repli, et une recette sans sa
 propre clé ne servirait aucune requête des apps — autant le lire avant la coupure.
 `RecetteDeploymentTest` exécute ce garde sur des `.env` fabriqués.
+
+Depuis **S80**, un troisième job, « Répétition de déploiement », précède les deux
+déploiements : il installe `--no-dev`, monte une base MySQL, déroule l'installation
+d'une recette (migrations, semences, jeu pilote, zones) puis **les commandes de
+`deploy.sh` dans son ordre** (`optimize:clear`, `tarification-prete`, `migrate`, les trois
+caches, `queue:restart`) et vérifie que l'API répond avec la clé du `.env`. Rien ne part
+sur un serveur si la répétition échoue. `DeploymentRehearsalTest` tient le job et le
+script d'accord : une étape ajoutée à `deploy.sh` doit être répétée.
 
 Avant le premier déploiement, le dépôt doit être cloné dans `/var/www/beninlink-recette`
 par l'utilisateur de recette (le workflow fait `git fetch` puis `deploy.sh`, il ne clone
@@ -355,5 +372,5 @@ coche **avant** le jour J ; une ligne vide reporte la recette, elle ne la dégra
 | P6 | Compte **Expo / EAS** lié aux deux projets (`eas init`), **deux keystores**, variable `EXPO_PUBLIC_API_KEY` posée par profil (= l'`API_KEY` du `.env` de recette, S77) | développement | `eas build -p android --profile recette` rend deux liens APK |
 | P7 | **Deux téléphones Android** au moins, réseau mobile (pas seulement Wi-Fi), APK installés | porteur | connexion `PIL-001` et `LIV-001` réussie sur chacun |
 | P8 | Les 5 PME et 3 livreurs informés : identifiants, mot de passe commun, personne à appeler, fenêtre de recette | porteur | accusé de réception |
-| P9 | `php artisan test` vert sur la version déployée, dont `RecettePiloteRepetitionTest` | développement | 1 202 tests au 2026-10-05 |
+| P9 | `php artisan test` vert sur la version déployée, dont `RecettePiloteRepetitionTest` | développement | 1 207 tests au 2026-10-05 |
 | P10 | Tableau de collecte ouvert (§6) et partagé aux PME | porteur | une ligne d'essai saisie par chaque PME |

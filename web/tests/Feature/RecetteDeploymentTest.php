@@ -52,7 +52,8 @@ class RecetteDeploymentTest extends TestCase
         $this->assertArrayHasKey('deploy-recette', $jobs, 'le job de recette (S76)');
 
         $recette = $jobs['deploy-recette'];
-        $this->assertSame('tests', $recette['needs'], 'rien ne part en recette sans la suite verte');
+        $this->assertContains('tests', (array) $recette['needs'], 'rien ne part en recette sans la suite verte');
+        $this->assertContains('repetition', (array) $recette['needs'], 'ni sans la répétition de déploiement (S80)');
         $this->assertSame("github.event_name != 'pull_request'", $recette['if']);
     }
 
