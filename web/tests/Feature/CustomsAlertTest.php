@@ -92,6 +92,53 @@ class CustomsAlertTest extends TestCase
         $this->assertNotEmpty($alert->required_document);
     }
 
+    /**
+     * S82 (M1) — l'alerte se lit SUR LE COLIS, par son détail et par son suivi.
+     *
+     * Deux exports, deux alertes : chaque colis ne porte que la sienne. Un colis
+     * domestique porte un tableau vide, pas une absence de clé : l'app lit
+     * `customs_alerts` sans condition.
+     */
+    public function test_le_detail_et_le_suivi_d_un_colis_portent_ses_alertes_douanieres(): void
+    {
+        $this->postJson('/api/v10/parcel/store', $this->colis([
+            'destination_country' => 'TG', 'customs_category' => 'textile',
+        ]), $this->entetes())->assertOk();
+        $togo = Parcel::latest('id')->firstOrFail();
+
+        $this->postJson('/api/v10/parcel/store', $this->colis([
+            'destination_country' => 'TG', 'customs_category' => 'textile', 'customer_name' => 'Second export',
+        ]), $this->entetes())->assertOk();
+        $second = Parcel::latest('id')->firstOrFail();
+
+        $this->postJson('/api/v10/parcel/store', $this->colis(), $this->entetes())->assertOk();
+        $domestique = Parcel::latest('id')->firstOrFail();
+
+        $this->assertSame(2, CustomsAlert::count());
+        $alerte = CustomsAlert::where('parcel_id', $togo->id)->firstOrFail();
+
+        foreach (['details', 'logs'] as $lecture) {
+            $this->getJson("/api/v10/parcel/{$lecture}/{$togo->id}", $this->entetes())
+                ->assertOk()
+                ->assertJsonCount(1, 'data.customs_alerts')
+                ->assertJsonPath('data.customs_alerts.0.id', $alerte->id)
+                ->assertJsonPath('data.customs_alerts.0.parcel_id', $togo->id)
+                ->assertJsonPath('data.customs_alerts.0.level', CustomsLevel::WARNING)
+                ->assertJsonPath('data.customs_alerts.0.status', CustomsAlertStatus::PENDING)
+                ->assertJsonPath('data.customs_alerts.0.required_document', $alerte->required_document);
+
+            // Le second export a SA propre alerte : rien de l'autre colis ne fuit.
+            $this->getJson("/api/v10/parcel/{$lecture}/{$second->id}", $this->entetes())
+                ->assertOk()
+                ->assertJsonCount(1, 'data.customs_alerts')
+                ->assertJsonPath('data.customs_alerts.0.parcel_id', $second->id);
+
+            $this->getJson("/api/v10/parcel/{$lecture}/{$domestique->id}", $this->entetes())
+                ->assertOk()
+                ->assertJsonPath('data.customs_alerts', []);
+        }
+    }
+
     public function test_un_export_bloquant_est_refuse_et_ne_cree_rien(): void
     {
         // Nigeria + produits alimentaires : BLOQUANT (certificat NAFDAC).

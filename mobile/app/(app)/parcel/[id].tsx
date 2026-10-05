@@ -3,11 +3,13 @@ import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
 import { ApiError } from '../../../src/api/client';
+import { resolveCustomsAlert } from '../../../src/api/customs';
 import { fetchParcelTimeline } from '../../../src/api/parcels';
-import type { Parcel, ParcelEvent } from '../../../src/api/types';
-import { Card, ErrorText, Muted, Title } from '../../../src/components/ui';
+import type { CustomsAlert, Parcel, ParcelEvent } from '../../../src/api/types';
+import { Button, Card, ErrorText, Muted, Title } from '../../../src/components/ui';
 import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, radii, spacing } from '../../../src/theme/typography';
+import { CustomsAlertStatus, customsLevelColorName } from '../../../src/domain/customsLevel';
 import { formatAmount } from '../../../src/domain/money';
 import { TIMELINE_ORDER, isIncident, toMerchantStage } from '../../../src/domain/parcelStatus';
 import { stageLabel, t } from '../../../src/i18n';
@@ -16,6 +18,9 @@ export default function ParcelDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [parcel, setParcel] = useState<Parcel | null>(null);
   const [events, setEvents] = useState<ParcelEvent[]>([]);
+  // S82 (M1) — les alertes douanières DE CE colis, servies avec lui.
+  const [customsAlerts, setCustomsAlerts] = useState<CustomsAlert[]>([]);
+  const [busyAlertId, setBusyAlertId] = useState<number | null>(null);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -26,13 +31,30 @@ export default function ParcelDetailScreen() {
       return;
     }
     try {
-      const { parcel: p, events: e } = await fetchParcelTimeline(numericId);
+      const { parcel: p, events: e, customsAlerts: a } = await fetchParcelTimeline(numericId);
       setParcel(p);
       setEvents(e);
+      setCustomsAlerts(a);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('errors.unexpected'));
     }
   }, [id]);
+
+  /** Le marchand déclare avoir réuni le document ; le serveur rend l'alerte à jour. */
+  const resolveAlert = useCallback(async (alertId: number) => {
+    setBusyAlertId(alertId);
+    setError('');
+    try {
+      const updated = await resolveCustomsAlert(alertId);
+      setCustomsAlerts((current) =>
+        current.map((alert) => (alert.id === alertId && updated ? updated : alert)),
+      );
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t('errors.unexpected'));
+    } finally {
+      setBusyAlertId(null);
+    }
+  }, []);
 
   useEffect(() => {
     void load();
@@ -51,6 +73,45 @@ export default function ParcelDetailScreen() {
             <Text style={styles.status}>{parcel.statusName ?? '—'}</Text>
             <Muted>{parcel.created_at ?? ''}</Muted>
           </Card>
+
+          {/* S82 (M1) — la douane sur le colis lui-même. Le niveau se lit sur le
+              bord gauche et le badge, par la même table que l'écran Douane et le
+              tableau de bord (`customsLevelColorName`, S68) : un blocage ne se
+              lit jamais comme un conseil. Rien n'est rendu pour un colis
+              domestique : la carte n'existe pas. */}
+          {customsAlerts.length > 0 && (
+            <Card>
+              <Title>{t('customs.title')}</Title>
+              {customsAlerts.map((alert) => {
+                const tone = colors[customsLevelColorName(alert.level)];
+                return (
+                  <View key={alert.id} style={[styles.alert, { borderLeftColor: tone }]}>
+                    <View style={styles.alertTop}>
+                      <Text style={styles.alertRoute}>
+                        {alert.country_name} — {alert.category_name}
+                      </Text>
+                      <Text style={[styles.alertBadge, { color: tone }]}>{alert.level_name}</Text>
+                    </View>
+                    <Text style={styles.alertMessage}>{alert.message}</Text>
+                    {!!alert.required_document && (
+                      <Text style={styles.alertDocument}>
+                        {t('customs.requiredDocument')} : {alert.required_document}
+                      </Text>
+                    )}
+                    {alert.status === CustomsAlertStatus.PENDING ? (
+                      <Button
+                        title={t('customs.markResolved')}
+                        onPress={() => void resolveAlert(alert.id)}
+                        loading={busyAlertId === alert.id}
+                      />
+                    ) : (
+                      <Muted>{alert.status_name}</Muted>
+                    )}
+                  </View>
+                );
+              })}
+            </Card>
+          )}
 
           <Card>
             <Title>{t('parcels.recipient')}</Title>
@@ -171,6 +232,18 @@ const styles = StyleSheet.create({
     color: colors.warning,
     marginTop: spacing.xs,
   },
+  alert: {
+    // Le niveau se lit d'un coup d'œil sur le bord gauche, comme sur l'écran Douane.
+    borderLeftWidth: 4,
+    paddingLeft: spacing.sm,
+    paddingVertical: spacing.xs,
+    gap: spacing.xs,
+  },
+  alertTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
+  alertRoute: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.sm, color: colors.text, flexShrink: 1 },
+  alertBadge: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.xs },
+  alertMessage: { fontFamily: fonts.body, fontSize: fontSizes.sm, color: colors.text },
+  alertDocument: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.sm, color: colors.textMuted },
   event: { paddingVertical: spacing.xs },
   eventLabel: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.sm, color: colors.text },
   proof: { marginTop: spacing.xs, gap: spacing.xs },
