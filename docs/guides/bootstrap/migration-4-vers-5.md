@@ -203,6 +203,10 @@ vérification visuelle — sept lots de charte ont été livrés sur la foi de f
 et de calculs. Migrer sans ce regard, c'est déplacer un risque qu'on ne sait pas
 mesurer.
 
+> **Tranché le 2026-10-06 (S107, D15)** : les étapes A et B suffisent ; C, D et E ne sont pas
+> entreprises. À rouvrir après la recette pilote, avec le contrôle visuel humain (E5), si un
+> défaut d'écran le demande.
+
 **Recommandation : les étapes A et B, faites, suffisent pour aujourd'hui.** Elles
 retirent un CDN, réalignent deux versions et désamorcent le piège silencieux, le
 tout sans qu'un pixel bouge. Les étapes C à E se décident quand quelqu'un pourra

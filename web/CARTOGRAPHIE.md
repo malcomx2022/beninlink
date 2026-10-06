@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8647,3 +8647,39 @@ L6 de la recette garde son sens — si les PME jugent la signature superflue sur
 retire de l'écran, le serveur continue de l'accepter. Il n'instruit pas l'exonération de TVA du
 transport international (question fiscale, expert-comptable). La photo (`image`) reste réservée à
 la livraison : un retour n'a pas de « colis remis » à photographier.
+
+## S107 — dette technique T2, T3, T9 tranchée (D15) (2026-10-06)
+
+### D'où ça vient
+
+Trois lignes de dette technique du registre (§ 7.2) attendaient une décision : les colonnes
+monétaires en `decimal(…,2)` (T2), la migration Bootstrap 4 → 5 (T3) et la re-fusion du socle
+We Courier (T9). Le porteur a rendu la main. La règle d'or — appropriation, pas réécriture — les
+tranche dans le même sens : **on ne refait pas ce qui marche, on le tient.** Le détail et les
+raisons sont dans `docs/DECISIONS_METIER.md`, D15.
+
+### Ce qui est écrit
+
+| Où | Quoi |
+|---|---|
+| `app/Console/Commands/NonIntegerAmountsCommand.php` | `beninlink:montants-non-entiers {--societe=}` : table par table (`parcels`, `invoices`, `wallets`, `merchants`), les montants dont `ROUND(x) <> x`, avec les identifiants ; constat seul, sortie 0 ; société lue dans la liste des sociétés (F4) |
+| `tests/Feature/NonIntegerAmountsTest.php` (3 tests) | une base amorcée ne porte aucune décimale ; une décimale glissée en base est constatée **sans être corrigée** ; les colonnes surveillées sont celles des relevés |
+| `docs/guides/infra/reprise/README.md` § 8 | le constat rejoint les trois autres |
+| Docs | registre § 7.2 (T2, T3, T9 barrés), `DECISIONS_METIER.md` (ligne et section D15), `bootstrap/migration-4-vers-5.md` § 5, `socle/mise-a-jour-we-courier.md`, CLAUDE.md, en-têtes |
+
+Un piège de test, utile au prochain constat : `expectsOutputToContain()` consomme **une ligne
+de sortie par attente, dans l'ordre** — deux attentes sur la même ligne font échouer la
+seconde. Une attente par ligne.
+
+### Vérification
+
+| Sabotage | Effet |
+|---|---|
+| le constat compte `ROUND(x) = x` au lieu de `<>` | **rouge** (2 tests : la base amorcée devient « non entière », la décimale glissée disparaît) |
+
+Suite complète `web/` : **1 302 tests, 49 106 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne touche ni au schéma, ni aux vues Bootstrap, ni au socle : c'est le sens des trois
+décisions. T4 (PHP 8.4) reste une attente, pas une décision.

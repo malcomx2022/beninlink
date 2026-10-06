@@ -324,6 +324,9 @@ avant les apps.
 - **R1, R2, R8 actés par des défauts réversibles** (**S106**) : huit forfaits CEDEAO dans `ZoneCatalog::PAYS`
   (point de départ, jamais réécrits) ; les numéros SYSCOHADA en place sont le plan de travail ; un **retour**
   peut porter `signatureImage` (`returntoQourier()`, même champ que la livraison, `DeliveryProofTest`).
+- **Dette technique tranchée (D15, S107)** : pas de migration des colonnes `decimal` — la règle « FCFA entiers »
+  se vérifie par `beninlink:montants-non-entiers` (constat, rien d'écrit) ; Bootstrap 4 + 5 cohabitent à dessein ;
+  pas de re-fusion We Courier, le fork est le produit.
 - **Le livreur voit l'alerte douanière de sa course, en lecture seule** (**S95**).
   `deliveryman/parcel/details/{id}` porte `customs_alerts` (même `CustomsAlertResource` que S82)
   sur le colis déjà vérifié par `notOwned()` ; un domestique rend `[]`, la course d'un collègue
