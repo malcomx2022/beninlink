@@ -312,6 +312,15 @@ avant les apps.
   reste un 404. Aucune route de traitement n'est ouverte au livreur (`customs/alerts/{id}/resolve`
   est marchande, S68 : 403). `DeliverymanCustomsAlertTest` (API) et
   `CourierAppCustomsContractTest` (sources de l'app) tiennent le contrat.
+- **Les entrées d'authentification de l'API sont limitées contre la force brute** (**S96**).
+  Limiteur nommé `connexion` (`RouteServiceProvider`) sur `signin`, `deliveryman/login`,
+  `otp-verification`, `resend-otp`, `password/email`, `password/reset` : **5/min par identifiant +
+  adresse** (`merchant_id`, `driver_id`, `email` ou `mobile`, normalisé) et **30/min par adresse**.
+  Réponse 429 dans l'enveloppe de l'API, `Retry-After`, message `auth.throttle` dans la langue
+  négociée. ⚠️ `ThrottleRequests` est dans `$middlewarePriority` : il tourne **avant** `ApiLocale`
+  (S90), le limiteur négocie donc la langue lui-même (`ApiLocale::negocier`). Le générateur
+  OpenAPI documente le 429 dès qu'une route porte `throttle:*`. `register` n'est pas limité
+  (une inscription qui échoue cinq fois à la validation ne doit pas bloquer la PME).
 - **Les deux apps ont leur filet de contrat** (**S85**). L'app marchand : `OpenApiSpecTest`
   (inventaire), `ParcelStageTest` (statuts), `MerchantAppCustomsContractTest` (pages, douane).
   L'app livreur : `DeliverymanAppContractTest` — inventaire dans la spec et jamais réservé au
