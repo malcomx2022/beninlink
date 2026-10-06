@@ -290,6 +290,15 @@ avant les apps.
   joue le préfixe `SeedsTenant` et lit les autres semences à la source ; seul `CurrencySeeder`
   (catalogue mondial) garde le taka. Les textes anglais de la vitrine (`CompanyFrontendDataSeeder`,
   `SectionSeeder`) restent : MySQL brut, lot à part.
+- **La vitrine d'une société neuve parle français** (**S93**). `CompanyFrontendDataSeeder` est la
+  **seule source** de la vitrine publique : `companySiteData($societe)` (appelé par
+  `CompanyRepository` à la création d'une société et par `UserSeeder` pour la démo) et les huit
+  semences `Backend/FrontWeb` de la société 1, qui y délèguent. Contenu français et honnête
+  (compteurs à une agence et zéro colis, pages légales lisibles, trois articles vrais), inséré par
+  Eloquent et `DB::table()` : plus de `DB::statement` MySQL ni de `Faker` dans la vitrine, la suite
+  la joue sur SQLite. `StorefrontSpeaksFrenchTest` lit ce qu'un visiteur lit, dont la page
+  d'accueil en HTTP (`MountsTenantRoutes`). ⚠️ `UserSeeder` sème déjà la vitrine de la société 2 :
+  un test qui rappelle `companySiteData(2)` la double.
 - **Les deux apps ont leur filet de contrat** (**S85**). L'app marchand : `OpenApiSpecTest`
   (inventaire), `ParcelStageTest` (statuts), `MerchantAppCustomsContractTest` (pages, douane).
   L'app livreur : `DeliverymanAppContractTest` — inventaire dans la spec et jamais réservé au

@@ -2,67 +2,18 @@
 
 namespace Database\Seeders\Backend\FrontWeb;
 
-use App\Models\Backend\FrontWeb\SocialLink;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Database\Seeders\CompanyFrontendDataSeeder;
 use Illuminate\Database\Seeder;
 
+/**
+ * Vitrine de la **société 1** (la plateforme). Depuis **S93** le contenu vit dans
+ * `CompanyFrontendDataSeeder::reseauxSociaux()`, la même source que la vitrine de chaque
+ * société créée par le super-admin : une seule version, en français.
+ */
 class SocialLinkSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
-        $socials = [
-            [
-                'name'  => 'facebook',
-                'icon'  => 'fab fa-facebook-square',
-                'link'  => 'https://www.facebook.com',
-                'status' => 1
-            ],
-            [
-                'name'  => 'Instagram',
-                'icon'  => 'fab fa-instagram',
-                'link'  => 'https://www.instagram.com',
-                'status' => 1
-            ],
-            [
-                'name'  => 'Twitter',
-                'icon'  => 'fab fa-twitter',
-                'link'  => 'https://www.twitter.com',
-                'status' => 1
-            ],
-            [
-                'name'  => 'Youtube',
-                'icon'  => 'fab fa-youtube',
-                'link'  => 'https://www.youtube.com',
-                'status' => 0
-            ],
-            [
-                'name'  => 'Whatsapp',
-                'icon'  => 'fab fa-whatsapp',
-                'link'  => 'https://www.whatsapp.com',
-                'status' => 0
-            ],
-            [
-                'name'  => 'Skype',
-                'icon'  => 'fab fa-skype',
-                'link'  => 'https://www.skype.com',
-                'status' => 1
-            ]
-        ];
-
-        foreach ($socials as  $key => $social) {
-            $socialLink           = new SocialLink();
-            $socialLink->company_id     = 1;
-            $socialLink->name     = $social['name'];
-            $socialLink->icon     = $social['icon'];
-            $socialLink->link     = $social['link'];
-            $socialLink->status   = $social['status'];
-            $socialLink->position = ($key + 1);
-            $socialLink->save();
-        }
+        (new CompanyFrontendDataSeeder)->reseauxSociaux(1);
     }
 }

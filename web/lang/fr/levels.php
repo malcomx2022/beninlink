@@ -306,7 +306,7 @@ return [
     "Enter_about_us"          =>  'Entrez À propos de nous',
     'play_store'              => 'Jouer au magasin',
     'ios_store'                => 'Boutique iOS', 
-    'home'                    => 'Maison',
+    'home'                    => 'Accueil', // S93 — « Maison » était la traduction mot à mot de Home
     'pricing'                 => 'Tarification',
     'tracking'                => 'Suivie',
     'about'                   => 'À propos',

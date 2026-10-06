@@ -125,9 +125,8 @@ class SeedsSpeakBeninTest extends TestCase
             }
         }
 
-        foreach (['seeders/CompanyFrontendDataSeeder.php', 'seeders/Backend/FrontWeb/SectionSeeder.php'] as $vitrine) {
-            $this->assertStringContainsString('6.3703,2.3912', file_get_contents(database_path($vitrine)), "{$vitrine} : la carte de la vitrine pointe Cotonou");
-        }
+        // S93 : la vitrine n'a plus qu'une source, `CompanyFrontendDataSeeder` (les semences `FrontWeb` y délèguent).
+        $this->assertStringContainsString('6.3703,2.3912', file_get_contents(database_path('seeders/CompanyFrontendDataSeeder.php')), 'la carte de la vitrine pointe Cotonou');
         $comptes = file_get_contents(database_path('seeders/PaymentAccountSeeder.php'));
         $this->assertStringContainsString("['MTN MoMo','Moov Money']", $comptes, 'les comptes mobile money sont ceux que FedaPay sert');
     }

@@ -2,29 +2,18 @@
 
 namespace Database\Seeders\Backend\FrontWeb;
 
-use App\Models\Backend\FrontWeb\Blog;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Database\Seeders\CompanyFrontendDataSeeder;
 use Illuminate\Database\Seeder;
-use Faker\Factory as Faker;
 
+/**
+ * Vitrine de la **société 1** (la plateforme). Depuis **S93** le contenu vit dans
+ * `CompanyFrontendDataSeeder::articles()`, la même source que la vitrine de chaque
+ * société créée par le super-admin : une seule version, en français.
+ */
 class BlogSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
-        $faker = Faker::create();
-        for ($i = 0; $i < 10; $i++) {
-            $blog              = new Blog();
-            $blog->company_id     = 1;
-            $blog->title       = $faker->unique()->sentence(10);
-            $blog->description = $faker->unique()->sentence(100);
-            $blog->position    = $i;
-            $blog->created_by  = 1;
-            $blog->save();
-        }
+        (new CompanyFrontendDataSeeder)->articles(1);
     }
 }

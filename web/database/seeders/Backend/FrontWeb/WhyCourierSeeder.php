@@ -2,42 +2,18 @@
 
 namespace Database\Seeders\Backend\FrontWeb;
 
-use App\Models\Backend\FrontWeb\WhyCourier;
-use App\Models\Backend\Upload;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Database\Seeders\CompanyFrontendDataSeeder;
 use Illuminate\Database\Seeder;
 
+/**
+ * Vitrine de la **société 1** (la plateforme). Depuis **S93** le contenu vit dans
+ * `CompanyFrontendDataSeeder::atouts()`, la même source que la vitrine de chaque
+ * société créée par le super-admin : une seule version, en français.
+ */
 class WhyCourierSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
-        $lists = [
-            'Timely Delivery '      => 'timly-delivery.png',
-            'Limitless Pickup'      => 'limitless-pickup.png',
-            'Cash on delivery (COD)' => 'cash-on-delivery.png',
-            'Get Payment Any Time ' => 'payment.png',
-            'Secure Handling '      => 'handling.png',
-            'Live Tracking Update'  => 'live-tracking.png',
-        ];
-
-        $i = 0;
-        foreach ($lists as  $key => $item) {
-            $i++;
-            $upload           = new Upload();
-            $upload->original = "frontend/images/whycourier/" . $item;
-            $upload->save();
-
-            $whycourier             = new WhyCourier();
-            $whycourier->company_id     = 1;
-            $whycourier->title      = $key;
-            $whycourier->image_id   = $upload->id;
-            $whycourier->position   = $i;
-            $whycourier->save();
-        }
+        (new CompanyFrontendDataSeeder)->atouts(1);
     }
 }
