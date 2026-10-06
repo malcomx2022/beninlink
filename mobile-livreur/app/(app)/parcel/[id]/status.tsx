@@ -81,16 +81,20 @@ export default function ParcelStatusScreen() {
     }
     setSaving(true);
     try {
+      // Le PNG n'est produit qu'à l'envoi : inutile de capturer à chaque trait.
+      // S106 (R8) : la signature vaut pour une livraison ET pour un retour.
+      const signatureUri =
+        (action === 'delivered' || action === 'return') && hasSignature
+          ? await signatureRef.current?.capture()
+          : null;
       if (action === 'delivered') {
-        // Le PNG n'est produit qu'à l'envoi : inutile de capturer à chaque trait.
-        const signatureUri = hasSignature ? await signatureRef.current?.capture() : null;
         await reportDelivered(parcelId, {
           note,
           photoUri: photoUri ?? undefined,
           signatureUri: signatureUri ?? undefined,
         });
       } else {
-        await reportOutcome(parcelId, action, { cashCollection, note });
+        await reportOutcome(parcelId, action, { cashCollection, note, signatureUri: signatureUri ?? undefined });
       }
       // Position au moment de la déclaration : utile au transporteur, jamais bloquante.
       void shareCurrentPosition().catch(() => undefined);
@@ -156,9 +160,14 @@ export default function ParcelStatusScreen() {
                 <Button title={photoUri ? t('common.retakePhoto') : t('common.photo')} onPress={capture} />
                 {photoUri && <Button title={t('common.removePhoto')} onPress={() => setPhotoUri(null)} />}
               </View>
+            </View>
+          )}
 
+          {/* S106 (R8) — la signature vaut pour une livraison et pour un retour (celui qui reprend le colis) ; facultative. */}
+          {(action === 'delivered' || action === 'return') && (
+            <View style={styles.proof}>
               <Text style={styles.proofLabel}>{t('status.signature')}</Text>
-              <Muted>{t('status.signatureHint')}</Muted>
+              <Muted>{action === 'return' ? t('status.signatureReturnHint') : t('status.signatureHint')}</Muted>
               <SignaturePad ref={signatureRef} onChange={setHasSignature} onDrawingChange={setDrawing} />
               {hasSignature && (
                 <Button title={t('common.clearSignature')} onPress={() => signatureRef.current?.clear()} />

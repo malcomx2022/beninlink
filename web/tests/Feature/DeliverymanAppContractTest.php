@@ -277,4 +277,28 @@ class DeliverymanAppContractTest extends TestCase
         $this->assertSame($attendues, $nonAppelees,
             'la couverture de l\'inventaire livreur par la répétition de recette a changé : mettre HORS_REPETITION à jour (un endpoint nouveau se joue dans la répétition, ou se motive ici)');
     }
+    /**
+     * S106 (R8) — un retour peut porter la signature de celui qui reprend le colis.
+     * L'app l'envoie sous le **même champ** que la livraison (`signatureImage`), en
+     * multipart seulement quand elle est jointe ; l'écran la propose pour « Retour »
+     * avec son propre texte ; la spec dit le champ.
+     */
+    public function test_a_return_may_carry_the_signature_under_the_same_field_as_a_delivery(): void
+    {
+        $fonctions = preg_split('/(?=export async function )/', $this->livreur('src/api/deliveryman.ts'));
+        $outcome = collect($fonctions)->first(fn ($f) => str_starts_with($f, 'export async function reportOutcome'));
+        $this->assertNotNull($outcome, 'reportOutcome a disparu du module');
+        $this->assertStringContainsString("action === 'return' && options.signatureUri", $outcome, 'la signature ne part que pour un retour, et seulement si elle est jointe');
+        $this->assertStringContainsString("form.append('signatureImage'", $outcome, 'même champ que la livraison');
+        $this->assertStringContainsString('endpoints.parcelStatusUpdate, form', $outcome);
+
+        $ecran = $this->livreur('app/(app)/parcel/[id]/status.tsx');
+        $this->assertStringContainsString("action === 'delivered' || action === 'return'", $ecran, 'le tracé est proposé pour la livraison ET le retour');
+        $this->assertStringContainsString("t('status.signatureReturnHint')", $ecran);
+        $this->assertStringContainsString('signatureReturnHint:', $this->livreur('src/i18n/fr.ts'));
+
+        $spec = json_decode(file_get_contents(public_path('openapi/v10.json')), true);
+        $props = $spec['paths']['/deliveryman/parcel-status-update']['post']['requestBody']['content']['multipart/form-data']['schema']['properties'] ?? [];
+        $this->assertArrayHasKey('signatureImage', $props, 'la spec documente la signature du retour');
+    }
 }

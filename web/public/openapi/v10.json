@@ -1451,7 +1451,7 @@
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "multipart/form-data": {
                             "schema": {
                                 "type": "object",
                                 "properties": {
@@ -1466,6 +1466,11 @@
                                         "type": "integer",
                                         "description": "Obligatoire pour la livraison partielle",
                                         "nullable": true
+                                    },
+                                    "signatureImage": {
+                                        "type": "string",
+                                        "format": "binary",
+                                        "description": "S106 (R8) — retour au coursier seulement : signature manuscrite de celui qui reprend le colis (PNG), facultative ; elle ressort dans ParcelEvent.signature_image. L'app envoie du multipart quand elle est jointe, du JSON sinon."
                                     },
                                     "note": {
                                         "type": "string",

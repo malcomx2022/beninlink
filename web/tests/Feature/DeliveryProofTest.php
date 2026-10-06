@@ -147,6 +147,45 @@ class DeliveryProofTest extends TestCase
         $this->assertSame(ParcelStatus::DELIVERED, (int) $this->colis->fresh()->status);
     }
 
+    /**
+     * S106 (R8) — la signature sur un RETOUR : celui qui reprend le colis signe,
+     * si on le lui demande. Même champ, même dossier, même lecture par le
+     * marchand que la livraison ; facultative, comme la recette L6 le prévoit.
+     */
+    public function test_the_deliveryman_may_attach_a_signature_to_a_return(): void
+    {
+        Sanctum::actingAs($this->livreur, ['deliveryman']);
+
+        $this->post('/api/v10/deliveryman/parcel-status-update', [
+            'parcel_id' => $this->colis->id,
+            'status_action' => ParcelStatus::RETURN_TO_COURIER,
+            'note' => 'Client absent, colis repris',
+            'signatureImage' => UploadedFile::fake()->image('signature.png', 600, 240),
+        ], $this->entetes() + ['Accept' => 'application/json'])->assertOk();
+
+        $event = ParcelEvent::where('parcel_id', $this->colis->id)
+            ->where('parcel_status', ParcelStatus::RETURN_TO_COURIER)->firstOrFail();
+
+        $this->assertSame('Client absent, colis repris', $event->note);
+        $this->assertStringStartsWith('uploads/parcel/signature/', $event->signature_image);
+        $this->assertFileExists(public_path($event->signature_image));
+        $this->assertNull($event->delivered_image, 'un retour ne porte pas de photo de livraison');
+    }
+
+    public function test_a_return_without_signature_is_still_accepted(): void
+    {
+        Sanctum::actingAs($this->livreur, ['deliveryman']);
+
+        $this->postJson('/api/v10/deliveryman/parcel-status-update', [
+            'parcel_id' => $this->colis->id,
+            'status_action' => ParcelStatus::RETURN_TO_COURIER,
+        ], $this->entetes())->assertOk();
+
+        $event = ParcelEvent::where('parcel_id', $this->colis->id)
+            ->where('parcel_status', ParcelStatus::RETURN_TO_COURIER)->firstOrFail();
+        $this->assertNull($event->signature_image);
+    }
+
     public function test_the_proof_is_optional(): void
     {
         Sanctum::actingAs($this->livreur, ['deliveryman']);

@@ -172,9 +172,14 @@ class DeliveryZoneApiTest extends TestCase
         $this->assertSame('cedeao', $export['cod_key']);
         $this->assertSame([
             ['code' => 'BF', 'name' => 'Burkina Faso', 'flat_amount' => '15000'],
+            ['code' => 'CI', 'name' => "Côte d'Ivoire", 'flat_amount' => '20000'],
+            ['code' => 'GH', 'name' => 'Ghana', 'flat_amount' => '15000'],
+            ['code' => 'ML', 'name' => 'Mali', 'flat_amount' => '22000'],
+            ['code' => 'NE', 'name' => 'Niger', 'flat_amount' => '18000'],
             ['code' => 'NG', 'name' => 'Nigeria', 'flat_amount' => '18000'],
+            ['code' => 'SN', 'name' => 'Sénégal', 'flat_amount' => '25000'],
             ['code' => 'TG', 'name' => 'Togo', 'flat_amount' => '12000'],
-        ], $export['countries'], 'les forfaits CEDEAO, triés par nom de pays');
+        ], $export['countries'], 'les huit forfaits CEDEAO (S106), triés par nom de pays');
     }
 
     public function test_le_supplement_de_delai_est_servi_une_fois_pour_toutes_les_zones(): void

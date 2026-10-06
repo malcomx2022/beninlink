@@ -162,4 +162,12 @@ elle, sera un lot à part, écrit **après** votre réponse, sur le modèle de
 `beninlink:retours-annules --corriger` : constat d'abord, écriture ensuite,
 jamais en production sans `--force`.
 
+> **Au 2026-10-06 (S106).** Les numéros en place (4712, 4191, 4713) et les codes
+> VE / OD / BQ / CA sont le **plan de travail** : l'export tourne avec, et une
+> préférence de votre part se pose en une ligne de `web/config/syscohada.php`.
+> La **régularisation du passé (point 3) est sans objet** : la production a
+> démarré le 2026-10-06, après S73 — aucun retour n'y a été facturé sans TVA,
+> `beninlink:retours-sans-tva` y rend zéro. Restent à vous : une préférence de
+> numéros, et l'opposabilité du PDF (point 6).
+
 Nom et signature : ______________________  ·  Date : ____________

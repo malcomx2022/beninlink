@@ -201,13 +201,14 @@ class DeliveryZonePricingBaselineTest extends TestCase
     /**
      * La zone d'export se facture au **pays**, forfait, sans regarder le poids.
      *
-     * Les trois montants sont ceux tranchés par le métier le 2026-09-06 ; ils
-     * font partie de l'étalon au même titre que la grille nationale, et ne
-     * doivent pas plus bouger sans décision.
+     * Les trois premiers montants sont ceux tranchés par le métier le 2026-09-06,
+     * les cinq suivants le point de départ posé en S106 (R1) ; ils font partie
+     * de l'étalon au même titre que la grille nationale, et ne doivent pas plus
+     * bouger sans décision (à l'écran, le transporteur ajuste ce qu'il veut).
      */
     public function test_le_forfait_de_chaque_pays_de_la_cedeao(): void
     {
-        foreach (['TG' => 12000, 'NG' => 18000, 'BF' => 15000] as $pays => $forfait) {
+        foreach (['TG' => 12000, 'NG' => 18000, 'BF' => 15000, 'GH' => 15000, 'NE' => 18000, 'CI' => 20000, 'ML' => 22000, 'SN' => 25000] as $pays => $forfait) {
             $this->assertEquals($forfait, $this->tarif(DeliveryZone::CEDEAO, 1, null, $pays), $pays);
             // Un forfait ne regarde pas le poids : 1 kg et 10 kg au même prix.
             $this->assertEquals($forfait, $this->tarif(DeliveryZone::CEDEAO, 10, null, $pays), $pays);
@@ -215,13 +216,13 @@ class DeliveryZonePricingBaselineTest extends TestCase
     }
 
     /**
-     * Un pays hors de la liste n'est **pas** facturé au hasard. Le Ghana est
-     * membre de la CEDEAO et n'a pas de forfait : la zone ne lui applique rien
-     * plutôt que d'emprunter le montant d'un voisin.
+     * Un pays hors de la liste n'est **pas** facturé au hasard. La Guinée est
+     * membre de la CEDEAO et n'a pas de forfait (le Ghana en a un depuis S106) :
+     * la zone ne lui applique rien plutôt que d'emprunter le montant d'un voisin.
      */
     public function test_un_pays_hors_liste_na_pas_de_tarif(): void
     {
-        $this->assertNull($this->tarif(DeliveryZone::CEDEAO, 1, null, 'GH'));
+        $this->assertNull($this->tarif(DeliveryZone::CEDEAO, 1, null, 'GN'));
     }
 
     /**

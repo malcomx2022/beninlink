@@ -198,26 +198,26 @@ class DeliveryZoneScreensTest extends TestCase
         $this->assertNotNull($cedeao);
 
         $resolveur = new DeliveryChargeResolver();
-        // Le Ghana n'est pas dans les forfaits tranchés par le métier : avant
+        // La Guinée (le Ghana a son forfait depuis S106) n'est pas dans les forfaits tranchés par le métier : avant
         // saisie, la zone ne sait rien lui facturer — et le dit.
         $this->assertNull(
-            $resolveur->resolveByZone($this->merchant->id, $this->categoryId, 1, $cedeao->id, null, 'GH')
+            $resolveur->resolveByZone($this->merchant->id, $this->categoryId, 1, $cedeao->id, null, 'GN')
         );
 
         $this->repo->enregistrerPays($cedeao, [
-            ['id' => '', 'code' => 'gh', 'name' => 'Ghana', 'flat_amount' => 14000, 'status' => Status::ACTIVE],
+            ['id' => '', 'code' => 'gn', 'name' => 'Guinée', 'flat_amount' => 14000, 'status' => Status::ACTIVE],
         ]);
 
-        $pays = DeliveryZoneCountry::where('zone_id', $cedeao->id)->where('code', 'GH')->firstOrFail();
-        $this->assertSame('Ghana', $pays->name);
+        $pays = DeliveryZoneCountry::where('zone_id', $cedeao->id)->where('code', 'GN')->firstOrFail();
+        $this->assertSame('Guinée', $pays->name);
 
         // Le forfait ne regarde pas le poids : 1 kg et 10 kg au même prix.
-        $this->assertSame(14000.0, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, 1, $cedeao->id, null, 'GH'));
-        $this->assertSame(14000.0, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, 10, $cedeao->id, null, 'gh'));
+        $this->assertSame(14000.0, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, 1, $cedeao->id, null, 'GN'));
+        $this->assertSame(14000.0, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, 10, $cedeao->id, null, 'gn'));
 
         // Un pays toujours non saisi reste sans tarif : on ne facture pas au hasard.
         $this->assertNull(
-            $resolveur->resolveByZone($this->merchant->id, $this->categoryId, 1, $cedeao->id, null, 'CI')
+            $resolveur->resolveByZone($this->merchant->id, $this->categoryId, 1, $cedeao->id, null, 'LR')
         );
     }
 
@@ -226,13 +226,13 @@ class DeliveryZoneScreensTest extends TestCase
         $cedeao = $this->repo->zoneExport();
 
         $this->repo->enregistrerPays($cedeao, [
-            ['id' => '', 'code' => 'GH', 'name' => 'Ghana', 'flat_amount' => 14000],
-            ['id' => '', 'code' => 'gh', 'name' => 'Ghana', 'flat_amount' => 15000],
+            ['id' => '', 'code' => 'GN', 'name' => 'Guinée', 'flat_amount' => 14000],
+            ['id' => '', 'code' => 'gn', 'name' => 'Guinée', 'flat_amount' => 15000],
         ]);
 
-        $ghana = DeliveryZoneCountry::where('zone_id', $cedeao->id)->where('code', 'GH')->get();
-        $this->assertCount(1, $ghana);
-        $this->assertSame(15000.0, (float) $ghana->first()->flat_amount);
+        $guinee = DeliveryZoneCountry::where('zone_id', $cedeao->id)->where('code', 'GN')->get();
+        $this->assertCount(1, $guinee);
+        $this->assertSame(15000.0, (float) $guinee->first()->flat_amount);
     }
 
     // ---- La grille ---------------------------------------------------------

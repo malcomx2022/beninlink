@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8605,3 +8605,45 @@ passerelle de la plateforme, et `Helper.php` le dit (« `stripe_status` sert aus
 SaaS »). Il ne touche pas au retour de Stripe (`subscription/success`, vérifié depuis S1) ni au
 chemin FedaPay (Chantier 3). La passe de S40 est close : `search-charts` répond des dates à tout
 compte authentifié (aucune donnée), `store-token` répond 410 depuis D12.
+
+## S106 — R1, R2 et R8 actés par des défauts réversibles (2026-10-06)
+
+### D'où ça vient
+
+Trois décisions métier attendaient dans le registre (§ 7.1) : le reliquat CEDEAO de la grille
+(R1), les numéros de comptes SYSCOHADA (R2) et la signature sur un retour (R8). Le porteur a
+rendu la main sur les trois. La règle du projet pour une décision de ce type est celle de S72 :
+**un défaut qui marche, documenté, réversible à l'écran ou en une ligne de configuration** — pas
+une case vide qui bloque la recette.
+
+### Ce qui est écrit
+
+| Décision | Où | Quoi |
+|---|---|---|
+| R1 | `ZoneCatalog::PAYS` | cinq pays de plus, point de départ gradué à la distance depuis Cotonou (GH 15 000, NE 18 000, CI 20 000, ML 22 000, SN 25 000 F), **créés s'ils manquent, jamais réécrits** ; le COD CEDEAO (3 %) datait du 2026-09-06 ; la TVA à l'export reste au taux du marchand (D1/R7) |
+| R1 | `DeliveryZoneApiTest`, `DeliveryZonePricingBaselineTest`, `PricingReadinessAuditTest`, `DeliveryZoneGridTest`, `DeliveryZoneScreensTest`, `ParcelZoneRouteTest` | les huit forfaits servis et étalonnés ; cinq tests figeaient « trois pays » ou prenaient le Ghana et la Côte d'Ivoire comme exemples **non tarifés** — la Guinée et le Libéria les remplacent, le compte des forfaits se lit dans `ZoneCatalog::PAYS` |
+| R2 | docs seulement | les numéros en place (4712, 4191, 4713 ; VE/OD/BQ/CA) sont le **plan de travail** ; la régularisation du passé est **sans objet** : la production a démarré le 2026-10-06, après S73 |
+| R8 | `ParcelRepository::returntoQourier()` | un retour peut porter `signatureImage`, même champ et même dossier que la livraison, stocké sur l'événement `RETURN_TO_COURIER` et lu par le marchand (`parcel/logs`) |
+| R8 | overlay `deliveryman/parcel-status-update` | corps en multipart, `signatureImage` facultatif, retour seulement ; spec régénérée |
+| R8 | `mobile-livreur` | l'écran d'issue propose le tracé pour « Retour » (texte `status.signatureReturnHint`) ; `reportOutcome()` envoie du multipart quand la signature est jointe, le JSON du socle sinon |
+| R8 | `DeliveryProofTest` (+2), `DeliverymanAppContractTest` (+1) | retour avec signature stockée, retour sans signature accepté ; l'app envoie sous le même champ, l'écran le propose, la spec le dit |
+| Docs | registre § 7.1 (R1, R2 clos, R8 livré), `DECISIONS_METIER.md` (D2, D4 complément, R8), `plan-de-comptes.md` § 6, `refonte-bareme.md` § 1.4, CLAUDE.md, en-têtes |
+
+### Vérification
+
+`tsc`, `expo lint`, `jest` verts dans l'app livreur (30 tests).
+
+| Sabotage | Effet |
+|---|---|
+| `returntoQourier()` ignore `signatureImage` (`if (false)`) | **rouge** (1 test : la signature du retour n'est pas stockée) |
+| le Ghana retiré de `ZoneCatalog::PAYS` | **rouge** (2 tests : la liste servie, l'étalon des forfaits) |
+
+Suite complète `web/` : **1 299 tests, 49 096 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne fige rien : un forfait se change à l'écran, un numéro de compte en une ligne, et la question
+L6 de la recette garde son sens — si les PME jugent la signature superflue sur un retour, on la
+retire de l'écran, le serveur continue de l'accepter. Il n'instruit pas l'exonération de TVA du
+transport international (question fiscale, expert-comptable). La photo (`image`) reste réservée à
+la livraison : un retour n'a pas de « colis remis » à photographier.

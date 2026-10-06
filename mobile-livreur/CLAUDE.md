@@ -89,6 +89,8 @@ Icônes Ionicons ; visuels d'app générés depuis `assets/source/generate.py`.
   **S103** : la carte d'une course est un composant extrait, `ParcelCard` (`src/components/`), rendu en
   test (pastille, montant à encaisser en FCFA entiers, Appeler / Itinéraire inactifs sans numéro ou adresse,
   toucher) ; l'écran de la liste ne fait que la poser.
+  **S106 (R8)** : la signature est proposée aussi pour un **retour** (facultative, texte propre) ;
+  `reportOutcome()` l'envoie en multipart sous `signatureImage`, le JSON du socle sinon.
 
 ## Commandes
 - `npm install` · `npx expo start` · `npm run typecheck` · `npx expo lint` · `npm test`

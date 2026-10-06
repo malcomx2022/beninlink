@@ -164,8 +164,8 @@ class PricingReadinessAuditTest extends TestCase
 
     public function test_les_forfaits_poses_a_l_installation_levent_lavertissement(): void
     {
-        // Togo, Nigeria, Burkina : la décision du métier, posée par
-        // `ZoneCatalog`. L'avertissement n'a donc plus lieu d'être.
+        // Les huit pays de `ZoneCatalog::PAYS` (trois tranchés le 2026-09-06, cinq
+        // posés en S106) : l'avertissement n'a donc plus lieu d'être.
         $this->assertSame([], $this->audit()['avertissements']);
     }
 
