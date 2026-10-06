@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8281,6 +8281,12 @@ Il ne vérifie pas `SESSION_DRIVER` ni `QUEUE_CONNECTION` : une session `array` 
 le monde à la première page, ce qui se voit ; une file `sync` ne perd rien, elle ralentit. Il ne lit
 pas le `.env` du serveur : c'est le déploiement qui le lira, au prochain run.
 
+### Vu en production (run 229, 2026-10-06 07:21 UTC)
+
+Le déploiement de `main` qui portait S97 a **passé** `verifier-env.sh` : le `.env` de production
+n'est pas en `CACHE_DRIVER=array`, le limiteur de S96 compte bien entre requêtes. Rien à faire sur
+le serveur pour ce point.
+
 ## S98 — mot de passe oublié dans l'app livreur (2026-10-06)
 
 ### D'où ça vient
@@ -8353,3 +8359,39 @@ Il ne change pas `.env.example` (qui décrit un poste de développement) et ne l
 du serveur : le prochain déploiement le lira. Les runs 217 et 219 ont déployé sans que ce garde
 existe ; si la production est en `APP_DEBUG=true`, le prochain run le dira et s'arrêtera avant de
 couper le site.
+
+## S100 — la CI des pull requests n'attend plus le déploiement de `main` (2026-10-06)
+
+### D'où ça vient
+
+Le groupe de concurrence `deploiement-production` (`cancel-in-progress: false`) était posé **sur le
+workflow entier**. GitHub Actions ne fait tourner qu'un run du groupe à la fois : la suite de tests
+d'une pull request attendait donc que le déploiement de `main` en cours — déclenché par la fusion
+de la pull request précédente — soit terminé. Constaté sur les PR #161 à #166 : huit à quinze
+minutes d'attente par lot, pendant lesquelles rien ne tournait. La règle, elle, ne concerne que les
+deux jobs qui touchent un serveur.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `.github/workflows/deploy.yml` | plus de `concurrency` au niveau du workflow ; `deploy` porte `deploiement-production` et `deploy-recette` porte `deploiement-recette`, tous deux `cancel-in-progress: false` ; le commentaire explique les deux niveaux |
+| `DeploymentRehearsalTest` (+1) | pas de groupe sur le workflow ; les deux jobs de déploiement ont le leur, distincts, sans annulation ; `tests`, `apps`, `repetition` n'en ont pas |
+| Docs | cartographie § S100, « Vu en production (run 229) » sous S97, en-têtes datés |
+
+### Vérification
+
+| Sabotage | Effet |
+|---|---|
+| le groupe remis au niveau du workflow | **rouge** |
+
+Suite complète `web/` : **1 283 tests, 49 002 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne change pas la règle : deux déploiements sur le même serveur restent sérialisés, et un
+déploiement en cours n'est jamais interrompu. GitHub garde au plus **un** job en attente par groupe :
+deux fusions rapprochées font toujours annuler le déploiement en attente au profit du plus récent,
+qui contient le premier (vu au run 215). Les jobs `tests` et `repetition` d'un push sur `main`
+tournent désormais en parallèle de ceux d'une pull request : le job `repetition` monte sa propre
+base MySQL dans son conteneur, rien n'est partagé.
