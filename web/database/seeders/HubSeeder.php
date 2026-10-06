@@ -15,41 +15,45 @@ class HubSeeder extends Seeder
      */
     public function run()
     {
+        // S92 — les semences parlent du Bénin : six agences réelles du réseau
+        // visé (Cotonou, Abomey-Calavi, Porto-Novo, Parakou, Bohicon). Les ids
+        // 1 à 6 sont lus par les autres semences (livreur → 1, agence → 2,
+        // marchand → 4) : l'ordre ne change pas. Numéros à dix chiffres (01…).
         $hubs = [
             [
-                'name'            =>'Mirpur-10',
-                'phone'           =>'01000000001',
-                'address'         =>'Dhaka, Bangladesh',
+                'name'            =>'Cotonou — Cadjèhoun',
+                'phone'           =>'0197020001',
+                'address'         =>'Cadjèhoun, Cotonou, Bénin',
                 'current_balance' => '00'
             ],
             [
-                'name'            =>'Uttara',
-                'phone'           =>'01000000002',
-                'address'         =>'Dhaka, Bangladesh',
+                'name'            =>'Cotonou — Akpakpa',
+                'phone'           =>'0197020002',
+                'address'         =>'Akpakpa, Cotonou, Bénin',
                 'current_balance' => '00'
             ],
             [
-                'name'            =>'Dhanmundi',
-                'phone'           =>'01000000003',
-                'address'         =>'Dhaka, Bangladesh',
+                'name'            =>'Abomey-Calavi — Godomey',
+                'phone'           =>'0197020003',
+                'address'         =>'Godomey, Abomey-Calavi, Bénin',
                 'current_balance' => '00'
             ],
             [
-                'name'            =>'Old Dhaka',
-                'phone'           =>'01000000004',
-                'address'         =>'Dhaka, Bangladesh',
+                'name'            =>'Porto-Novo — Ouando',
+                'phone'           =>'0197020004',
+                'address'         =>'Ouando, Porto-Novo, Bénin',
                 'current_balance' => '00'
             ],
             [
-                'name'            =>'Jatrabari',
-                'phone'           =>'01000000005',
-                'address'         =>'Dhaka, Bangladesh',
+                'name'            =>'Parakou — Centre',
+                'phone'           =>'0197020005',
+                'address'         =>'Centre-ville, Parakou, Bénin',
                 'current_balance' => '00'
             ],
             [
-                'name'            =>'Badda',
-                'phone'           =>'01000000006',
-                'address'         =>'Dhaka, Bangladesh',
+                'name'            =>'Bohicon — Gare',
+                'phone'           =>'0197020006',
+                'address'         =>'Quartier de la gare, Bohicon, Bénin',
                 'current_balance' => '00'
             ],
         ];

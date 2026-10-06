@@ -20,8 +20,8 @@ class MerchantshopsSeeder extends Seeder
                     $shop=new MerchantShops();
                     $shop->merchant_id=1;
                     $shop->name='Shop '.$i;
-                    $shop->contact_no='+88013000000';
-                    $shop->address='Wemaxdevs,Dhaka';
+                    $shop->contact_no='0197030010';
+                    $shop->address='Marché Dantokpa, Cotonou, Bénin';
                     $shop->status=1;
                     $shop->default_shop=1;
                     $shop->save();
@@ -29,8 +29,8 @@ class MerchantshopsSeeder extends Seeder
                     $shop=new MerchantShops();
                     $shop->merchant_id=1;
                     $shop->name='Shop '.$i;
-                    $shop->contact_no='+88013000000';
-                    $shop->address='Wemaxdevs,Dhaka';
+                    $shop->contact_no='0197030010';
+                    $shop->address='Marché Dantokpa, Cotonou, Bénin';
                     $shop->status=1;
                     $shop->default_shop=0;
                     $shop->save();

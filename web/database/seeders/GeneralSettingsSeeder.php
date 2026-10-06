@@ -25,12 +25,12 @@ class GeneralSettingsSeeder extends Seeder
         $user->save(); 
 
         $row               = new GeneralSettings();
-        $row->name         = "We Courier";
-        $row->phone        = "20022002";
-        $row->email        = "info@wecourier.com";
-        $row->address      = "Mirpur 10, Dhaka, Bangladesh";
+        $row->name         = "BeninLink"; // S92 — la plateforme porte son nom
+        $row->phone        = "0197010000";
+        $row->email        = "contact@beninlink.app";
+        $row->address      = "Cadjèhoun, Cotonou, Bénin";
         $row->currency     = "FCFA";
-        $row->copyright    = "Copyright © All rights reserved. Development by WemaxDevs.";
+        $row->copyright    = "© Tous droits réservés — BeninLink.";
         $row->logo         = 8;
         $row->favicon      = 9;
         $row->par_track_prefix     = 'we';
@@ -45,12 +45,12 @@ class GeneralSettingsSeeder extends Seeder
         //company
  
         $row               = new GeneralSettings();
-        $row->name         = "Company";
-        $row->phone        = "20022002";
-        $row->email        = "info@company.com";
-        $row->address      = "Mirpur 10, Dhaka, Bangladesh";
+        $row->name         = "Transporteur de démonstration"; // S92 — société 2 : le jeu de démonstration
+        $row->phone        = "0197020000";
+        $row->email        = "contact@transporteur-demo.bj";
+        $row->address      = "Akpakpa, Cotonou, Bénin";
         $row->currency     = "FCFA";
-        $row->copyright    = "Copyright © All rights reserved. Development by Company Name.";
+        $row->copyright    = "© Tous droits réservés — Transporteur de démonstration.";
         $row->logo         = 8;
         $row->favicon      = 9;
         $row->par_track_prefix     = 'co';

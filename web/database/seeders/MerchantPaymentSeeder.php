@@ -18,21 +18,21 @@ class MerchantPaymentSeeder extends Seeder
         $payment=new MerchantPayment();
         $payment->merchant_id    =1;
         $payment->payment_method ='bank';
-        $payment->bank_name      = 'NRB Commercial Bank Ltd.';
-        $payment->holder_name    = 'Marchant';
+        $payment->bank_name      = 'Ecobank Bénin';
+        $payment->holder_name    = 'Marchand';
         $payment->account_no     = 123456;
-        $payment->branch_name    = 'Dhaka branch';
+        $payment->branch_name    = 'Agence Ganhi, Cotonou';
         $payment->routing_no     = 123456;
         $payment->status         = 1;
 
         $payment->save();
 
-        $company=['Bkash','Nagad','Rocket'];
+        $company=['MTN MoMo','Moov Money']; // S92 — les deux opérateurs servis par FedaPay
          foreach ( $company as $key => $value) {
             $payments=new MerchantPayment();
             $payments->merchant_id    =1;
             $payments->payment_method ='mobile';
-            $payments->holder_name    = 'Marchant';
+            $payments->holder_name    = 'Marchand';
              $payments->mobile_company = $value;
              $payments->mobile_no      = '01300000000';
              $payments->account_type   = 'Personal';
