@@ -105,6 +105,34 @@ class DeliverymanCustomsAlertTest extends TestCase
         $this->assertSame(CustomsAlertStatus::PENDING, $alerte->fresh()->status);
     }
 
+    /** S101 — la liste des courses dit lesquelles ont un document à collecter, sans ouvrir chaque colis. */
+    public function test_the_course_list_carries_the_number_of_pending_alerts(): void
+    {
+        $export = $this->colisConfieA($this->livreur);
+        $domestique = $this->colisConfieA($this->livreur, 'D');
+        $this->alerteSur($export, 'Certificat de circulation UEMOA', CustomsLevel::WARNING);
+        $traitee = $this->alerteSur($export, 'Facture commerciale', CustomsLevel::INFO);
+        $traitee->update(['status' => CustomsAlertStatus::RESOLVED]);
+
+        $courses = collect($this->getJson('/api/v10/deliveryman/dashboard', $this->entetes())->assertOk()->json('data.deliveryman_assign'))
+            ->keyBy('id');
+
+        $this->assertSame(1, $courses[$export->id]['customs_pending'], 'une alerte en cours, l\'alerte traitée ne compte plus');
+        $this->assertSame(0, $courses[$domestique->id]['customs_pending'], 'un domestique : zéro, pas une clé absente');
+    }
+
+    /** La même clé sur la liste du marchand (`parcel/index`) : les deux apps lisent le même `ParcelResource`. */
+    public function test_the_merchant_list_carries_it_too(): void
+    {
+        $export = $this->colisConfieA($this->livreur);
+        $this->alerteSur($export, 'Certificat de circulation UEMOA', CustomsLevel::WARNING);
+
+        Sanctum::actingAs($this->marchand->user->fresh(), ['merchant']);
+        $colis = collect($this->getJson('/api/v10/parcel/index', $this->entetes())->assertOk()->json('data.parcels'))->keyBy('id');
+
+        $this->assertSame(1, $colis[$export->id]['customs_pending']);
+    }
+
     /* ─────────────────────────── fixtures (TenantIsolationTest, S7) ─────── */
 
     private function livreur(string $suffixe): User

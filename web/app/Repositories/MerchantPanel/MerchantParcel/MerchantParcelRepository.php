@@ -42,7 +42,8 @@ class MerchantParcelRepository implements MerchantParcelInterface {
         return Parcel::where('merchant_id',$merchant_id)->orderByDesc('id')->paginate(10);
     }
     public function parcelAll($merchant_id){
-        return Parcel::with('merchant')->where('merchant_id',$merchant_id)->orderByDesc('id')->get();
+        // S101 — le nombre d'alertes douanières en cours voyage avec la liste (`customs_pending`, ParcelResource).
+        return Parcel::with('merchant')->withCount(['customsAlerts as customs_pending_count' => fn ($q) => $q->where('status', \App\Enums\CustomsAlertStatus::PENDING)])->where('merchant_id',$merchant_id)->orderByDesc('id')->get();
     }
 
     public function deliveryTypes(){

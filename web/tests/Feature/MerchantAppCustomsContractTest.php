@@ -359,4 +359,16 @@ class MerchantAppCustomsContractTest extends TestCase
         $this->assertFileExists($this->app('src/components/CustomsAlertCard.test.tsx'),
             'le test de rendu de la carte a disparu : la propriété redevient une lecture de source');
     }
+
+    /** S101 — la liste des colis signale une alerte douanière en cours sans ouvrir le colis (`customs_pending`). */
+    public function test_the_parcel_list_shows_the_customs_badge_from_customs_pending(): void
+    {
+        $liste = $this->source('app/(app)/parcels.tsx');
+        $this->assertStringContainsString('(item.customs_pending ?? 0) > 0', $liste, 'la pastille suit `customs_pending`, avec repli pour un serveur d\'avant S101');
+        $this->assertStringContainsString("t('customs.badge')", $liste);
+
+        $types = $this->source('src/api/types.ts');
+        $this->assertStringContainsString('customs_pending?: number;', $types, 'la clé est optionnelle : un serveur d\'avant S101 ne l\'envoie pas');
+        $this->assertStringContainsString('badge:', $this->source('src/i18n/fr.ts'));
+    }
 }

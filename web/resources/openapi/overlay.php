@@ -121,6 +121,7 @@ $schemas = [
         'zone' => $str('Libellé de la zone', true),
         'delay_id' => $int('Délai ; son supplément est global', true),
         'delay' => $str('Libellé du délai', true),
+        'customs_pending' => $int('S101 — nombre d\'alertes douanières **en cours** sur ce colis (0 pour un domestique) : la liste signale le document à collecter sans ouvrir le colis'),
         'status' => $int('App\\Enums\\ParcelStatus (33 constantes)'), 'statusName' => $str('Libellé traduit', true),
         'pickup_date' => $str('', true), 'delivery_date' => $str('', true), 'created_at' => $str('Déjà mise en forme (« 17 Aug 2026, 09:29 PM »)', true),
         'parcel_date' => $str('', true), 'parcel_time' => $str('', true),

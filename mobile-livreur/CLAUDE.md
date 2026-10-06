@@ -84,6 +84,8 @@ Icônes Ionicons ; visuels d'app générés depuis `assets/source/generate.py`.
   l'en-tête — le document à demander au marchand **au ramassage**, gravité par
   `customsLevelColorName` (`src/domain/customsLevel.ts`, valeurs du contrat). Lecture seule : pas
   de bouton, le traitement est au transporteur (S68). Carte rendue en test (`CustomsNotice.test.tsx`).
+  **S101** : la liste des courses lit `customs_pending` sur chaque `ParcelSummary` (optionnel) et pose une
+  pastille « Douane » : le livreur sait quel colis a un document à collecter avant d'ouvrir la course.
 
 ## Commandes
 - `npm install` · `npx expo start` · `npm run typecheck` · `npx expo lint` · `npm test`

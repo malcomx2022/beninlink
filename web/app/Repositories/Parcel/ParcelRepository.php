@@ -3756,13 +3756,13 @@ class ParcelRepository implements ParcelInterface {
     public function deliverymanStatusParcel($status){
 
         if($status == ParcelStatus::DELIVERED):
-            return Parcel::orderBy('updated_at')->orderBy('priority_type_id')->with(['merchant'])->whereIn('status',[ParcelStatus::DELIVERED, ParcelStatus::PARTIAL_DELIVERED])->where(function($query){
+            return Parcel::orderBy('updated_at')->orderBy('priority_type_id')->with(['merchant'])->withCount(['customsAlerts as customs_pending_count' => fn ($q) => $q->where('status', \App\Enums\CustomsAlertStatus::PENDING)])->whereIn('status',[ParcelStatus::DELIVERED, ParcelStatus::PARTIAL_DELIVERED])->where(function($query){
                 $query->wherehas('parcelEvent',function($eventquery){
                     $eventquery->where('delivery_man_id',Auth::user()->deliveryman->id);
                 });
             })->get();
         else:
-            return Parcel::orderBy('updated_at')->orderBy('priority_type_id')->with(['merchant'])->where('status',$status)->where(function($query){
+            return Parcel::orderBy('updated_at')->orderBy('priority_type_id')->with(['merchant'])->withCount(['customsAlerts as customs_pending_count' => fn ($q) => $q->where('status', \App\Enums\CustomsAlertStatus::PENDING)])->where('status',$status)->where(function($query){
                 $query->wherehas('parcelEvent',function($eventquery){
                     $eventquery->where('delivery_man_id',Auth::user()->deliveryman->id);
                 });
