@@ -56,4 +56,15 @@ class CourierAppCustomsContractTest extends TestCase
         $this->assertStringContainsString('customs: {', $fr);
         $this->assertStringContainsString('requiredDocument:', $fr);
     }
+
+    /** S101 — la liste des courses signale le document à collecter sans ouvrir la course (`customs_pending`). */
+    public function test_the_course_list_shows_the_customs_badge_from_customs_pending(): void
+    {
+        $liste = $this->source('app/(app)/(tabs)/index.tsx');
+        $this->assertStringContainsString('(item.customs_pending ?? 0) > 0', $liste, 'la pastille suit `customs_pending`, avec repli pour un serveur d\'avant S101');
+        $this->assertStringContainsString("t('customs.badge')", $liste);
+
+        $this->assertStringContainsString('customs_pending?: number;', $this->source('src/api/types.ts'));
+        $this->assertStringContainsString('badge:', $this->source('src/i18n/fr.ts'));
+    }
 }

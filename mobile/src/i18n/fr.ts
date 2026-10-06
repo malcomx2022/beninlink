@@ -217,6 +217,7 @@ export const fr = {
   },
   customs: {
     title: 'Alertes douanières',
+    badge: 'Douane',
     subtitle: 'Export UEMOA / CEDEAO',
     tabPending: 'En cours',
     tabResolved: 'Traitées',

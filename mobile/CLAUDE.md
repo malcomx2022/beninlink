@@ -124,7 +124,8 @@ Rien de tout ceci ne peut être versionné — ce sont des secrets et des liens 
 - **Deux niveaux de tests, deux rôles** (**S84 / M2**). `npm test` (Jest, préréglage
   `jest-expo`, `@testing-library/react-native` 14 — `await render`, `await fireEvent`) **exécute**
   ce qui est à l'app : les modules purs de `src/domain/` et `src/api/pagination.ts`, et les
-  composants extraits pour être rendus (`CustomsAlertCard`). Le **contrat** avec `web/` reste
+  composants extraits pour être rendus (`CustomsAlertCard`). **S101** : la liste des colis lit
+  `customs_pending` (optionnel, serveur d'avant S101 toléré) et pose une pastille « Douane » sur la carte. Le **contrat** avec `web/` reste
   tenu en PHPUnit dans `web/tests/` — `OpenApiSpecTest` (endpoints), `ParcelStageTest`
   (statuts), `MerchantAppCustomsContractTest` (tailles de page, valeurs des enums, la carte
   bien branchée) — parce qu'un test d'app ne peut pas lire `web/`. Un écran `expo-router`

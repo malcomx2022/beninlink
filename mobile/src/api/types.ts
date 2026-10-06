@@ -106,6 +106,8 @@ export type Parcel = {
    */
   zone?: string | null;
   delay?: string | null;
+  /** S101 — alertes douanières en cours sur ce colis (0 pour un domestique) ; absent sur un serveur d'avant S101. */
+  customs_pending?: number;
   status: number;
   statusName: string | null;
   pickup_date: string | null;

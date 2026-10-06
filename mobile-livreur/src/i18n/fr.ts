@@ -106,6 +106,7 @@ export const fr = {
   },
   customs: {
     title: 'Douane — document à collecter',
+    badge: 'Douane',
     hint: 'Au ramassage, demandez ce document au marchand : sans lui, le colis risque un blocage en douane.',
     requiredDocument: 'Document requis',
   },

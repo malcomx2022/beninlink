@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8395,3 +8395,50 @@ deux fusions rapprochées font toujours annuler le déploiement en attente au pr
 qui contient le premier (vu au run 215). Les jobs `tests` et `repetition` d'un push sur `main`
 tournent désormais en parallèle de ceux d'une pull request : le job `repetition` monte sa propre
 base MySQL dans son conteneur, rien n'est partagé.
+
+## S101 — les listes de colis signalent le document douanier à collecter (2026-10-06)
+
+### D'où ça vient
+
+S82, S94 et S95 ont mis l'alerte douanière sur le **détail** du colis, partout. Sur les listes
+(courses du livreur, colis du marchand), rien ne distinguait un export qui attend un document d'un
+colis domestique : il fallait ouvrir chaque course. S95 l'avait nommé « lot à part » ; le ramassage
+le réclame — un livreur qui prépare sa tournée regarde la liste, pas vingt fiches.
+
+### Le choix : un compteur sur `ParcelResource`, pas un filtre
+
+Un filtre `customs/alerts?parcel_id` aurait été un paramètre d'identifiant de plus à prouver
+(IsolationCoverageTest) et une requête par ligne côté app. Le compteur `customs_pending` voyage
+**avec le colis**, dans la ressource que les deux listes lisent déjà ; il est compté par la requête
+de liste (`withCount`), une seule requête pour la liste entière ; une lecture isolée (sans
+`withCount`) retombe sur un comptage par colis, jamais sur une clé absente.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `Http\Resources\v10\ParcelResource` | `customs_pending` : `customs_pending_count` si la requête l'a compté, sinon comptage des alertes `PENDING` du colis |
+| `ParcelRepository::deliverymanStatusParcel()` (deux branches), `MerchantParcelRepository::parcelAll()` | `withCount(['customsAlerts as customs_pending_count' => PENDING])` |
+| `resources/openapi/overlay.php`, spec régénérée | `Parcel.customs_pending` |
+| `DeliverymanCustomsAlertTest` (+2) | le tableau de bord du livreur : 1 sur l'export (l'alerte traitée ne compte plus), 0 sur le domestique ; `parcel/index` du marchand porte la même clé |
+| `mobile/`, `mobile-livreur/` | `ParcelSummary.customs_pending?` ; pastille « Douane » (bord et texte `warning`) sous l'en-tête de la carte quand `> 0` ; clé `customs.badge` |
+| `MerchantAppCustomsContractTest` (+1), `CourierAppCustomsContractTest` (+1) | la liste lit `customs_pending` avec repli `?? 0`, la clé est optionnelle dans les types, la traduction existe |
+| Docs | `web/CLAUDE.md`, `mobile/CLAUDE.md`, `mobile-livreur/CLAUDE.md`, grand livre chantier 5, en-têtes datés |
+
+### Vérification
+
+`tsc`, `expo lint`, `jest` verts dans les deux apps (39 et 22 tests).
+
+| Sabotage | Effet |
+|---|---|
+| `ParcelResource` sans `customs_pending` | **rouge** (API : tableau de bord et liste marchand) |
+| la liste des courses perd la pastille | **rouge** (contrat de l'app livreur) |
+
+Suite complète `web/` : **1 287 tests, 49 021 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+La pastille ne dit pas le niveau (info, avertissement, bloquant) : elle dit qu'il y a quelque chose
+à lire sur la fiche, qui le dit. Les listes du back-office web ne la portent pas (le transporteur a
+l'écran « Alertes douanières », S68). La pastille n'est pas rendue en test (les listes sont des
+écrans, pas des composants extraits — même limite que S84 a notée).

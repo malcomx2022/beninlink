@@ -102,6 +102,12 @@ export default function ParcelsScreen() {
               {/* statusName vient traduit du backend : on ne le réécrit pas. */}
               <Text style={styles.status}>{item.statusName ?? '—'}</Text>
             </View>
+            {/* S101 — une alerte douanière en cours : le document à collecter se voit depuis la liste. */}
+            {(item.customs_pending ?? 0) > 0 && (
+              <Text style={styles.customsBadge} testID={`customs-badge-${item.id}`}>
+                {t('customs.badge')}
+              </Text>
+            )}
             <Text style={styles.customer}>{item.customer_name}</Text>
             <Muted>{item.customer_address ?? ''}</Muted>
             <View style={styles.rowBottom}>
@@ -150,6 +156,17 @@ const styles = StyleSheet.create({
   rowBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xs },
   tracking: { fontFamily: fonts.numeric, fontSize: fontSizes.sm, color: colors.primary },
   status: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.xs, color: colors.info },
+  customsBadge: {
+    alignSelf: 'flex-start',
+    fontFamily: fonts.bodyMedium,
+    fontSize: fontSizes.xs,
+    color: colors.warning,
+    borderWidth: 1,
+    borderColor: colors.warning,
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
   customer: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.md, color: colors.text },
   amount: { fontFamily: fonts.numeric, fontSize: fontSizes.md, color: colors.text },
 });

@@ -42,6 +42,10 @@ class ParcelResource extends JsonResource
             "zone"                  => $this->zone->name ?? null,
             "delay_id"              => $this->delay_id === null ? null : (int) $this->delay_id,
             "delay"                 => $this->delay->name ?? null,
+            // S101 — alertes douanières EN COURS sur ce colis : la liste dit lesquels ont un
+            // document à collecter sans ouvrir chaque colis. Compté par la requête de liste
+            // (`withCount`) quand elle le fait, sinon ici (une lecture isolée).
+            "customs_pending"       => (int) ($this->customs_pending_count ?? $this->customsAlerts()->where('status', \App\Enums\CustomsAlertStatus::PENDING)->count()),
             "status"                => (int) $this->status,
             "statusName"            => trans("parcelStatus.".$this->status),
             'pickup_date'           => dateFormat($this->pickup_date),

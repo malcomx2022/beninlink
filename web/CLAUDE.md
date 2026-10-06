@@ -306,6 +306,10 @@ avant les apps.
   suit `parcel_update` (`$peutTraiter`), comme la route `customs.alerts.resolve` qu'il appelle ; le
   panneau marchand lit seulement. ⚠️ Un test de fiche ne cherche pas « Alertes douanières » : le
   menu latéral le porte sur toute page ; il cherche `id="alertes-douanieres-colis"`.
+- **Les listes de colis portent `customs_pending`** (**S101**) : `ParcelResource` compte les alertes douanières
+  **en cours** du colis (`withCount` dans `deliverymanStatusParcel()` et `parcelAll()`, repli par requête
+  sinon) ; les deux apps affichent une pastille « Douane » sur la carte, sans ouvrir le colis. Jamais de
+  filtre côté app sur `customs/alerts` (règle S82).
 - **Le livreur voit l'alerte douanière de sa course, en lecture seule** (**S95**).
   `deliveryman/parcel/details/{id}` porte `customs_alerts` (même `CustomsAlertResource` que S82)
   sur le colis déjà vérifié par `notOwned()` ; un domestique rend `[]`, la course d'un collègue

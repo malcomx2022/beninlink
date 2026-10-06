@@ -9102,6 +9102,10 @@
                         "description": "Libellé du délai",
                         "nullable": true
                     },
+                    "customs_pending": {
+                        "type": "integer",
+                        "description": "S101 — nombre d'alertes douanières **en cours** sur ce colis (0 pour un domestique) : la liste signale le document à collecter sans ouvrir le colis"
+                    },
                     "status": {
                         "type": "integer",
                         "description": "App\\Enums\\ParcelStatus (33 constantes)"
