@@ -73,7 +73,7 @@ Volumétrie (au 2026-10-03) :
 | 2 | IFU / RCCM / CNSS | 2026-08-17 | — |
 | 3 | FedaPay (wallet + abonnement + panneau web) | 2026-09-04/05 | renouvellement avant échéance |
 | 4 | Relevés SYSCOHADA (PDF, CSV, journal) ; plan de comptes tranché (S73) | 2026-09-04 → 2026-10-03 | 3 numéros + 4 codes de journaux à confirmer, régularisation des retours sans TVA (D2) |
-| 5 | Alertes douanières (3 niveaux, push + courriel) | 2026-08-19 → S67 | alerte sur le détail colis |
+| 5 | Alertes douanières (3 niveaux, push + courriel) | 2026-08-19 → S67 ; sur le détail colis : app (S82), fiches web back-office et panneau marchand (S94) | — |
 | 6 | Reporting SaaS (MRR, ARR, churn, LTV, CAC) | 2026-09-04 | discipline de saisie CAC |
 | 7 | OpenAPI `/api/v10` | 2026-09-04 | — |
 | D4 | Barème par zones, étapes 1-6 ; grille de départ en fichier (S72) | 2026-09-07 → 2026-10-03 | forfaits CEDEAO des 5 autres pays, taux COD CEDEAO, TVA export |

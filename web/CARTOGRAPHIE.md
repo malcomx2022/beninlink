@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8073,6 +8073,17 @@ semée les garde. Il ne francise pas la vitrine (`CompanyFrontendDataSeeder`, `S
 Une base **déjà amorcée** ne change pas : les semences ne rejouent pas ; le transporteur corrige
 son identité dans Réglages, comme n'importe quelle société.
 
+### Vu en production (runs 217 et 219, 2026-10-06)
+
+Entre le run 212 (03:43Z, refusé par `comptes-amorcage`, filet S89 à l'œuvre) et le run 217
+(04:32Z, fusion de la #159 / S91), l'opérateur a agi sur le serveur : `beninlink:comptes-amorcage`
+répond « Aucun compte d'amorçage ne porte le mot de passe public du socle », `tarification-prete`
+dit les deux sociétés prêtes, `migrate` n'a rien à faire. **Premier déploiement de production
+réussi** : S91 à 04:32Z, puis S92 à 04:50Z (run 219). La base servie garde les noms « We Courier »
+et « Company » : les semences ne rejouent pas sur une base amorcée (voir « Ce que ce lot ne fait
+pas » de S92) ; le renommage se fait dans Réglages. Le run 215 (S90) a été **annulé** par le groupe
+de concurrence `deploiement-production` au profit du 217, qui le contenait : rien de perdu.
+
 ## S93 — la vitrine d'une société neuve parle français (2026-10-06)
 
 ### D'où ça vient
@@ -8114,3 +8125,41 @@ Il ne touche pas aux écrans du back-office qui éditent la vitrine, ni aux imag
 (`public/frontend/images/...`), ni aux sociétés **déjà créées** : leur vitrine est en base, elle se
 corrige dans Vitrine → Sections / Pages / Services. Il ne relit pas le reste de `lang/fr` ; la
 francisation du socle a eu ses lots, « Maison » est la seule retouche, parce que le filet l'a vue.
+
+## S94 — l'alerte douanière sur la fiche colis web, back-office et panneau marchand (2026-10-06)
+
+### D'où ça vient
+
+S82 a mis `customs_alerts` sur `parcel/details/{id}` et `parcel/logs/{id}` de l'API, donc une
+carte « Alertes douanières » sur le détail du colis dans l'app marchand. Les deux fiches **web**
+du même colis n'avaient rien : un agent du back-office qui ouvrait un colis export ne voyait ni le
+niveau ni le document exigé, il devait aller le chercher dans « Alertes douanières » (S68) ; un
+marchand sur le panneau web non plus. Le grand livre portait encore « alerte sur le détail colis »
+en reste du chantier 5 alors que ~~M1~~ (l'app) était barré : c'est la moitié web qui manquait.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `resources/views/backend/customs/_parcel_alerts.blade.php` | un bloc par colis (`id="alertes-douanieres-colis"`), absent si le colis n'a pas d'alerte : niveau (badge), pays, catégorie traduite, document exigé et message, statut ; « Traitée » (formulaire `PUT customs/alerts/{id}/resolve`) si `$peutTraiter` ; date de traitement sinon ; bord rouge si une alerte bloque |
+| `Backend\ParcelController::details()` | `$alertesDouanieres = $parcel->customsAlerts()->orderByDesc('id')->get()` sur le colis déjà vérifié (S33) ; la vue l'inclut avec `hasPermission('parcel_update')` |
+| `MerchantPanel\MerchantParcelController::details()` | même lecture ; la vue l'inclut avec `peutTraiter => false` : le marchand lit, le back-office traite |
+| `tests/Feature/CustomsAlertOnParcelScreenTest` (5 tests, HTTP sur l'hôte locataire) | la fiche back-office montre les alertes **de ce colis** (niveau, pays, catégorie, document) et pas celles d'un autre ; un domestique n'a pas de bloc ; le bouton suit `parcel_update` ; traiter depuis la fiche marque l'alerte et la fiche le dit ; le panneau marchand montre sans bouton |
+| Docs | `web/CLAUDE.md` (décision), grand livre chantier 5 (reste clos), en-têtes datés |
+
+### Vérification
+
+| Sabotage | Effet |
+|---|---|
+| toutes les alertes de la société au lieu de celles du colis | **rouge** (la fiche du premier export montre le document du second) |
+| le bouton « Traitée » affiché sans `parcel_update` | **rouge** (agent lecteur, panneau marchand) |
+
+Suite complète `web/` : **1 263 tests, 48 845 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il n'ajoute pas de route : le traitement passe par `customs.alerts.resolve` (S68), gardé par
+`parcel_update`, et revient sur la fiche (`redirect()->back()`). Il ne touche ni à l'API ni à
+l'app. Le panneau marchand ne traite pas d'alerte : c'est la décision de S68 (la résolution est
+au transporteur) ; l'API, elle, laisse le marchand marquer la sienne — asymétrie héritée, à
+trancher si elle gêne à la recette.

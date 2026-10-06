@@ -299,6 +299,13 @@ avant les apps.
   la joue sur SQLite. `StorefrontSpeaksFrenchTest` lit ce qu'un visiteur lit, dont la page
   d'accueil en HTTP (`MountsTenantRoutes`). ⚠️ `UserSeeder` sème déjà la vitrine de la société 2 :
   un test qui rappelle `companySiteData(2)` la double.
+- **Les alertes douanières d'un colis sont sur sa fiche, partout** (**S94**, après S82 pour l'API).
+  Les deux fiches web (`admin/parcel/details/{id}`, `merchant/parcel/details/{id}`) incluent
+  `backend.customs._parcel_alerts` avec `$parcel->customsAlerts()` du colis **déjà vérifié** par le
+  dépôt : un domestique n'a pas de bloc, l'alerte d'un autre colis n'y est pas. Le bouton « Traitée »
+  suit `parcel_update` (`$peutTraiter`), comme la route `customs.alerts.resolve` qu'il appelle ; le
+  panneau marchand lit seulement. ⚠️ Un test de fiche ne cherche pas « Alertes douanières » : le
+  menu latéral le porte sur toute page ; il cherche `id="alertes-douanieres-colis"`.
 - **Les deux apps ont leur filet de contrat** (**S85**). L'app marchand : `OpenApiSpecTest`
   (inventaire), `ParcelStageTest` (statuts), `MerchantAppCustomsContractTest` (pages, douane).
   L'app livreur : `DeliverymanAppContractTest` — inventaire dans la spec et jamais réservé au
