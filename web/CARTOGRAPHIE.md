@@ -2,7 +2,8 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S89 — un déploiement refusé remet l'ancien code ; S88 —
+> Dernière mise à jour : 2026-10-06 (S90 — l'API négocie sa langue ; S89 — un déploiement refusé
+> remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
 > de mot de passe public sur les comptes d'amorçage ; S86 — une installation neuve réussit son premier déploiement ; S85 — le contrat de l'app livreur tenu en PHPUnit ;
 > S84 — un lanceur de tests dans les deux apps, M2, et le job CI `apps` ; S83 — l'écran de
@@ -7921,6 +7922,17 @@ production a été amorcée avant S86 et S87, `comptes-amorcage` ou `tarificatio
 
 Suite complète : **1 240 tests, 47 121 assertions**, verte.
 
+### Vu en production (run 212, fusion de la #157, 2026-10-06 03:43 UTC)
+
+Exactement le scénario annoncé. `verifier-env.sh` est passé (le serveur porte donc
+`APP_INSTALLED=yes`), puis `git pull`, `composer install`, `optimize:clear`, et
+`beninlink:comptes-amorcage` a **refusé** : les cinq comptes d'amorçage sont à `12345678` sur la
+base de production. Le filet S89 a fait son travail : « Retour à la révision servie avant le
+déploiement (`fd8daa0`) », `composer install` (rien à changer), caches reconstruits, « Application
+is now live ». Le serveur sert toujours la révision de la fusion de S86 — S87, S88 et S89 n'y
+sont pas, et n'y seront pas tant que les comptes ne seront pas changés (puis, probablement, les
+zones de la société 1 posées). Remèdes : encadré « le premier déploiement réel » du guide.
+
 ### Ce que ce lot ne fait pas
 
 Il ne change pas la forme du déploiement (pas de répertoire de version ni de lien symbolique
@@ -7929,3 +7941,50 @@ migration reste le cas documenté de longue date : MySQL ne défait pas un sché
 modifié, la sauvegarde se prend avant ; le filet remet alors l'ancien code (la migration n'est
 pas tenue pour appliquée) et le dit. Il ne pose rien sur le serveur : les remèdes du premier
 déploiement réel sont les vôtres, listés dans le guide.
+
+## S90 — l'API négocie sa langue par `Accept-Language` (T6) (2026-10-06)
+
+### D'où ça vient
+
+Ligne T6 du grand livre : l'API ignorait `Accept-Language`, chaque `message` de l'enveloppe
+sortait dans la locale du serveur. Acceptable tant que le produit est français seul — mais une
+langue se négocie, elle ne se devine pas, et `config/locales.php` sert déjà `fr` et `en` au web
+(sélecteur de session, `LanguageManager`). Rien d'équivalent côté API.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `App\Http\Middleware\ApiLocale` | sur le groupe `api` (`Kernel`) : `negocier()` lit l'en-tête (poids `q`, ordre d'apparition, sous-code principal `en-GB` → `en`, `*` et `q=0` ignorés), retient la première langue servie ; sinon rien ne change. La locale est **remise après la réponse** (`try … finally`) : c'est un état de l'application, pas de la requête |
+| `resources/openapi/overlay.php` → `public/openapi/v10.json` | `Envelope.message` : « dans la langue négociée par `Accept-Language` (`fr` par défaut, `en`) » |
+| `tests/Feature/ApiLocaleTest` (7 tests) | sans en-tête : français ; `en` et `en-GB,en;q=0.9` : anglais ; `zh`, `bn-BD`, `*`, `xx` : français ; `q` décide, puis l'ordre ; `negocier()` pur ; locale remise après la réponse ; le garde est sur `api` et pas sur `web` |
+| Docs | `web/CLAUDE.md` (règle et piège du client de test), grand livre T6 barré |
+
+### Ce que l'écriture a appris
+
+- ⚠️ **Le client de test de Laravel envoie `Accept-Language: en-us,en;q=0.5` par défaut**
+  (Symfony `Request::create()`). Dès que l'API négocie, **deux tests existants sont tombés**
+  (`ApiUserTypeTest`, `ParcelWalletBalanceGuardTest` : un libellé français attendu, l'anglais
+  reçu). Plutôt que de corriger test par test, `Tests\TestCase::setUp()` pose
+  `HTTP_ACCEPT_LANGUAGE` à vide pour toute la suite : « sans en-tête » redevient ce que les apps
+  font, et un test qui veut une langue la demande explicitement (`ApiLocaleTest`).
+- `App::setLocale()` **persiste** entre deux requêtes du même processus (tests, Octane, files) :
+  un garde qui change la locale la remet.
+- `['a' => ''] + $entetes` garde la valeur de **gauche** : la fusion d'en-têtes se fait par
+  `array_merge`, sinon l'en-tête du test est écrasé par le défaut.
+
+### Vérification
+
+| Sabotage | Effet |
+|---|---|
+| `ApiLocale` retiré du groupe `api` | **rouge** (3 tests) |
+| `negocier()` ignore `q` (ordre d'apparition seul) | **rouge** |
+| la locale n'est plus remise après la réponse | **rouge** |
+
+Suite complète : **1 247 tests, 47 149 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Les apps restent françaises et n'envoient pas l'en-tête : rien ne change pour elles. Aucune
+nouvelle langue n'est servie (`es`, `ar`, `bn`, `in`, `zh` restent non servies, S-lot 5), et le web
+garde sa négociation par session. Les SMS gardent `SmsTemplate::locale()` (D14).

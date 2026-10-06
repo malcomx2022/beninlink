@@ -3,7 +3,7 @@
 > Index du dépôt lu par Claude Code. Le détail vit dans les CLAUDE.md par dossier
 > et dans .claude/rules/. Garder < 200 lignes. Aucun secret ici.
 > Décision : Option A — socle We Courier (backend seul) + apps React Native neuves.
-> Dernière revue : 2026-10-06 (S89 — un déploiement refusé remet l'ancien code ; S88 — l'installateur fermé sur une base installée ; S87 — plus de mot de passe public sur les comptes d'amorçage ; S86 — une installation neuve réussit son premier déploiement ; S85 — le contrat de l'app livreur tenu en PHPUnit ; les dates de ce fichier,
+> Dernière revue : 2026-10-06 (S90 — l'API négocie sa langue par Accept-Language ; S89 — un déploiement refusé remet l'ancien code ; S88 — l'installateur fermé sur une base installée ; S87 — plus de mot de passe public sur les comptes d'amorçage ; S86 — une installation neuve réussit son premier déploiement ; S85 — le contrat de l'app livreur tenu en PHPUnit ; les dates de ce fichier,
 > de web/CARTOGRAPHIE.md et de docs/DECISIONS_METIER.md sont tenues à jour par lot).
 
 ## Structure (active)

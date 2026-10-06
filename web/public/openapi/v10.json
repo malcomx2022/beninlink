@@ -8626,7 +8626,7 @@
                     },
                     "message": {
                         "type": "string",
-                        "description": "Libellé déjà traduit (locale du serveur, FR)"
+                        "description": "Libellé déjà traduit, dans la langue négociée par l'en-tête `Accept-Language` (`fr` par défaut, `en` ; S90)"
                     },
                     "data": {
                         "description": "Charge utile, selon l'endpoint"

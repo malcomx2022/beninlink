@@ -49,7 +49,12 @@ avant les apps.
 ## Décisions actées
 - **FedaPay** = passerelle Mobile Money BJ. **Webhook signé = seule source de vérité**
   pour créditer/activer. Traitement **idempotent**.
-- Devise **XOF** : montants **entiers**. Locale **FR** par défaut.
+- Devise **XOF** : montants **entiers**. Locale **FR** par défaut. L'**API négocie** sa langue par
+  `Accept-Language` (**S90 / T6**, `ApiLocale` sur le groupe `api`) : la première langue de
+  l'en-tête que `config/locales.php` sert (`fr`, `en`), sinon la locale du serveur ; la locale est
+  **remise après la réponse**. ⚠️ Le client de test de Laravel envoie `Accept-Language:
+  en-us,en;q=0.5` par défaut : `Tests\TestCase::setUp()` le vide pour toute la suite, et un test
+  qui veut une langue la demande par l'en-tête.
 - **TVA** : taux **au niveau de la société** (`configs.vat_rate`, 18 % au Bénin), surcharge
   par marchand si `merchants.vat` > 0 — toujours via `VatRate::for()`. Registre des
   décisions métier : `docs/DECISIONS_METIER.md`.
