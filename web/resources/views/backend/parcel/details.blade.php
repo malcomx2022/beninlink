@@ -33,6 +33,7 @@
                         </div>
                     </div>
                 </div>
+                @include('backend.customs._parcel_alerts', ['peutTraiter' => hasPermission('parcel_update')]) {-- S94 --}
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-header">

@@ -284,7 +284,9 @@ class ParcelController extends Controller
         // On passe malgre tout le colis DEJA verifie, comme `logs()` et
         // `deliveredInfo()` depuis S25, pour que la forme ne redevienne pas un piege.
         $parcelevents   = $this->repo->parcelEvents($parcel->id);
-        return view('backend.parcel.details',compact('parcel','parcelevents'));
+        // S94 — les alertes douanières du colis déjà vérifié (comme l'API depuis S82) ; un domestique n'en a pas.
+        $alertesDouanieres = $parcel->customsAlerts()->orderByDesc('id')->get();
+        return view('backend.parcel.details',compact('parcel','parcelevents','alertesDouanieres'));
     }
 
 

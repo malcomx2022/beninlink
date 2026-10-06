@@ -279,6 +279,11 @@ déploiement, jusqu'à ce que vous ayez agi **sur le serveur** :
 Chaque refus laisse le serveur **comme avant** (S89) ; relancez le déploiement depuis
 *Actions → Run workflow* une fois le remède appliqué.
 
+✅ **Fait le 2026-10-06** : après le run 212 (refusé par `comptes-amorcage`), les remèdes ont été
+appliqués sur le serveur et le run 217 (04:32 UTC, S91) a été le **premier déploiement de production
+réussi** ; le 219 (S92) a suivi. La base servie garde ses noms d'origine (« We Courier », « Company ») :
+les semences ne rejouent pas, renommez dans Réglages → Généraux.
+
 ⚠️ **Une migration MySQL interrompue ne se défait pas.** MySQL ne sait pas
 annuler une modification de schéma dans une transaction : une migration qui
 échoue à mi-parcours laisse ce qu'elle avait déjà appliqué. Sur une base neuve

@@ -33,6 +33,7 @@
                         </div>
                     </div>
                 </div>
+                @include('backend.customs._parcel_alerts', ['peutTraiter' => false]) {{-- S94 : le marchand lit, le back-office traite --}}
                 <div class="col-xl-6 col-lg-6 col-md-6">
                     <div class="card">
                         <div class="card-header">

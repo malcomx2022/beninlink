@@ -217,7 +217,8 @@ class MerchantParcelController extends Controller
         abort_if(blank($parcel), 404); // S29
 
         $parcelevents = $this->repo->parcelEvents($parcel->id);
-        return view('backend.merchant_panel.parcel.details',compact('parcel','parcelevents'));
+        $alertesDouanieres = $parcel->customsAlerts()->orderByDesc('id')->get(); // S94
+        return view('backend.merchant_panel.parcel.details',compact('parcel','parcelevents','alertesDouanieres'));
     }
 
     public function edit($id)
