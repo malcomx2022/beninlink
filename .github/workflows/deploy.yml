@@ -13,14 +13,10 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-# Deux déploiements simultanés couperaient et remonteraient le site en
-# parallèle, avec deux `artisan migrate` concurrents sur la même base. On les
-# sérialise, et on n'annule pas celui qui tourne : l'interrompre entre `down`
-# et `up` laisserait le site en maintenance.
-concurrency:
-  group: deploiement-production
-  cancel-in-progress: false
-
+# La sérialisation des déploiements est posée SUR LES JOBS de déploiement
+# (`deploy`, `deploy-recette`), pas sur le workflow : posée ici, elle retenait
+# aussi la suite de tests d'une pull request derrière le déploiement de `main`
+# en cours — huit à quinze minutes d'attente par lot, pour rien (S100).
 jobs:
   tests:
     name: Suite de tests
@@ -227,6 +223,13 @@ jobs:
     needs: [tests, repetition]
     # Une pull request exerce les tests, jamais le déploiement.
     if: github.event_name != 'pull_request'
+    # Deux déploiements simultanés couperaient et remonteraient le site en
+    # parallèle, avec deux `artisan migrate` concurrents sur la même base. On
+    # les sérialise, et on n'annule pas celui qui tourne : l'interrompre entre
+    # `down` et `up` laisserait le site en maintenance. (S100 : au niveau du job.)
+    concurrency:
+      group: deploiement-production
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
       - name: Les secrets sont-ils en place ?
@@ -279,6 +282,10 @@ jobs:
     name: Déploiement sur le serveur de recette
     needs: [tests, repetition]
     if: github.event_name != 'pull_request'
+    # Même règle que `deploy`, sur son propre serveur : un autre groupe (S100).
+    concurrency:
+      group: deploiement-recette
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
       - name: Le serveur de recette est-il configuré ?

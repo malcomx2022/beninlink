@@ -253,6 +253,31 @@ class DeploymentRehearsalTest extends TestCase
         $this->assertSame(2, $etapesSsh, 'les deux déploiements (production, recette) passent par SSH');
     }
 
+    /**
+     * S100 — la sérialisation des déploiements est sur les jobs de déploiement, pas sur le
+     * workflow : posée au niveau du workflow, elle retenait la suite de tests d'une pull request
+     * derrière le déploiement de `main` en cours (huit à quinze minutes par lot, constaté sur
+     * les PR #161 à #166). Chaque serveur a son groupe, et rien ne s'annule en cours de route.
+     */
+    public function test_la_serialisation_des_deploiements_ne_retient_pas_la_ci_des_pull_requests(): void
+    {
+        $workflow = Yaml::parseFile($this->racine(self::WORKFLOW));
+        $this->assertArrayNotHasKey('concurrency', $workflow, 'au niveau du workflow, le groupe retiendrait aussi les tests des pull requests');
+
+        $groupes = [];
+        foreach (['deploy', 'deploy-recette'] as $nom) {
+            $job = $workflow['jobs'][$nom];
+            $this->assertArrayHasKey('concurrency', $job, "$nom : deux déploiements simultanés couperaient le site deux fois");
+            $this->assertFalse($job['concurrency']['cancel-in-progress'], "$nom : interrompre entre down et up laisserait le site en maintenance");
+            $groupes[] = $job['concurrency']['group'];
+        }
+        $this->assertCount(2, array_unique($groupes), 'un groupe par serveur : la recette n\'attend pas la production');
+
+        foreach (['tests', 'apps', 'repetition'] as $nom) {
+            $this->assertArrayNotHasKey('concurrency', $workflow['jobs'][$nom], "$nom : la CI d'une pull request ne se sérialise pas");
+        }
+    }
+
     public function test_rien_ne_part_sur_un_serveur_sans_la_repetition(): void
     {
         $jobs = Yaml::parseFile($this->racine(self::WORKFLOW))['jobs'];
