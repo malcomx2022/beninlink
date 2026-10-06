@@ -1711,6 +1711,17 @@ class ParcelRepository implements ParcelInterface {
             $returntocourier                = new ParcelEvent();
             $returntocourier->parcel_id     = $id;
             $returntocourier->note          = $request->note;
+
+            // S106 (R8) — signature de celui qui reprend le colis, facultative,
+            // même champ et même dossier que la livraison (`parcelDelivered`) :
+            // le marchand la voit dans le suivi du colis (`parcel/logs`).
+            if ($request->hasFile('signatureImage')) {
+                $signatureImage     = $request->file('signatureImage');
+                $destinationPath    = public_path('uploads/parcel/signature/');
+                $signatureImageName = date('YmdHis') . uniqid() . rand(5, 10) . '.' . $signatureImage->getClientOriginalExtension();
+                $signatureImage->move($destinationPath, $signatureImageName);
+                $returntocourier->signature_image = 'uploads/parcel/signature/' . $signatureImageName;
+            }
             $returntocourier->parcel_status = ParcelStatus::RETURN_TO_COURIER;
             $returntocourier->created_by    = Auth::user()->id;
             $returntocourier->save();

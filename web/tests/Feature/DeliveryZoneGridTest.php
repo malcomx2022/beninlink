@@ -157,8 +157,9 @@ class DeliveryZoneGridTest extends TestCase
         $this->assertEquals(15000, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, 12, $cedeao->id, null, 'tg'));
         $this->assertEquals(25000, $resolveur->resolveByZone($this->merchant->id, $this->categoryId, 3, $cedeao->id, null, 'NG'));
 
-        // Un pays sans forfait n'est pas facturé au hasard : l'appelant doit le voir.
-        $this->assertNull($resolveur->resolveByZone($this->merchant->id, $this->categoryId, 3, $cedeao->id, null, 'GH'));
+        // Un pays sans forfait n'est pas facturé au hasard : l'appelant doit le voir
+        // (la Guinée : le Ghana a son forfait depuis S106).
+        $this->assertNull($resolveur->resolveByZone($this->merchant->id, $this->categoryId, 3, $cedeao->id, null, 'GN'));
         $this->assertNull($resolveur->resolveByZone($this->merchant->id, $this->categoryId, 3, $cedeao->id));
     }
 
@@ -269,6 +270,6 @@ class DeliveryZoneGridTest extends TestCase
         $this->assertSame(3, DeliveryDelay::where('company_id', $this->merchant->company_id)->count(), 'pas de délais en double');
         $cedeao = DeliveryZone::where('company_id', $this->merchant->company_id)
             ->where('code', DeliveryZone::CEDEAO)->firstOrFail();
-        $this->assertSame(3, DeliveryZoneCountry::where('zone_id', $cedeao->id)->count(), 'pas de forfaits en double');
+        $this->assertSame(count(\App\Services\Pricing\ZoneCatalog::PAYS), DeliveryZoneCountry::where('zone_id', $cedeao->id)->count(), 'pas de forfaits en double');
     }
 }

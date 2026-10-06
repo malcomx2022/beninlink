@@ -58,6 +58,14 @@ class ZoneCatalog
         ['TG', 'Togo', 12000],
         ['NG', 'Nigeria', 18000],
         ['BF', 'Burkina Faso', 15000],
+        // S106 (R1) — les cinq autres pays desservis, posés comme POINT DE DÉPART
+        // (créés s'ils manquent, jamais réécrits) : gradués à la distance et au
+        // mode d'acheminement depuis Cotonou, le transporteur les ajuste à l'écran.
+        ['GH', 'Ghana', 15000],
+        ['NE', 'Niger', 18000],
+        ['CI', "Côte d'Ivoire", 20000],
+        ['ML', 'Mali', 22000],
+        ['SN', 'Sénégal', 25000],
     ];
 
     /**

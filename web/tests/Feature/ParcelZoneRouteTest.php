@@ -169,9 +169,9 @@ class ParcelZoneRouteTest extends TestCase
     {
         $this->expectException(UnpricedDeliveryException::class);
 
-        // Le Ghana n'a pas de forfait : on refuse plutôt que d'emprunter le
+        // La Guinée n'a pas de forfait : on refuse plutôt que d'emprunter le
         // montant d'un voisin, ce qui reviendrait à inventer un prix.
-        $this->calculer(['zone_id' => $this->zone(DeliveryZone::CEDEAO)->id, 'country' => 'GH']);
+        $this->calculer(['zone_id' => $this->zone(DeliveryZone::CEDEAO)->id, 'country' => 'GN']);
     }
 
     public function test_une_zone_sans_grille_fait_echouer_le_calcul(): void
@@ -208,9 +208,9 @@ class ParcelZoneRouteTest extends TestCase
             'customer_phone' => '0022997000041',
             'weight' => 1,
             'zone_id' => $this->zone(DeliveryZone::CEDEAO)->id,
-            // Le Ghana n'a pas de forfait : c'est le cas que la règle doit
+            // La Guinée n'a pas de forfait : c'est le cas que la règle doit
             // attraper, sur le champ `zone_id`, avant que le calcul ne lève.
-            'destination_country' => 'GH',
+            'destination_country' => 'GN',
             'customs_category' => 'general',
         ];
 

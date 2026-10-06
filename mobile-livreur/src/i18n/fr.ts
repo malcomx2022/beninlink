@@ -124,6 +124,7 @@ export const fr = {
     proofHint: 'Photo du colis remis (facultatif). Elle est jointe à la déclaration.',
     signature: 'Signature du destinataire',
     signatureHint: 'Faites signer le destinataire au doigt (facultatif). La signature est jointe à la déclaration.',
+    signatureReturnHint: 'Si vous le souhaitez, faites signer la personne qui reprend le colis (facultatif). La signature est jointe au retour.',
     confirm: 'Enregistrer',
     successDelivered: 'Course déclarée livrée.',
     successPartial: 'Livraison partielle enregistrée.',

@@ -72,6 +72,13 @@ Un **forfait** par pays, ou un tarif au poids comme le reste ? Et la TVA : le
 transport export est-il taxé au même taux ? (Le taux est déjà réglable par
 société et par marchand — **D1**.)
 
+**Réponse (S106, 2026-10-06).** Un **forfait par pays**, sans regarder le poids
+(D4). Huit pays posés comme point de départ, ajustables à l'écran : Togo 12 000,
+Ghana 15 000, Burkina Faso 15 000, Niger 18 000, Nigeria 18 000, Côte d'Ivoire
+20 000, Mali 22 000, Sénégal 25 000 F. La TVA à l'export reste au taux du marchand
+(18 % ou exonéré, D1/R7) ; une exonération propre au transport international
+relève de l'expert-comptable.
+
 ### 1.5 Frais COD
 
 Aujourd'hui trois zones propres (`inside_city`, `sub_city`, `outside_city`),

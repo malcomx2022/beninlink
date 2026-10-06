@@ -61,19 +61,37 @@ export type StatusAction = 'delivered' | 'partial' | 'return';
 export async function reportOutcome(
   parcelId: number,
   action: StatusAction,
-  options: { cashCollection?: number; note?: string } = {},
+  options: { cashCollection?: number; note?: string; signatureUri?: string } = {},
 ): Promise<void> {
   const statusAction = {
     delivered: BackendParcelStatus.DELIVERED,
     partial: BackendParcelStatus.PARTIAL_DELIVERED,
     return: BackendParcelStatus.RETURN_TO_COURIER,
   }[action];
+  const note = options.note?.trim() || undefined;
+
+  // S106 (R8) — un retour peut porter la signature de celui qui reprend le colis.
+  // Même champ `signatureImage` que la livraison ; multipart seulement quand elle
+  // est jointe, le JSON du socle sinon.
+  if (action === 'return' && options.signatureUri) {
+    const form = new FormData();
+    form.append('parcel_id', String(parcelId));
+    form.append('status_action', String(statusAction));
+    if (note) form.append('note', note);
+    form.append('signatureImage', {
+      uri: options.signatureUri,
+      name: `signature-retour-${parcelId}.png`,
+      type: 'image/png',
+    } as unknown as Blob);
+    await api.post(endpoints.parcelStatusUpdate, form);
+    return;
+  }
 
   await api.post(endpoints.parcelStatusUpdate, {
     parcel_id: parcelId,
     status_action: statusAction,
     cash_collection: options.cashCollection,
-    note: options.note?.trim() || undefined,
+    note,
   });
 }
 

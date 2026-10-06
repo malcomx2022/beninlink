@@ -2,7 +2,7 @@
 
 > Registre des décisions qui ne relèvent pas du code seul. Chaque entrée dit ce
 > qui a été **tranché** (et livré), ce qui reste **à trancher** par le métier, et
-> par qui. Mis à jour le 2026-10-06, S105 (D1-D14 ; les décisions R1-R9 du porteur du
+> par qui. Mis à jour le 2026-10-06, S106 (D1-D14 ; les décisions R1-R9 du porteur du
 > 2026-10-03 sont ventilées dans les lignes qu'elles tranchent).
 
 | # | Sujet | État | Livré dans le code | Reste à trancher |
@@ -53,7 +53,7 @@ pas saisi ») est levée : `merchants.vat_status` porte `unset`, `taxable` ou
 nulle part. Le relevé imprime « Marchand exonéré de TVA (statut déclaré) » —
 distinct de « Aucune TVA facturée ». Décision D14 / R7 b.
 
-## D2 — Plan de comptes SYSCOHADA ✅ (numéros à valider)
+## D2 — Plan de comptes SYSCOHADA ✅ (numéros = plan de travail depuis S106)
 
 **Ce qui existe.** `config/syscohada.php` propose : 4111 Clients, 7061 Prestations de
 services de livraison, 4431 TVA facturée, 4712 Créditeurs divers (COD encaissé pour
@@ -583,6 +583,15 @@ de facturer gratuitement.
 
 **442 tests**, dont sept sur le refus de la migration elle-même.
 
+**Complément S106 (2026-10-06) — le reliquat CEDEAO de R1 est clos.** Les cinq
+autres pays desservis entrent dans `ZoneCatalog::PAYS` comme **point de départ**,
+gradués à la distance depuis Cotonou : Ghana 15 000, Niger 18 000, Côte d'Ivoire
+20 000, Mali 22 000, Sénégal 25 000 F. Même règle que les trois premiers : créés
+s'ils manquent, **jamais réécrits**, ajustables à l'écran. Le taux COD de la zone
+(3 %) datait du 2026-09-06. La TVA à l'export reste **au taux du marchand** (D1,
+R7) : une exonération du transport international est une question fiscale, à
+instruire par l'expert-comptable, pas un défaut de code.
+
 ## D5 — Fiches de fraude sans `company_id` ✅
 
 **Constat.** Avant S7, le panneau marchand créait les fiches de fraude sans
@@ -1051,7 +1060,7 @@ porteur ; cinq ont du code, deux n'en ont pas et le disent.
 | R6 | Catalogue des **catégories** (`categorys`, sans `company_id`) réservé au **super-administrateur**, comme les devises (S55) : routes sous `super-admin/category`, `panel:super-admin`, droit retiré des semences du locataire, migration pour les super-admins existants. Les six catégories de livraison d'amorçage restent | `routes/superadmin.php`, migration `2026_10_03_110000`, `CategoryPanelScopeTest` |
 | R7 a | Hors Bénin : taux par société, configurable (D1), défaut 18 % | aucun |
 | R7 b | **Exonéré ≠ non renseigné** : `merchants.vat_status` (`unset` / `taxable` / `exempt`, `App\Enums\VatStatus`). `exempt` → 0 et le relevé l'imprime ; `unset` → taux société ; un taux saisi avant devient `taxable` (même comportement) ; **personne** n'est reclassé exonéré par migration | `VatRate`, formulaire marchand, `SettlementStatement` / PDF, `MerchantVatStatusTest` |
-| R8 | Signature du destinataire sur un retour : **reporté** après la recette avec les PME pilotes | aucun |
+| R8 | Signature du destinataire sur un retour : ~~reporté~~ **livré en S106 (2026-10-06), facultative** — même champ que la livraison, stockée sur l'événement de retour, lue par le marchand ; L6 de la recette décide du maintien à l'écran | `ParcelRepository::returntoQourier()`, `reportOutcome()` de l'app, `DeliveryProofTest` |
 | R9 | **Relevés par courriel** : à l'émission de chaque relevé, en file (D13), au courriel du compte marchand, avec **le** PDF officiel (`SettlementPdf`, point de rendu unique). **Jamais de réémission modifiée** (D8) : aucune route n'écrit sur un relevé, un test l'affirme. Délivrabilité : file active à surveiller (`beninlink:file-attente`). Opposabilité juridique du PDF : dossier de l'expert-comptable (R2) | `StatementMailer`, `SettlementPdf`, `InvoiceRepository::store()`, `StatementEmailTest` |
 
 Hors de ce lot, et volontairement : le prorata d'abonnement, la colonne de langue
