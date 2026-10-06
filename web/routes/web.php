@@ -1039,31 +1039,11 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                     Route::post('/aamarpay-fail',             [AamarpayController::class, 'fail'])->name('aamarpay.payment.fail');
                     }
                 });
-                // Theme Pages
-                Route::get('/dashboard-finance', function () {
-                    return view('theme.dashboard-finance');
-                })->name('dashboard.finance');
-                Route::get('/dashboard-influencer', function () {
-                    return view('theme.dashboard-influencer');
-                })->name('dashboard.influencer');
-                Route::get('/dashboard-sales', function () {
-                    return view('theme.dashboard-sales');
-                })->name('dashboard.sales');
-                Route::get('/ecommerce-product-checkout', function () {
-                    return view('theme.ecommerce-product-checkout');
-                })->name('ecommerce.product.checkout');
-                Route::get('/ecommerce-product-single', function () {
-                    return view('theme.ecommerce-product-single');
-                })->name('ecommerce.product.single');
-                Route::get('/ecommerce-product', function () {
-                    return view('theme.ecommerce-product');
-                })->name('ecommerce.product');
-                Route::get('/influencer-finder', function () {
-                    return view('theme.influencer-finder');
-                })->name('influencer.finder');
-                Route::get('/influencer-profile', function () {
-                    return view('theme.influencer-profile');
-                })->name('influencer.profile');
+                // S104 — les huit « Theme Pages » du socle (`dashboard-finance`,
+                // `dashboard-influencer`, `dashboard-sales`, `ecommerce-product*`,
+                // `influencer-*`) sont RETIRÉES : elles rendaient des vues `theme.*`
+                // qui n'existent pas (500 pour tout compte) et aucune vue ni script
+                // ne les nommait. Même famille que les cinq routes `sms-settings` de S35.
                 // FCM Token
             });
 

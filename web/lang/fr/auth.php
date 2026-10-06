@@ -13,6 +13,7 @@ return [
     |
     */
 
+    'courier_app_only' => 'Ce compte est un compte livreur : il se connecte dans l\'application livreur, pas sur le site.',
     'failed' => 'Vous n\'êtes pas une personne active, veuillez contacter l\'administrateur !',
     // 'failed' => 'These credentials do not match our records.',
     'password'          => 'Le mot de passe fourni est incorrect.',

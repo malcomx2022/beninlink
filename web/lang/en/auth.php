@@ -13,6 +13,7 @@ return [
     |
     */
 
+    'courier_app_only' => 'This is a courier account: it signs in from the courier app, not on the website.',
     'failed' => 'You are not an active person, please contact Admin!',
     // 'failed' => 'These credentials do not match our records.',
     'password'          => 'The provided password is incorrect.',

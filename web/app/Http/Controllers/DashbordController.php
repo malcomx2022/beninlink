@@ -57,7 +57,13 @@ class DashbordController extends Controller
      }
     public function index(Request $request)
     {
-    
+        // S104 — le livreur n'a pas de tableau de bord web (il a l'app) : la
+        // branche « back-office » ci-dessous rendait `backend.dashboard` à un
+        // compte sans droits et plantait dans la vue (500). Un refus, pas une panne.
+        if ((int) Auth::user()->user_type === UserType::DELIVERYMAN) {
+            abort(403, __('auth.courier_app_only'));
+        }
+
         if(Auth::user()->user_type == UserType::SUPER_ADMIN){ 
        
             $data=[];
