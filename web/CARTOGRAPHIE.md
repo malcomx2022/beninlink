@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8360,6 +8360,12 @@ du serveur : le prochain déploiement le lira. Les runs 217 et 219 ont déployé
 existe ; si la production est en `APP_DEBUG=true`, le prochain run le dira et s'arrêtera avant de
 couper le site.
 
+### Vu en production (run 233, 2026-10-06 07:53 UTC)
+
+Le déploiement de `main` qui portait S99 a **passé** `verifier-env.sh` : la production n'est pas en
+`APP_DEBUG=true`. Les deux gardes du `.env` posés ce jour (S97, S99) ont donc constaté un serveur
+déjà conforme. Rien à faire sur le serveur pour ce point.
+
 ## S100 — la CI des pull requests n'attend plus le déploiement de `main` (2026-10-06)
 
 ### D'où ça vient
@@ -8442,3 +8448,31 @@ La pastille ne dit pas le niveau (info, avertissement, bloquant) : elle dit qu'i
 à lire sur la fiche, qui le dit. Les listes du back-office web ne la portent pas (le transporteur a
 l'écran « Alertes douanières », S68). La pastille n'est pas rendue en test (les listes sont des
 écrans, pas des composants extraits — même limite que S84 a notée).
+
+## S102 — le registre dit la production vraie (2026-10-06)
+
+### D'où ça vient
+
+`docs/CARTOGRAPHIE_PROJET.md` (§ 7.4) disait encore, au 2026-10-03, que les secrets SSH étaient
+vides et qu'« aucune version n'a jamais atteint un serveur par le workflow ». Depuis, le run 217
+(S91) a été le premier déploiement de production réussi et neuf lots l'ont suivi jusqu'au run 233
+(S99) ; les deux gardes du `.env` ont passé ; le job de recette, lui, saute à chaque run (secrets
+`RECETTE_SSH_*` absents). Un registre qui dit le contraire de *Actions* fait perdre du temps à qui
+le lit pour décider quoi faire sur le serveur.
+
+### Ce qui est écrit
+
+| Où | Quoi |
+|---|---|
+| `docs/CARTOGRAPHIE_PROJET.md` | en-tête au 2026-10-06 ; E3 réécrit : production **en service** depuis le run 217, gardes passés aux runs 229 et 233, ce qui reste à poser sur le serveur ; E2 : le job de recette **saute** faute de secrets ; § 8 relu |
+| `docs/guides/infra/mise-en-service/README.md` | la note « Fait le 2026-10-06 » va jusqu'au run 233 et une liste **« Ce qui reste à faire sur le serveur »** réunit en un endroit les points encore dus, chacun renvoyant au guide qui le détaille |
+| ici | « Vu en production (run 233) » sous S99 ; en-têtes datés |
+
+Aucun code, aucun test : la suite reste à **1 287 tests, 49 021 assertions**.
+
+### Ce que ce lot ne fait pas
+
+Il ne pose rien sur le serveur et ne vérifie rien à distance : il relit les runs d'*Actions* (212 à
+233) et les trois gardes de `deploy.sh`. Le renommage « We Courier » → BeninLink dans Réglages,
+Supervisor, la supervision, la sauvegarde et le serveur de recette restent des gestes d'opérateur,
+listés dans le guide.

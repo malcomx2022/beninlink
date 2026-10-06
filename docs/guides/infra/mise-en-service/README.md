@@ -283,8 +283,21 @@ Chaque refus laisse le serveur **comme avant** (S89) ; relancez le déploiement 
 
 ✅ **Fait le 2026-10-06** : après le run 212 (refusé par `comptes-amorcage`), les remèdes ont été
 appliqués sur le serveur et le run 217 (04:32 UTC, S91) a été le **premier déploiement de production
-réussi** ; le 219 (S92) a suivi. La base servie garde ses noms d'origine (« We Courier », « Company ») :
-les semences ne rejouent pas, renommez dans Réglages → Généraux.
+réussi** ; chaque fusion a déployé depuis (219, 229, 231, 233…). Les deux gardes du `.env` posés le
+même jour ont trouvé le serveur conforme : cache partagé (S97, run 229) et `APP_DEBUG=false` (S99,
+run 233). Rien à refaire pour ces lignes.
+
+### Ce qui reste à faire sur le serveur (relevé S102, 2026-10-06)
+
+Dans l'ordre ; chaque point renvoie au guide qui le détaille. Aucun n'est fait par le workflow.
+
+| # | À faire | Pourquoi | Où c'est décrit |
+|---|---|---|---|
+| 1 | Renommer la société servie : Réglages → Généraux (nom, courriel, téléphone, adresse) | la base garde « We Courier » et « Company » : les semences ne rejouent pas (`db:seed` une seule fois) | § 5.b ci-dessus |
+| 2 | Installer le worker de la file sous Supervisor | sans lui l'application répond et **plus aucun SMS ni courriel ne part** (D13) | [`infra/supervisor/`](../supervisor/) |
+| 3 | Poser le crontab et l'alerte | le planificateur Laravel ne tourne pas tout seul ; un worker sans surveillance déplace le problème | [`infra/supervision/`](../supervision/) |
+| 4 | Sauvegarde (base, `public/uploads/`, `.env`) **et un exercice de restauration** | la seule étape qui prouve la sauvegarde ; une migration MySQL interrompue ne se défait pas | [`infra/sauvegarde/`](../sauvegarde/) |
+| 5 | Serveur de recette : utilisateur, dossier, base, `.env`, DNS, puis les secrets `RECETTE_SSH_*` et `DEPLOY_PATH` dans Actions | le job « Déploiement sur le serveur de recette » tourne à chaque fusion et **saute** tant que les secrets manquent (run 233) | [`recette-pilote/`](../../recette-pilote/) § 1 |
 
 ⚠️ **Une migration MySQL interrompue ne se défait pas.** MySQL ne sait pas
 annuler une modification de schéma dans une transaction : une migration qui
