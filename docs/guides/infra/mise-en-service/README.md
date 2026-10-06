@@ -274,6 +274,7 @@ déploiement, jusqu'à ce que vous ayez agi **sur le serveur** :
 |---|---|---|
 | `verifier-env.sh` : `APP_INSTALLED n'est pas « yes »` | le drapeau n'a jamais été posé (S88) | ajouter `APP_INSTALLED=yes` au `.env` |
 | `beninlink:comptes-amorcage` | les cinq comptes d'amorçage sont encore à `12345678` (S87) | changer leur mot de passe dans le back-office, ou supprimer ceux dont vous n'avez pas l'usage ; `php artisan beninlink:comptes-amorcage` doit sortir en succès |
+| `verifier-env.sh` : `CACHE_DRIVER=array` | un cache non partagé : le limiteur de connexion (S96) ne compterait rien (S97) | `CACHE_DRIVER=file` (ou `database`) dans le `.env`, puis `php artisan config:clear` |
 | `beninlink:tarification-prete` | la société 1 n'a pas de zones (S86) | `php artisan beninlink:zones-tarifaires --societe=1 --installer`, puis `php artisan beninlink:tarification-prete` en succès |
 
 Chaque refus laisse le serveur **comme avant** (S89) ; relancez le déploiement depuis

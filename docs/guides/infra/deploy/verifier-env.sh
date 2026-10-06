@@ -63,6 +63,18 @@ if [ "$app_installed" != "yes" ]; then
     exit 1
 fi
 
+# S97 — le cache doit être partagé entre requêtes. Le limiteur de connexion
+# (S96) compte les essais dans le cache : avec CACHE_DRIVER=array (ou null)
+# chaque requête repart de zéro et la force brute passe ; les verrous et les
+# compteurs du socle ne tiendraient pas davantage. `file` (défaut) ou
+# `database` conviennent sur un serveur ; absent vaut `file`.
+cache_driver="$(lire CACHE_DRIVER)"
+if [ "$cache_driver" = "array" ] || [ "$cache_driver" = "null" ]; then
+    echo "❌ CACHE_DRIVER=${cache_driver} : le limiteur de connexion (S96) ne compterait rien, chaque requête repartirait de zéro — la force brute passerait." >&2
+    echo "   Mettre CACHE_DRIVER=file (ou database), puis php artisan config:clear. Rien n'a été touché." >&2
+    exit 1
+fi
+
 if [ "$app_env" != "production" ]; then
     if [ "$fedapay_env" = "live" ]; then
         echo "❌ APP_ENV=${app_env:-vide} mais FEDAPAY_ENVIRONMENT=live : une recette encaisserait de l'argent réel." >&2
