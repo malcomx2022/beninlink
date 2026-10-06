@@ -210,6 +210,26 @@ class RecetteDeploymentTest extends TestCase
         $this->assertStringContainsString('(no)', $sortie);
     }
 
+    /** S97 — le limiteur de connexion (S96) compte dans le cache : un cache `array` ne compte rien, la force brute passerait. */
+    public function test_un_cache_non_partage_est_refuse_le_limiteur_de_connexion_ne_compterait_rien(): void
+    {
+        foreach (['staging', 'production'] as $env) {
+            foreach (['array', 'null'] as $pilote) {
+                [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=$env\nFEDAPAY_ENVIRONMENT=sandbox\nCACHE_DRIVER=$pilote\n");
+                $this->assertSame(1, $code, "$env / $pilote : $sortie");
+                $this->assertStringContainsString("CACHE_DRIVER=$pilote", $sortie);
+                $this->assertStringContainsString('limiteur de connexion', $sortie);
+            }
+        }
+
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=production\nFEDAPAY_ENVIRONMENT=live\nCACHE_DRIVER=file\n");
+        $this->assertSame(0, $code, "file : $sortie");
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=production\nFEDAPAY_ENVIRONMENT=live\nCACHE_DRIVER=database\n");
+        $this->assertSame(0, $code, "database : $sortie");
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=production\nFEDAPAY_ENVIRONMENT=live\n");
+        $this->assertSame(0, $code, 'absent vaut file : ' . $sortie);
+    }
+
     public function test_un_env_absent_est_refuse(): void
     {
         [$code, $sortie] = $this->garde(null);

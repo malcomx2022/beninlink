@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8247,3 +8247,35 @@ grandeur raisonnable ; elles se règlent dans le limiteur, pas dans les routes. 
 dans le cache de l'application : un cache `file` ou `database` le partage entre processus PHP,
 un cache `array` ne compterait que dans la requête (le `.env` de production n'est pas en `array`,
 `verifier-env.sh` ne le vérifie pas — à savoir).
+
+## S97 — le garde du `.env` refuse un cache non partagé (2026-10-06)
+
+### D'où ça vient
+
+S96 compte les essais de connexion dans le cache de l'application. Avec `CACHE_DRIVER=array` (ou
+`null`) chaque requête PHP repart de zéro : le limiteur ne refuse jamais rien, et le `.env` d'un
+serveur peut porter cette valeur sans que rien ne le dise — `ApiAuthThrottleTest` tourne sur le
+cache `array` de la suite, qui vit **dans le même processus** et compte donc, ce que PHP-FPM ne fait
+pas. S96 l'avait noté dans « ce que ce lot ne fait pas ».
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `docs/guides/infra/deploy/verifier-env.sh` | refuse `CACHE_DRIVER=array` et `null` dans tous les environnements déployés, avant `php artisan down` ; `file`, `database` ou absent (= `file`) passent |
+| `RecetteDeploymentTest` (+1) | les deux valeurs refusées en recette et en production, `file`, `database` et l'absence acceptés |
+| Docs | `web/CLAUDE.md` (S96 complété), guide de mise en service (tableau des refus), en-têtes datés |
+
+### Vérification
+
+| Sabotage | Effet |
+|---|---|
+| le garde désactivé (`if false`) | **rouge** |
+
+Suite complète `web/` : **1 278 tests, 48 965 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne vérifie pas `SESSION_DRIVER` ni `QUEUE_CONNECTION` : une session `array` déconnecterait tout
+le monde à la première page, ce qui se voit ; une file `sync` ne perd rien, elle ralentit. Il ne lit
+pas le `.env` du serveur : c'est le déploiement qui le lira, au prochain run.

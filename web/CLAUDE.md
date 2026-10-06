@@ -320,7 +320,9 @@ avant les apps.
   négociée. ⚠️ `ThrottleRequests` est dans `$middlewarePriority` : il tourne **avant** `ApiLocale`
   (S90), le limiteur négocie donc la langue lui-même (`ApiLocale::negocier`). Le générateur
   OpenAPI documente le 429 dès qu'une route porte `throttle:*`. `register` n'est pas limité
-  (une inscription qui échoue cinq fois à la validation ne doit pas bloquer la PME).
+  (une inscription qui échoue cinq fois à la validation ne doit pas bloquer la PME). **S97** : le
+  compteur vit dans le cache ; `verifier-env.sh` refuse `CACHE_DRIVER=array` ou `null` au déploiement
+  (chaque requête repartirait de zéro), `file` ou `database` conviennent, absent vaut `file`.
 - **Les deux apps ont leur filet de contrat** (**S85**). L'app marchand : `OpenApiSpecTest`
   (inventaire), `ParcelStageTest` (statuts), `MerchantAppCustomsContractTest` (pages, douane).
   L'app livreur : `DeliverymanAppContractTest` — inventaire dans la spec et jamais réservé au
