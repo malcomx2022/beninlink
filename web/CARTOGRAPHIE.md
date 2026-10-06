@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8279,3 +8279,43 @@ Suite complète `web/` : **1 278 tests, 48 965 assertions**, verte.
 Il ne vérifie pas `SESSION_DRIVER` ni `QUEUE_CONNECTION` : une session `array` déconnecterait tout
 le monde à la première page, ce qui se voit ; une file `sync` ne perd rien, elle ralentit. Il ne lit
 pas le `.env` du serveur : c'est le déploiement qui le lira, au prochain run.
+
+## S98 — mot de passe oublié dans l'app livreur (2026-10-06)
+
+### D'où ça vient
+
+L'app marchand a « Mot de passe oublié ? » depuis ses premiers écrans (`password/email` puis
+`password/reset`, le courtier `users` de Laravel). L'app livreur n'avait que la connexion : un
+livreur qui oubliait son mot de passe attendait que le transporteur le change au back-office. Les
+deux routes sont communes aux deux types de compte (S96 les a limitées) : rien à écrire dans
+`web/`, l'app suit le contrat existant.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `mobile-livreur/src/api/endpoints.ts`, `auth.ts` | `passwordEmail`, `passwordReset` ; `requestPasswordReset()`, `resetPassword()` repris de `mobile/`, appels **sans jeton** |
+| `mobile-livreur/app/(auth)/forgot-password.tsx`, `reset-password.tsx`, `_layout.tsx` | les deux écrans de `mobile/`, mêmes textes (adaptés au livreur : « sans adresse connue, demandez un nouveau mot de passe à votre transporteur »), en-têtes de pile à la charte |
+| `mobile-livreur/app/(auth)/login.tsx` | le lien « Mot de passe oublié ? » sous le bouton |
+| `mobile-livreur/src/i18n/fr.ts` | clés `auth.*` de la réinitialisation, `errors.passwordMismatch` / `passwordTooShort` |
+| `tests/Feature/CourierPasswordResetTest` (3 tests) | un livreur reçoit la notification de réinitialisation ; le jeton change le mot de passe et le nouveau ouvre `deliveryman/login`, l'ancien non ; l'app inventorie les deux routes, le lien est sur la connexion, les deux écrans existent, les appels se font sans jeton |
+| `DeliverymanAppContractTest` | inchangé et vert : les deux entrées existent dans la spec, ne sont pas réservées au marchand, ont un appelant, et la répétition de recette les joue déjà |
+| Docs | `mobile-livreur/CLAUDE.md` (table des écrans), en-têtes datés |
+
+### Vérification
+
+`tsc --noEmit`, `expo lint`, `jest` (22 tests) verts dans `mobile-livreur/`.
+
+| Sabotage | Effet |
+|---|---|
+| le lien de la connexion renvoie vers la connexion | **rouge** |
+| la demande de lien part avec le jeton (`{}` au lieu de `authenticated: false`) | **rouge** |
+
+Suite complète `web/` : **1 281 tests, 48 985 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne crée pas de lien profond `beninlink-livreur://reset-password` : le lien reçu mène à la page
+web du socle, et le jeton se saisit dans l'app (même choix que `mobile/`). Un livreur **sans
+adresse e-mail** en base ne peut pas se réinitialiser seul : le texte le dit et le renvoie au
+transporteur — l'adresse n'est pas obligatoire à la création d'un livreur, règle du socle.

@@ -11,6 +11,9 @@ export const endpoints = {
   refresh: 'refresh',
   signOut: 'sign-out',
   updatePassword: 'update-password',
+  /** Mot de passe oublié (S98) : routes communes aux deux apps, sans jeton ; limitées (S96). */
+  passwordEmail: 'password/email',
+  passwordReset: 'password/reset',
 
   // — Notifications poussées : l'appareil s'abonne pour lui-même (D11).
   // Route commune aux deux apps, sous `auth:sanctum`.

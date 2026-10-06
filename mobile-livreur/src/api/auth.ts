@@ -42,3 +42,35 @@ export async function updatePassword(oldPassword: string, newPassword: string): 
     confirm_password: newPassword,
   });
 }
+
+/**
+ * S98 — mot de passe oublié, première étape : demander le lien.
+ * Le backend envoie un e-mail au compte (`Password::sendResetLink`) ; la
+ * réponse ne dit jamais si l'adresse existe (le serveur répond pareil).
+ */
+export async function requestPasswordReset(email: string): Promise<string> {
+  const res = await api.post<{ message?: string }>(
+    endpoints.passwordEmail,
+    { email: email.trim() },
+    { authenticated: false },
+  );
+  return res?.message ?? '';
+}
+
+export type ResetPasswordPayload = {
+  /** Jeton porté par le lien reçu par e-mail (`password/reset/{token}`). */
+  token: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+};
+
+/** S98 — seconde étape : le nouveau mot de passe (8 caractères au moins, confirmé — règle du backend). */
+export async function resetPassword(payload: ResetPasswordPayload): Promise<string> {
+  const res = await api.post<{ message?: string }>(
+    endpoints.passwordReset,
+    { ...payload, email: payload.email.trim() },
+    { authenticated: false },
+  );
+  return res?.message ?? '';
+}

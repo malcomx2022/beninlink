@@ -35,6 +35,7 @@ Application **livreur (coursier)**, React Native / Expo. **Consomme l'API de `we
 | Écran | Fichier | Endpoints |
 |---|---|---|
 | Connexion | `(auth)/login.tsx` | `deliveryman/login` |
+| Mot de passe oublié (S98 : lien, puis jeton + nouveau mot de passe, repris de `mobile/`) | `(auth)/forgot-password.tsx`, `(auth)/reset-password.tsx` | `password/email`, `password/reset` (sans jeton, limités S96) |
 | Mes courses (En cours / Retours / Livrés) | `(app)/(tabs)/index.tsx` | `deliveryman/dashboard` (4 listes en `ParcelResource`) |
 | Détail (marchand, colis, destinataire, historique, Appeler / Itinéraire) | `(app)/parcel/[id]/index.tsx` | `deliveryman/parcel/details/{id}` |
 | Issue de la course (livré / partielle / retour + montant) | `(app)/parcel/[id]/status.tsx` | `deliveryman/parcel-status-update` (`status_action`) |
