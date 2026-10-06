@@ -75,7 +75,21 @@ if [ "$cache_driver" = "array" ] || [ "$cache_driver" = "null" ]; then
     exit 1
 fi
 
+# S99 — le mode debug en production. Une page d'erreur de Laravel en debug montre
+# la pile, la requête et des variables d'environnement (clés, mot de passe de
+# base) à qui provoque l'erreur. Refusé en production ; en recette, dit mais
+# laissé (une recette se débogue). Absent vaut false.
+app_debug="$(lire APP_DEBUG)"
+if [ "$app_env" = "production" ] && [ "$app_debug" = "true" ]; then
+    echo "❌ APP_ENV=production mais APP_DEBUG=true : une page d'erreur montrerait la pile et des variables d'environnement à n'importe quel visiteur." >&2
+    echo "   Mettre APP_DEBUG=false, puis php artisan config:clear. Rien n'a été touché." >&2
+    exit 1
+fi
+
 if [ "$app_env" != "production" ]; then
+    if [ "$app_debug" = "true" ]; then
+        echo "⚠️  APP_ENV=${app_env:-vide} avec APP_DEBUG=true : les pages d'erreur montrent la pile et l'environnement — acceptable en recette, jamais en production." >&2
+    fi
     if [ "$fedapay_env" = "live" ]; then
         echo "❌ APP_ENV=${app_env:-vide} mais FEDAPAY_ENVIRONMENT=live : une recette encaisserait de l'argent réel." >&2
         echo "   Mettre FEDAPAY_ENVIRONMENT=sandbox et les clés sandbox du tableau de bord FedaPay. Rien n'a été touché." >&2

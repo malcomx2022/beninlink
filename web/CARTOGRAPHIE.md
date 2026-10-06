@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -1234,6 +1234,7 @@ vestige du squelette Laravel.
 | ~~S32~~ | G | ~~Les relevés de règlement : neuf routes non prouvées~~ — ✅ **inscrites le 2026-09-20** (7ᵉ passe). **Passe de vérification, pas de correction** : les six méthodes du dépôt que ces routes atteignent étaient **déjà** `companywise()` (S14, S20, chantier 4). L'arriéré les tenait faute de test, pas faute de périmètre. Un seul défaut trouvé : `InvoiceDetails()` déréférençait un `null` hors périmètre — 500 au lieu de 404. Et un piège signalé : `InvoiceRepository::InvoicePdf()` est un **doublon mort** d'`invoiceGet()`, corps pour corps — il a avalé un de mes sabotages | `MerchantInvoiceController` · `InvoiceRepository` |
 | ~~S88~~ | A | ~~**`GET /finish` détruisait la base d'une installation terminée, sans authentification**~~ — 🔴 ✅ **corrigé le 2026-10-05 (S88)** : `routes/web.php` ne posait `IsNotInstalled` que sur l'écran `GET /install` ; `POST /installing` et `GET /finish` ne portaient que `XSS`, et `InstallerController::finish()` supprime **chaque table** (`SHOW TABLES` + `Schema::drop`), rejoue `migrate:refresh` et `db:seed`, pose nom, courriel et **mot de passe du compte n° 1** depuis la requête, et réécrit `APP_INSTALLED` et `APP_URL` dans le `.env`. Second maillon : le garde ne reconnaissait une installation que par `APP_INSTALLED=yes`, que l'installation prescrite par le guide (`migrate` + `db:seed`) n'écrit pas. Les trois routes portent le garde ; une base qui porte des utilisateurs est installée, drapeau ou pas ; les deux actions répondent **404** ; `verifier-env.sh` refuse un `.env` sans le drapeau. Relevé en relisant l'installateur pour S87 ; aucun test ne nommait l'installateur | `routes/web.php` · `App\Http\Middleware\IsNotInstalledMiddleware` · `docs/guides/infra/deploy/verifier-env.sh` · `InstallerLockTest` |
 | ~~S96~~ | A | ~~**Les entrées d'authentification de l'API (`signin`, `deliveryman/login`, OTP, `password/reset`) sans limite propre : 60 mots de passe ou codes OTP par minute et par adresse**~~ — 🟠 ✅ **corrigé le 2026-10-06 (S96)** : limiteur `connexion` (5/min par identifiant + adresse, 30/min par adresse), réponse 429 dans l'enveloppe, `ApiAuthThrottleTest`. | `routes/api.php`, `RouteServiceProvider` |
+| ~~S99~~ | A | ~~**Rien n'empêchait un `.env` de production en `APP_DEBUG=true` : la page d'erreur de Laravel montre la pile, la requête et des variables d'environnement**~~ — 🟠 ✅ **fermé le 2026-10-06 (S99)** : `verifier-env.sh` le refuse avant `php artisan down` (signalé seulement en recette), `RecetteDeploymentTest`. | `docs/guides/infra/deploy/verifier-env.sh` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
 
@@ -8319,3 +8320,36 @@ Il ne crée pas de lien profond `beninlink-livreur://reset-password` : le lien r
 web du socle, et le jeton se saisit dans l'app (même choix que `mobile/`). Un livreur **sans
 adresse e-mail** en base ne peut pas se réinitialiser seul : le texte le dit et le renvoie au
 transporteur — l'adresse n'est pas obligatoire à la création d'un livreur, règle du socle.
+
+## S99 — le garde du `.env` refuse le mode debug en production (2026-10-06)
+
+### D'où ça vient
+
+Le `.env.example` du socle livre `APP_DEBUG=true`. Un serveur installé en le recopiant sert, à la
+première erreur, la page de débogage de Laravel : pile d'appels, requête, et un bloc
+« Environment » avec les variables — clés d'API, FedaPay, mot de passe de base. `verifier-env.sh`
+(S76, S77, S88, S97) ne le regardait pas ; `DevDependencyLeakTest` (S79) tient la barre de
+débogage hors d'une installation `--no-dev`, pas la page d'erreur.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `docs/guides/infra/deploy/verifier-env.sh` | `APP_ENV=production` + `APP_DEBUG=true` : refus avant `php artisan down`, message qui dit quoi faire ; hors production : avertissement seulement (une recette se débogue) ; absent vaut `false` |
+| `RecetteDeploymentTest` (+1) | refus en production, `false` et absence acceptés, avertissement sans refus en recette |
+| Docs | `web/CLAUDE.md`, guide de mise en service (tableau des refus), tableau des constats de sécurité (~~S99~~), en-têtes datés |
+
+### Vérification
+
+| Sabotage | Effet |
+|---|---|
+| le garde désactivé (`if false`) | **rouge** |
+
+Suite complète `web/` : **1 282 tests, 48 993 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne change pas `.env.example` (qui décrit un poste de développement) et ne lit pas le `.env`
+du serveur : le prochain déploiement le lira. Les runs 217 et 219 ont déployé sans que ce garde
+existe ; si la production est en `APP_DEBUG=true`, le prochain run le dira et s'arrêtera avant de
+couper le site.
