@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8564,3 +8564,44 @@ change pas la connexion du marchand ni de l'agent (le test le tient). Les autres
 passe de S40 (`search-charts`, `store-token`, `subscription`, les routes `aamarpay.payment` et
 `bkash.redirect` nommées par des vues marchandes) restent telles quelles : passerelles hors
 Bénin, décision D-FedaPay.
+
+## S105 — la page des plans ne dépend plus d'un réglage Stripe absent (2026-10-06)
+
+### D'où ça vient
+
+Dernière ligne de la passe de S40 restée ouverte : « `GET /subscription` répond 500 pour les
+trois types ». Mesuré : la vue `backend.subscription.subscription` faisait **sa propre requête**
+(`Setting::where('company_id', 1)->where('key', 'stripe_status')->first()`) puis lisait
+`->value` sur le résultat — `null` dès que la plateforme n'a pas cette ligne (une base amorcée
+autrement que par `SettingSeeder`, ou une ligne effacée). Or `/subscription` est la page où le
+middleware `subscriptionCheck` **renvoie un locataire dont le plan a expiré** : lui répondre 500,
+c'est l'empêcher de voir les plans et de payer par Mobile Money. Le départ vers Stripe
+(`subscription/payment`) lisait la clé secrète de la même façon : 500 sans clé.
+
+### Ce qui est écrit
+
+| Où | Quoi |
+|---|---|
+| `Superadmin\PlanController::subscription()` | passe `$stripeEnabled` à la vue, calculé par `stripePlatformReady()` : interrupteur `stripe_status` de la société 1 **actif et** `stripe_secret_key` renseignée |
+| `subscriptionPayment()` | sans ce drapeau, **refuse** vers la page des plans avec `levels.stripe_not_configured` (FR, EN) au lieu d'appeler Stripe avec une clé nulle |
+| `subscription.blade.php` | plus de requête dans la vue ; le bouton carte suit `$stripeEnabled` ; le bouton Mobile Money (FedaPay) ne change pas |
+| `tests/Feature/SubscriptionPageStripeTest.php` (4 tests) | sans aucune ligne Stripe la page rend 200 et sans bouton carte ; l'interrupteur seul ne suffit pas ; interrupteur + clé font apparaître le bouton ; le départ sans clé redirige au lieu de planter |
+| `PlanSwitchNoticeTest` | n'a plus à poser la ligne `stripe_status` pour que la page se rende |
+| Docs | `web/CLAUDE.md`, en-têtes datés |
+
+### Vérification
+
+| Sabotage | Effet |
+|---|---|
+| `stripePlatformReady()` n'exige plus la clé | **rouge** (1 test : le bouton carte apparaît sans clé) |
+| la vue affiche toujours le bouton carte (`@if (true)`) | **rouge** (2 tests) |
+
+Suite complète `web/` : **1 296 tests, 49 068 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne retire pas Stripe de l'abonnement SaaS : la décision D10 coupe le module *payout*, pas la
+passerelle de la plateforme, et `Helper.php` le dit (« `stripe_status` sert aussi l'abonnement
+SaaS »). Il ne touche pas au retour de Stripe (`subscription/success`, vérifié depuis S1) ni au
+chemin FedaPay (Chantier 3). La passe de S40 est close : `search-charts` répond des dates à tout
+compte authentifié (aucune donnée), `store-token` répond 410 depuis D12.

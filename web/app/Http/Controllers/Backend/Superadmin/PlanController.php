@@ -85,7 +85,24 @@ class PlanController extends Controller
         // L'abonnement SaaS est encaissé par la PLATEFORME, jamais par le
         // locataire : on interroge le compte plateforme, pas le sien.
         $fedapayEnabled = app(\App\Services\Payments\FedaPayGateway::class)->isEnabled();
-        return view('backend.subscription.subscription',compact('plans','allmodules','fedapayEnabled'));
+        $stripeEnabled  = $this->stripePlatformReady();
+        return view('backend.subscription.subscription',compact('plans','allmodules','fedapayEnabled','stripeEnabled'));
+    }
+
+    /**
+     * S105 — Stripe est prêt pour l'abonnement SaaS quand la PLATEFORME (société 1)
+     * a l'interrupteur `stripe_status` actif ET une clé secrète. La vue lisait
+     * `$stripe_status->value` sur une ligne qui peut manquer (500 pour tout compte,
+     * donc pour un locataire expiré que le middleware renvoie ici) ; et le départ
+     * vers Stripe lisait la clé sans la vérifier. Sans l'un des deux, le bouton
+     * n'apparaît pas et le départ est refusé — le Mobile Money (FedaPay) reste.
+     */
+    private function stripePlatformReady(): bool
+    {
+        $statut = Setting::where('company_id', 1)->where('key', 'stripe_status')->value('value');
+        $cle    = Setting::where('company_id', 1)->where('key', 'stripe_secret_key')->value('value');
+
+        return (int) $statut === \App\Enums\Status::ACTIVE && filled($cle);
     }
  
     public function subscriptionHistory(Request $request){
@@ -110,6 +127,12 @@ class PlanController extends Controller
 
     public function subscriptionPayment(Request $request){
     
+        // S105 — sans interrupteur actif et clé de plateforme, on refuse avant
+        // d'appeler Stripe (le socle lisait `->value` sur une ligne absente : 500).
+        if (!$this->stripePlatformReady()) {
+            Toastr::error(__('levels.stripe_not_configured'), __('message.error'));
+            return redirect()->route('subscription.index');
+        }
         $stripe_secret_key        =  Setting::where('company_id',1)->where('key','stripe_secret_key')->first(); 
         $plan  = Plan::find($request->plan_id);
         if(!$plan):

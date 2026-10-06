@@ -317,6 +317,10 @@ avant les apps.
   `DELIVERYMAN` avec `auth.courier_app_only` (il se connecte dans l'app livreur) ; `DashbordController`
   répond 403 à une session livreur au lieu de planter dans la vue ; les huit routes « Theme Pages » sans
   vue sont retirées (`CourierWebAccessTest`).
+- **La page des plans ne dépend plus d'un réglage Stripe absent** (**S105**) : `PlanController` calcule
+  `$stripeEnabled` (interrupteur `stripe_status` de la plateforme actif **et** clé posée) ; la vue ne fait plus
+  de requête ; `subscription/payment` refuse avec un message au lieu de planter sans clé
+  (`SubscriptionPageStripeTest`). Le Mobile Money (FedaPay) reste la voie béninoise.
 - **Le livreur voit l'alerte douanière de sa course, en lecture seule** (**S95**).
   `deliveryman/parcel/details/{id}` porte `customs_alerts` (même `CustomsAlertResource` que S82)
   sur le colis déjà vérifié par `notOwned()` ; un domestique rend `[]`, la course d'un collègue

@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Enums\UserType;
-use App\Models\Backend\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\MountsTenantRoutes;
@@ -31,11 +30,6 @@ class PlanSwitchNoticeTest extends TestCase
         $this->seedTenant();
         $this->mountTenantRoutes();
         $this->souscrireLeLocataire();
-
-        // La page des plans lit l'interrupteur Stripe de la plateforme.
-        if (!Setting::where('company_id', 1)->where('key', 'stripe_status')->exists()) {
-            Setting::forceCreate(['company_id' => 1, 'key' => 'stripe_status', 'value' => 0]);
-        }
     }
 
     public function test_le_locataire_lit_la_regle_sur_la_page_des_plans_avant_de_payer(): void

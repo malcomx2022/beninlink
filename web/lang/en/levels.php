@@ -407,4 +407,5 @@ return [
     'vat_status_taxable' => 'Merchant-specific rate',
     'vat_status_exempt' => 'VAT exempt',
     'vat_status_help' => 'A rate of 0 does not mean exempt: choose "VAT exempt" so that no VAT is charged and the statements say so.',
+    'stripe_not_configured' => 'Card payment (Stripe) is not configured on the platform. Use Mobile Money or contact the administrator.',
 ];

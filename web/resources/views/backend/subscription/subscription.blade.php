@@ -14,12 +14,7 @@
                             <h3 class="text-center my-2">{{ @$plan->name }}</h3>
                             <p class="my-3">{{ @$plan->description }}</p>
                             <div class="d-flex justify-content-center my-5 ">
-                                @php
-                                    $settings = App\Models\Backend\GeneralSettings::find(1);
-                                    $stripe_status = App\Models\Backend\Setting::where('company_id', 1)
-                                        ->where('key', 'stripe_status')
-                                        ->first();
-                                @endphp
+                                @php $settings = App\Models\Backend\GeneralSettings::find(1); @endphp
                                 <h3 class="mt-2px">{{ formatAmount(@$plan->price) }} </h3>
                                 <div class="mx-2 text-left">
                                     <p class="mb-2 font-weight-bold"> / {{ @$plan->intval_name }}</p>
@@ -55,7 +50,8 @@
     
                                 {{-- R3 (S75) : pas de prorata au renouvellement — l'acheteur le sait AVANT de payer. --}}
                                 <p class="small text-muted mb-2 plan-switch-notice">{{ __('levels.plan_switch_notice') }}</p>
-                                @if ($stripe_status->value)
+                                {{-- S105 : le bouton Stripe n'apparaît que si la plateforme a l'interrupteur ET la clé (calculé par le contrôleur, jamais par une requête dans la vue). --}}
+                                @if (!empty($stripeEnabled))
                                     <a class="btn btn-primary "
                                         href="{{ route('subscription.payment', ['plan_id' => $plan->id]) }}">Subscribe</a>
                                 @elseif (empty($fedapayEnabled))
