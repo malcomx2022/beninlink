@@ -78,6 +78,11 @@ Icônes Ionicons ; visuels d'app générés depuis `assets/source/generate.py`.
 - C'est le **seul** canal du livreur : il n'a pas de fil consultable. Une affectation de
   course arrive par là, et le toucher ouvre directement la course.
 - Un refus de permission ne bloque rien — les courses restent visibles dans l'onglet.
+- **Douane (S95)** : `fetchParcelDetails()` rend aussi `customsAlerts` (`customs_alerts ?? []`, un
+  serveur d'avant S95 n'envoie pas la clé) ; l'écran de course montre `CustomsNotice` juste sous
+  l'en-tête — le document à demander au marchand **au ramassage**, gravité par
+  `customsLevelColorName` (`src/domain/customsLevel.ts`, valeurs du contrat). Lecture seule : pas
+  de bouton, le traitement est au transporteur (S68). Carte rendue en test (`CustomsNotice.test.tsx`).
 
 ## Commandes
 - `npm install` · `npx expo start` · `npm run typecheck` · `npx expo lint` · `npm test`

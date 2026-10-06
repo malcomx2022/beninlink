@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V10;
 
+use App\Http\Resources\v10\CustomsAlertResource;
 use App\Enums\StatementType;
 use App\Enums\Status;
 use App\Http\Controllers\Controller;
@@ -48,7 +49,11 @@ class DeliveryManParcelController extends Controller
         try {
             $parcel       = $this->repo->details($id);
             $parcelEvents = $this->repo->parcelEvents($id);
-            return $this->responseWithSuccess(__('parcel.parcel_details'), ['parcel'=>$parcel,'parcelEvents'=>$parcelEvents], 200);
+            // S95 — le livreur voit l'alerte douanière de SA course (document à
+            // collecter au ramassage), comme le marchand depuis S82 : les alertes
+            // voyagent avec le colis déjà vérifié par `notOwned()`. Un domestique rend [].
+            $alertes      = CustomsAlertResource::collection($parcel->customsAlerts()->orderByDesc('id')->get());
+            return $this->responseWithSuccess(__('parcel.parcel_details'), ['parcel'=>$parcel,'parcelEvents'=>$parcelEvents,'customs_alerts'=>$alertes], 200);
         }catch (\Exception $exception){
             return $this->responseWithError(__('parcel.parcel_details'), [], 500);
 

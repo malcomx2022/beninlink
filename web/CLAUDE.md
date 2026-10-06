@@ -306,6 +306,12 @@ avant les apps.
   suit `parcel_update` (`$peutTraiter`), comme la route `customs.alerts.resolve` qu'il appelle ; le
   panneau marchand lit seulement. ⚠️ Un test de fiche ne cherche pas « Alertes douanières » : le
   menu latéral le porte sur toute page ; il cherche `id="alertes-douanieres-colis"`.
+- **Le livreur voit l'alerte douanière de sa course, en lecture seule** (**S95**).
+  `deliveryman/parcel/details/{id}` porte `customs_alerts` (même `CustomsAlertResource` que S82)
+  sur le colis déjà vérifié par `notOwned()` ; un domestique rend `[]`, la course d'un collègue
+  reste un 404. Aucune route de traitement n'est ouverte au livreur (`customs/alerts/{id}/resolve`
+  est marchande, S68 : 403). `DeliverymanCustomsAlertTest` (API) et
+  `CourierAppCustomsContractTest` (sources de l'app) tiennent le contrat.
 - **Les deux apps ont leur filet de contrat** (**S85**). L'app marchand : `OpenApiSpecTest`
   (inventaire), `ParcelStageTest` (statuts), `MerchantAppCustomsContractTest` (pages, douane).
   L'app livreur : `DeliverymanAppContractTest` — inventaire dans la spec et jamais réservé au

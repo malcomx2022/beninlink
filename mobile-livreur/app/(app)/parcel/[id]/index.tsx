@@ -4,7 +4,8 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 
 import { ApiError } from '../../../../src/api/client';
 import { fetchParcelDetails } from '../../../../src/api/deliveryman';
-import type { ParcelDetails, ParcelEvent } from '../../../../src/api/types';
+import type { CustomsAlert, ParcelDetails, ParcelEvent } from '../../../../src/api/types';
+import { CustomsNotice } from '../../../../src/components/CustomsNotice';
 import { Button, Card, ErrorText, Muted, Title } from '../../../../src/components/ui';
 import { colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, radii, spacing } from '../../../../src/theme/typography';
@@ -28,6 +29,7 @@ export default function ParcelDetailScreen() {
   const router = useRouter();
   const [parcel, setParcel] = useState<ParcelDetails | null>(null);
   const [events, setEvents] = useState<ParcelEvent[]>([]);
+  const [customsAlerts, setCustomsAlerts] = useState<CustomsAlert[]>([]);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -38,9 +40,10 @@ export default function ParcelDetailScreen() {
       return;
     }
     try {
-      const { parcel: p, events: e } = await fetchParcelDetails(numericId);
+      const { parcel: p, events: e, customsAlerts: a } = await fetchParcelDetails(numericId);
       setParcel(p);
       setEvents(e);
+      setCustomsAlerts(a);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('errors.unexpected'));
     }
@@ -75,6 +78,9 @@ export default function ParcelDetailScreen() {
               <Text style={styles.codValue}>{formatAmount(parcel.cash_collection)}</Text>
             </View>
           </Card>
+
+          {/* S95 — le document douanier à collecter au ramassage, avant tout le reste. */}
+          <CustomsNotice alerts={customsAlerts} />
 
           <Card>
             <Title>{t('parcels.recipient')}</Title>
