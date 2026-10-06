@@ -9,6 +9,7 @@
 #   FEDAPAY_ENVIRONMENT (live / sandbox) ; FedaPay préfixe ses clés par `_live_`
 #   ou `_sandbox_`. Les deux sont vérifiés : l'un peut être juste et l'autre faux ;
 # - (S77) un `.env` sans API_KEY, ou avec la clé publique du socle We Courier.
+# - (S88) un `.env` sans APP_INSTALLED=yes : le site ne servirait que l'installateur.
 #   Depuis S77 la config n'a plus de repli : sans clé, `CheckApiKeyMiddleware`
 #   refuse toute requête d'API et les deux apps sont coupées. Mieux vaut le lire
 #   ici, avant la coupure du site, que dans les téléphones.
@@ -48,6 +49,17 @@ if [ -z "$api_key" ]; then
 fi
 if [ "$api_key" = "123456rx-ecourier123456" ]; then
     echo "❌ API_KEY vaut la clé publique du socle We Courier, connue de toutes ses installations : à remplacer par une clé propre. Rien n'a été touché." >&2
+    exit 1
+fi
+
+# S88 — le drapeau d'installation, dans tous les environnements. Sans lui le site
+# ne monte que l'installateur, dont l'action finale recrée la base ; la première
+# installation par `migrate` + `db:seed` ne l'écrit pas, seul l'installateur web
+# le faisait.
+app_installed="$(lire APP_INSTALLED)"
+if [ "$app_installed" != "yes" ]; then
+    echo "❌ APP_INSTALLED n'est pas « yes » (${app_installed:-absent}) : le site ne servirait que l'installateur, et son action finale recrée la base (S88)." >&2
+    echo "   Après migrate + db:seed, poser APP_INSTALLED=yes dans le .env. Rien n'a été touché." >&2
     exit 1
 fi
 

@@ -53,12 +53,6 @@ php -r 'exit(PHP_VERSION_ID >= 80300 && PHP_VERSION_ID < 80400 ? 0 : 1);' || {
 # ---------------------------------------------------------------------------
 bash "$DEPLOY_PATH/docs/guides/infra/deploy/verifier-env.sh" .env
 
-# S87 — aucun compte d'amorçage du socle ne garde le mot de passe de son code
-# source (`12345678`, partagé par toutes les installations We Courier). Avant de
-# couper le site : une base amorcée avant S87 s'arrête ici, intacte et toujours
-# servie, jusqu'à ce que ces comptes soient changés ou supprimés.
-php artisan beninlink:comptes-amorcage
-
 # ---------------------------------------------------------------------------
 # Le filet : si quoi que ce soit échoue après la coupure, le site remonte.
 #
@@ -69,8 +63,28 @@ php artisan beninlink:comptes-amorcage
 # dépend encore. Sans ce filet, la sécurité qu'on a mise dans la migration
 # deviendrait une panne de production.
 # ---------------------------------------------------------------------------
+# S89 — remonter le site ne suffit pas : les gardes qui peuvent refuser un
+# déploiement (`comptes-amorcage`, `tarification-prete`, `migrate`) tournent
+# APRÈS `git pull` et `composer install`, parce qu'ils vivent dans la version
+# déployée. Sur refus, le serveur aurait le NOUVEAU code sur l'ANCIEN schéma,
+# et le site serait de nouveau servi dans cet état. Le filet revient donc à la
+# révision servie avant le déploiement — tant que la migration n'a pas été
+# appliquée : après elle, c'est l'ancien code qui serait faux.
+REVISION_SERVIE="$(git rev-parse HEAD)"
+MIGRE=0
 remonter_le_site() {
     echo "❌ Déploiement interrompu — remise en service immédiate." >&2
+    if [ "$MIGRE" = 0 ] && [ "$(git rev-parse HEAD)" != "$REVISION_SERVIE" ]; then
+        echo "   Retour à la révision servie avant le déploiement ($REVISION_SERVIE) : le nouveau code ne reste pas sur l'ancien schéma." >&2
+        git reset --hard "$REVISION_SERVIE" || true
+        composer install --no-dev --optimize-autoloader --no-interaction || true
+        php artisan optimize:clear || true
+        php artisan config:cache || true
+        php artisan route:cache || true
+        php artisan view:cache || true
+    elif [ "$MIGRE" = 1 ]; then
+        echo "   La migration a été appliquée : le code déployé reste en place (l'ancien ne connaît pas le nouveau schéma)." >&2
+    fi
     php artisan up || true
 }
 trap remonter_le_site ERR
@@ -86,6 +100,15 @@ composer install --no-dev --optimize-autoloader --no-interaction
 # la vérification ci-dessous et la migration tournent sur un décor périmé.
 php artisan optimize:clear
 
+# S87 — aucun compte d'amorçage du socle ne garde le mot de passe de son code
+# source (`12345678`, partagé par toutes les installations We Courier). Après la
+# mise à jour du code et le vidage des caches — la commande vit dans la version
+# qu'on déploie, pas dans celle du serveur (S88 l'a appris : appelée avant
+# `git pull`, « Command not defined ») — et avant de migrer : une base amorcée
+# avant S87 s'arrête ici, coupée puis remontée par le filet, intacte, jusqu'à
+# ce que ces comptes soient changés ou supprimés.
+php artisan beninlink:comptes-amorcage
+
 # Vérifier AVANT de migrer, pas pendant. La migration de l'étape 6 est
 # irréversible : si l'installation n'est pas convertie, mieux vaut s'arrêter
 # ici — site remonté par le filet, base intacte — que de l'apprendre à
@@ -94,6 +117,7 @@ php artisan optimize:clear
 php artisan beninlink:tarification-prete
 
 php artisan migrate --force
+MIGRE=1   # S89 — à partir d'ici, revenir à l'ancien code serait faux
 php artisan config:cache && php artisan route:cache && php artisan view:cache
 
 # Les workers en cours tournent avec l'ANCIEN code : `queue:restart` leur

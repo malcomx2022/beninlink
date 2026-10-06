@@ -2,8 +2,9 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-05 (S87 — plus de mot de passe public sur les comptes
-> d'amorçage ; S86 — une installation neuve réussit son premier déploiement ; S85 — le contrat de l'app livreur tenu en PHPUnit ;
+> Dernière mise à jour : 2026-10-06 (S89 — un déploiement refusé remet l'ancien code ; S88 —
+> l'installateur fermé sur une base installée ; S87 — plus
+> de mot de passe public sur les comptes d'amorçage ; S86 — une installation neuve réussit son premier déploiement ; S85 — le contrat de l'app livreur tenu en PHPUnit ;
 > S84 — un lanceur de tests dans les deux apps, M2, et le job CI `apps` ; S83 — l'écran de
 > modification d'une demande de retrait réparé ; S82 — l'alerte douanière sur le détail du
 > colis, M1 ; S81 — identifiants au nom libre dans les filets). Les blocs A-K décrivent le socle **tel que trouvé** ; les
@@ -1229,6 +1230,7 @@ vestige du squelette Laravel.
 | ~~S30~~ | C | ~~L'argent du back-office : sept dépôts touchant à des comptes bancaires lisaient **nu**~~ — ✅ **corrigé le 2026-09-18** (5ᵉ passe sur l'arriéré). Pour six d'entre eux la lecture nue précédait un **mouvement d'argent** : `Income::update` touche le compte bancaire **et** le relevé du marchand rattachés à la recette lue ; `Expense::update` **rend le solde** au compte de la dépense lue ; `FundTransfer::update` rejoue un **virement** entre ses deux comptes ; `MerchantManage\Payment::update` réécrit la demande de versement et la **réaffecte** à un autre marchand ; `cancelReject` remet le versement rejeté **en attente de paiement** ; `Account::update` réécrit le compte bancaire ; `HubPaymentRequest::update` **rattache** la demande à l'entrepôt de l'agent connecté. Plus le **décaissement** d'un versement marchand, lu nu dans le contrôleur avec l'identifiant dans le corps — 3ᵉ occurrence de l'angle mort du filet | `Income` · `Expense` · `FundTransfer` · `MerchantManage\Payment` · `Account` · `HubPaymentRequest` · `ReceivedRepository` · `MerchantmanagePaymentController` |
 | ~~S31~~ | B | ~~Les responsables d'entrepôt : périmètre par `hub_id` **et par rien d'autre**~~ — ✅ **corrigé le 2026-09-18** (6ᵉ passe). `hub_incharges` ne porte pas de `company_id`, donc `where('hub_id', $hubID)` acceptait l'entrepôt de n'importe quelle société. **Neuf points dans un seul dépôt**, et le plus grave n'est pas une lecture : la rafle d'`assignedHub()` passe tous les autres responsables actifs de l'entrepôt à inactif — chez l'autre société, une **interruption de service**. Elle réécrivait aussi le `hub_id` d'un utilisateur sans vérifier qu'il est à nous, `delete()` était `destroy($id)` **sans même le `hub_id`**, et `users()` nommait les **administrateurs de tous les transporteurs** dans le menu déroulant | `HubInChargeRepository` · `HubInChargeController` |
 | ~~S32~~ | G | ~~Les relevés de règlement : neuf routes non prouvées~~ — ✅ **inscrites le 2026-09-20** (7ᵉ passe). **Passe de vérification, pas de correction** : les six méthodes du dépôt que ces routes atteignent étaient **déjà** `companywise()` (S14, S20, chantier 4). L'arriéré les tenait faute de test, pas faute de périmètre. Un seul défaut trouvé : `InvoiceDetails()` déréférençait un `null` hors périmètre — 500 au lieu de 404. Et un piège signalé : `InvoiceRepository::InvoicePdf()` est un **doublon mort** d'`invoiceGet()`, corps pour corps — il a avalé un de mes sabotages | `MerchantInvoiceController` · `InvoiceRepository` |
+| ~~S88~~ | A | ~~**`GET /finish` détruisait la base d'une installation terminée, sans authentification**~~ — 🔴 ✅ **corrigé le 2026-10-05 (S88)** : `routes/web.php` ne posait `IsNotInstalled` que sur l'écran `GET /install` ; `POST /installing` et `GET /finish` ne portaient que `XSS`, et `InstallerController::finish()` supprime **chaque table** (`SHOW TABLES` + `Schema::drop`), rejoue `migrate:refresh` et `db:seed`, pose nom, courriel et **mot de passe du compte n° 1** depuis la requête, et réécrit `APP_INSTALLED` et `APP_URL` dans le `.env`. Second maillon : le garde ne reconnaissait une installation que par `APP_INSTALLED=yes`, que l'installation prescrite par le guide (`migrate` + `db:seed`) n'écrit pas. Les trois routes portent le garde ; une base qui porte des utilisateurs est installée, drapeau ou pas ; les deux actions répondent **404** ; `verifier-env.sh` refuse un `.env` sans le drapeau. Relevé en relisant l'installateur pour S87 ; aucun test ne nommait l'installateur | `routes/web.php` · `App\Http\Middleware\IsNotInstalledMiddleware` · `docs/guides/infra/deploy/verifier-env.sh` · `InstallerLockTest` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
 
@@ -7762,7 +7764,7 @@ défaut.
 | `app/Services/Install/SeedAccounts` | un seul endroit : la liste des cinq comptes, le mot de passe public, `motDePasse($email)` (le public en `local`/`testing`, un tirage de 20 caractères lettres et chiffres partout ailleurs), `annoncer()` qui l'affiche **une fois** dans la sortie de la semence |
 | `UserSeeder`, `MerchantSeeder`, `DeliveryManSeeder` | `Hash::make(SeedAccounts::motDePasse(…))` puis `annoncer($this->command, …)` — rien d'autre ne change dans le socle |
 | `beninlink:comptes-amorcage` (`SeedAccountsCommand`) | **constate** : les comptes d'amorçage dont le mot de passe vérifie encore le public, par `Hash::check` ; sort en erreur s'il en reste. Un compte supprimé n'est pas un blocage ; un compte renommé en est un |
-| `deploy.sh` | l'exécute **avant** `artisan down`, à côté du garde du `.env` : une base refusée reste servie, intacte |
+| `deploy.sh` | l'exécute ~~avant `artisan down`~~ — **corrigé en S88** : après `git pull` et `optimize:clear`, avant `migrate`. Appelée avant la mise à jour du code, la commande n'existait pas sur le serveur (« Command not defined ») : le premier déploiement qui a atteint le VPS est tombé là, site non coupé, base intacte |
 | Job `repetition` | rejoue la commande en tête des commandes de `deploy.sh` ; en `staging`, les semences ont tiré au sort, le constat passe — il mesure donc la règle, pas un contournement |
 | `tests/Feature/SeedAccountsPasswordTest` (6 tests) | en test, les cinq comptes gardent le public (la liste est bien celle des semences) ; en production simulée, un mot de passe distinct par compte, affiché, et c'est celui posé ; le constat rouge tant qu'un compte reste public, nommé ; vert une fois changés ou supprimés ; il lit le mot de passe, pas le nom ; `deploy.sh` le joue avant la coupure |
 | `DeploymentRehearsalTest` | la liste des commandes de `deploy.sh` gagne `beninlink:comptes-amorcage` en tête |
@@ -7798,3 +7800,132 @@ pilote, dont le mot de passe commun est un choix de recette, refusé en producti
 commande. Il ne vérifie que les **comptes d'amorçage** : un utilisateur qui choisit lui-même
 `12345678` relève d'une politique de mots de passe, pas de ce lot. Et il ne change rien à
 `local` : le poste de développement garde les identifiants du socle.
+
+## S88 — l'installateur n'est plus joignable sur une base installée (2026-10-05)
+
+### D'où ça vient
+
+Relu en préparant S87. `routes/web.php` monte trois routes d'installation, et seule `GET /install`
+portait le garde `IsNotInstalled`. `POST /installing` et **`GET /finish`** ne portaient que `XSS`,
+et `InstallerController::finish()` fait, sans authentification : `SHOW TABLES` et `Schema::drop`
+de **chaque table**, `migrate:refresh`, `db:seed`, puis écrit le nom, le courriel et le **mot de
+passe du compte n° 1** depuis la requête, et réécrit `APP_INSTALLED` et `APP_URL` dans le `.env`.
+Sur une installation terminée, une requête anonyme vidait la base et posait l'administrateur de
+son choix. Les routes sont montées sur tous les hôtes, avant le bloc conditionné par
+`app_installed`, et aucun test ne nommait l'installateur.
+
+Second maillon : le garde ne reconnaissait une installation que par `APP_INSTALLED=yes` dans le
+`.env`. La première installation que le guide prescrit (`migrate` + `db:seed`, « jamais par
+`/install` ») n'écrit pas ce drapeau — seul l'installateur web le fait — et `verifier-env.sh` ne
+le vérifiait pas.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `routes/web.php` | les **trois** routes sous `['XSS', 'IsNotInstalled']` |
+| `IsNotInstalledMiddleware` | `installee()` : tables présentes **et** (drapeau `yes` **ou** table `users` non vide) ; sur une base installée, `installing` et `final` répondent **404**, l'écran redirige vers `/` si le drapeau est posé, sinon **403** en texte nu qui dit quoi poser (une redirection bouclerait avec `IsInstalled`, et la page 403 du socle n'affiche pas le message d'un `abort()`) |
+| `verifier-env.sh` | refuse un `.env` dont `APP_INSTALLED` n'est pas `yes`, dans tous les environnements, avant de couper le site (forme de S77) |
+| `tests/Feature/InstallerLockTest` (4 tests) | les trois routes portent le garde (lu dans `Route::getRoutes()`) ; base installée : `GET /finish` et `POST /installing` 404, `/install` redirige, **nombre de tables, d'utilisateurs et de sociétés inchangé**, aucun compte « pirate » ; sans drapeau, base peuplée : mêmes 404, 403 explicite ; base vierge : l'écran répond (le flux du socle survit) |
+| `RecetteDeploymentTest` (+1) | un `.env` sans `APP_INSTALLED=yes`, ou avec une autre valeur, est refusé ; les fixtures qui passent portent le drapeau |
+| `deploy.sh`, job `repetition`, `DeploymentRehearsalTest` (+1) | **correctif de S87** : `beninlink:comptes-amorcage` passe après `optimize:clear` et avant `tarification-prete` ; nouveau filet : toute commande `beninlink:*` du script suit `git pull`, `composer install` et `optimize:clear` (voir ci-dessous) |
+| Docs | `mise-en-service` § 5, grand livre E3, « Ne jamais casser » dans `web/CLAUDE.md`, tableau des constats de sécurité (S88) |
+
+### Ce que le premier déploiement réel a appris
+
+Le point de contrôle de 20 h a trouvé **`main` rouge** : la fusion de S87 (run 208) est le
+**premier déploiement à avoir atteint le VPS** — les secrets `SSH_*` sont désormais en place
+(E3 avance), `git fetch` a répondu, `verifier-env.sh` a validé le `.env` de production (FedaPay
+en sandbox, averti). Puis `php artisan beninlink:comptes-amorcage` : **« Command not defined »**.
+S87 l'avait placée **avant `git pull`**, à côté du garde du `.env` ; or seuls les scripts de
+`docs/guides/infra/deploy/` sont pris à la version déployée (`git checkout FETCH_HEAD -- …`), le
+code PHP du serveur est encore l'ancien, et il ne connaît pas la commande. Conséquence bénigne par
+construction — l'arrêt précède `artisan down`, le site n'a pas été coupé, rien n'a été migré —
+mais **plus aucun déploiement ne passait**. ⚠️ Le job de répétition ne pouvait pas le voir : il
+tourne sur le code neuf de bout en bout.
+
+Correctif porté dans ce lot : la commande passe après `optimize:clear`, avant
+`tarification-prete` (coupée puis remontée par le filet, comme elle). Et un filet neuf dans
+`DeploymentRehearsalTest` : **toute commande `beninlink:*` de `deploy.sh` suit `git pull`,
+`composer install` et `optimize:clear`** — sabotage (la commande remise avant `git pull`) :
+**rouge** sur deux fichiers. Règle dans `web/CLAUDE.md`. La CI de la PR #157 avait par ailleurs
+été **annulée** avant tout test (jobs `cancelled` à 19 h 35, sans échec) ; le push du correctif la
+relance.
+
+### Ce que l'écriture a appris
+
+- La vue `installer/index.blade.php` lit **`$_SERVER['HTTP_HOST']` et `SCRIPT_NAME` directement**,
+  pas la requête : hors nginx elle tombe en 500. Le test les pose comme le serveur le ferait.
+- La page 403 du socle (`errors/403.blade.php`) affiche un texte fixe, jamais le message d'un
+  `abort(403, …)` : un message qui doit être lu part en réponse nue.
+
+### Vérification
+
+Quatre sabotages, chacun relancé sur le seul fichier qu'il doit faire tomber :
+
+| Sabotage | Effet |
+|---|---|
+| `finish` ressort du groupe gardé (forme du socle) | **rouge** (3 tests : le garde manque sur `finish`, et `GET /finish` ne répond plus 404 — sur SQLite il tombe sur `SHOW TABLES`, en MySQL il aurait vidé la base) |
+| `installee()` ne regarde plus que le drapeau | **rouge** (sans drapeau, la base peuplée redevient « vierge ») |
+| `verifier-env.sh` sans le refus `APP_INSTALLED` | **rouge** (`RecetteDeploymentTest`) |
+| le garde laisse passer `installing` sur une base installée | **rouge** (2 tests : `POST /installing` passe le garde) |
+
+Suite complète : **1 238 tests, 47 104 assertions**, verte (après le correctif de l'ordre de `deploy.sh`).
+
+### Ce que ce lot ne fait pas
+
+Il ne retire ni ne réécrit l'installateur (0 fichier supprimé) : le flux du socle reste entier pour
+une base vierge, il cesse seulement d'être joignable une fois la base installée. Il ne touche pas
+`IsInstalledMiddleware`, qui redirige vers `/install` quand le drapeau manque — l'écran répond
+alors 403 avec la ligne à poser, et `verifier-env.sh` empêche qu'un déploiement parte sans elle.
+La vérification du code d'achat (`purchaseVerify`) et la vue d'installation restent telles quelles.
+
+## S89 — un déploiement refusé remet l'ancien code, pas seulement le site (2026-10-06)
+
+### D'où ça vient
+
+Le premier déploiement réel (S88) a fait relire `deploy.sh` avec les yeux du serveur. Les trois
+gardes qui peuvent refuser un déploiement — `comptes-amorcage`, `tarification-prete`, puis
+`migrate` — tournent **après** `git pull` et `composer install`, et c'est nécessaire : ils vivent
+dans la version déployée (S88 l'a appris en les appelant avant). Mais sur refus, le filet
+`remonter_le_site()` ne faisait que `php artisan up` : le serveur repartait avec le **nouveau code
+sur l'ancien schéma**, et le site était de nouveau servi dans cet état. La base était intacte, le
+code ne l'était pas. Dès la fusion de la #157, c'est le scénario le plus probable : la base de
+production a été amorcée avant S86 et S87, `comptes-amorcage` ou `tarification-prete` refusera.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `deploy.sh` | `REVISION_SERVIE="$(git rev-parse HEAD)"` et `MIGRE=0` **avant** `artisan down` ; le filet revient à cette révision (`git reset --hard`, `composer install --no-dev`, `optimize:clear` puis les trois caches) **si** `MIGRE` vaut encore 0 et que HEAD a bougé, puis remonte le site ; `MIGRE=1` juste après `migrate --force` — à partir de là, l'ancien code serait faux, il reste le nouveau et le filet le dit |
+| `.github/workflows/deploy.yml` | les deux étapes `appleboy/ssh-action@v1` perdent `script_stop`, entrée que v1 ne connaît plus (avertissement dans chaque journal) ; `set -euo pipefail` est dans le script |
+| `DeploymentRehearsalTest` (+2) | le parseur des commandes du script ignore désormais le **corps du filet** (chemin de secours, pas à rejouer) — la liste attendue perd le `up` du filet ; un test lit le filet : révision notée avant `git pull`, `git reset --hard "$REVISION_SERVIE"` puis `composer install --no-dev` puis `php artisan up`, garde `"$MIGRE" = 0`, `MIGRE=1` entre `migrate` et la commande suivante ; un test lit les deux étapes SSH : pas de `script_stop`, `set -euo pipefail` présent |
+| Docs | `mise-en-service` § 6 : la table « où il s'arrête » gagne la colonne **code servi** et la ligne `comptes-amorcage` ; encadré **« le premier déploiement réel »** : les trois refus attendus sur une base d'avant S86/S87 et leurs remèdes sur le serveur ; `web/CLAUDE.md` |
+
+### Ce que l'écriture a appris
+
+- `strpos` sans décalage trouve la **première** occurrence : `php artisan config:cache` vit aussi
+  dans le filet, avant `migrate` dans le fichier. Une position « après la migration » se cherche à
+  partir de la migration.
+- Après la migration, revenir en arrière serait **pire** : l'ancien code ne connaît pas le nouveau
+  schéma. D'où le drapeau `MIGRE`, levé après `migrate --force` et lu par le filet.
+
+### Vérification
+
+| Sabotage | Effet |
+|---|---|
+| le filet ne fait plus que `php artisan up` (forme d'avant S89) | **rouge** |
+| `MIGRE=1` retiré après la migration | **rouge** |
+| `REVISION_SERVIE` notée **après** `git pull` | **rouge** |
+| `script_stop: true` remis sur une étape SSH | **rouge** |
+
+Suite complète : **1 240 tests, 47 121 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne change pas la forme du déploiement (pas de répertoire de version ni de lien symbolique
+basculé : ce serait une autre architecture), ni l'ordre des gardes. Un échec **pendant** la
+migration reste le cas documenté de longue date : MySQL ne défait pas un schéma à moitié
+modifié, la sauvegarde se prend avant ; le filet remet alors l'ancien code (la migration n'est
+pas tenue pour appliquée) et le dit. Il ne pose rien sur le serveur : les remèdes du premier
+déploiement réel sont les vôtres, listés dans le guide.

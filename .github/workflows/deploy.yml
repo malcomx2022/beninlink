@@ -198,8 +198,8 @@ jobs:
       - name: Les commandes de deploy.sh, dans l'ordre
         working-directory: web
         run: |
-          php artisan beninlink:comptes-amorcage
           php artisan optimize:clear
+          php artisan beninlink:comptes-amorcage
           php artisan beninlink:tarification-prete
           php artisan migrate --force
           php artisan config:cache && php artisan route:cache && php artisan view:cache
@@ -254,7 +254,6 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           envs: DEPLOY_PATH
-          script_stop: true
           script: |
             set -euo pipefail
             cd "$DEPLOY_PATH"
@@ -307,7 +306,6 @@ jobs:
           key: ${{ secrets.RECETTE_SSH_KEY }}
           port: ${{ secrets.RECETTE_SSH_PORT || secrets.SSH_PORT || 22 }}
           envs: DEPLOY_PATH
-          script_stop: true
           script: |
             set -euo pipefail
             cd "$DEPLOY_PATH"

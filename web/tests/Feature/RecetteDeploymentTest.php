@@ -29,8 +29,8 @@ class RecetteDeploymentTest extends TestCase
     private const DEPLOY = 'docs/guides/infra/deploy/deploy.sh';
     private const GARDE = 'docs/guides/infra/deploy/verifier-env.sh';
 
-    /** Une clé d'installation valide : les cas FedaPay ne doivent pas tomber sur le garde S77. */
-    private const CLE = "API_KEY=blk_0123456789abcdef\n";
+    /** Une clé d'installation valide et le drapeau d'installation : les cas FedaPay ne doivent tomber ni sur le garde S77 ni sur celui de S88. */
+    private const CLE = "API_KEY=blk_0123456789abcdef\nAPP_INSTALLED=yes\n";
 
     private function racine(string $relatif): string
     {
@@ -193,6 +193,21 @@ class RecetteDeploymentTest extends TestCase
 
         $this->assertSame(1, $code);
         $this->assertStringContainsString('clé publique du socle', $sortie);
+    }
+
+    /** S88 — sans APP_INSTALLED=yes le site ne sert que l'installateur, dont l'action finale recrée la base. */
+    public function test_un_env_sans_app_installed_est_refuse_dans_tous_les_environnements(): void
+    {
+        foreach (['staging', 'production'] as $env) {
+            [$code, $sortie] = $this->garde("APP_ENV=$env\nAPI_KEY=blk_0123456789abcdef\nFEDAPAY_ENVIRONMENT=sandbox\n");
+            $this->assertSame(1, $code, "$env : $sortie");
+            $this->assertStringContainsString('APP_INSTALLED', $sortie);
+            $this->assertStringContainsString('recrée la base', $sortie);
+        }
+
+        [$code, $sortie] = $this->garde("APP_ENV=production\nAPI_KEY=blk_0123456789abcdef\nAPP_INSTALLED=no\n");
+        $this->assertSame(1, $code, 'une autre valeur que « yes » vaut une absence');
+        $this->assertStringContainsString('(no)', $sortie);
     }
 
     public function test_un_env_absent_est_refuse(): void
