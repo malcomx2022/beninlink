@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8476,3 +8476,49 @@ Il ne pose rien sur le serveur et ne vérifie rien à distance : il relit les ru
 233) et les trois gardes de `deploy.sh`. Le renommage « We Courier » → BeninLink dans Réglages,
 Supervisor, la supervision, la sauvegarde et le serveur de recette restent des gestes d'opérateur,
 listés dans le guide.
+
+## S103 — les cartes de colis des deux apps rendues en test (2026-10-06)
+
+### D'où ça vient
+
+S84 puis S101 l'avaient noté : les listes de colis des deux apps sont des **écrans**, et un écran
+(hooks de session, appels d'API, navigation) ne se rend pas en test unitaire. La pastille « Douane »
+de S101, le montant en FCFA entiers, le statut traduit par le backend et les boutons Appeler /
+Itinéraire du livreur n'étaient donc tenus que par une **lecture de source** dans les tests de
+contrat (`assertStringContainsString`). Une lecture de source dit qu'une expression existe, pas
+qu'elle rend ce qu'on croit.
+
+### Ce qui est écrit
+
+| Où | Quoi |
+|---|---|
+| `mobile/src/components/ParcelCard.tsx` (+ test, 4) | la carte d'un colis du marchand : suivi, statut du backend, pastille « Douane » si `customs_pending > 0`, client et adresse, montant par `formatAmount`, type de livraison ; `testID` `parcel-card-<id>` ; le toucher ouvre la fiche |
+| `mobile-livreur/src/components/ParcelCard.tsx` (+ test, 4) | la carte d'une course : même tronc, plus le libellé « à encaisser » et les boutons Appeler / Itinéraire (`accessibilityRole="button"`, inactifs sans numéro ou adresse) |
+| `mobile/app/(app)/parcels.tsx`, `mobile-livreur/app/(app)/(tabs)/index.tsx` | ne font plus que poser `<ParcelCard>` ; les styles de la carte ont suivi |
+| `MerchantAppCustomsContractTest`, `CourierAppCustomsContractTest` | le test S101 lit le **composant** (pastille, `formatAmount`), exige que l'écran passe par `<ParcelCard` sans porter lui-même `customs_pending`, et que le test de rendu existe |
+| Docs | `web/CLAUDE.md`, `mobile/CLAUDE.md`, `mobile-livreur/CLAUDE.md`, grand livre (M5), en-têtes datés |
+
+Les fixtures des tests sont des `Partial<…>` affirmés en type : la carte ne lit qu'une dizaine
+de champs, les quarante autres du `ParcelSummary` n'ont pas à être inventés.
+
+### Vérification
+
+`tsc`, `expo lint`, `jest` verts dans les deux apps (**47** tests marchand, **30** tests livreur).
+
+| Sabotage | Effet |
+|---|---|
+| la carte du livreur ne pose plus la pastille (`false &&`) | **rouge** (jest livreur, 1 test) |
+| la carte du marchand écrit le montant brut (`String(...)` au lieu de `formatAmount`) | **rouge** (jest marchand, 1 test) |
+
+Deux pièges rencontrés en écrivant les tests, utiles au prochain composant : (1) après un
+`unmount()` manuel, `screen` ne suit plus le rendu suivant du même test — utiliser `rerender` ;
+(2) `getAllByRole('button')` destructuré donne `TestInstance | undefined` sous le typage strict —
+viser le bouton par son nom (`getByRole('button', { name: 'Appeler' })`).
+
+Suite complète `web/` : **1 287 tests, 49 031 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne change ni le contrat ni un pixel : les deux écrans rendent la même carte qu'avant, par un
+composant. Les autres listes des apps (relevés, wallet, alertes, tickets) restent des écrans ; elles
+n'ont pas de propriété métier que les tests de contrat tiendraient par lecture de source.

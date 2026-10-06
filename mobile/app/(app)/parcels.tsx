@@ -5,10 +5,10 @@ import { useRouter } from 'expo-router';
 import { ApiError } from '../../src/api/client';
 import { fetchParcels } from '../../src/api/parcels';
 import type { Parcel } from '../../src/api/types';
+import { ParcelCard } from '../../src/components/ParcelCard';
 import { ErrorText, Muted } from '../../src/components/ui';
 import { colors } from '../../src/theme/colors';
 import { fonts, fontSizes, radii, spacing } from '../../src/theme/typography';
-import { formatAmount } from '../../src/domain/money';
 import { TAB_STAGES, toMerchantStage } from '../../src/domain/parcelStatus';
 import { t } from '../../src/i18n';
 
@@ -92,29 +92,11 @@ export default function ParcelsScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <Pressable
+          <ParcelCard
+            parcel={item}
             // Forme objet : vérifiée par les routes typées, contrairement au gabarit de chaîne.
-            onPress={() => router.push({ pathname: '/(app)/parcel/[id]', params: { id: item.id } })}
-            style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-          >
-            <View style={styles.rowTop}>
-              <Text style={styles.tracking}>{item.tracking_id}</Text>
-              {/* statusName vient traduit du backend : on ne le réécrit pas. */}
-              <Text style={styles.status}>{item.statusName ?? '—'}</Text>
-            </View>
-            {/* S101 — une alerte douanière en cours : le document à collecter se voit depuis la liste. */}
-            {(item.customs_pending ?? 0) > 0 && (
-              <Text style={styles.customsBadge} testID={`customs-badge-${item.id}`}>
-                {t('customs.badge')}
-              </Text>
-            )}
-            <Text style={styles.customer}>{item.customer_name}</Text>
-            <Muted>{item.customer_address ?? ''}</Muted>
-            <View style={styles.rowBottom}>
-              <Text style={styles.amount}>{formatAmount(item.cash_collection)}</Text>
-              <Muted>{item.deliveryType ?? ''}</Muted>
-            </View>
-          </Pressable>
+            onOpen={() => router.push({ pathname: '/(app)/parcel/[id]', params: { id: item.id } })}
+          />
         )}
       />
     </View>
@@ -143,6 +125,7 @@ const styles = StyleSheet.create({
   },
   list: { padding: spacing.md, gap: spacing.sm },
   empty: { padding: spacing.xl, alignItems: 'center' },
+  rowPressed: { opacity: 0.7 },
   row: {
     backgroundColor: colors.surface,
     borderRadius: radii.md,
@@ -151,22 +134,4 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.xs,
   },
-  rowPressed: { opacity: 0.7 },
-  rowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  rowBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xs },
-  tracking: { fontFamily: fonts.numeric, fontSize: fontSizes.sm, color: colors.primary },
-  status: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.xs, color: colors.info },
-  customsBadge: {
-    alignSelf: 'flex-start',
-    fontFamily: fonts.bodyMedium,
-    fontSize: fontSizes.xs,
-    color: colors.warning,
-    borderWidth: 1,
-    borderColor: colors.warning,
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-  },
-  customer: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.md, color: colors.text },
-  amount: { fontFamily: fonts.numeric, fontSize: fontSizes.md, color: colors.text },
 });

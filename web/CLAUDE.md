@@ -310,6 +310,9 @@ avant les apps.
   **en cours** du colis (`withCount` dans `deliverymanStatusParcel()` et `parcelAll()`, repli par requête
   sinon) ; les deux apps affichent une pastille « Douane » sur la carte, sans ouvrir le colis. Jamais de
   filtre côté app sur `customs/alerts` (règle S82).
+- **Les cartes de colis des deux apps sont des composants rendus en test** (**S103**) : `ParcelCard` dans
+  `mobile/` et `mobile-livreur/` ; les deux tests de contrat (`MerchantAppCustomsContractTest`,
+  `CourierAppCustomsContractTest`) lisent le composant, pas l'écran, et exigent son test de rendu.
 - **Le livreur voit l'alerte douanière de sa course, en lecture seule** (**S95**).
   `deliveryman/parcel/details/{id}` porte `customs_alerts` (même `CustomsAlertResource` que S82)
   sur le colis déjà vérifié par `notOwned()` ; un domestique rend `[]`, la course d'un collègue
