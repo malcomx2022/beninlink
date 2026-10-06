@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -1233,6 +1233,7 @@ vestige du squelette Laravel.
 | ~~S31~~ | B | ~~Les responsables d'entrepôt : périmètre par `hub_id` **et par rien d'autre**~~ — ✅ **corrigé le 2026-09-18** (6ᵉ passe). `hub_incharges` ne porte pas de `company_id`, donc `where('hub_id', $hubID)` acceptait l'entrepôt de n'importe quelle société. **Neuf points dans un seul dépôt**, et le plus grave n'est pas une lecture : la rafle d'`assignedHub()` passe tous les autres responsables actifs de l'entrepôt à inactif — chez l'autre société, une **interruption de service**. Elle réécrivait aussi le `hub_id` d'un utilisateur sans vérifier qu'il est à nous, `delete()` était `destroy($id)` **sans même le `hub_id`**, et `users()` nommait les **administrateurs de tous les transporteurs** dans le menu déroulant | `HubInChargeRepository` · `HubInChargeController` |
 | ~~S32~~ | G | ~~Les relevés de règlement : neuf routes non prouvées~~ — ✅ **inscrites le 2026-09-20** (7ᵉ passe). **Passe de vérification, pas de correction** : les six méthodes du dépôt que ces routes atteignent étaient **déjà** `companywise()` (S14, S20, chantier 4). L'arriéré les tenait faute de test, pas faute de périmètre. Un seul défaut trouvé : `InvoiceDetails()` déréférençait un `null` hors périmètre — 500 au lieu de 404. Et un piège signalé : `InvoiceRepository::InvoicePdf()` est un **doublon mort** d'`invoiceGet()`, corps pour corps — il a avalé un de mes sabotages | `MerchantInvoiceController` · `InvoiceRepository` |
 | ~~S88~~ | A | ~~**`GET /finish` détruisait la base d'une installation terminée, sans authentification**~~ — 🔴 ✅ **corrigé le 2026-10-05 (S88)** : `routes/web.php` ne posait `IsNotInstalled` que sur l'écran `GET /install` ; `POST /installing` et `GET /finish` ne portaient que `XSS`, et `InstallerController::finish()` supprime **chaque table** (`SHOW TABLES` + `Schema::drop`), rejoue `migrate:refresh` et `db:seed`, pose nom, courriel et **mot de passe du compte n° 1** depuis la requête, et réécrit `APP_INSTALLED` et `APP_URL` dans le `.env`. Second maillon : le garde ne reconnaissait une installation que par `APP_INSTALLED=yes`, que l'installation prescrite par le guide (`migrate` + `db:seed`) n'écrit pas. Les trois routes portent le garde ; une base qui porte des utilisateurs est installée, drapeau ou pas ; les deux actions répondent **404** ; `verifier-env.sh` refuse un `.env` sans le drapeau. Relevé en relisant l'installateur pour S87 ; aucun test ne nommait l'installateur | `routes/web.php` · `App\Http\Middleware\IsNotInstalledMiddleware` · `docs/guides/infra/deploy/verifier-env.sh` · `InstallerLockTest` |
+| ~~S96~~ | A | ~~**Les entrées d'authentification de l'API (`signin`, `deliveryman/login`, OTP, `password/reset`) sans limite propre : 60 mots de passe ou codes OTP par minute et par adresse**~~ — 🟠 ✅ **corrigé le 2026-10-06 (S96)** : limiteur `connexion` (5/min par identifiant + adresse, 30/min par adresse), réponse 429 dans l'enveloppe, `ApiAuthThrottleTest`. | `routes/api.php`, `RouteServiceProvider` |
 
 ## ✅ S2 — le calcul des montants est revenu côté serveur (2026-08-18)
 
@@ -8206,3 +8207,43 @@ Il n'ouvre aucune route au livreur : il lit. Il ne touche pas à la liste des co
 — une pastille « douane » sur la liste serait un lot à part, à décider à la recette avec un colis
 export du jeu pilote. L'asymétrie héritée (le marchand peut marquer sa propre alerte traitée par
 l'API, pas par le panneau web) reste à trancher (S94).
+
+## S96 — les entrées d'authentification de l'API sont limitées contre la force brute (2026-10-06)
+
+### D'où ça vient
+
+Le login web est limité par `ThrottlesLogins` (5 essais), `password/email` par `throttle:5,1`.
+Les autres entrées d'authentification de l'API (`signin`, `deliveryman/login`, `otp-verification`,
+`resend-otp`, `password/reset`) ne connaissaient que la borne du groupe `api` : **60 requêtes par
+minute et par adresse**, sans fin — soixante mots de passe à la minute sur un compte marchand, ou
+soixante codes OTP à six chiffres. Depuis S87 les comptes d'amorçage n'ont plus de mot de passe
+public ; depuis les runs 217 et 219 la production est en ligne. Le trou se voyait depuis `grep`.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `RouteServiceProvider::configureRateLimiting()` | limiteur `connexion` : deux bornes, `Limit::perMinute(5)->by('connexion:' . identifiant . '|' . ip)` et `Limit::perMinute(30)->by('connexion-ip:' . ip)` ; identifiant = `merchant_id` / `driver_id` / `email` / `mobile`, en minuscules, sans espaces ; réponse 429 `{success:false, message, data:[]}` + `Retry-After`, message `auth.throttle` dans la langue négociée (le limiteur appelle `ApiLocale::negocier` : `ThrottleRequests` a la priorité sur `ApiLocale`) |
+| `routes/api.php` | `->middleware('throttle:connexion')` sur les six entrées ; `password/email` passe de `throttle:5,1` au même limiteur (même réponse, même langue) |
+| `public/openapi/v10.json` (régénéré) | les six routes documentent le 429 (`SpecGenerator` le fait pour tout `throttle:*`) |
+| `tests/Feature/ApiAuthThrottleTest` (7 tests) | 6ᵉ essai sur un compte : 429 dans l'enveloppe, `Retry-After` repris dans le message ; identifiant normalisé (casse, espaces) ; un autre compte depuis la même adresse passe ; 31ᵉ compte depuis une adresse : 429 ; la langue négociée (S90) ; les six routes portent le limiteur ; le login livreur aussi |
+| Docs | `web/CLAUDE.md` (décision), cartographie § S96, en-têtes datés |
+
+### Vérification
+
+| Sabotage | Effet |
+|---|---|
+| `signin` sans le limiteur | **rouge** (5 tests : compte visé, normalisation, énumération, langue, inventaire) |
+| borne par compte portée à 60/min | **rouge** (compte visé, normalisation, langue, livreur) |
+
+Suite complète `web/` : **1 277 tests, 48 950 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+`register` n'est pas limité : une PME dont l'inscription échoue cinq fois à la validation ne doit
+pas se voir fermer la porte ; le spam d'inscriptions est un autre sujet (captcha, vérification
+OTP déjà en place). Les bornes (5 et 30 par minute) sont celles du login web et un ordre de
+grandeur raisonnable ; elles se règlent dans le limiteur, pas dans les routes. Le compteur vit
+dans le cache de l'application : un cache `file` ou `database` le partage entre processus PHP,
+un cache `array` ne compterait que dans la requête (le `.env` de production n'est pas en `array`,
+`verifier-env.sh` ne le vérifie pas — à savoir).

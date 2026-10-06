@@ -1199,6 +1199,9 @@
                                 }
                             }
                         }
+                    },
+                    "429": {
+                        "description": "Trop de requêtes (throttle:connexion)"
                     }
                 },
                 "security": [
@@ -1208,7 +1211,8 @@
                 ],
                 "x-middleware": [
                     "api",
-                    "CheckApiKey"
+                    "CheckApiKey",
+                    "throttle:connexion"
                 ],
                 "x-documented": true
             }
@@ -3698,6 +3702,9 @@
                                 }
                             }
                         }
+                    },
+                    "429": {
+                        "description": "Trop de requêtes (throttle:connexion)"
                     }
                 },
                 "security": [
@@ -3707,7 +3714,8 @@
                 ],
                 "x-middleware": [
                     "api",
-                    "CheckApiKey"
+                    "CheckApiKey",
+                    "throttle:connexion"
                 ],
                 "x-documented": true
             }
@@ -4992,7 +5000,7 @@
                         }
                     },
                     "429": {
-                        "description": "Trop de requêtes (throttle:5,1)"
+                        "description": "Trop de requêtes (throttle:connexion)"
                     }
                 },
                 "security": [
@@ -5003,7 +5011,7 @@
                 "x-middleware": [
                     "api",
                     "CheckApiKey",
-                    "throttle:5,1"
+                    "throttle:connexion"
                 ],
                 "x-documented": true
             }
@@ -5086,6 +5094,9 @@
                                 }
                             }
                         }
+                    },
+                    "429": {
+                        "description": "Trop de requêtes (throttle:connexion)"
                     }
                 },
                 "security": [
@@ -5095,7 +5106,8 @@
                 ],
                 "x-middleware": [
                     "api",
-                    "CheckApiKey"
+                    "CheckApiKey",
+                    "throttle:connexion"
                 ],
                 "x-documented": true
             }
@@ -6610,6 +6622,9 @@
                                 }
                             }
                         }
+                    },
+                    "429": {
+                        "description": "Trop de requêtes (throttle:connexion)"
                     }
                 },
                 "security": [
@@ -6619,7 +6634,8 @@
                 ],
                 "x-middleware": [
                     "api",
-                    "CheckApiKey"
+                    "CheckApiKey",
+                    "throttle:connexion"
                 ],
                 "x-documented": true
             }
@@ -7359,6 +7375,9 @@
                                 }
                             }
                         }
+                    },
+                    "429": {
+                        "description": "Trop de requêtes (throttle:connexion)"
                     }
                 },
                 "security": [
@@ -7368,7 +7387,8 @@
                 ],
                 "x-middleware": [
                     "api",
-                    "CheckApiKey"
+                    "CheckApiKey",
+                    "throttle:connexion"
                 ],
                 "x-documented": true
             }

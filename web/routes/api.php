@@ -50,12 +50,13 @@ Route::prefix('v10')->group(function() {
 
         // all apis goes here
         Route::post('/register',                                        [AuthController::class, 'register']);
-        Route::post('/signin',                                          [AuthController::class, 'signin']);
-        Route::post('/deliveryman/login',                               [AuthController::class, 'deliveryManLogin']);
-        Route::post('/otp-verification',                                [AuthController::class, 'otpVerification']);
-        Route::post('/resend-otp',                                      [AuthController::class, 'resendOTP']);
-        Route::post('/password/email',                                  [AuthController::class, 'sendPasswordResetLinkEmail'])->middleware('throttle:5,1');
-        Route::post('/password/reset',                                  [AuthController::class, 'resetPassword']);
+        // S96 — limités contre la force brute (`throttle:connexion`, RouteServiceProvider) : 5/min par identifiant+IP, 30/min par IP.
+        Route::post('/signin',                                          [AuthController::class, 'signin'])->middleware('throttle:connexion');
+        Route::post('/deliveryman/login',                               [AuthController::class, 'deliveryManLogin'])->middleware('throttle:connexion');
+        Route::post('/otp-verification',                                [AuthController::class, 'otpVerification'])->middleware('throttle:connexion');
+        Route::post('/resend-otp',                                      [AuthController::class, 'resendOTP'])->middleware('throttle:connexion');
+        Route::post('/password/email',                                  [AuthController::class, 'sendPasswordResetLinkEmail'])->middleware('throttle:connexion');
+        Route::post('/password/reset',                                  [AuthController::class, 'resetPassword'])->middleware('throttle:connexion');
         Route::get('/hub',                                              [HubController::class, 'index']);
         //general settings api
         Route::get('/general-settings',                                 [GeneralSettingCotroller::class, 'index']);

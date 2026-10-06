@@ -58,5 +58,39 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
+
+        // S96 — les points d'entrée d'authentification de l'API sont limités contre
+        // la force brute, comme le login web (`ThrottlesLogins`, 5 essais). Deux
+        // bornes : 5 par minute sur le COUPLE identifiant + adresse (un compte visé),
+        // 30 par minute par adresse (une adresse qui énumère des comptes). La seconde
+        // ne bloque pas une agence entière derrière un NAT à la première faute de
+        // frappe, la première ne laisse pas tourner un dictionnaire. La réponse garde
+        // l'enveloppe de l'API et parle français, dans la locale négociée (S90).
+        RateLimiter::for('connexion', function (Request $request) {
+            // `merchant_id` (signin), `driver_id` (deliveryman/login), `email` (réinitialisation), `mobile` (OTP).
+            $identifiant = strtolower(trim((string) ($request->input('merchant_id')
+                ?? $request->input('driver_id')
+                ?? $request->input('email')
+                ?? $request->input('mobile')
+                ?? $request->input('unique_id')
+                ?? '')));
+            // ⚠️ `ThrottleRequests` est dans `$middlewarePriority` : il tourne AVANT `ApiLocale`
+            // (S90). La langue se négocie donc ici, par la même règle.
+            $refus = function (Request $r, array $headers) {
+                $langue = \App\Http\Middleware\ApiLocale::negocier((string) $r->header('Accept-Language', ''), array_keys(config('locales.supported', [])))
+                    ?? app()->getLocale();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => __('auth.throttle', ['seconds' => $headers['Retry-After'] ?? 60], $langue),
+                    'data'    => [],
+                ], 429, $headers);
+            };
+
+            return [
+                Limit::perMinute(5)->by('connexion:' . $identifiant . '|' . $request->ip())->response($refus),
+                Limit::perMinute(30)->by('connexion-ip:' . $request->ip())->response($refus),
+            ];
+        });
     }
 }
