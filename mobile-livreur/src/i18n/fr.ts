@@ -86,6 +86,11 @@ export const fr = {
     timeline: 'Historique',
     changeStatus: 'Changer le statut',
   },
+  customs: {
+    title: 'Douane — document à collecter',
+    hint: 'Au ramassage, demandez ce document au marchand : sans lui, le colis risque un blocage en douane.',
+    requiredDocument: 'Document requis',
+  },
   status: {
     title: 'Issue de la course',
     delivered: 'Livré',

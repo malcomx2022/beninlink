@@ -1659,6 +1659,7 @@
                     "Livreur"
                 ],
                 "summary": "Détail d'une course et son suivi",
+                "description": "Depuis S95, `customs_alerts` porte les alertes douanières **de cette course** (vide pour un colis domestique) : le document à collecter au ramassage se lit sur la course, en lecture seule — le livreur ne traite pas une alerte.",
                 "parameters": [
                     {
                         "name": "id",
@@ -1692,6 +1693,12 @@
                                                             "type": "array",
                                                             "items": {
                                                                 "$ref": "#/components/schemas/ParcelEvent"
+                                                            }
+                                                        },
+                                                        "customs_alerts": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/CustomsAlert"
                                                             }
                                                         }
                                                     }

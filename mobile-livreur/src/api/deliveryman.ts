@@ -9,6 +9,7 @@ import { api } from './client';
 import { endpoints } from './endpoints';
 import { BackendParcelStatus } from '../domain/parcelStatus';
 import type {
+  CustomsAlert,
   DashboardData,
   IncomeExpenseData,
   ParcelDetails,
@@ -31,14 +32,21 @@ export function fetchProfile(): Promise<ProfileData> {
   return api.get<ProfileData>(endpoints.profile);
 }
 
-/** Détail d'une course confiée au livreur (404 sinon — S7). */
+/**
+ * Détail d'une course confiée au livreur (404 sinon — S7).
+ * Depuis S95 la réponse porte aussi `customs_alerts` : le document douanier à
+ * collecter au ramassage, servi avec la course (un serveur d'avant S95 n'envoie
+ * pas la clé : `[]`). Lecture seule — le livreur ne traite pas une alerte.
+ */
 export async function fetchParcelDetails(
   id: number,
-): Promise<{ parcel: ParcelDetails | null; events: ParcelEvent[] }> {
-  const data = await api.get<{ parcel: ParcelDetails | null; parcelEvents: ParcelEvent[] }>(
-    endpoints.parcelDetails(id),
-  );
-  return { parcel: data?.parcel ?? null, events: data?.parcelEvents ?? [] };
+): Promise<{ parcel: ParcelDetails | null; events: ParcelEvent[]; customsAlerts: CustomsAlert[] }> {
+  const data = await api.get<{
+    parcel: ParcelDetails | null;
+    parcelEvents: ParcelEvent[];
+    customs_alerts?: CustomsAlert[];
+  }>(endpoints.parcelDetails(id));
+  return { parcel: data?.parcel ?? null, events: data?.parcelEvents ?? [], customsAlerts: data?.customs_alerts ?? [] };
 }
 
 export type StatusAction = 'delivered' | 'partial' | 'return';

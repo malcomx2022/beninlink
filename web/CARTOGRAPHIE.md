@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8163,3 +8163,46 @@ Il n'ajoute pas de route : le traitement passe par `customs.alerts.resolve` (S68
 l'app. Le panneau marchand ne traite pas d'alerte : c'est la décision de S68 (la résolution est
 au transporteur) ; l'API, elle, laisse le marchand marquer la sienne — asymétrie héritée, à
 trancher si elle gêne à la recette.
+
+## S95 — le livreur voit l'alerte douanière de sa course (2026-10-06)
+
+### D'où ça vient
+
+Un colis export porte une alerte douanière : un document que le marchand doit fournir, sinon
+blocage à la frontière. Le marchand la voit dans son app (S82) et sur le panneau web (S94), le
+transporteur sur la fiche back-office (S94) et dans « Alertes douanières » (S68). La personne qui
+**ramasse** le colis, le livreur, ne la voyait nulle part : `deliveryman/parcel/details/{id}` ne
+servait que le colis et ses événements. Il repartait sans le document, et le colis attendait en
+agence.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `Api\V10\DeliveryManParcelController::details()` | `customs_alerts` (`CustomsAlertResource`, libellés traduits) sur le colis déjà vérifié par `notOwned()` (S7) ; `[]` pour un domestique |
+| `resources/openapi/overlay.php`, spec régénérée | la réponse documente `customs_alerts`, lecture seule |
+| `tests/Feature/DeliverymanCustomsAlertTest` (4 tests) | la course porte **ses** alertes seulement ; un domestique rend `[]` et pas une clé absente ; la course d'un collègue reste un 404 ; le livreur ne peut pas traiter une alerte (403 sur la route marchande) |
+| `mobile-livreur/src/domain/customsLevel.ts` (+ test) | niveaux et statuts recopiés du contrat, `customsLevelColorName` comme dans l'app marchand |
+| `mobile-livreur/src/api/types.ts`, `deliveryman.ts` | type `CustomsAlert` ; `fetchParcelDetails()` rend `customsAlerts` (`customs_alerts ?? []`) |
+| `mobile-livreur/src/components/CustomsNotice.tsx` (+ test rendu, 3) | « Douane — document à collecter » : pays, catégorie, badge de gravité, document, message, statut ; **aucun bouton** ; rien sur un domestique |
+| `mobile-livreur/app/(app)/parcel/[id]/index.tsx`, `src/i18n/fr.ts` | la carte juste sous l'en-tête de la course ; clés `customs.*` |
+| `tests/Feature/CourierAppCustomsContractTest` (3 tests) | l'app lit `customs_alerts` avec repli, l'écran rend la carte, la carte n'offre pas d'action, les niveaux sont ceux de `web/` |
+| Docs | `web/CLAUDE.md`, `mobile-livreur/CLAUDE.md`, grand livre chantier 5, en-têtes datés |
+
+### Vérification
+
+`tsc --noEmit`, `expo lint`, `jest` (22 tests) verts dans `mobile-livreur/`.
+
+| Sabotage | Effet |
+|---|---|
+| toutes les alertes de la société au lieu de celles de la course | **rouge** (API : la course porte l'alerte d'une autre) |
+| l'écran de course perd la carte | **rouge** (contrat de l'app) |
+
+Suite complète `web/` : **1 270 tests, 48 880 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il n'ouvre aucune route au livreur : il lit. Il ne touche pas à la liste des courses (`parcel/index`)
+— une pastille « douane » sur la liste serait un lot à part, à décider à la recette avec un colis
+export du jeu pilote. L'asymétrie héritée (le marchand peut marquer sa propre alerte traitée par
+l'API, pas par le panneau web) reste à trancher (S94).

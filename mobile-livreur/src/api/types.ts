@@ -186,3 +186,22 @@ export type ParcelPaymentLog = {
   note: string | null;
   created_at: string | null;
 };
+
+/** Alerte douanière d'une course (`customs_alerts` sur `deliveryman/parcel/details/{id}`, S95). */
+export type CustomsAlert = {
+  id: number;
+  parcel_id: number | null;
+  tracking_id: string | null;
+  country_code: string;
+  country_name: string;
+  goods_category: string;
+  category_name: string;
+  level: number;
+  level_name: string;
+  required_document: string | null;
+  message: string;
+  /** 1 en cours · 2 traitée. */
+  status: number;
+  status_name: string;
+  created_at: string | null;
+};
