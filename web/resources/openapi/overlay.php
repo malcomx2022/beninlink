@@ -58,7 +58,7 @@ $schemas = [
     'Envelope' => [
         'type' => 'object',
         'description' => 'Enveloppe d\'ApiReturnFormatTrait. `data` change de forme selon l\'endpoint.',
-        'properties' => ['success' => $bool(), 'message' => $str('Libellé déjà traduit (locale du serveur, FR)'), 'data' => ['description' => 'Charge utile, selon l\'endpoint'], 'page' => ['allOf' => [['$ref' => '#/components/schemas/Page']], 'description' => 'Présent seulement sur les réponses paginées (S78)']],
+        'properties' => ['success' => $bool(), 'message' => $str('Libellé déjà traduit, dans la langue négociée par l\'en-tête `Accept-Language` (`fr` par défaut, `en` ; S90)'), 'data' => ['description' => 'Charge utile, selon l\'endpoint'], 'page' => ['allOf' => [['$ref' => '#/components/schemas/Page']], 'description' => 'Présent seulement sur les réponses paginées (S78)']],
         'required' => ['success', 'message'],
     ],
     'Page' => [
