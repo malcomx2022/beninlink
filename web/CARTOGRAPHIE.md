@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8072,3 +8072,45 @@ semée les garde. Il ne francise pas la vitrine (`CompanyFrontendDataSeeder`, `S
 `PageSeeder` : `DB::statement` MySQL, jamais joués par la suite) ni le catalogue des devises.
 Une base **déjà amorcée** ne change pas : les semences ne rejouent pas ; le transporteur corrige
 son identité dans Réglages, comme n'importe quelle société.
+
+## S93 — la vitrine d'une société neuve parle français (2026-10-06)
+
+### D'où ça vient
+
+Quand le super-admin crée une société, `CompanyRepository` remplit sa vitrine publique par
+`CompanyFrontendDataSeeder::companySiteData()` : quatre services, six atouts, neuf questions,
+douze partenaires, dix articles, cinq pages, vingt-cinq sections. Le socle y mettait des titres
+anglais (« SUB-DOMAIN BASED », « Happy Merchant », « Subscribe Us »), des paragraphes *lorem
+ipsum* tirés de `Faker` (services, réponses, articles, pages légales), des noms de partenaires
+inventés et des compteurs de marketing faux (7 520 agences, 50 000 000 colis). Les semences de la
+société 1 (`Backend/FrontWeb`) répétaient le même contenu, dont deux en SQL MySQL brut que la
+suite ne jouait pas (S79 l'avait noté dans « Ce qui reste »). Un transporteur béninois qui
+ouvrait son site le premier jour montrait tout cela à ses clients. En passant, la page d'accueil
+s'appelait « Maison » (`levels.home`) : la traduction mot à mot de Home.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `CompanyFrontendDataSeeder` | réécrit : une méthode publique par rubrique (`reseauxSociaux`, `services`, `atouts`, `faq`, `partenaires`, `articles`, `pages`, `sections`), `companySiteData()` les enchaîne ; contenu français ; compteurs à **une agence et zéro colis** (le transporteur les met à jour dans Vitrine → Sections) ; pages légales et « À propos » lisibles ; trois articles vrais et courts ; six partenaires « Partenaire n » sur les logos du socle ; `DB::table()->insert` pour pages et sections |
+| `Backend/FrontWeb/*Seeder` (8) | délèguent à la méthode correspondante pour la société 1 : une seule version du texte |
+| `lang/fr/levels.php` | `home` : « Accueil » |
+| `tests/Feature/StorefrontSpeaksFrenchTest` (4 tests) | une société neuve (ligne `general_settings` copiée) reçoit une vitrine française complète, aux clés que les gabarits lisent, sans rien d'anglais ni de lorem, et rien ne fuit hors des sociétés semées ; la société 1 lit le même texte que la démo ; la page d'accueil en HTTP (hôte locataire) montre la bannière, les atouts, « Accueil », et plus « Subscribe Us » ni « Maison » ; aucune semence de la vitrine n'écrit `DB::statement` ni ne lit `Faker` |
+| `SeedsSpeakBeninTest` | suit : la carte de la vitrine n'a plus qu'une source |
+| Docs | `web/CLAUDE.md` (décision), grand livre chantier 1, en-têtes datés |
+
+### Vérification
+
+| Sabotage | Effet |
+|---|---|
+| un service rebaptisé « E-Commerce Delivery » | **rouge** (société neuve, et la société 1 avec elle) |
+| un `DB::statement` remis dans `PageSeeder` | **rouge** (source) |
+
+Suite complète `web/` : **1 258 tests, 48 819 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne touche pas aux écrans du back-office qui éditent la vitrine, ni aux images du socle
+(`public/frontend/images/...`), ni aux sociétés **déjà créées** : leur vitrine est en base, elle se
+corrige dans Vitrine → Sections / Pages / Services. Il ne relit pas le reste de `lang/fr` ; la
+francisation du socle a eu ses lots, « Maison » est la seule retouche, parce que le filet l'a vue.

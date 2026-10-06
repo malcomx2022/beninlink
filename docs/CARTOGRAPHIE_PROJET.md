@@ -69,7 +69,7 @@ Volumétrie (au 2026-10-03) :
 ### 3.2 Chantiers BeninLink (tous livrés)
 | # | Chantier | Livré | Reste (voir §7) |
 |---|---|---|---|
-| 1 | Francisation + FCFA entier | 2026-08-16 ; semences d'amorçage béninoises le 2026-10-06 (S92) | colonnes `decimal(…,2)` toujours en base |
+| 1 | Francisation + FCFA entier | 2026-08-16 ; semences d'amorçage béninoises (S92) et vitrine des sociétés neuves en français (S93) le 2026-10-06 | colonnes `decimal(…,2)` toujours en base |
 | 2 | IFU / RCCM / CNSS | 2026-08-17 | — |
 | 3 | FedaPay (wallet + abonnement + panneau web) | 2026-09-04/05 | renouvellement avant échéance |
 | 4 | Relevés SYSCOHADA (PDF, CSV, journal) ; plan de comptes tranché (S73) | 2026-09-04 → 2026-10-03 | 3 numéros + 4 codes de journaux à confirmer, régularisation des retours sans TVA (D2) |
