@@ -230,6 +230,25 @@ class RecetteDeploymentTest extends TestCase
         $this->assertSame(0, $code, 'absent vaut file : ' . $sortie);
     }
 
+    /** S99 — le mode debug montre la pile et l'environnement à qui provoque une erreur : refusé en production, dit en recette. */
+    public function test_le_mode_debug_est_refuse_en_production_et_signale_en_recette(): void
+    {
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=production\nFEDAPAY_ENVIRONMENT=live\nAPP_DEBUG=true\n");
+        $this->assertSame(1, $code, $sortie);
+        $this->assertStringContainsString('APP_DEBUG=true', $sortie);
+        $this->assertStringContainsString('APP_DEBUG=false', $sortie, 'le message dit quoi faire');
+
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=production\nFEDAPAY_ENVIRONMENT=live\nAPP_DEBUG=false\n");
+        $this->assertSame(0, $code, "false : $sortie");
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=production\nFEDAPAY_ENVIRONMENT=live\n");
+        $this->assertSame(0, $code, 'absent vaut false : ' . $sortie);
+
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=staging\nFEDAPAY_ENVIRONMENT=sandbox\nAPP_DEBUG=true\n");
+        $this->assertSame(0, $code, 'une recette se débogue : ' . $sortie);
+        $this->assertStringContainsString('⚠️', $sortie);
+        $this->assertStringContainsString('APP_DEBUG=true', $sortie);
+    }
+
     public function test_un_env_absent_est_refuse(): void
     {
         [$code, $sortie] = $this->garde(null);

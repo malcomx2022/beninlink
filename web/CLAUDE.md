@@ -322,7 +322,9 @@ avant les apps.
   OpenAPI documente le 429 dès qu'une route porte `throttle:*`. `register` n'est pas limité
   (une inscription qui échoue cinq fois à la validation ne doit pas bloquer la PME). **S97** : le
   compteur vit dans le cache ; `verifier-env.sh` refuse `CACHE_DRIVER=array` ou `null` au déploiement
-  (chaque requête repartirait de zéro), `file` ou `database` conviennent, absent vaut `file`.
+  (chaque requête repartirait de zéro), `file` ou `database` conviennent, absent vaut `file`. **S99** : le
+  même garde refuse `APP_DEBUG=true` en production (une page d'erreur montre la pile et l'environnement)
+  et le signale seulement en recette.
 - **Les deux apps ont leur filet de contrat** (**S85**). L'app marchand : `OpenApiSpecTest`
   (inventaire), `ParcelStageTest` (statuts), `MerchantAppCustomsContractTest` (pages, douane).
   L'app livreur : `DeliverymanAppContractTest` — inventaire dans la spec et jamais réservé au
