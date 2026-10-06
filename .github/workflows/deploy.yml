@@ -254,7 +254,6 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           envs: DEPLOY_PATH
-          script_stop: true
           script: |
             set -euo pipefail
             cd "$DEPLOY_PATH"
@@ -307,7 +306,6 @@ jobs:
           key: ${{ secrets.RECETTE_SSH_KEY }}
           port: ${{ secrets.RECETTE_SSH_PORT || secrets.SSH_PORT || 22 }}
           envs: DEPLOY_PATH
-          script_stop: true
           script: |
             set -euo pipefail
             cd "$DEPLOY_PATH"

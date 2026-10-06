@@ -63,8 +63,28 @@ bash "$DEPLOY_PATH/docs/guides/infra/deploy/verifier-env.sh" .env
 # dépend encore. Sans ce filet, la sécurité qu'on a mise dans la migration
 # deviendrait une panne de production.
 # ---------------------------------------------------------------------------
+# S89 — remonter le site ne suffit pas : les gardes qui peuvent refuser un
+# déploiement (`comptes-amorcage`, `tarification-prete`, `migrate`) tournent
+# APRÈS `git pull` et `composer install`, parce qu'ils vivent dans la version
+# déployée. Sur refus, le serveur aurait le NOUVEAU code sur l'ANCIEN schéma,
+# et le site serait de nouveau servi dans cet état. Le filet revient donc à la
+# révision servie avant le déploiement — tant que la migration n'a pas été
+# appliquée : après elle, c'est l'ancien code qui serait faux.
+REVISION_SERVIE="$(git rev-parse HEAD)"
+MIGRE=0
 remonter_le_site() {
     echo "❌ Déploiement interrompu — remise en service immédiate." >&2
+    if [ "$MIGRE" = 0 ] && [ "$(git rev-parse HEAD)" != "$REVISION_SERVIE" ]; then
+        echo "   Retour à la révision servie avant le déploiement ($REVISION_SERVIE) : le nouveau code ne reste pas sur l'ancien schéma." >&2
+        git reset --hard "$REVISION_SERVIE" || true
+        composer install --no-dev --optimize-autoloader --no-interaction || true
+        php artisan optimize:clear || true
+        php artisan config:cache || true
+        php artisan route:cache || true
+        php artisan view:cache || true
+    elif [ "$MIGRE" = 1 ]; then
+        echo "   La migration a été appliquée : le code déployé reste en place (l'ancien ne connaît pas le nouveau schéma)." >&2
+    fi
     php artisan up || true
 }
 trap remonter_le_site ERR
@@ -97,6 +117,7 @@ php artisan beninlink:comptes-amorcage
 php artisan beninlink:tarification-prete
 
 php artisan migrate --force
+MIGRE=1   # S89 — à partir d'ici, revenir à l'ancien code serait faux
 php artisan config:cache && php artisan route:cache && php artisan view:cache
 
 # Les workers en cours tournent avec l'ANCIEN code : `queue:restart` leur

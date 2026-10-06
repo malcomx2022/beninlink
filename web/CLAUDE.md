@@ -100,6 +100,11 @@ avant les apps.
   dans celle du serveur — le premier déploiement qui a atteint le VPS est tombé sur « Command
   not defined ». Le job de répétition ne le voit pas (il tourne sur le code neuf) ;
   `DeploymentRehearsalTest` le mesure sur le script.
+  ⚠️ Et un déploiement **refusé remet l'ancien code** (**S89**) : le filet `remonter_le_site()`
+  revient à la révision notée avant `git pull` (code, `composer install --no-dev`, caches) tant
+  que `MIGRE=1` n'est pas levé, puis remonte le site. Un garde ajouté au script se place avant
+  `migrate` et après `optimize:clear` ; le corps du filet n'est pas rejoué par le job (il a son
+  test). `appleboy/ssh-action@v1` ne connaît pas `script_stop` : ne pas le remettre.
 - `php artisan openapi:generate` après tout changement de `routes/api.php` ou de
   `resources/openapi/overlay.php` (régénère `public/openapi/v10.json`, versionné).
 - `php artisan beninlink:pilote [--company=] [--reset]` : jeu de données béninois de recette

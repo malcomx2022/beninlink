@@ -41,11 +41,46 @@ class DeploymentRehearsalTest extends TestCase
         return $jobs['repetition'];
     }
 
-    /** Les commandes `php artisan …` de deploy.sh, dans l'ordre, commentaires exclus. */
+    /** @return array<int, string> les lignes de deploy.sh hors du corps de `remonter_le_site()` */
+    private function lignesDuCheminNominal(): array
+    {
+        $lignes = [];
+        $dansLeFilet = false;
+        foreach (file($this->racine(self::DEPLOY)) as $ligne) {
+            if (preg_match('/^remonter_le_site\(\) \{/', $ligne)) {
+                $dansLeFilet = true;
+                continue;
+            }
+            if ($dansLeFilet) {
+                if (preg_match('/^\}/', $ligne)) {
+                    $dansLeFilet = false;
+                }
+                continue;
+            }
+            $lignes[] = $ligne;
+        }
+
+        return $lignes;
+    }
+
+    /** Le corps de `remonter_le_site()`, tel qu'écrit. */
+    private function corpsDuFilet(): string
+    {
+        $script = file_get_contents($this->racine(self::DEPLOY));
+        $this->assertSame(1, preg_match('/^remonter_le_site\(\) \{\n(.*?)^\}/ms', $script, $m), 'deploy.sh définit le filet remonter_le_site()');
+
+        return $m[1];
+    }
+
+    /**
+     * Les commandes `php artisan …` du **chemin nominal** de deploy.sh, dans l'ordre,
+     * commentaires exclus. Le corps du filet `remonter_le_site()` (S89) est le chemin de
+     * secours : il n'est pas à rejouer par le job, il a son propre test.
+     */
     private function commandesDuScript(): array
     {
         $commandes = [];
-        foreach (file($this->racine(self::DEPLOY)) as $ligne) {
+        foreach ($this->lignesDuCheminNominal() as $ligne) {
             $ligne = trim(preg_replace('/#.*$/', '', $ligne));
             // Plusieurs commandes sur une ligne (`a && b && c`).
             foreach (preg_split('/\s*(?:&&|\|\|)\s*/', $ligne) as $morceau) {
@@ -70,7 +105,7 @@ class DeploymentRehearsalTest extends TestCase
     public function test_les_commandes_artisan_de_deploy_sh_sont_celles_attendues(): void
     {
         $this->assertSame(
-            ['up', 'down', 'optimize:clear', 'beninlink:comptes-amorcage', 'beninlink:tarification-prete', 'migrate', 'config:cache', 'route:cache', 'view:cache', 'queue:restart', 'up'],
+            ['down', 'optimize:clear', 'beninlink:comptes-amorcage', 'beninlink:tarification-prete', 'migrate', 'config:cache', 'route:cache', 'view:cache', 'queue:restart', 'up'],
             $this->commandesDuScript(),
             'deploy.sh a changé : mettre à jour cette liste ET le job de répétition'
         );
@@ -164,6 +199,58 @@ class DeploymentRehearsalTest extends TestCase
             $this->assertGreaterThan($miseAJour, $position,
                 "`{$commande}` est appelée avant la mise à jour du code : le serveur exécute l'ancienne version, qui peut ne pas la connaître");
         }
+    }
+
+    /**
+     * **S89** — un déploiement refusé remet l'ancien code, pas seulement le site.
+     *
+     * Les gardes qui peuvent refuser (`comptes-amorcage`, `tarification-prete`, `migrate`)
+     * tournent après `git pull` : sur refus, remonter le site servirait le NOUVEAU code sur
+     * l'ANCIEN schéma. Le filet note la révision servie avant `git pull`, et y revient —
+     * code, dépendances, caches — tant que la migration n'a pas été appliquée.
+     */
+    public function test_un_deploiement_refuse_remet_la_revision_servie(): void
+    {
+        $script = file_get_contents($this->racine(self::DEPLOY));
+
+        $revision = strpos($script, 'REVISION_SERVIE="$(git rev-parse HEAD)"');
+        $pull = strpos($script, 'git pull origin main');
+        $this->assertNotFalse($revision, 'deploy.sh note la révision servie');
+        $this->assertLessThan($pull, $revision, 'la révision se note AVANT git pull, sinon c\'est déjà la nouvelle');
+
+        $filet = $this->corpsDuFilet();
+        $reset = strpos($filet, 'git reset --hard "$REVISION_SERVIE"');
+        $composer = strpos($filet, 'composer install --no-dev');
+        $up = strpos($filet, 'php artisan up');
+        $this->assertNotFalse($reset, 'le filet revient à la révision servie');
+        $this->assertNotFalse($composer, 'le filet réinstalle les dépendances de cette révision');
+        $this->assertNotFalse($up, 'le filet remonte le site');
+        $this->assertLessThan($composer, $reset, 'le code avant ses dépendances');
+        $this->assertLessThan($up, $composer, 'le site remonte en dernier, sur l\'ancien code');
+        $this->assertStringContainsString('"$MIGRE" = 0', $filet, 'le retour en arrière ne vaut que tant que la migration n\'a pas été appliquée');
+
+        $migration = strpos($script, 'php artisan migrate --force');
+        $drapeau = strpos($script, 'MIGRE=1');
+        $this->assertNotFalse($drapeau);
+        $this->assertGreaterThan($migration, $drapeau, 'le drapeau se lève APRÈS la migration');
+        $this->assertLessThan(strpos($script, 'php artisan config:cache', $migration), $drapeau, '… et avant la commande suivante du chemin nominal');
+    }
+
+    /** `appleboy/ssh-action@v1` ne connaît plus `script_stop` (avertissement dans chaque journal) : `set -euo pipefail` est dans le script. */
+    public function test_les_etapes_ssh_ne_passent_pas_d_entree_inconnue(): void
+    {
+        $jobs = Yaml::parseFile($this->racine(self::WORKFLOW))['jobs'];
+        $etapesSsh = 0;
+        foreach ($jobs as $nom => $job) {
+            foreach ($job['steps'] ?? [] as $etape) {
+                if (str_starts_with($etape['uses'] ?? '', 'appleboy/ssh-action')) {
+                    $etapesSsh++;
+                    $this->assertArrayNotHasKey('script_stop', $etape['with'] ?? [], "{$nom} : `script_stop` n'est pas une entrée de ssh-action@v1");
+                    $this->assertStringContainsString('set -euo pipefail', $etape['with']['script'], "{$nom} : le script s'arrête lui-même à la première erreur");
+                }
+            }
+        }
+        $this->assertSame(2, $etapesSsh, 'les deux déploiements (production, recette) passent par SSH');
     }
 
     public function test_rien_ne_part_sur_un_serveur_sans_la_repetition(): void

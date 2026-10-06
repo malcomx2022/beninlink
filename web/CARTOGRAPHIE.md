@@ -2,7 +2,8 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-05 (S88 — l'installateur fermé sur une base installée ; S87 — plus
+> Dernière mise à jour : 2026-10-06 (S89 — un déploiement refusé remet l'ancien code ; S88 —
+> l'installateur fermé sur une base installée ; S87 — plus
 > de mot de passe public sur les comptes d'amorçage ; S86 — une installation neuve réussit son premier déploiement ; S85 — le contrat de l'app livreur tenu en PHPUnit ;
 > S84 — un lanceur de tests dans les deux apps, M2, et le job CI `apps` ; S83 — l'écran de
 > modification d'une demande de retrait réparé ; S82 — l'alerte douanière sur le détail du
@@ -7878,3 +7879,53 @@ une base vierge, il cesse seulement d'être joignable une fois la base installé
 `IsInstalledMiddleware`, qui redirige vers `/install` quand le drapeau manque — l'écran répond
 alors 403 avec la ligne à poser, et `verifier-env.sh` empêche qu'un déploiement parte sans elle.
 La vérification du code d'achat (`purchaseVerify`) et la vue d'installation restent telles quelles.
+
+## S89 — un déploiement refusé remet l'ancien code, pas seulement le site (2026-10-06)
+
+### D'où ça vient
+
+Le premier déploiement réel (S88) a fait relire `deploy.sh` avec les yeux du serveur. Les trois
+gardes qui peuvent refuser un déploiement — `comptes-amorcage`, `tarification-prete`, puis
+`migrate` — tournent **après** `git pull` et `composer install`, et c'est nécessaire : ils vivent
+dans la version déployée (S88 l'a appris en les appelant avant). Mais sur refus, le filet
+`remonter_le_site()` ne faisait que `php artisan up` : le serveur repartait avec le **nouveau code
+sur l'ancien schéma**, et le site était de nouveau servi dans cet état. La base était intacte, le
+code ne l'était pas. Dès la fusion de la #157, c'est le scénario le plus probable : la base de
+production a été amorcée avant S86 et S87, `comptes-amorcage` ou `tarification-prete` refusera.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `deploy.sh` | `REVISION_SERVIE="$(git rev-parse HEAD)"` et `MIGRE=0` **avant** `artisan down` ; le filet revient à cette révision (`git reset --hard`, `composer install --no-dev`, `optimize:clear` puis les trois caches) **si** `MIGRE` vaut encore 0 et que HEAD a bougé, puis remonte le site ; `MIGRE=1` juste après `migrate --force` — à partir de là, l'ancien code serait faux, il reste le nouveau et le filet le dit |
+| `.github/workflows/deploy.yml` | les deux étapes `appleboy/ssh-action@v1` perdent `script_stop`, entrée que v1 ne connaît plus (avertissement dans chaque journal) ; `set -euo pipefail` est dans le script |
+| `DeploymentRehearsalTest` (+2) | le parseur des commandes du script ignore désormais le **corps du filet** (chemin de secours, pas à rejouer) — la liste attendue perd le `up` du filet ; un test lit le filet : révision notée avant `git pull`, `git reset --hard "$REVISION_SERVIE"` puis `composer install --no-dev` puis `php artisan up`, garde `"$MIGRE" = 0`, `MIGRE=1` entre `migrate` et la commande suivante ; un test lit les deux étapes SSH : pas de `script_stop`, `set -euo pipefail` présent |
+| Docs | `mise-en-service` § 6 : la table « où il s'arrête » gagne la colonne **code servi** et la ligne `comptes-amorcage` ; encadré **« le premier déploiement réel »** : les trois refus attendus sur une base d'avant S86/S87 et leurs remèdes sur le serveur ; `web/CLAUDE.md` |
+
+### Ce que l'écriture a appris
+
+- `strpos` sans décalage trouve la **première** occurrence : `php artisan config:cache` vit aussi
+  dans le filet, avant `migrate` dans le fichier. Une position « après la migration » se cherche à
+  partir de la migration.
+- Après la migration, revenir en arrière serait **pire** : l'ancien code ne connaît pas le nouveau
+  schéma. D'où le drapeau `MIGRE`, levé après `migrate --force` et lu par le filet.
+
+### Vérification
+
+| Sabotage | Effet |
+|---|---|
+| le filet ne fait plus que `php artisan up` (forme d'avant S89) | **rouge** |
+| `MIGRE=1` retiré après la migration | **rouge** |
+| `REVISION_SERVIE` notée **après** `git pull` | **rouge** |
+| `script_stop: true` remis sur une étape SSH | **rouge** |
+
+Suite complète : **1 240 tests, 47 121 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne change pas la forme du déploiement (pas de répertoire de version ni de lien symbolique
+basculé : ce serait une autre architecture), ni l'ordre des gardes. Un échec **pendant** la
+migration reste le cas documenté de longue date : MySQL ne défait pas un schéma à moitié
+modifié, la sauvegarde se prend avant ; le filet remet alors l'ancien code (la migration n'est
+pas tenue pour appliquée) et le dit. Il ne pose rien sur le serveur : les remèdes du premier
+déploiement réel sont les vôtres, listés dans le guide.

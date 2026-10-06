@@ -251,11 +251,33 @@ Le script coupe le site, met à jour, vide les caches, **vérifie la
 tarification**, migre, recache, redemande aux workers de repartir, et remonte le
 site. Ses trois points d'arrêt, et où ils vous laissent :
 
-| Il s'arrête sur | État du site | État de la base |
+| Il s'arrête sur | État du site | Code servi (S89) | État de la base |
+|---|---|---|---|
+| Le garde **PHP 8.3**, `verifier-env.sh` | **jamais coupé** — ces gardes passent avant `artisan down` | l'ancien, inchangé | intacte |
+| `beninlink:comptes-amorcage` | coupé puis **remonté** par le filet | **l'ancien, remis** par le filet (code, dépendances, caches) | intacte |
+| `beninlink:tarification-prete` | coupé puis **remonté** par le filet | **l'ancien, remis** par le filet | intacte : la vérification précède la migration |
+| `php artisan migrate` | coupé puis **remonté** par le filet | l'ancien, remis (la migration n'est pas tenue pour appliquée) | ⚠️ voir ci-dessous |
+| après la migration (`cache`, `queue:restart`) | coupé puis **remonté** par le filet | **le nouveau** : l'ancien ne connaît pas le nouveau schéma | migrée |
+
+Jusqu'au **2026-10-06 (S89)**, le filet ne faisait que `artisan up` : un refus de
+`comptes-amorcage` ou de `tarification-prete` laissait le **nouveau code sur l'ancien
+schéma**, site servi. Il note désormais la révision servie avant `git pull` et y revient
+(`git reset --hard`, `composer install --no-dev`, caches) tant que la migration n'a pas
+été appliquée.
+
+### Le premier déploiement réel — ce qu'il refusera probablement, et quoi faire
+
+Une base amorcée **avant S86 et S87** tombera sur deux gardes, dans cet ordre, à chaque
+déploiement, jusqu'à ce que vous ayez agi **sur le serveur** :
+
+| Refus | Pourquoi | Remède (sur le serveur, `cd /var/www/beninlink/web`) |
 |---|---|---|
-| Le garde **PHP 8.3** | **jamais coupé** — le garde passe avant `artisan down` | intacte |
-| `beninlink:tarification-prete` | coupé puis **remonté** par le filet | intacte : la vérification précède la migration |
-| `php artisan migrate` | coupé puis **remonté** par le filet | ⚠️ voir ci-dessous |
+| `verifier-env.sh` : `APP_INSTALLED n'est pas « yes »` | le drapeau n'a jamais été posé (S88) | ajouter `APP_INSTALLED=yes` au `.env` |
+| `beninlink:comptes-amorcage` | les cinq comptes d'amorçage sont encore à `12345678` (S87) | changer leur mot de passe dans le back-office, ou supprimer ceux dont vous n'avez pas l'usage ; `php artisan beninlink:comptes-amorcage` doit sortir en succès |
+| `beninlink:tarification-prete` | la société 1 n'a pas de zones (S86) | `php artisan beninlink:zones-tarifaires --societe=1 --installer`, puis `php artisan beninlink:tarification-prete` en succès |
+
+Chaque refus laisse le serveur **comme avant** (S89) ; relancez le déploiement depuis
+*Actions → Run workflow* une fois le remède appliqué.
 
 ⚠️ **Une migration MySQL interrompue ne se défait pas.** MySQL ne sait pas
 annuler une modification de schéma dans une transaction : une migration qui
