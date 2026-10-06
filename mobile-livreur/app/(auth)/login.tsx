@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Link } from 'expo-router';
 
 import { ApiError } from '../../src/api/client';
 import { API_BASE_URL } from '../../src/api/config';
@@ -71,6 +72,10 @@ export default function LoginScreen() {
 
         <ErrorText>{error}</ErrorText>
         <Button title={t('auth.signIn')} onPress={submit} loading={loading} variant="accent" />
+        {/* S98 — mot de passe oublié : les mêmes routes que l'app marchand. */}
+        <Link href="/(auth)/forgot-password" style={styles.link}>
+          {t('auth.forgotPassword')}
+        </Link>
 
         {__DEV__ && <Text style={styles.devHint}>{API_BASE_URL}</Text>}
       </ScrollView>
@@ -84,6 +89,13 @@ const styles = StyleSheet.create({
   brand: { alignItems: 'center', marginBottom: spacing.lg, gap: spacing.xs },
   brandName: { fontFamily: fonts.headingBold, fontSize: fontSizes.xxl, color: colors.primary },
   brandBaseline: { fontFamily: fonts.body, fontSize: fontSizes.md, color: colors.textMuted },
+  link: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: fontSizes.sm,
+    color: colors.primary,
+    textAlign: 'center',
+    paddingVertical: spacing.sm,
+  },
   devHint: {
     fontFamily: fonts.body,
     fontSize: fontSizes.xs,
