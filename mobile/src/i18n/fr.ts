@@ -101,7 +101,6 @@ export const fr = {
     address: 'Adresse de livraison',
     zone: 'Zone de livraison',
     delay: 'Délai',
-    legacyRoute: 'Barème hérité (par type de livraison)',
     zoneNeedsCountry:
       "Cette zone se facture au pays : choisissez une destination, sinon la création sera refusée.",
     deliveryType: 'Type de livraison',
@@ -259,7 +258,6 @@ export const fr = {
   rates: {
     title: 'Tarifs de livraison',
     subtitle: 'Par poids et par zone (FCFA)',
-    empty: 'Aucun tarif défini pour votre compte.',
     weight: 'Poids',
     codTitle: "Frais d'encaissement (COD)",
     codNotice: 'Pourcentage prélevé sur le montant encaissé auprès du destinataire.',

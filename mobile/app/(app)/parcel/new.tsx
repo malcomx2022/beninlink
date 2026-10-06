@@ -17,6 +17,7 @@ import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, radii, spacing } from '../../../src/theme/typography';
 import { deliveryTypeId, deliveryTypeLabel } from '../../../src/domain/deliveryType';
 import { formatAmount, formatRate } from '../../../src/domain/money';
+import { zoneChoices } from '../../../src/domain/zoneChoices';
 import { t } from '../../../src/i18n';
 
 /**
@@ -160,20 +161,15 @@ export default function NewParcelScreen() {
   }, [form]);
 
   /**
-   * Zones proposées (**D4**), la première entrée valant « barème hérité ».
+   * Zones proposées (**D4**) — une entrée par zone, rien d'autre.
    *
-   * Vide tant que le transporteur n'a pas de zones — le sélecteur ne s'affiche
-   * alors pas du tout, et le colis suit son type de livraison.
+   * Depuis l'étape 6 (2026-09-07) la route est le seul axe de tarification :
+   * `zone_id` est obligatoire côté serveur, et l'ancienne entrée « barème
+   * hérité » (valeur 0) ne menait plus qu'à un refus (**S91 / M4**). Vide tant
+   * que le transporteur n'a pas de zones — ce que `tarification-prete` interdit
+   * désormais à tout déploiement (S86).
    */
-  const zoneOptions = useMemo(() => {
-    const zones = form?.zones ?? [];
-    if (!zones.length) return [];
-
-    return [
-      { value: 0, label: t('parcels.legacyRoute') },
-      ...zones.map((zone) => ({ value: zone.id, label: zone.name })),
-    ];
-  }, [form]);
+  const zoneOptions = useMemo(() => zoneChoices(form?.zones ?? []), [form]);
 
   /** Délais et leur supplément — global, donc annoncé une fois par délai. */
   const delayOptions = useMemo(
@@ -285,20 +281,16 @@ export default function NewParcelScreen() {
           error={fieldErrors.delivery_type_id?.[0]}
         />
 
-        {/* Barème par zones (D4). Les deux sélecteurs n'existent que si le
-            transporteur a configuré ses zones ; sinon l'écran est celui d'avant.
-            « Barème hérité » reste offert tant que le serveur sert les deux
-            formes : le colis est alors facturé par son type de livraison. */}
+        {/* Barème par zones (D4) : la zone est obligatoire, le délai la suit.
+            Sans zone servie, les sélecteurs n'apparaissent pas et le serveur
+            refusera la création — un transporteur sans zones ne facture rien. */}
         {!!zoneOptions.length && (
           <>
             <ChoiceGroup
               label={t('parcels.zone')}
               options={zoneOptions}
-              value={zoneId ?? 0}
-              onChange={(value) => {
-                setZoneId(value === 0 ? null : value);
-                if (value === 0) setDelayId(null);
-              }}
+              value={zoneId}
+              onChange={setZoneId}
               error={fieldErrors.zone_id?.[0]}
             />
 
