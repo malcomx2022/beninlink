@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8522,3 +8522,45 @@ Suite complète `web/` : **1 287 tests, 49 031 assertions**, verte.
 Il ne change ni le contrat ni un pixel : les deux écrans rendent la même carte qu'avant, par un
 composant. Les autres listes des apps (relevés, wallet, alertes, tickets) restent des écrans ; elles
 n'ont pas de propriété métier que les tests de contrat tiendraient par lecture de source.
+
+## S104 — un compte livreur n'entre pas au back-office web (2026-10-06)
+
+### D'où ça vient
+
+La passe de S40 l'avait noté et laissé : « `GET /dashboard` répond **500 à un livreur** ». Mesuré
+à nouveau, sur le site d'une société : un livreur qui tape son e-mail et son mot de passe sur
+`/login` est **accepté** (302 vers `/dashboard`), puis le tableau de bord lui répond **500** —
+`backend.dashboard` fait `in_array()` sur ses droits, qui n'existent pas. Un refus annoncé comme
+une panne (famille S37). Or le livreur n'a **aucun écran web** (S41 l'a mesuré, S85 le tient en
+contrat) : son outil est l'app livreur. Dans la même passe de S40 dormaient huit « Theme Pages »
+du socle (`dashboard-finance`, `dashboard-influencer`, `dashboard-sales`, `ecommerce-product`,
+`ecommerce-product-checkout`, `ecommerce-product-single`, `influencer-finder`,
+`influencer-profile`) qui rendaient des vues `theme.*` **inexistantes** : 500 pour tout compte,
+aucune vue ni script ne les nommait — la famille des cinq routes `sms-settings` de S35.
+
+### Ce qui est écrit
+
+| Où | Quoi |
+|---|---|
+| `Auth\LoginController::login()` | un compte `DELIVERYMAN` est refusé **avant la session**, par une erreur de validation sur le champ e-mail : `auth.courier_app_only` (« Ce compte est un compte livreur : il se connecte dans l'application livreur, pas sur le site. », en FR et EN) |
+| `DashbordController::index()` | une session livreur qui existerait encore reçoit **403** avec le même message, au lieu d'atteindre la branche back-office et de planter dans la vue |
+| `routes/web.php` | les huit routes « Theme Pages » **retirées** ; le commentaire dit pourquoi |
+| `tests/Feature/CourierWebAccessTest.php` (5 tests) | la connexion web refuse un livreur et dit où aller, elle sert toujours un agent ; `/dashboard` répond 403 au livreur et 200 à l'agent ; les huit noms de route ont disparu, `resources/views/theme/` n'existe pas et aucune vue ne les nomme |
+| Docs | `web/CLAUDE.md`, en-têtes datés |
+
+### Vérification
+
+| Sabotage | Effet |
+|---|---|
+| le refus de connexion retiré (`if (false)`) | **rouge** (le livreur entre) |
+| une route de thème remise | **rouge** (le filet des huit noms) |
+
+Suite complète `web/` : **1 292 tests, 49 059 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne touche pas à l'API : `deliveryman/login` reste la porte du livreur (S96 la limite). Il ne
+change pas la connexion du marchand ni de l'agent (le test le tient). Les autres lignes de la
+passe de S40 (`search-charts`, `store-token`, `subscription`, les routes `aamarpay.payment` et
+`bkash.redirect` nommées par des vues marchandes) restent telles quelles : passerelles hors
+Bénin, décision D-FedaPay.

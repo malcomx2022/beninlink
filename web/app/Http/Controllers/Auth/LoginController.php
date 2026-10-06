@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
@@ -51,6 +52,16 @@ class LoginController extends Controller
             $query->orWhere('mobile',$request->email);
         })->first();
         
+        // S104 — un compte LIVREUR n'a aucun écran web : il se connecte dans
+        // l'app livreur. Le laisser entrer menait à `/dashboard`, qui lui
+        // répondait 500 (famille S37 : un refus annoncé comme une panne). On
+        // refuse ici, avant la session, avec le mot qui dit où aller.
+        if ($user && (int) $user->user_type === UserType::DELIVERYMAN) {
+            throw ValidationException::withMessages([
+                $this->username() => [__('auth.courier_app_only')],
+            ]);
+        }
+
         if(tenant()):
             if($user && $user->user_type == UserType::SUPER_ADMIN):
                 return $this->sendFailedLoginResponse($request);
