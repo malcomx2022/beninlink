@@ -2,7 +2,8 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S90 — l'API négocie sa langue ; S89 — un déploiement refusé
+> Dernière mise à jour : 2026-10-06 (S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
 > de mot de passe public sur les comptes d'amorçage ; S86 — une installation neuve réussit son premier déploiement ; S85 — le contrat de l'app livreur tenu en PHPUnit ;
@@ -7988,3 +7989,43 @@ Suite complète : **1 247 tests, 47 149 assertions**, verte.
 Les apps restent françaises et n'envoient pas l'en-tête : rien ne change pour elles. Aucune
 nouvelle langue n'est servie (`es`, `ar`, `bn`, `in`, `zh` restent non servies, S-lot 5), et le web
 garde sa négociation par session. Les SMS gardent `SmsTemplate::locale()` (D14).
+
+## S91 — l'app marchand ne sert plus que le barème par zones (M4) (2026-10-06)
+
+### D'où ça vient
+
+Ligne M4 du grand livre : pendant la transition de D4, l'écran Tarifs retombait sur les quatre
+colonnes héritées quand `zones` était vide, et le formulaire de création offrait « Barème hérité
+(par type de livraison) » (valeur 0). La condition de M4 — « plus aucun serveur ne sert les
+colonnes » — est remplie depuis l'étape 6 (2026-09-07) ; et depuis S86 `tarification-prete`
+interdit à toute société sans zones de se déployer. L'entrée « barème hérité » ne menait donc plus
+qu'à un refus du serveur (`zone_id` obligatoire) : un choix offert qui échoue toujours.
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `mobile/src/domain/zoneChoices.ts` (+ test, 2) | une entrée par zone, plus de valeur 0 |
+| `mobile/app/(app)/parcel/new.tsx` | les choix de zone viennent du module ; `ChoiceGroup` reçoit `zoneId` tel quel ; commentaires mis à jour |
+| `mobile/app/(app)/rates.tsx` | une seule forme ; `zones` vide → `rates.noZone` (anomalie du transporteur) ; le type `DeliveryRate` n'est plus lu par l'écran (l'API le sert encore, le module `merchant.ts` le garde) |
+| `mobile/src/i18n/fr.ts` | `parcels.legacyRoute` et `rates.empty` retirés |
+| `web/tests/Feature/MerchantAppPricingContractTest` (3 tests) | lit les sources de l'app : pas de `legacyRoute` ni de valeur 0, `zoneChoices` utilisé et testé ; l'écran Tarifs sans repli sur `rates` ; les traductions suivent |
+| Docs | `mobile/CLAUDE.md` (règle réécrite), grand livre M4 barré |
+
+### Vérification
+
+`tsc`, `expo lint`, `npm test` (39 tests) verts dans `mobile/`.
+
+| Sabotage | Effet |
+|---|---|
+| l'entrée « barème hérité » (valeur 0) remise dans `zoneChoices` | **rouge** (jest : 2 tests ; filet web après resserrage — le premier jet laissait passer une entrée devant le `map`) |
+| le repli `rates.length` remis dans l'écran Tarifs | **rouge** (filet web) |
+
+Suite complète `web/` : **1 250 tests, 47 165 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne touche pas l'API : `settings/delivery-charges` sert toujours `deliveryCharges` (lignes
+zonées), que l'app ignore désormais à l'écran. Il ne touche pas aux types de livraison
+(`deliveryType.ts`, `delivery_type_id`), toujours envoyés à la création. L'app livreur n'a pas
+d'écran de barème.

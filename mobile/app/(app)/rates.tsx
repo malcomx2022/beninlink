@@ -3,7 +3,7 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native
 
 import { ApiError } from '../../src/api/client';
 import { fetchCodCharges, fetchDeliveryGrid } from '../../src/api/merchant';
-import type { CodCharge, DeliveryDelay, DeliveryRate, DeliveryZone } from '../../src/api/types';
+import type { CodCharge, DeliveryDelay, DeliveryZone } from '../../src/api/types';
 import { Card, ErrorText, Muted, Title } from '../../src/components/ui';
 import { colors } from '../../src/theme/colors';
 import { fonts, fontSizes, spacing } from '../../src/theme/typography';
@@ -18,18 +18,17 @@ import { t } from '../../src/i18n';
  * fait qu'afficher la grille pour que le marchand sache à quoi s'attendre ; il
  * ne recalcule rien et ne sert jamais de base à un montant envoyé au serveur.
  *
- * **Deux affichages, un seul écran (D4).** Le serveur sert les deux formes
- * pendant la transition : les quatre colonnes héritées, et le barème par zones.
- * L'écran choisit la seconde **dès qu'elle n'est pas vide**, et retombe sur la
- * première sinon. Un serveur qui n'a pas encore basculé, ou un transporteur qui
- * n'a pas configuré ses zones, donnent donc exactement l'affichage d'avant.
+ * **Une seule forme : le barème par zones (D4).** Pendant la transition l'écran
+ * retombait sur les quatre colonnes héritées quand `zones` était vide ; depuis
+ * l'étape 6 le serveur ne tarife que par la route, et depuis S86 aucune société
+ * ne se déploie sans zones. Un `zones` vide est désormais une anomalie du
+ * transporteur, dite comme telle (**S91 / M4**).
  *
  * ⚠️ Le poids est une **valeur de tranche comparée à l'identique** par le
  * calculateur, pas un plafond : on écrit « 1 kg », jamais « jusqu'à 1 kg ».
  */
 
 export default function RatesScreen() {
-  const [rates, setRates] = useState<DeliveryRate[]>([]);
   const [zones, setZones] = useState<DeliveryZone[]>([]);
   const [delays, setDelays] = useState<DeliveryDelay[]>([]);
   const [codCharges, setCodCharges] = useState<CodCharge[]>([]);
@@ -41,7 +40,6 @@ export default function RatesScreen() {
     try {
       // Deux endpoints indépendants : en parallèle.
       const [grid, c] = await Promise.all([fetchDeliveryGrid(), fetchCodCharges()]);
-      setRates(grid.rates);
       setZones(grid.zones);
       setDelays(grid.delays);
       setCodCharges(c);
@@ -67,7 +65,6 @@ export default function RatesScreen() {
   );
 
   const parZones = zones.length > 0;
-  const vide = parZones ? false : rates.length === 0;
 
   return (
     <ScrollView
@@ -77,7 +74,7 @@ export default function RatesScreen() {
       <Muted>{t('rates.subtitle')}</Muted>
       <ErrorText>{error}</ErrorText>
 
-      {vide && !error && <Muted>{t('rates.empty')}</Muted>}
+      {!parZones && !error && <Muted>{t('rates.noZone')}</Muted>}
 
       {/* Le supplément dépend du délai, jamais de la zone : il est annoncé une
           fois, en tête, et ne se répète pas dans chaque case. */}
@@ -136,11 +133,6 @@ export default function RatesScreen() {
             )}
           </Card>
         ))}
-
-      {/* Le barème négocié du marchand, quand il en a un : mêmes zones, ses
-          montants. Le serveur le sert déjà résolu dans `zones[].rates`, ce
-          bloc ne fait que le nommer pour que le marchand sache qu'il existe. */}
-      {!parZones && rates.length > 0 && <Muted>{t('rates.noZone')}</Muted>}
 
       {codCharges.length > 0 && (
         <Card>

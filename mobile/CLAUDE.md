@@ -44,13 +44,13 @@ Chercher un écran dans `src/` ne trouve rien — et ne prouve rien (S68).
   couleurs (`customsLevelColorName`) avec « Marquer traitée ». Ne jamais filtrer côté app la
   liste paginée de `customs/alerts` pour retrouver celles d'un colis : elle ment dès la page 2.
 - Boutiques (multi-shop), Tarifs (poids × zone), Notifications, Profil.
-  L'écran **Tarifs** sert **les deux formes** (**D4**) : le barème par zones dès que
-  `zones` n'est pas vide, sinon les quatre colonnes héritées. Ne jamais supprimer le
-  second affichage tant que l'API sert encore les colonnes — c'est ce qui permet à
-  cette version de tourner sur un serveur qui n'a pas basculé.
-  Même règle sur la **création** : les sélecteurs *zone* et *délai* n'apparaissent
-  que si `parcel/create` renvoie des zones, et « barème hérité » reste offert. Une
-  zone d'export sans pays est signalée **avant** l'envoi — le serveur refuserait.
+  L'écran **Tarifs** ne sert plus que le **barème par zones** (**D4**, **S91 / M4**) : la
+  seconde forme (quatre colonnes héritées) est tombée avec l'étape 6, et depuis S86 aucune
+  société ne se déploie sans zones — un `zones` vide est dit comme une anomalie du
+  transporteur (`rates.noZone`). À la **création**, les choix de zone viennent de
+  `src/domain/zoneChoices.ts` : une entrée par zone, **plus de « barème hérité »** (la valeur 0
+  ne menait qu'à un refus, `zone_id` est obligatoire). Une zone d'export sans pays est signalée
+  **avant** l'envoi — le serveur refuserait. `MerchantAppPricingContractTest` (web) lit ces sources.
 
 ## Statuts colis (alignés backend)
 En attente → Ramassage assigné → Entrepôt → Livreur assigné → Livré ; + Livraison partielle, Retour.
