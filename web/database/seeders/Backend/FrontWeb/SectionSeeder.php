@@ -41,6 +41,6 @@ class SectionSeeder extends Seeder
             (1, 5, 'playstore_link','https://drive.google.com/drive/folders/1jLe_s4F-HDSjI7dHPsen7vRUw2wv9SMi', '2023-01-27 17:30:40', '2023-01-27 17:30:40'),
             (1, 5, 'ios_icon','fa-brands fa-app-store-ios', '2023-01-27 17:30:40', '2023-01-27 17:30:40'),
             (1, 5, 'ios_link','https://drive.google.com/drive/folders/1jLe_s4F-HDSjI7dHPsen7vRUw2wv9SMi', '2023-01-27 17:30:40', '2023-01-27 17:30:40'),
-            (1, 6, 'map_link','https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d542.6581052086841!2d90.3516149889463!3d23.798889773393963!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755c0e8a725cb8b%3A0x5a69b65edf9c7cf4!2sWemax%20IT!5e0!3m2!1sen!2sbd!4v1687082326781!5m2!1sen!2sbd', '2023-01-27 17:30:40', '2023-01-27 17:30:40')");
+            (1, 6, 'map_link','https://www.google.com/maps?q=6.3703,2.3912&z=13&output=embed', '2023-01-27 17:30:40', '2023-01-27 17:30:40')");
     }
 }

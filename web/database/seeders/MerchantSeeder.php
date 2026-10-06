@@ -25,9 +25,9 @@ class MerchantSeeder extends Seeder
         $merchantUser                  = new User();
         $merchantUser->company_id      = 2;
         $merchantUser->name            = "Merchant";
-        $merchantUser->mobile          = "01912938003";
+        $merchantUser->mobile          = "0197030001";
         $merchantUser->email           = "merchant@wemaxdevs.com";
-        $merchantUser->address         = "Mirpur-2,Dhaka";
+        $merchantUser->address         = "Ganhi, Cotonou, Bénin";
         $merchantUser->password        = Hash::make(SeedAccounts::motDePasse($merchantUser->email)); // S87
         $merchantUser->user_type       = UserType::MERCHANT;
         $merchantUser->hub_id          = 4;
@@ -38,7 +38,7 @@ class MerchantSeeder extends Seeder
 
         $merchant                      = new Merchant();
         $merchant->user_id             = $merchantUser->id;
-        $merchant->business_name       = "WemaxDevs";
+        $merchant->business_name       = "Boutique Démo Cotonou"; // S92
         $merchant->company_id          = 2;
         $merchant->merchant_unique_id  = 2024;
         $merchant->current_balance     = 00;
@@ -52,7 +52,7 @@ class MerchantSeeder extends Seeder
         );
         $merchant->nid_id              = 4;
         $merchant->trade_license       = 5;
-        $merchant->address             = "Dhaka";
+        $merchant->address             = "Ganhi, Cotonou, Bénin";
         $merchant->save();
 
         // Barème négocié : une ligne par tranche ET par zone depuis l'étape 6

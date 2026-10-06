@@ -281,6 +281,15 @@ avant les apps.
   (`$this->app->detectEnvironment(fn () => 'production')`, `db:seed --force`). ⚠️ Un
   `PendingCommand` de test ne s'exécute qu'à `run()` ou à sa destruction : assigné à une
   variable, il tourne **après** les lignes qui le suivent.
+- **Les semences parlent du Bénin** (**S92**). La plateforme (société 1) s'appelle `BeninLink`,
+  la société 2 est « Transporteur de démonstration », les six agences sont Cotonou (Cadjèhoun,
+  Akpakpa), Abomey-Calavi, Porto-Novo, Parakou et Bohicon — **ids 1 à 6 conservés**, les autres
+  semences les lisent (livreur → 1, agence → 2, marchand → 4). Numéros à **dix chiffres** (`01…`,
+  plan 2024), comptes mobile money `MTN MoMo` / `Moov Money`, banque `Ecobank Bénin`. Les
+  **courriels d'amorçage ne bougent pas** (`SeedAccounts::COMPTES`, S87). `SeedsSpeakBeninTest`
+  joue le préfixe `SeedsTenant` et lit les autres semences à la source ; seul `CurrencySeeder`
+  (catalogue mondial) garde le taka. Les textes anglais de la vitrine (`CompanyFrontendDataSeeder`,
+  `SectionSeeder`) restent : MySQL brut, lot à part.
 - **Les deux apps ont leur filet de contrat** (**S85**). L'app marchand : `OpenApiSpecTest`
   (inventaire), `ParcelStageTest` (statuts), `MerchantAppCustomsContractTest` (pages, douane).
   L'app livreur : `DeliverymanAppContractTest` — inventaire dans la spec et jamais réservé au

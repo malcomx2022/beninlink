@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-06 (S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8029,3 +8029,46 @@ Il ne touche pas l'API : `settings/delivery-charges` sert toujours `deliveryChar
 zonées), que l'app ignore désormais à l'écran. Il ne touche pas aux types de livraison
 (`deliveryType.ts`, `delivery_type_id`), toujours envoyés à la création. L'app livreur n'a pas
 d'écran de barème.
+
+## S92 — les semences parlent du Bénin (2026-10-06)
+
+### D'où ça vient
+
+Le socle amorçait toute installation avec l'identité de son éditeur : société « We Courier »
+à Mirpur, six agences de Dhaka, adresses bangladaises sur chaque compte, raison sociale
+« WemaxDevs » pour le marchand, banque `NRB Commercial Bank`, mobile money `Bkash` / `Nagad` /
+`Rocket`, numéros à onze chiffres, carte de la vitrine centrée sur Dhaka. Depuis S86 une
+installation neuve réussit son premier déploiement, depuis S87 ses comptes n'ont plus de mot de
+passe public : le transporteur qui ouvre son back-office le premier jour lisait encore un autre
+pays. S87 l'avait laissé de côté explicitement (« il ne renomme pas les comptes »).
+
+### Ce qui est écrit
+
+| Pièce | Rôle |
+|---|---|
+| `GeneralSettingsSeeder` | société 1 = `BeninLink` (`contact@beninlink.app`, Cadjèhoun) ; société 2 = « Transporteur de démonstration » (Akpakpa) ; copyright en français ; préfixes `we` / `co` et couleurs inchangés |
+| `HubSeeder` | six agences : Cotonou — Cadjèhoun, Cotonou — Akpakpa, Abomey-Calavi — Godomey, Porto-Novo — Ouando, Parakou — Centre, Bohicon — Gare. **Ids 1 à 6 conservés** (livreur → 1, agence → 2, marchand → 4) |
+| `UserSeeder`, `DeliveryManSeeder`, `MerchantSeeder`, `MerchantshopsSeeder` | adresses de Cotonou et d'Abomey-Calavi ; numéros à dix chiffres `01…` ; marchand « Boutique Démo Cotonou », boutiques au marché Dantokpa. **Courriels inchangés** (S87) |
+| `AccountSeeder`, `PaymentAccountSeeder`, `MerchantPaymentSeeder` (hors `DatabaseSeeder`) | `Ecobank Bénin`, agence Ganhi ; mobile money `MTN MoMo` / `Moov Money` — les deux opérateurs que FedaPay sert |
+| `ParcelSeeder` (hors `DatabaseSeeder`) | téléphones à dix chiffres |
+| `CompanyFrontendDataSeeder`, `Backend/FrontWeb/SectionSeeder` | `map_link` pointe Cotonou (6.3703, 2.3912) ; rien d'autre (MySQL brut, textes anglais : lot à part) |
+| `tests/Feature/SeedsSpeakBeninTest` (4 tests) | joue `SeedsTenant` : sociétés, agences, personnes, boutiques sans « Dhaka / Mirpur / Bangladesh / Wemax / +88 / Bkash… », adresses au Bénin, numéros `^(\+229)?01\d{8}$`, `BeninLink` et six agences ; les identifiants de `SeedAccounts::COMPTES` existent toujours ; les semences hors préfixe sont lues à la source, `CurrencySeeder` seul excepté |
+| Docs | `web/CLAUDE.md` (décision), grand livre chantier 1, en-têtes datés |
+
+### Vérification
+
+| Sabotage | Effet |
+|---|---|
+| l'agence 1 remise à « Mirpur 10, Dhaka, Bangladesh » | **rouge** (2 tests : agences, source) |
+| le numéro de l'admin ramené à huit chiffres | **rouge** (personnes) |
+
+Suite complète `web/` : **1 254 tests, 47 800 assertions**, verte.
+
+### Ce que ce lot ne fait pas
+
+Il ne renomme pas les comptes (`Admin`, `Company`, `Branch`, `Merchant`, `Delivery Man`) ni leurs
+courriels `@wemaxdevs.com` / `@wemaxit.com` : S87 les surveille par nom, et une installation déjà
+semée les garde. Il ne francise pas la vitrine (`CompanyFrontendDataSeeder`, `SectionSeeder`,
+`PageSeeder` : `DB::statement` MySQL, jamais joués par la suite) ni le catalogue des devises.
+Une base **déjà amorcée** ne change pas : les semences ne rejouent pas ; le transporteur corrige
+son identité dans Réglages, comme n'importe quelle société.
