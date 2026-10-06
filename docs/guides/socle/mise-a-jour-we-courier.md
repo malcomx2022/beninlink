@@ -163,6 +163,10 @@ sortie de secours qu'on croit.
 
 ## Faut-il monter ? — la question qu'on ne pose pas assez
 
+> **Tranché le 2026-10-06 (S107, D15) : on ne monte pas.** Le fork est le produit. La grille
+> ci-dessous se relit à chaque version de l'éditeur ; seul un correctif **qui nous manque** sur
+> ce que nous utilisons rouvre la question, et la méthode de ce guide est alors prête.
+
 Sur un fork aussi modifié, « rester à jour » n'est pas une vertu en soi. Le
 paquet de l'éditeur apporte trois sortes de choses :
 

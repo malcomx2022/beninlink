@@ -212,6 +212,7 @@ Ils existent pour ce moment précis — et ils se **lisent**, ils ne s'écoutent
 
 ```bash
 php artisan beninlink:colis-non-debites      # colis jamais facturés
+php artisan beninlink:montants-non-entiers   # montants stockés avec des décimales (T2 : le FCFA est entier, le schéma reste decimal)
 php artisan beninlink:ecarts-marchands       # solde qui ne répond plus au relevé
 php artisan beninlink:retours-annules        # frais de retour prélevé, jamais rendu
 ```

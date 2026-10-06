@@ -2,7 +2,7 @@
 
 > Registre des décisions qui ne relèvent pas du code seul. Chaque entrée dit ce
 > qui a été **tranché** (et livré), ce qui reste **à trancher** par le métier, et
-> par qui. Mis à jour le 2026-10-06, S106 (D1-D14 ; les décisions R1-R9 du porteur du
+> par qui. Mis à jour le 2026-10-06, S107 (D1-D15 ; les décisions R1-R9 du porteur du
 > 2026-10-03 sont ventilées dans les lignes qu'elles tranchent).
 
 | # | Sujet | État | Livré dans le code | Reste à trancher |
@@ -13,6 +13,7 @@
 | D4 | Refonte du barème (zones, tranches) | ✅ tranché (S72) | zones/délais/forfaits pays **en base**, résolveur, écrans, API, apps ; **grille de départ dans un fichier versionné**, posée par la commande et le jeu pilote, **ajustable à tout moment à l'écran** | forfaits des 5 autres pays CEDEAO, taux COD CEDEAO, TVA à l'export (R1) |
 | D5 | Fiches de fraude sans `company_id` | ✅ tranché | migration de rattachement par l'auteur | — |
 | D14 | Décisions produit R3–R9 | ✅ tranché (S75) | pas de prorata mais **dit avant confirmation** (R3) ; SMS français seul (R4) ; menu Réglages visible en **OU** (R5) ; catalogue catégories **super-admin** (R6) ; statut TVA explicite (R7 b) ; relevés **par courriel** à l'émission (R9) | signature sur retour (R8) après la recette ; expansion anglophone des SMS ; personnalisation des catalogues par société |
+| D15 | Dette technique T2, T3, T9 | ✅ tranché (S107) | **pas** de migration des colonnes `decimal` (constat `beninlink:montants-non-entiers`) ; Bootstrap 4 + 5 cohabitent, étapes C–E non entreprises ; **pas** de re-fusion We Courier, le fork est le produit | rouvrir T3 après la recette si un écran le demande ; T9 à chaque version de l'éditeur, contre la grille « ce qui nous manque » |
 
 ---
 
@@ -1066,3 +1067,21 @@ porteur ; cinq ont du code, deux n'en ont pas et le disent.
 Hors de ce lot, et volontairement : le prorata d'abonnement, la colonne de langue
 des SMS, la personnalisation des catalogues par société, la signature sur retour.
 
+---
+
+## D15 — Dette technique : T2, T3 et T9 tranchés ✅ (2026-10-06, S107)
+
+Trois lignes de dette technique attendaient une décision dans le registre (§ 7.2).
+Le porteur a rendu la main. La règle d'or du projet — **appropriation, pas
+réécriture ; ne jamais modifier le cœur du socle de façon invasive** — tranche les
+trois dans le même sens : on ne refait pas ce qui marche, on le **tient**.
+
+| # | Sujet | Décision | Ce qui la tient |
+|---|---|---|---|
+| T2 | Colonnes monétaires en `decimal(…,2)` | **Pas de migration de schéma.** Le FCFA est entier **par calcul** (`ChargeCalculator::percentage()` arrondit, seul endroit où un taux devient des francs) et **par affichage** (`formatAmount()`, zéro décimale) ; la base peut porter deux décimales sans qu'un document ne les montre jamais. Changer une quinzaine de colonnes du socle serait invasif, compliquerait T9, et une migration MySQL interrompue ne se défait pas. | `VatRoundingTest` ; **`beninlink:montants-non-entiers`** constate dans une base vivante les montants qui auraient contourné le calcul (import, saisie directe) — rien d'écrit, sortie 0, quatrième constat du guide de reprise § 8 (`NonIntegerAmountsTest`) |
+| T3 | Bootstrap 4 **et** 5 ensemble | **Les étapes A et B suffisent ; C, D, E ne sont pas entreprises.** Les deux versions cohabitent à dessein (5 câble `data-bs-*`, 4 câble `data-*`) et rien ne casse ; renommer 331 attributs et 26 classes change l'apparence de tout le back-office pour aucun gain au pilote. | `bootstrap/migration-4-vers-5.md` § 5 ; à rouvrir après la recette, avec le contrôle visuel humain (E5), si un défaut d'écran le demande |
+| T9 | Re-fusion We Courier | **On ne monte pas.** Le fork est le produit : 106 lots, 32 constats de sécurité fermés, paiement en ligne coupé (D10). Une montée ne se justifie que par un correctif de l'éditeur **qui nous manque** sur ce que nous utilisons. | `socle/mise-a-jour-we-courier.md` : base `eb56a37`, fusion à trois points, suite avant/après, recette — la méthode reste prête, la grille « faut-il monter ? » se relit à chaque version de l'éditeur |
+
+**Ce que D15 ne décide pas.** T4 (PHP 8.4 fermé par trois dépendances) n'est pas une
+décision mais une attente : il s'ouvrira quand `league/commonmark` et ses
+dépendances le permettront.
