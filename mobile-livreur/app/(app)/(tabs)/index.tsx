@@ -5,11 +5,11 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { ApiError } from '../../../src/api/client';
 import { fetchDashboard } from '../../../src/api/deliveryman';
 import type { DashboardData, ParcelSummary } from '../../../src/api/types';
+import { ParcelCard } from '../../../src/components/ParcelCard';
 import { ErrorText, Muted } from '../../../src/components/ui';
 import { shareCurrentPosition } from '../../../src/domain/location';
 import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, radii, spacing } from '../../../src/theme/typography';
-import { formatAmount } from '../../../src/domain/money';
 import { t } from '../../../src/i18n';
 
 type TabKey = 'ongoing' | 'returns' | 'delivered';
@@ -137,38 +137,12 @@ export default function ParcelsScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <Pressable
-            onPress={() => router.push({ pathname: '/(app)/parcel/[id]', params: { id: item.id } })}
-            style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-          >
-            <View style={styles.rowTop}>
-              <Text style={styles.tracking}>{item.tracking_id}</Text>
-              {/* statusName vient traduit du backend : on ne le réécrit pas. */}
-              <Text style={styles.status}>{item.statusName ?? '—'}</Text>
-            </View>
-            {/* S101 — une alerte douanière en cours : le document à collecter se voit depuis la liste. */}
-            {(item.customs_pending ?? 0) > 0 && (
-              <Text style={styles.customsBadge} testID={`customs-badge-${item.id}`}>
-                {t('customs.badge')}
-              </Text>
-            )}
-            <Text style={styles.customer}>{item.customer_name}</Text>
-            <Muted>{item.customer_address ?? ''}</Muted>
-            <View style={styles.rowBottom}>
-              <View>
-                <Text style={styles.codLabel}>{t('parcels.cod')}</Text>
-                <Text style={styles.amount}>{formatAmount(item.cash_collection)}</Text>
-              </View>
-              <View style={styles.actions}>
-                <Pressable onPress={() => call(item.customer_phone)} style={styles.action} disabled={!item.customer_phone}>
-                  <Text style={styles.actionLabel}>{t('common.call')}</Text>
-                </Pressable>
-                <Pressable onPress={() => route(item.customer_address)} style={styles.action} disabled={!item.customer_address}>
-                  <Text style={styles.actionLabel}>{t('common.route')}</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Pressable>
+          <ParcelCard
+            parcel={item}
+            onOpen={() => router.push({ pathname: '/(app)/parcel/[id]', params: { id: item.id } })}
+            onCall={() => call(item.customer_phone)}
+            onRoute={() => route(item.customer_address)}
+          />
         )}
       />
     </View>
@@ -193,6 +167,7 @@ const styles = StyleSheet.create({
   },
   shareLabel: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.sm, color: colors.textOnPrimary },
   empty: { padding: spacing.xl, alignItems: 'center' },
+  rowPressed: { opacity: 0.7 },
   row: {
     backgroundColor: colors.surface,
     borderRadius: radii.md,
@@ -201,32 +176,4 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.xs,
   },
-  rowPressed: { opacity: 0.7 },
-  rowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  rowBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: spacing.xs },
-  tracking: { fontFamily: fonts.numeric, fontSize: fontSizes.sm, color: colors.primary },
-  status: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.xs, color: colors.info },
-  customsBadge: {
-    alignSelf: 'flex-start',
-    fontFamily: fonts.bodyMedium,
-    fontSize: fontSizes.xs,
-    color: colors.warning,
-    borderWidth: 1,
-    borderColor: colors.warning,
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-  },
-  customer: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.md, color: colors.text },
-  codLabel: { fontFamily: fonts.body, fontSize: fontSizes.xs, color: colors.textMuted },
-  amount: { fontFamily: fonts.numeric, fontSize: fontSizes.lg, color: colors.accent },
-  actions: { flexDirection: 'row', gap: spacing.sm },
-  action: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.pill,
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  actionLabel: { fontFamily: fonts.bodyMedium, fontSize: fontSizes.sm, color: colors.primary },
 });

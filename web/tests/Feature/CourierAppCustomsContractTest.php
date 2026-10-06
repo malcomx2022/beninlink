@@ -57,12 +57,23 @@ class CourierAppCustomsContractTest extends TestCase
         $this->assertStringContainsString('requiredDocument:', $fr);
     }
 
-    /** S101 — la liste des courses signale le document à collecter sans ouvrir la course (`customs_pending`). */
+    /**
+     * S101 — la liste des courses signale le document à collecter sans ouvrir la course (`customs_pending`).
+     * S103 — la carte est un composant extrait (`ParcelCard`) et RENDUE en test : la pastille, le montant
+     * en FCFA entiers et les boutons Appeler / Itinéraire ne sont plus une lecture de source.
+     */
     public function test_the_course_list_shows_the_customs_badge_from_customs_pending(): void
     {
         $liste = $this->source('app/(app)/(tabs)/index.tsx');
-        $this->assertStringContainsString('(item.customs_pending ?? 0) > 0', $liste, 'la pastille suit `customs_pending`, avec repli pour un serveur d\'avant S101');
-        $this->assertStringContainsString("t('customs.badge')", $liste);
+        $this->assertStringContainsString('<ParcelCard', $liste, 'la liste rend ses courses par le composant extrait (S103)');
+        $this->assertStringNotContainsString('customs_pending', $liste, 'la pastille vit dans la carte, pas dans l\'écran');
+
+        $carte = $this->source('src/components/ParcelCard.tsx');
+        $this->assertStringContainsString('(parcel.customs_pending ?? 0) > 0', $carte, 'la pastille suit `customs_pending`, avec repli pour un serveur d\'avant S101');
+        $this->assertStringContainsString("t('customs.badge')", $carte);
+        $this->assertStringContainsString('formatAmount(parcel.cash_collection)', $carte, 'le montant à encaisser passe par le formateur FCFA entiers');
+        $this->assertFileExists(dirname(base_path()) . '/mobile-livreur/src/components/ParcelCard.test.tsx',
+            'le test de rendu de la carte a disparu : la propriété redevient une lecture de source');
 
         $this->assertStringContainsString('customs_pending?: number;', $this->source('src/api/types.ts'));
         $this->assertStringContainsString('badge:', $this->source('src/i18n/fr.ts'));

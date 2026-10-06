@@ -360,12 +360,23 @@ class MerchantAppCustomsContractTest extends TestCase
             'le test de rendu de la carte a disparu : la propriété redevient une lecture de source');
     }
 
-    /** S101 — la liste des colis signale une alerte douanière en cours sans ouvrir le colis (`customs_pending`). */
+    /**
+     * S101 — la liste des colis signale une alerte douanière en cours sans ouvrir le colis (`customs_pending`).
+     * S103 — la carte est un composant extrait (`ParcelCard`) et RENDUE en test : la pastille et le montant
+     * en FCFA entiers ne sont plus une lecture de source.
+     */
     public function test_the_parcel_list_shows_the_customs_badge_from_customs_pending(): void
     {
         $liste = $this->source('app/(app)/parcels.tsx');
-        $this->assertStringContainsString('(item.customs_pending ?? 0) > 0', $liste, 'la pastille suit `customs_pending`, avec repli pour un serveur d\'avant S101');
-        $this->assertStringContainsString("t('customs.badge')", $liste);
+        $this->assertStringContainsString('<ParcelCard', $liste, 'la liste rend ses colis par le composant extrait (S103)');
+        $this->assertStringNotContainsString('customs_pending', $liste, 'la pastille vit dans la carte, pas dans l\'écran');
+
+        $carte = $this->source('src/components/ParcelCard.tsx');
+        $this->assertStringContainsString('(parcel.customs_pending ?? 0) > 0', $carte, 'la pastille suit `customs_pending`, avec repli pour un serveur d\'avant S101');
+        $this->assertStringContainsString("t('customs.badge')", $carte);
+        $this->assertStringContainsString('formatAmount(parcel.cash_collection)', $carte, 'le montant passe par le formateur FCFA entiers');
+        $this->assertFileExists($this->app('src/components/ParcelCard.test.tsx'),
+            'le test de rendu de la carte a disparu : la propriété redevient une lecture de source');
 
         $types = $this->source('src/api/types.ts');
         $this->assertStringContainsString('customs_pending?: number;', $types, 'la clé est optionnelle : un serveur d\'avant S101 ne l\'envoie pas');
