@@ -410,4 +410,5 @@ return [
     'vat_status_taxable' => 'Taux propre au marchand',
     'vat_status_exempt' => 'Exonéré de TVA',
     'vat_status_help' => 'Un taux à 0 ne veut pas dire exonéré : choisir « Exonéré » pour qu\'aucune TVA ne soit facturée, et que les relevés le disent.',
+    'stripe_not_configured' => 'Le paiement par carte (Stripe) n\'est pas configuré sur la plateforme. Utilisez le Mobile Money ou contactez l\'administrateur.',
 ];
