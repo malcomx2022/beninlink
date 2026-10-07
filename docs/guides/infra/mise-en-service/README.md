@@ -287,20 +287,19 @@ réussi** ; chaque fusion a déployé depuis (219, 229, 231, 233…). Les deux g
 même jour ont trouvé le serveur conforme : cache partagé (S97, run 229) et `APP_DEBUG=false` (S99,
 run 233). Rien à refaire pour ces lignes.
 
-### Ce qui reste à faire sur le serveur (relevé S102, 2026-10-06 ; corrigé S109, 2026-10-07)
+### Ce qui reste à faire sur le serveur (relevé S102, 2026-10-06 ; corrigé S109 et S110, 2026-10-07)
 
 Dans l'ordre ; chaque point renvoie au guide qui le détaille. Aucun n'est fait par le workflow.
-**État vérifié sur le serveur par le porteur le 2026-10-07 : quatre points sur cinq sont faits ;
-seul le renommage de la société attend ses coordonnées définitives.** (S108 avait écrit l'inverse
-pour les points 1, 4 et 5 ; S109 corrige.)
+**État vérifié sur le serveur par le porteur le 2026-10-07 au soir : les cinq points sont faits.**
+Reste, côté dépôt, à poser les secrets de recette pour que les fusions la mettent à jour (point 5).
 
 | # | À faire | Pourquoi | Où c'est décrit |
 |---|---|---|---|
-| 1 | **Renommer la société servie** : Réglages → Généraux (nom, courriel, téléphone, adresse) — ⏳ **en attente des coordonnées définitives du porteur** ; au 2026-10-07 la base porte toujours « We Courier » (id 1) et « Company » (id 2) | la base garde les noms d'origine : les semences ne rejouent pas | § 5.b ci-dessus |
+| ~~1~~ | ~~Renommer la société servie : Réglages → Généraux~~ — ✅ **fait le 2026-10-07 à 17 h 50** : la société 1 s'appelle « beninlink », avec le courriel et le téléphone du porteur ; la société 2 (« Company », celle des données de démonstration) reste inchangée | la base gardait les noms d'origine : les semences ne rejouent pas | § 5.b ci-dessus |
 | ~~2~~ | ~~Installer le worker de la file sous Supervisor~~ — ✅ **fait**. À vérifier à froid : `sudo supervisorctl status beninlink-worker` dit `RUNNING`, un changement de statut de colis fait partir son SMS, `php artisan queue:failed` est vide | sans lui l'application répond et **plus aucun SMS ni courriel ne part** (D13) | [`infra/supervisor/`](../supervisor/) § « Vérifier qu'il travaille » |
 | ~~3~~ | ~~Poser le crontab et l'alerte~~ — ✅ **fait**. À vérifier : `crontab -l` porte `schedule:run` chaque minute, et l'alerte du guide de supervision a un destinataire | le planificateur Laravel ne tourne pas tout seul ; un worker sans surveillance déplace le problème | [`infra/supervision/`](../supervision/) |
 | ~~4~~ | ~~Sauvegarde et exercice de restauration~~ — ✅ **fait le 2026-10-06** : `/var/backups/beninlink/` porte les sauvegardes du 06/10 et du 07/10 (cron quotidien à 2 h 15) ; exercice de restauration réussi le 06/10 sur une base jetable, données cohérentes, base d'essai supprimée | la seule étape qui prouve la sauvegarde | [`infra/sauvegarde/`](../sauvegarde/) |
-| ~~5~~ | ~~Serveur de recette~~ — ✅ **fonctionnel depuis le 2026-10-05** : `https://recette.beninlink.app/` répond 200, worker Supervisor `RUNNING` (vérifié le 07/10). ⚠️ Le job *Actions* « Déploiement sur le serveur de recette » **saute** encore son étape SSH (run 251) : la recette n'est pas mise à jour par les fusions tant que `RECETTE_SSH_*` et `DEPLOY_PATH` ne sont pas posés dans les secrets du dépôt | une recette qui ne suit pas `main` teste une version ancienne | [`recette-pilote/`](../../recette-pilote/) § 1 |
+| ~~5~~ | ~~Serveur de recette~~ — ✅ **fonctionnel depuis le 2026-10-05** : `https://recette.beninlink.app/` répond 200, worker Supervisor `RUNNING` (vérifié le 07/10). ⚠️ Le job *Actions* « Déploiement sur le serveur de recette » **saute** encore son étape SSH (runs 251 et 253) : il lui faut les trois secrets `RECETTE_SSH_HOST`, `RECETTE_SSH_USER`, `RECETTE_SSH_KEY` (Settings → Secrets and variables → Actions du dépôt) ; `RECETTE_DEPLOY_PATH` et `RECETTE_SSH_PORT` sont facultatifs (`/var/www/beninlink-recette` et 22 par défaut). Tant qu'ils manquent, la recette sert la version déployée à la main | une recette qui ne suit pas `main` teste une version ancienne | [`recette-pilote/`](../../recette-pilote/) § 1 |
 
 ⚠️ **Une migration MySQL interrompue ne se défait pas.** MySQL ne sait pas
 annuler une modification de schéma dans une transaction : une migration qui
