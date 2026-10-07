@@ -287,15 +287,17 @@ réussi** ; chaque fusion a déployé depuis (219, 229, 231, 233…). Les deux g
 même jour ont trouvé le serveur conforme : cache partagé (S97, run 229) et `APP_DEBUG=false` (S99,
 run 233). Rien à refaire pour ces lignes.
 
-### Ce qui reste à faire sur le serveur (relevé S102, 2026-10-06)
+### Ce qui reste à faire sur le serveur (relevé S102, 2026-10-06 ; mis à jour S108, 2026-10-07)
 
 Dans l'ordre ; chaque point renvoie au guide qui le détaille. Aucun n'est fait par le workflow.
+Au 2026-10-07, les points 1 à 3 sont faits (compte rendu du porteur) : **restent la sauvegarde avec
+son exercice de restauration (4) et le serveur de recette (5).**
 
 | # | À faire | Pourquoi | Où c'est décrit |
 |---|---|---|---|
-| 1 | Renommer la société servie : Réglages → Généraux (nom, courriel, téléphone, adresse) | la base garde « We Courier » et « Company » : les semences ne rejouent pas (`db:seed` une seule fois) | § 5.b ci-dessus |
-| 2 | Installer le worker de la file sous Supervisor | sans lui l'application répond et **plus aucun SMS ni courriel ne part** (D13) | [`infra/supervisor/`](../supervisor/) |
-| 3 | Poser le crontab et l'alerte | le planificateur Laravel ne tourne pas tout seul ; un worker sans surveillance déplace le problème | [`infra/supervision/`](../supervision/) |
+| ~~1~~ | ~~Renommer la société servie : Réglages → Généraux~~ — ✅ **fait** (compte rendu du porteur, 2026-10-07) | la base portait « We Courier » et « Company » ; les semences ne rejouent pas | § 5.b ci-dessus |
+| ~~2~~ | ~~Installer le worker de la file sous Supervisor~~ — ✅ **fait** (2026-10-07). À vérifier à froid : `sudo supervisorctl status beninlink-worker` dit `RUNNING`, un changement de statut de colis fait partir son SMS, `php artisan queue:failed` est vide | sans lui l'application répond et **plus aucun SMS ni courriel ne part** (D13) | [`infra/supervisor/`](../supervisor/) § « Vérifier qu'il travaille » |
+| ~~3~~ | ~~Poser le crontab et l'alerte~~ — ✅ **fait** (2026-10-07). À vérifier : `crontab -l` porte `schedule:run` chaque minute, et l'alerte du guide de supervision a un destinataire | le planificateur Laravel ne tourne pas tout seul ; un worker sans surveillance déplace le problème | [`infra/supervision/`](../supervision/) |
 | 4 | Sauvegarde (base, `public/uploads/`, `.env`) **et un exercice de restauration** | la seule étape qui prouve la sauvegarde ; une migration MySQL interrompue ne se défait pas | [`infra/sauvegarde/`](../sauvegarde/) |
 | 5 | Serveur de recette : utilisateur, dossier, base, `.env`, DNS, puis les secrets `RECETTE_SSH_*` et `DEPLOY_PATH` dans Actions | le job « Déploiement sur le serveur de recette » tourne à chaque fusion et **saute** tant que les secrets manquent (run 233) | [`recette-pilote/`](../../recette-pilote/) § 1 |
 
