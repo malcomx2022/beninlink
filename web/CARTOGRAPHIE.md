@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-06 (S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-07 (S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8683,3 +8683,32 @@ Suite complète `web/` : **1 302 tests, 49 106 assertions**, verte.
 
 Il ne touche ni au schéma, ni aux vues Bootstrap, ni au socle : c'est le sens des trois
 décisions. T4 (PHP 8.4) reste une attente, pas une décision.
+
+## S108 — le serveur : société renommée, Supervisor et crontab posés (2026-10-07)
+
+### D'où ça vient
+
+Compte rendu du porteur : sur le VPS, la société servie est renommée (Réglages → Généraux), le
+worker de la file tourne sous Supervisor, le crontab est posé. Ce sont les points 1 à 3 de la
+liste « Ce qui reste à faire sur le serveur » (S102). Conséquence métier : depuis ce moment, les
+SMS, courriels et notifications poussées **partent réellement** (D13 : sans worker, l'application
+répondait mais n'envoyait rien), et le planificateur Laravel tourne.
+
+### Ce qui est écrit
+
+| Où | Quoi |
+|---|---|
+| `docs/guides/infra/mise-en-service/README.md` | les trois points barrés, datés, avec ce qui se vérifie à froid (`supervisorctl status`, un SMS qui part, `queue:failed` vide, `crontab -l`) ; restent la sauvegarde avec son exercice de restauration et le serveur de recette |
+| `docs/CARTOGRAPHIE_PROJET.md` E3 | l'état du serveur au 2026-10-07 |
+| en-têtes datés | S108 |
+
+Côté *Actions*, chaque fusion de la journée a déployé : runs 235 à 249 (S100 à S107) tous verts ;
+la production sert donc S107.
+
+Aucun code, aucun test : la suite reste à **1 302 tests, 49 106 assertions**.
+
+### Ce que ce lot ne fait pas
+
+Il ne vérifie rien à distance : il consigne le compte rendu et dit ce qui le prouverait. La
+sauvegarde — et surtout l'**exercice de restauration**, la seule étape qui prouve la sauvegarde —
+reste le dernier point avant la recette ; le serveur de recette (E2) attend ses secrets.
