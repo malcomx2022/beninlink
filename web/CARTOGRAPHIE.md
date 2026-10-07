@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-07 (S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-07 (S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8686,6 +8686,10 @@ décisions. T4 (PHP 8.4) reste une attente, pas une décision.
 
 ## S108 — le serveur : société renommée, Supervisor et crontab posés (2026-10-07)
 
+> ⚠️ **Corrigé par S109** : ce compte rendu était faux sur trois points. La société n'est **pas**
+> renommée ; la sauvegarde et son exercice étaient **faits** dès le 06/10 ; la recette est
+> **fonctionnelle** depuis le 05/10. Voir § S109.
+
 ### D'où ça vient
 
 Compte rendu du porteur : sur le VPS, la société servie est renommée (Réglages → Généraux), le
@@ -8712,3 +8716,42 @@ Aucun code, aucun test : la suite reste à **1 302 tests, 49 106 assertions**.
 Il ne vérifie rien à distance : il consigne le compte rendu et dit ce qui le prouverait. La
 sauvegarde — et surtout l'**exercice de restauration**, la seule étape qui prouve la sauvegarde —
 reste le dernier point avant la recette ; le serveur de recette (E2) attend ses secrets.
+
+## S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend (2026-10-07)
+
+### D'où ça vient
+
+Le porteur a vérifié le serveur après la fusion de S108 et relevé trois erreurs dans son compte
+rendu :
+
+| Point | S108 disait | État vérifié le 2026-10-07 |
+|---|---|---|
+| Renommer la société | fait | **pas fait** : la base porte toujours « We Courier » (id 1) et « Company » (id 2) ; en attente des coordonnées définitives du porteur |
+| Sauvegarde et exercice de restauration | reste à faire | **fait le 06/10** : sauvegardes du 06/10 et du 07/10 dans `/var/backups/beninlink/`, cron quotidien à 2 h 15 ; restauration réussie sur une base jetable, données cohérentes, base d'essai supprimée |
+| Serveur de recette | reste à faire | **fonctionnel depuis le 05/10** : `https://recette.beninlink.app/` répond 200, worker Supervisor `RUNNING` |
+| Supervisor, crontab | faits | faits (inchangé) |
+
+S102 portait déjà une erreur du même ordre : « rien n'a encore été déployé en recette ». Elle
+déduisait l'état du serveur de recette du seul job *Actions*, qui saute son étape SSH ; or la
+recette a été montée à la main. **Leçon** : un lot de documentation ne déduit pas l'état d'un
+serveur de ce qu'il peut lire dans le dépôt ou dans *Actions* ; il consigne une vérification faite
+sur la machine, et le dit.
+
+### Ce qui est écrit
+
+| Où | Quoi |
+|---|---|
+| `docs/guides/infra/mise-en-service/README.md` | le tableau « Ce qui reste à faire » réécrit sur l'état vérifié : 2 à 5 faits et datés, 1 en attente ; une note sur la recette, que les fusions ne mettent pas à jour |
+| `docs/CARTOGRAPHIE_PROJET.md` E2, E3 | l'état vérifié ; les deux erreurs (S102, S108) nommées et corrigées |
+| § S108 ci-dessus | un renvoi en tête vers cette correction |
+| en-têtes datés | S109 |
+
+### Un point que le dépôt montre, et que le compte rendu ne contredit pas
+
+Le run 251 (fusion de S108) a déployé en production, mais l'étape « Déploiement par SSH (recette) »
+a **sauté** : les secrets `RECETTE_SSH_*` et `DEPLOY_PATH` ne sont pas posés dans le dépôt. La
+recette répond, mais elle ne suit pas `main` d'elle-même : elle sert la version déployée à la main.
+Pour que la recette pilote teste ce qui part en production, il faut poser ces secrets
+(`recette-pilote/` § 1).
+
+Aucun code, aucun test : la suite reste à **1 302 tests, 49 106 assertions**.
