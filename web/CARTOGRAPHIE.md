@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-07 (S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-07 (S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8749,9 +8749,53 @@ sur la machine, et le dit.
 ### Un point que le dépôt montre, et que le compte rendu ne contredit pas
 
 Le run 251 (fusion de S108) a déployé en production, mais l'étape « Déploiement par SSH (recette) »
-a **sauté** : les secrets `RECETTE_SSH_*` et `DEPLOY_PATH` ne sont pas posés dans le dépôt. La
+a **sauté** : au moins un des secrets `RECETTE_SSH_HOST`, `RECETTE_SSH_USER`, `RECETTE_SSH_KEY` manque au dépôt (`RECETTE_DEPLOY_PATH` est facultatif — S109 citait à tort un `DEPLOY_PATH` obligatoire, corrigé en S110). La
 recette répond, mais elle ne suit pas `main` d'elle-même : elle sert la version déployée à la main.
 Pour que la recette pilote teste ce qui part en production, il faut poser ces secrets
 (`recette-pilote/` § 1).
 
 Aucun code, aucun test : la suite reste à **1 302 tests, 49 106 assertions**.
+
+## S110 — la société renommée, les secrets de recette nommés (2026-10-07)
+
+### D'où ça vient
+
+Deux comptes rendus du porteur, après la fusion de S109 :
+
+1. **Le renommage est fait**, le 2026-10-07 à 17 h 50 — après la rédaction de S109, qui le disait
+   en attente. La société 1 s'appelle désormais « beninlink », avec le courriel et le téléphone du
+   porteur ; la société 2 (« Company », celle qui porte l'abonnement et les utilisateurs de
+   démonstration depuis S86) reste inchangée.
+2. **Les secrets de recette** : le porteur ne peut pas lister les secrets du dépôt, mais l'étape
+   sautée prouve qu'il en manque au moins un. Relu dans `deploy.yml` (job `deploy-recette`) :
+   l'étape SSH exige `RECETTE_SSH_HOST`, `RECETTE_SSH_USER` et `RECETTE_SSH_KEY` ;
+   `RECETTE_DEPLOY_PATH` (`/var/www/beninlink-recette` par défaut) et `RECETTE_SSH_PORT` (22) sont
+   facultatifs. S109 avait écrit « `RECETTE_SSH_*` et `DEPLOY_PATH` » : le second nom était faux.
+
+Les coordonnées du porteur ne sont **pas** recopiées dans le dépôt : le nom de la société suffit à
+dire que le point est fait, et un courriel ou un téléphone n'a rien à faire dans l'historique git.
+
+### Ce qui est écrit
+
+| Où | Quoi |
+|---|---|
+| `docs/guides/infra/mise-en-service/README.md` | point 1 barré et daté ; les cinq points faits ; point 5 : les trois secrets exacts, les deux facultatifs, et où les poser |
+| `docs/CARTOGRAPHIE_PROJET.md` E2, E3 | le renommage ; « plus rien à faire sur le serveur » ; les noms exacts des secrets |
+| § S109 | le nom de secret faux corrigé |
+| en-têtes datés | S110 |
+
+### Vérification
+
+Le run 253 (fusion de S109) montre encore l'étape « Déploiement par SSH (recette) » **sautée** : le
+constat de S109 tient. Aucun code, aucun test : la suite reste à **1 302 tests, 49 106 assertions**.
+
+### Ce que ce lot ne fait pas
+
+Il ne pose pas les secrets : ils se règlent dans GitHub (Settings → Secrets and variables →
+Actions), et une clé privée SSH ne passe jamais par le dépôt ni par une session de code. Une fois
+posés, la **prochaine** fusion déploie aussi la recette ; son journal dira « Déploiement par SSH
+(recette) » vert au lieu de « sauté ».
+
+Le nom « beninlink » est écrit en minuscules dans la base, alors que la marque s'écrit « BeninLink »
+partout ailleurs (semences, vitrine, documents). C'est le nom qu'affichent les relevés et la
+vitrine : un seul champ à corriger dans Réglages → Généraux si la casse n'est pas voulue.
