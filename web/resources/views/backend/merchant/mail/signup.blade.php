@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -11,7 +11,7 @@
                 color:#8094ae;
             }
             a{
-                color:#7e0095;
+                color:#12503A;
             }
             ul {
                 display: inline-block;
@@ -42,38 +42,38 @@
         <table style="width:100%;height:50px;max-width:650px;margin: auto;background-color: white;">
                 <tr>
                     <td style="padding:30px;line-height: 1.5;" colspan="2">
-                        <p>Hi <b style="font-style: italic;">{{ @$data['merchant_user']->name }}</b>,</p>
-                        <p>Thank you for your interest in becoming an merchant with {{ $companyName }}.</p>
-                        <p>Your login is <b style="font-style: italic;" >{{ @$data['merchant_user']->email }}</b></p>
-                        <p style="color: #7e0095;font-weight: bold;">Your Business Information :</p>
+                        <p>{{ __('Hi') }} <b style="font-style: italic;">{{ @$data['merchant_user']->name }}</b>,</p>
+                        <p>{{ __('Thank you for joining :name as a merchant.', ['name' => $companyName]) }}</p>
+                        <p>{{ __('Your login is') }} <b style="font-style: italic;" >{{ @$data['merchant_user']->email }}</b></p>
+                        <p style="color: #12503A;font-weight: bold;">{{ __('Your Business Information :') }}</p>
                          <div style="display: flex;">
-                             <div style="width: 20%;display: inline-block;"><b >Business Name</b></div>
+                             <div style="width: 20%;display: inline-block;"><b >{{ __('Business Name') }}</b></div>
                              <div>: {{ @$data['merchant']->business_name }}</div>
                          </div>
                          <div style="display: flex;">
-                             <div style="width: 20%;display: inline-block;"><b >Email</b></div>
+                             <div style="width: 20%;display: inline-block;"><b >{{ __('Email') }}</b></div>
                              <div>: {{ @$data['merchant_user']->email }}</div>
                          </div>
                          <div style="display: flex;">
-                             <div style="width: 20%;display: inline-block;"><b >Phone</b></div>
+                             <div style="width: 20%;display: inline-block;"><b >{{ __('Phone') }}</b></div>
                              <div>: {{ @$data['merchant_user']->mobile }}</div>
                          </div>
                          <div style="display: flex;">
-                             <div style="width: 20%;display: inline-block;"><b>Address</b></div>
+                             <div style="width: 20%;display: inline-block;"><b>{{ __('Address') }}</b></div>
                              <div>: {{ @$data['merchant']->address }}</div>
                          </div>
-                        <p>Please login your panel
+                        <p>{{ __('Please login your panel') }}
                             <a target="_blank" href="{{ url('login') }}"
-                            style="background-color: #7e0095;color: white; margin-left:10px;padding: 7px 15px; border: none;text-decoration: none;border-radius: 3px;"
-                            >Login</a>
+                            style="background-color: #12503A;color: white; margin-left:10px;padding: 7px 15px; border: none;text-decoration: none;border-radius: 3px;"
+                            >{{ __('Login') }}</a>
                         </p>
-                        <p>Hope you'll enjoy the experience, we're here if you have any questions, drop us a line at <a href="mailto:{{ $courriel }}" >{{ $courriel }}</a> or {{ $telephone }} anytime.</p>
+                        <p>{{ __('Any question? Write to us at') }} <a href="mailto:{{ $courriel }}" >{{ $courriel }}</a> {{ __('or call') }} {{ $telephone }}.</p>
                     </td>
                 </tr>
                 <tr>
                     <td colspan="2">
                         <p style="text-align: center;text-transform:uppercase">
-                            Get download our android or i application
+                            {{ __('Download our mobile applications') }}
                         </p>
                     </td>
                 </tr>

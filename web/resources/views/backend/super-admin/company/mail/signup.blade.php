@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -11,7 +11,7 @@
                 color:#8094ae;
             }
             a{
-                color:#7e0095;
+                color:#12503A;
             }
             ul {
                 display: inline-block;
@@ -42,37 +42,37 @@
         <table style="width:100%;height:50px;max-width:650px;margin: auto;background-color: white;">
                 <tr>
                     <td style="padding:30px;line-height: 1.5;" colspan="2">
-                        <p>Hi <b style="font-style: italic;">{{ @$data['user']->company->name }}</b>,</p>
-                        <p>Thank you for your interest in becoming an merchant with {{ $companyName }}.</p>
-                        <p>Your login is <b style="font-style: italic;" >{{ @$data['user']->email }}</b></p>
+                        <p>{{ __('Hi') }} <b style="font-style: italic;">{{ @$data['user']->company->name }}</b>,</p>
+                        <p>{{ __('Thank you for registering your company on :name.', ['name' => $companyName]) }}</p>
+                        <p>{{ __('Your login is') }} <b style="font-style: italic;" >{{ @$data['user']->email }}</b></p>
                         <div style="text-align: center;">
-                            Your OTP Code: <b>{{ @$data['otp'] }}</b><br><br> 
+                            {{ __('Your OTP Code:') }} <b>{{ @$data['otp'] }}</b><br><br> 
                          </div>
-                        <p style="color: #7e0095;font-weight: bold;">Your company Information :</p>
+                        <p style="color: #12503A;font-weight: bold;">{{ __('Your company Information :') }}</p>
                          <div style="display: flex;">
-                             <div style="width: 20%;display: inline-block;"><b >Company Name</b></div>
+                             <div style="width: 20%;display: inline-block;"><b >{{ __('Company Name') }}</b></div>
                              <div>: {{ @$data['user']->company->name }}</div>
                          </div>
                          <div style="display: flex;">
-                             <div style="width: 20%;display: inline-block;"><b >Company Email</b></div>
+                             <div style="width: 20%;display: inline-block;"><b >{{ __('Company Email') }}</b></div>
                              <div>: {{ @$data['user']->company->email }}</div>
                          </div>
                          <div style="display: flex;">
-                             <div style="width: 20%;display: inline-block;"><b >Phone</b></div>
+                             <div style="width: 20%;display: inline-block;"><b >{{ __('Phone') }}</b></div>
                              <div>: {{ @$data['user']->company->phone }}</div>
                          </div>
                          <div style="display: flex;">
-                             <div style="width: 20%;display: inline-block;"><b>Address</b></div>
+                             <div style="width: 20%;display: inline-block;"><b>{{ __('Address') }}</b></div>
                              <div>: {{ @$data['user']->company->address }}</div>
                          </div>
                        
-                        <p>Hope you'll enjoy the experience, we're here if you have any questions, drop us a line at <a href="mailto:{{ $courriel }}" >{{ $courriel }}</a> or {{ $telephone }} anytime.</p>
+                        <p>{{ __('Any question? Write to us at') }} <a href="mailto:{{ $courriel }}" >{{ $courriel }}</a> {{ __('or call') }} {{ $telephone }}.</p>
                     </td>
                 </tr>
                 <tr>
                     <td colspan="2">
                         <p style="text-align: center;text-transform:uppercase">
-                            Get download our android or Apple application
+                            {{ __('Download our mobile applications') }}
                         </p>
                     </td>
                 </tr>

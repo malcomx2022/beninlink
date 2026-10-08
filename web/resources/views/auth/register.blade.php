@@ -13,7 +13,7 @@
                             <img alt="{{ settings()->name }}" src="{{ settings()->logo_image }}" class="logo" />
                         </a>
                         <h3 class="mb-1">{{ __('auth.registration_form') }}</h3>
-                        <p>Please enter your user information.</p>
+                        <p>{{ __('Please enter your user information.') }}</p>
                     </div>
                     <div class="card-body">
                         <div class="form-group">
@@ -58,8 +58,8 @@
                         <div class="form-group">
                             <label class="custom-control custom-checkbox">
                                 <input class="custom-control-input" type="checkbox"><span
-                                    class="custom-control-label">By creating an account, you agree the <a
-                                        href="#">terms and conditions</a></span>
+                                    class="custom-control-label">{{ __('By creating an account, you agree the') }} <a
+                                        href="#">{{ __('terms and conditions') }}</a></span>
                             </label>
                         </div>
                         <div class="form-group row pt-0">
@@ -72,7 +72,7 @@
                         </div>
                     </div>
                     <div class="card-footer bg-white">
-                        <p>Already member? <a href="{{ route('login') }}" class="text-secondary">Login Here.</a></p>
+                        <p>{{ __('Already member?') }} <a href="{{ route('login') }}" class="text-secondary">{{ __('Login Here.') }}</a></p>
                     </div>
                 </div>
             </div>

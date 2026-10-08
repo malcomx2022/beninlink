@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-08 (S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-08 (S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8968,3 +8968,37 @@ Sabotages : le pied de page de l'éditeur remis — rouge ; « to » retiré de 
 vues nommées.
 
 Suite complète : **1 314 tests, 51 197 assertions** (1 312 avant ; +2).
+
+## S115 — le parcours d'une PME pilote parle français, du formulaire au courriel (2026-10-08)
+
+### D'où ça vient
+
+S112 à S114 tiennent les catalogues ; aucun ne voit le texte **écrit en dur** dans une vue. Un relevé
+des nœuds de texte des vues en a compté environ 370, dans 153 fichiers. Ce lot prend ceux qu'une PME
+pilote traverse avant son premier colis :
+
+| Écran | Avant |
+|---|---|
+| inscription marchand, inscription société, `auth/register` | « Registrations Form », « Please enter your user information. », « Select Hub », « I agree to … Privacy Policy & Terms. », « Register My Account », « Already member? Login Here. » |
+| confirmation du code (marchand, société) | « Confirm OTP », « Check Your Phone. We have sent you a 5 digit OTP… », « Submit », « Didn't get? Resend Code! » |
+| courriels de bienvenue (marchand, société) | sujet « Welcome to new merchant » / « … company », « Thank you for your interest in becoming an merchant », « Get download our android or i application », `lang="en"`, violet de l'éditeur `#7e0095` |
+| portefeuille du marchand | « Total Wallet Balance », « You are low on balance. Please recharge », « Total Deducations », « Recharge Wallet » |
+
+### Ce qui est fait
+
+Chaque texte passe par `__('Phrase…')`, traduit dans `lang/fr.json` (34 entrées). Les deux courriels :
+sujet `__('Welcome to :name')` → « Bienvenue sur … », langue de la page selon la locale, couleur
+**`#12503A`** (vert de la charte) à la place de `#7e0095`, une phrase de contact réécrite (« Une question ?
+Écrivez-nous à … ou appelez le … »).
+
+### Le filet
+
+`tests/Feature/MerchantJourneySpeaksFrenchTest` (3 tests) : dans les huit vues de `PARCOURS`, **aucun
+texte littéral** hors `{{ }}` (expressions et directives Blade retirées avant le découpage, `->`
+compris) ; les deux courriels rendus en français, au vert de la charte, sans violet ni phrase du socle ;
+la page d'inscription marchand servie en HTTP se lit en français. Sabotages : « Registrations Form »
+remis en dur — rouge (deux tests) ; violet remis dans le courriel — rouge.
+
+Reste au relevé : les autres vues du back-office (rapports, impressions, installateur…), lot par lot.
+
+Suite complète : **1 317 tests, 51 228 assertions** (1 314 avant ; +3).
