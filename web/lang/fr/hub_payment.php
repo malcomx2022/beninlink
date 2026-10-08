@@ -14,7 +14,7 @@ return [
     'create_payment'                  => 'Créer un paiement',
     'edit_payment'                    => 'Modifier le paiement',
     'amount'                          => 'Montant',
-    'transaction_id'                  => 'Trans.ID',
+    'transaction_id'                  => 'N° de transaction',
     'from_account'                    => 'Du compte',
     'reference_file'                  => 'Fichier de référence',
     'description'                     => 'Description',

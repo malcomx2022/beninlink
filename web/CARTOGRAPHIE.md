@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-08 (S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-08 (S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8864,3 +8864,41 @@ que si elle **n'a pas** envoyé les siens dans Réglages → Généraux ; un log
 
 La recette ne suivra pas tant que le garde `comptes-amorcage` la refuse (run 255 :
 les cinq comptes d'amorçage de sa base portent encore `12345678`, voir le registre E2).
+
+## S112 — le catalogue français ne garde plus d'anglais (2026-10-08)
+
+### D'où ça vient
+
+En relevant les marques de S111, le menu du back-office s'est lu « Web avant » → « Partner ». Un
+relevé de `lang/fr/` contre `lang/en/` a compté **208 entrées identiques**. Une partie l'est à bon
+droit (marques : bKash, MTN MoMo, Visa ; sigles : IFU, RCCM, MRR ; mots qui s'écrivent de même :
+Action, Description, Signature). Le reste était de l'anglais :
+
+| Fichier | Entrées | Où on les lit |
+|---|---|---|
+| `reports.php` | 95 | tous les écrans de rapports (statut des colis, bénéfice, marchands, agences, livreurs, comptes) |
+| `permissions.php` | 77 (dont « Branche » remplacé) | l'écran des rôles et des droits |
+| `status.php` | 2 | « Active » / « Inactive » sur toutes les listes |
+| `levels.php`, `menus.php`, `userType.php`, `AccountType.php`, `parcel.php`, `asset.php`, `validation.php`, `ActivityLogs.php`, `hub_payment.php`, `liquid.php` | 22 | menu (« Web avant », « Partner », « Branches »), « Admin », « Hub », « Logs », « Dashboard » |
+
+### Ce qui est fait
+
+Traduction en place, valeur par valeur ; aucune clé ajoutée ni retirée. Deux choix de vocabulaire :
+**« Hub » → « Agence »**, le mot des semences (S92, six agences béninoises) — les menus disaient
+« branche », anglicisme, aussi corrigé ; **« Front web » → « Site public »**.
+
+### Le filet
+
+`tests/Feature/FrenchCatalogueTest` (3 tests) : chaque fichier de `lang/en/` a son jumeau français ;
+aucune entrée française (tableaux imbriqués compris, par `Arr::dot`) n'est identique à l'anglaise
+hors de la liste `PERMISES` ; les libellés vus à l'écran (`levels.front_web`, `levels.partner`,
+`status.*`, `reports.title`, `permissions.dashboard`, `userType` agence) se lisent en français.
+Sabotage : « Actif » remis à « Active » dans `status.php` — rouge, l'entrée nommée.
+
+Suite complète : **1 311 tests, 51 187 assertions** (1 308 avant ; +3).
+
+### Registre
+
+Le run 257 (fusion de S111) a déployé la production — la migration
+`remove_socle_brand_partners` y figure — **et la recette**, qui n'était plus refusée : les comptes
+d'amorçage de sa base ont été changés depuis le run 255. Registre E2 mis à jour.
