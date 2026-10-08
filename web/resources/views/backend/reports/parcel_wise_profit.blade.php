@@ -107,9 +107,9 @@
                                         </td>
                                         <td >
                                             <div class="width300px">
-                                                <b>Tracking Id :</b> <a class="active" href="{{ route('parcel.details',$parcel->id) }}" target="_blank">{{ $parcel->tracking_id }}</a><br/>
-                                                 <span><b>Merchant :</b>  {{$parcel->merchant->business_name}}</span><br>
-                                                 <span><b>Customer :</b>  {{$parcel->customer_name}}</span><br>
+                                                <b>{{ __('Tracking ID') }} :</b> <a class="active" href="{{ route('parcel.details',$parcel->id) }}" target="_blank">{{ $parcel->tracking_id }}</a><br/>
+                                                 <span><b>{{ __('Merchant') }} :</b>  {{$parcel->merchant->business_name}}</span><br>
+                                                 <span><b>{{ __('Customer :') }}</b>  {{$parcel->customer_name}}</span><br>
                                             </div>
                                         </td>
                                         <td> {{ formatAmount($parcel->total_delivery_amount) }}</td>

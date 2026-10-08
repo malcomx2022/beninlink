@@ -103,7 +103,7 @@
         <div class="col-lg-6  col-md-6">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="h4 mb-3">Paypal</h4>
+                    <h4 class="h4 mb-3">{{ __('Paypal') }}</h4>
                     @if(hasPermission('payout_setup_settings_update'))
                     <form action="{{route('payout.setup.settings.update',\App\Enums\PayoutSetup::PAYPAL)}}"  method="POST" enctype="multipart/form-data" id="basicform">
                         @method('PUT')
@@ -155,7 +155,7 @@
         <div class="col-lg-6  col-md-6">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="h4 mb-3">Stripe</h4>
+                    <h4 class="h4 mb-3">{{ __('Stripe') }}</h4>
                     @if(hasPermission('payout_setup_settings_update'))
                     <form action="{{route('payout.setup.settings.update',\App\Enums\PayoutSetup::STRIPE)}}"  method="POST" enctype="multipart/form-data" id="basicform">
                         @method('PUT')
@@ -250,7 +250,7 @@
         <div class="col-lg-6  col-md-6">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="h4 mb-3">Skrill</h4>
+                    <h4 class="h4 mb-3">{{ __('Skrill') }}</h4>
                     @if(hasPermission('payout_setup_settings_update'))
                     <form action="{{route('payout.setup.settings.update',\App\Enums\PayoutSetup::SKRILL)}}"  method="POST" enctype="multipart/form-data" id="basicform">
                         @method('PUT')
@@ -291,7 +291,7 @@
         <div class="col-lg-6  col-md-6">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="h4 mb-3">SSL Commerz</h4>
+                    <h4 class="h4 mb-3">{{ __('SSL Commerz') }}</h4>
                     @if(hasPermission('payout_setup_settings_update'))
                     <form action="{{route('payout.setup.settings.update',\App\Enums\PayoutSetup::SSL_COMMERZ)}}"  method="POST" enctype="multipart/form-data" id="basicform">
                         @method('PUT')
@@ -349,7 +349,7 @@
         <div class="col-lg-6  col-md-6">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="h4 mb-3">Aamarpay</h4>
+                    <h4 class="h4 mb-3">{{ __('Aamarpay') }}</h4>
                     @if(hasPermission('payout_setup_settings_update'))
                     <form action="{{route('payout.setup.settings.update',\App\Enums\PayoutSetup::AAMARPAY)}}"  method="POST" enctype="multipart/form-data" id="basicform">
                         @method('PUT')
@@ -400,7 +400,7 @@
         <div class="col-lg-6  col-md-6">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="h4 mb-3">Bkash</h4>
+                    <h4 class="h4 mb-3">{{ __('Bkash') }}</h4>
                     @if(hasPermission('payout_setup_settings_update'))
                     <form action="{{route('payout.setup.settings.update',\App\Enums\PayoutSetup::BKASH)}}"  method="POST" enctype="multipart/form-data" id="basicform">
                         @method('PUT')

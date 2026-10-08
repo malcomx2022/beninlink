@@ -54,7 +54,7 @@
                                     <td>{!! $news_offer->my_status !!}</td>
                                     <td>
                                         <div class="row">
-                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                             <div class="dropdown-menu">
                                                 <a href="{{route('news-offer.edit',$news_offer->id)}}" class="dropdown-item"><i class="fas fa-edit" aria-hidden="true"></i> {{ __('levels.edit') }}</a>
                                                 <form id="delete" value="Test" action="{{route('news-offer.delete',$news_offer->id)}}" method="POST" data-title="{{ __('delete.news_offer') }}">

@@ -23,7 +23,7 @@
                             @endif
                             <form method="POST" action="{{ route('password.email') }}">
                                 @csrf
-                                <p>Don't worry, we'll send you an email to reset your password.</p>
+                                <p>{{ __("Don't worry, we'll send you an email to reset your password.") }}</p>
                                 <div class="form-group">
                                     <input id="email" type="email" class="form-control form-control-lg @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus placeholder="{{ __('placeholder.enter_email') }}">
                                     @error('email')
@@ -36,7 +36,7 @@
                             </form>
                         </div>
                         <div class="card-footer text-center bg-none">
-                            <span>Don't have an account? <a href="@if(tenant()) {{ route('register') }}   @else {{ route('company.sign-up') }} @endif ">Sign Up</a> | <a href="{{ route('login') }}">Sign In</a></span>
+                            <span>{{ __('auth.no_account') }} <a href="@if(tenant()) {{ route('register') }}   @else {{ route('company.sign-up') }} @endif ">{{ __('auth.sign_up') }}</a> | <a href="{{ route('login') }}">{{ __('auth.sign_in') }}</a></span>
                         </div>
                     </div>
 

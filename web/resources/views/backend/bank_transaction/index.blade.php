@@ -87,7 +87,7 @@
                             <form action="{{ route('bank.transaction.specific.search') }}" class="d-flex" style="width:60%" >
                                 @csrf
                                 <input id="Psearch" class="form-control parcelSearch group-input" value="{{ $request->search }}" name="search" type="text" placeholder="{{ __('placeholder.search') }}">
-                                <button type="submit" class="btn btn-sm btn-primary group-btn ml-0">Search</button>
+                                <button type="submit" class="btn btn-sm btn-primary group-btn ml-0">{{ __('levels.search') }}</button>
                                 @if (isset($search) && count($search) > 0)
                                 <a  href="{{ route('bank.transaction.filter.print',['ids'=>$search]) }}" target="_blank" class="btn btn-primary ml-2">{{ __('levels.print') }}</a>
                                 @endif
@@ -120,34 +120,22 @@
 
                                         <td>
                                             @if ($transaction->fund_transfer_id !==null)
-                                                <span>From :</span>
+                                                <span>{{ __('levels.from') }} :</span>
                                                     @if($transaction->fundTransfer->fromAccount->gateway == 1)
-                                                        {{@$transaction->fundTransfer->fromAccount->user->name}} (Cash)
+                                                        {{@$transaction->fundTransfer->fromAccount->user->name}} ({{ __('account_gateway.1') }})
                                                     @else
-                                                        @if($transaction->fundTransfer->fromAccount->gateway == 3)
-                                                            bKash ,
-                                                        @elseif ($transaction->fundTransfer->fromAccount->gateway == 4)
-                                                            Rocket ,
-                                                        @elseif ($transaction->fundTransfer->fromAccount->gateway == 5)
-                                                            Nagad ,
-                                                        @endif
+                                                        {{ __('account_gateway.' . $transaction->fundTransfer->fromAccount->gateway) }} ,
                                                         {{$transaction->fundTransfer->fromAccount->account_holder_name}}
                                                         ({{$transaction->fundTransfer->fromAccount->account_no}}
                                                         {{$transaction->fundTransfer->fromAccount->branch_name}}
                                                         {{$transaction->fundTransfer->fromAccount->mobile}})
                                                     @endif
                                                 </br>
-                                                <span>To :</span>
+                                                <span>{{ __('To') }} :</span>
                                                     @if($transaction->fundTransfer->toAccount->gateway == 1)
-                                                        {{@$transaction->fundTransfer->toAccount->user->name}} (Cash)
+                                                        {{@$transaction->fundTransfer->toAccount->user->name}} ({{ __('account_gateway.1') }})
                                                     @else
-                                                        @if($transaction->fundTransfer->toAccount->gateway == 3)
-                                                            bKash ,
-                                                        @elseif ($transaction->fundTransfer->toAccount->gateway == 4)
-                                                            Rocket ,
-                                                        @elseif ($transaction->fundTransfer->toAccount->gateway == 5)
-                                                            Nagad ,
-                                                        @endif
+                                                        {{ __('account_gateway.' . $transaction->fundTransfer->toAccount->gateway) }} ,
                                                         {{$transaction->fundTransfer->toAccount->account_holder_name}}
                                                         ({{$transaction->fundTransfer->toAccount->account_no}}
                                                         {{$transaction->fundTransfer->toAccount->branch_name}}
@@ -155,23 +143,17 @@
                                                     @endif
                                             @elseif($transaction->income_id !==null && $transaction->income)
                                                 @if($transaction->income->account_head_id  == 2)
-                                                    From: {{ @$transaction->income->deliveryman->user->name }}</br>
-                                                    To:
+                                                    {{ __('levels.from') }} : {{ @$transaction->income->deliveryman->user->name }}</br>
+                                                    {{ __('To') }} :
                                                 @elseif($transaction->income->account_head_id  == 1)
-                                                    From: {{ @$transaction->income->merchant->business_name }}</br>
-                                                    To:
+                                                    {{ __('levels.from') }} : {{ @$transaction->income->merchant->business_name }}</br>
+                                                    {{ __('To') }} :
                                                 @endif
 
                                                 @if($transaction->account->gateway == 1)
-                                                    {{@$transaction->account->user->name}} (Cash)
+                                                    {{@$transaction->account->user->name}} ({{ __('account_gateway.1') }})
                                                 @else
-                                                    @if($transaction->account->gateway == 3)
-                                                        bKash ,
-                                                    @elseif ($transaction->account->gateway == 4)
-                                                        Rocket ,
-                                                    @elseif ($transaction->account->gateway == 5)
-                                                        Nagad ,
-                                                    @endif
+                                                    {{ __('account_gateway.' . $transaction->account->gateway) }} ,
                                                     {{$transaction->account->account_holder_name}}
                                                     ({{$transaction->account->account_no}}
                                                     {{$transaction->account->branch_name}}
@@ -179,19 +161,13 @@
                                                 @endif
                                             @elseif($transaction->cash_received_dvry !==null && $transaction->HubCashReceivedFromDeliveryman)
 
-                                                From: {{ @$transaction->HubCashReceivedFromDeliveryman->deliveryman->user->name }}</br>
-                                                To:
+                                                {{ __('levels.from') }} : {{ @$transaction->HubCashReceivedFromDeliveryman->deliveryman->user->name }}</br>
+                                                {{ __('To') }} :
 
                                                 @if($transaction->account->gateway == 1)
-                                                    {{@$transaction->account->user->name}} (Cash)
+                                                    {{@$transaction->account->user->name}} ({{ __('account_gateway.1') }})
                                                 @else
-                                                    @if($transaction->account->gateway == 3)
-                                                        bKash ,
-                                                    @elseif ($transaction->account->gateway == 4)
-                                                        Rocket ,
-                                                    @elseif ($transaction->account->gateway == 5)
-                                                        Nagad ,
-                                                    @endif
+                                                    {{ __('account_gateway.' . $transaction->account->gateway) }} ,
                                                     {{$transaction->account->account_holder_name}}
                                                     ({{$transaction->account->account_no}}
                                                     {{$transaction->account->branch_name}}
@@ -201,18 +177,12 @@
                                             @elseif($transaction->expense_id !==null && $transaction->expense)
 
                                                 @if($transaction->expense !==null)
-                                                    From:
+                                                    {{ __('levels.from') }} :
                                                 @endif
                                                 @if($transaction->account->gateway == 1)
-                                                    {{@$transaction->account->user->name}} (Cash)
+                                                    {{@$transaction->account->user->name}} ({{ __('account_gateway.1') }})
                                                 @else
-                                                    @if($transaction->account->gateway == 3)
-                                                        bKash ,
-                                                    @elseif ($transaction->account->gateway == 4)
-                                                        Rocket ,
-                                                    @elseif ($transaction->account->gateway == 5)
-                                                        Nagad ,
-                                                    @endif
+                                                    {{ __('account_gateway.' . $transaction->account->gateway) }} ,
                                                     {{$transaction->account->account_holder_name}}
                                                     ({{$transaction->account->account_no}}
                                                     {{$transaction->account->branch_name}}
@@ -221,21 +191,15 @@
 
                                                 </br>
                                                 @if($transaction->expense !==null)
-                                                    To:{{ @$transaction->expense->deliveryman->user->name }}
+                                                    {{ __('To') }} : {{ @$transaction->expense->deliveryman->user->name }}
                                                 @endif
 
 
                                             @else
                                                 @if($transaction->account->gateway == 1)
-                                                    {{@$transaction->account->user->name}} (Cash)
+                                                    {{@$transaction->account->user->name}} ({{ __('account_gateway.1') }})
                                                 @else
-                                                    @if($transaction->account->gateway == 3)
-                                                        bKash ,
-                                                    @elseif ($transaction->account->gateway == 4)
-                                                        Rocket ,
-                                                    @elseif ($transaction->account->gateway == 5)
-                                                        Nagad ,
-                                                    @endif
+                                                    {{ __('account_gateway.' . $transaction->account->gateway) }} ,
                                                     {{$transaction->account->account_holder_name}}
                                                     ({{$transaction->account->account_no}}
                                                     {{$transaction->account->branch_name}}

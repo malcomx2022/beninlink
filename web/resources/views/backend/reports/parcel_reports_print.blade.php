@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title> {{ __('reports.parcel_reports') }} | print</title>
+    <title> {{ __('reports.parcel_reports') }} | {{ __('reports.print') }}</title>
     <link rel="shortcut icon" href="{{ static_asset(settings()->favicon_image)}}" type="image/x-icon">
     <link rel="stylesheet" href="{{ static_asset('backend/')}}/css/reports_print.css">
     {{-- Document autonome : il ne charge ni Bootstrap ni les feuilles de la

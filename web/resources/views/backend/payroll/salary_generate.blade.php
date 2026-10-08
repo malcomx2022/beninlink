@@ -63,7 +63,7 @@
                                         {{$salary->user->name}}<br/>
                                         {{ $salary->user->email }}
                                     </td>
-                                    <td>{{\Carbon\Carbon::parse($salary->month)->format('M Y')}}</td>
+                                    <td>{{\Carbon\Carbon::parse($salary->month)->translatedFormat('M Y')}}</td>
                                     <td>{{ formatAmount($salary->amount) }}</td>
                                     <td>
                                         {!! $salary->my_status !!}
@@ -74,7 +74,7 @@
                                     @if (hasPermission('salary_generate_update') == true || hasPermission('salary_generate_delete') == true )
                                     <td>
                                         <div class="row">
-                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                             <div class="dropdown-menu">
 
                                                 @if (hasPermission('salary_generate_update') == true )

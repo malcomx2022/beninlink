@@ -59,7 +59,7 @@
                 </div>
             </div>
             <div class="card-footer text-center">
-                <span>Don't have an account? <a href="{{ route('register') }}">Sign Up</a> | <a href="{{ route('login') }}">Sign In</a></span>
+                <span>{{ __('auth.no_account') }} <a href="{{ route('register') }}">{{ __('auth.sign_up') }}</a> | <a href="{{ route('login') }}">{{ __('auth.sign_in') }}</a></span>
             </div>
         </div>
     </div>

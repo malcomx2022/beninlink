@@ -76,7 +76,7 @@
                                         @else
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend be-addon">
-                                                <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                                <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                                 <div class="dropdown-menu">  
                                                     @if(\App\Enums\SupportStatus::PENDING == $support->status)
                                                         <a class="dropdown-item pending"  href="{{ route('support.status.update',[$support->id,'status'=>\App\Enums\SupportStatus::PROCESSING]) }}"> {{ __('levels.processing') }} </a>
@@ -94,7 +94,7 @@
                                     @if(hasPermission('support_read') || hasPermission('support_update') || hasPermission('support_delete'))
                                         <td>
                                             <div class="row">
-                                                <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                                <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                                 <div class="dropdown-menu">
                                                     @if(hasPermission('support_read'))
                                                         <a href="{{route('support.view',$support->id)}}" class="dropdown-item"><i class="fas fa-eye" aria-hidden="true"></i> {{ __('levels.view') }}</a>

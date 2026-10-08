@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,14 +32,14 @@
         <table style="width: 100%">
             <thead>
                 <tr>
-                    <th colspan="5" style="text-align: center"><h3>Merchant Details</h3></th>
+                    <th colspan="5" style="text-align: center"><h3>{{ __('reports.merchant_details') }}</h3></th>
                 </tr>
                 <tr style="background-color: #5969ff;color:white">
-                    <th>Name</th>
-                    <th>Mobile</th>
-                    <th>Address</th>
-                    <th>Total Shops</th>
-                    <th>Total Parcel</th>
+                    <th>{{ __('levels.name') }}</th>
+                    <th>{{ __('levels.mobile') }}</th>
+                    <th>{{ __('levels.address') }}</th>
+                    <th>{{ __('dashboard.total_shop') }}</th>
+                    <th>{{ __('parcel.parcel_count') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -55,12 +55,11 @@
         <table style="width: 100%" class="test">
             <thead>
                 <tr>
-                    <th colspan="5" style="text-align: center"><h3  >Total Statistics</h3></th>
+                    <th colspan="5" style="text-align: center"><h3>{{ __('reports.total_statistics') }}</h3></th>
                 </tr>
                 <tr style="background-color: #5969ff;color:white;text-align:left">
-                    <th style="text-align: left"> Title
-                    </th>
-                    <th style="text-align: left"> Count</th>
+                    <th style="text-align: left">{{ __('reports.titles') }}</th>
+                    <th style="text-align: left">{{ __('reports.count') }}</th>
                 </tr>
             </thead>
             <tbody>

@@ -57,6 +57,7 @@ class PublicBrandAssetsTest extends TestCase
         '27517ad40b01642b0edab213bba55f1c6e6b0c2d' => 'frontend/logo.png (We Courier)',
         '0d2695e03873a14984624e28a5f1ddb6acd28349' => 'frontend/light-logo.png (We Courier)',
         '57d0bef568e056afdfd4ef34f4c413a5d77872a3' => 'frontend/favicon.png (We Courier)',
+        '6f325e2dfe97e2fb558793ecac853cb41ea805b6' => 'wemaxdevs.png (logo de l\'éditeur du socle, S117)',
     ];
 
     private const SEMENCES_VITRINE = [SocialLinkSeeder::class, ServiceSeeder::class, WhyCourierSeeder::class, FaqSeeder::class, PartnerSeeder::class, BlogSeeder::class, PageSeeder::class, SectionSeeder::class];

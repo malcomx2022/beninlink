@@ -43,9 +43,9 @@
                                         @if ($account->gateway == 1)
                                             <option value="{{ $account->id }}" @if($request->from_account == $account->id) selected @endif>{{ $account->user->name }} | {{ __('merchant.cash') }} : {{ $account->balance }} </option>
                                         @elseif($account->gateway == 3 || $account->gateway == 4 || $account->gateway == 5)
-                                            <option value="{{ $account->id }}" @if($request->from_account == $account->id) selected @endif >{{$account->account_holder_name}} |No : {{ $account->mobile }}|  @if($account->account_type == 1) {{ __('merchant.title') }} @else {{ __('placeholder.persional') }} @endif | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }} </option>
+                                            <option value="{{ $account->id }}" @if($request->from_account == $account->id) selected @endif >{{$account->account_holder_name}} | {{ __('levels.mobile') }} : {{ $account->mobile }}|  @if($account->account_type == 1) {{ __('merchant.title') }} @else {{ __('placeholder.persional') }} @endif | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }} </option>
                                         @else
-                                            <option value="{{ $account->id }}" @if($request->from_account == $account->id) selected @endif >{{$account->account_holder_name}} | A.No : {{ $account->account_no }} | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }}</option>
+                                            <option value="{{ $account->id }}" @if($request->from_account == $account->id) selected @endif >{{$account->account_holder_name}} | {{ __('levels.account_no') }} : {{ $account->account_no }} | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }}</option>
                                         @endif
                                     @endforeach
                                 </select>
@@ -58,9 +58,9 @@
                                         @if ($account->gateway == 1)
                                             <option value="{{ $account->id }}" @if($request->to_account == $account->id) selected @endif>{{ $account->user->name }} | {{ __('merchant.cash') }} : {{ $account->balance }} </option>
                                         @elseif($account->gateway == 3 || $account->gateway == 4 || $account->gateway == 5)
-                                            <option value="{{ $account->id }}" @if($request->to_account == $account->id) selected @endif>{{$account->account_holder_name}} |No : {{ $account->mobile }}|  @if($account->account_type == 1) {{ __('merchant.title') }} @else {{ __('placeholder.persional') }} @endif | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }} </option>
+                                            <option value="{{ $account->id }}" @if($request->to_account == $account->id) selected @endif>{{$account->account_holder_name}} | {{ __('levels.mobile') }} : {{ $account->mobile }}|  @if($account->account_type == 1) {{ __('merchant.title') }} @else {{ __('placeholder.persional') }} @endif | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }} </option>
                                         @else
-                                            <option value="{{ $account->id }}" @if($request->to_account == $account->id) selected @endif>{{$account->account_holder_name}} | A.No : {{ $account->account_no }} | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }}</option>
+                                            <option value="{{ $account->id }}" @if($request->to_account == $account->id) selected @endif>{{$account->account_holder_name}} | {{ __('levels.account_no') }} : {{ $account->account_no }} | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }}</option>
                                         @endif
                                     @endforeach
                                 </select>
@@ -84,7 +84,7 @@
                             <form action="{{ route('fund.transfer.specific.search') }}" class="d-flex  " style="width:60%">
                                 @csrf
                                 <input id="Psearch" class="form-control parcelSearch group-input" value="{{ $request->search }}" name="search" type="text" placeholder="{{ __('placeholder.search') }}">
-                                <button type="submit" class="btn btn-primary group-btn ml-0">Search</button>
+                                <button type="submit" class="btn btn-primary group-btn ml-0">{{ __('levels.search') }}</button>
                                 @if (isset($search) && count($search) > 0)
                                 <a  href="{{ route('fund.transfer.search.filter.print',['ids'=>$search]) }}" target="_blank" class="btn btn-primary ml-2">{{ __('levels.print') }}</a>
                                 @endif
@@ -101,7 +101,7 @@
                             <form action="{{ route('fund.transfer.specific.search') }}" class="d-flex" style="width:100%">
                                 @csrf
                                 <input id="Psearch" class="form-control parcelSearch fundTransferSearch group-input  " value="{{ $request->search }}" name="search" type="text" placeholder="{{ __('placeholder.search') }}">
-                                <button type="submit" class="btn btn-primary group-btn ml-0">Search</button>
+                                <button type="submit" class="btn btn-primary group-btn ml-0">{{ __('levels.search') }}</button>
                                 @if (isset($search) && count($search) > 0)
                                 <a  href="{{ route('fund.transfer.search.filter.print',['ids'=>$search]) }}" target="_blank" class="btn btn-primary ml-2">{{ __('levels.print') }}</a>
                                 @endif
@@ -140,19 +140,13 @@
                                             </div>
                                         </div>
                                         @if ($fund_transfer->fromAccount->gateway == 1)
-                                            Cash
+                                            {{ __('account_gateway.1') }}
                                         @elseif ($fund_transfer->fromAccount->gateway == 2)
                                         {{-- Bank info --}}
                                             <div class="row width300px">
                                                 <div class="col-4">{{__('levels.bank')}}</div>
                                                 <div class="col-8">:
-                                                    @if ($fund_transfer->fromAccount->bank == 1)
-                                                        BB
-                                                    @elseif($fund_transfer->fromAccount->bank == 2)
-                                                        DBBL
-                                                    @elseif($fund_transfer->fromAccount->bank == 3)
-                                                        IB
-                                                    @endif
+                                                    {{ __('account_bank.' . $fund_transfer->fromAccount->bank) }}
                                                 </div>
                                             </div>
                                             <div class="row width300px">
@@ -173,9 +167,9 @@
                                                 <div class="col-4">{{__('levels.type')}}</div>
                                                 <div class="col-8">:
                                                     @if ($fund_transfer->fromAccount->account_type == 1)
-                                                        Merchant
+                                                        {{ __('merchant.merchant') }}
                                                     @else
-                                                        Personal
+                                                        {{ __('merchant.personal') }}
                                                     @endif
                                                 </div>
                                             </div>
@@ -201,8 +195,8 @@
                                         </div>
                                         @if ($fund_transfer->toAccount->gateway == 1)
                                         <div class="row width300px">
-                                            <div class="col-4">Payment method</div>
-                                            <div class="col-8">: Cash
+                                            <div class="col-4">{{ __('merchant.payment_method') }}</div>
+                                            <div class="col-8">: {{ __('account_gateway.1') }}
                                             </div>
                                         </div>
                                         @elseif ($fund_transfer->toAccount->gateway == 2)
@@ -210,13 +204,7 @@
                                             <div class="row width300px">
                                                 <div class="col-4">{{__('levels.bank')}}</div>
                                                 <div class="col-8">:
-                                                    @if ($fund_transfer->toAccount->bank == 1)
-                                                        BB
-                                                    @elseif($fund_transfer->toAccount->bank == 2)
-                                                        DBBL
-                                                    @elseif($fund_transfer->toAccount->bank == 3)
-                                                        IB
-                                                    @endif
+                                                    {{ __('account_bank.' . $fund_transfer->toAccount->bank) }}
                                                 </div>
                                             </div>
                                             <div class="row width300px">
@@ -237,9 +225,9 @@
                                                 <div class="col-4">{{__('levels.type')}}</div>
                                                 <div class="col-8">:
                                                     @if ($fund_transfer->toAccount->account_type == 1)
-                                                        Merchant
+                                                        {{ __('merchant.merchant') }}
                                                     @else
-                                                        Personal
+                                                        {{ __('merchant.personal') }}
                                                     @endif
                                                 </div>
                                             </div>
@@ -258,7 +246,7 @@
                                     @if(hasPermission('fund_transfer_update') == true || hasPermission('fund_transfer_delete') == true )
                                     <td>
                                         <div class="row">
-                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                             <div class="dropdown-menu">
 
                                             @if(hasPermission('fund_transfer_update') == true)

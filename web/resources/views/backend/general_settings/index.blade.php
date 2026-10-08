@@ -89,11 +89,11 @@
                                 <div class="form-group">
                                     <label for="currency">{{ __('levels.currency') }}</label>
                                     <select class="form-control @error('currency') is-invalid @enderror" id="currency" name="currency"  required>
-                                        <option value="" selected disabled>Select Currency</option>
+                                        <option value="" selected disabled>{{ __('Select Currency') }}</option>
                                         @forelse ($currencies as $currency)
                                             <option value="{{ $currency->symbol }}" {{$settings->currency == $currency->symbol ? 'selected' : ''}}>{{ @$currency->name }} {{ @$currency->symbol }}</option>
                                         @empty
-                                            <option value="&#36;" {{$settings->currency == '$' ? 'selected' : ''}}>Dollar &#36;</option>
+                                            <option value="FCFA" {{$settings->currency == 'FCFA' ? 'selected' : ''}}>{{ __('CFA franc (WAEMU)') }} FCFA</option>
                                         @endforelse
                                     </select>
                                     @error('currency')

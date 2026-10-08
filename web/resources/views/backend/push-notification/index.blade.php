@@ -69,7 +69,7 @@
                                     @endif
                                     <td>
                                         <div class="row">
-                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                             <div class="dropdown-menu">
                                                     @if( hasPermission('push_notification_delete') == true)
                                                 <form id="delete" value="Test" action="{{route('push-notification.delete',$pushNotification->id)}}" method="POST" data-title="{{ __('levels.delete') }}">

@@ -64,10 +64,10 @@
                         </div>
                         <div class="form-group row pt-0">
                             <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12 mb-2">
-                                <button class="btn btn-block btn-social btn-facebook " type="button">Facebook</button>
+                                <button class="btn btn-block btn-social btn-facebook " type="button">{{ __('levels.facebook') }}</button>
                             </div>
                             <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
-                                <button class="btn  btn-block btn-social btn-twitter" type="button">Twitter</button>
+                                <button class="btn  btn-block btn-social btn-twitter" type="button">{{ __('Twitter') }}</button>
                             </div>
                         </div>
                     </div>

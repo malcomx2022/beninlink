@@ -34,7 +34,7 @@
                                 <div class="form-group col-12 col-sm-6 col-md-4 col-lg-4 col-xl-2">
                                     <label for="date">{{ __('parcel.company') }}</label>
                                      <select class="form-control select2" name="company_id">
-                                         <option value="4">Select company</option>
+                                         <option value="4">{{ __('Select company') }}</option>
                                         @foreach ($companies as $company)
                                             <option value="{{ $company->id }}" @selected($company->id == $request->company_id)>{{ $company->name }}</option>
                                         @endforeach

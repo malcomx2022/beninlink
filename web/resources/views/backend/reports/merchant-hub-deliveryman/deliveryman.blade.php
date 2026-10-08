@@ -40,7 +40,7 @@
             <ul class="list-group m-2">
                 <li class="list-group-item profile-list-group-item">
                     <span class="float-left font-weight-bold">{{ __('levels.title') }}</span>
-                    <span class="float-right">{{ __('Amount(Tk)') }}</span>
+                    <span class="float-right">{{ __('levels.amount') }}</span>
                 </li>
                 <li class="list-group-item profile-list-group-item">
                     <span class="float-left font-weight-bold">{{ __('reports.total_cash_collection')  }}</span>

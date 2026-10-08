@@ -65,7 +65,7 @@
                                 <div class="col-md-6 pr-0 pt-2">
                                     <div class="metric btn btn-primary w-100">
                                         <h6 class="metric-value text-white"> {{ $singleMerchant->parcels->count()}} </h6>
-                                        <p class="metric-label font-size-12 text-white">Total {{__('parcel.title')}} </p>
+                                        <p class="metric-label font-size-12 text-white">{{ __('Total parcels') }} </p>
                                     </div>
                                 </div>
 
@@ -79,7 +79,7 @@
                                 <div class="col-md-6 pr-0 pt-2">
                                     <div class="metric btn btn-primary w-100">
                                         <h6 class="metric-value text-white"> {{ $singleMerchant->parcels->whereIn('status',[App\Enums\ParcelStatus::DELIVERED,App\Enums\ParcelStatus::PARTIAL_DELIVERED])->count()}} </h6>
-                                        <p class="metric-label font-size-12 text-white">Total Delivered</p>
+                                        <p class="metric-label font-size-12 text-white">{{ __('reports.total_delivered') }}</p>
                                     </div>
                                 </div>
                                 <div class="col-md-6 pr-0 pt-2 ">

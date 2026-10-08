@@ -116,14 +116,14 @@
                                                 </div>
                                             @endif
                                         </td>
-                                        <td>{{\Carbon\Carbon::createFromFormat('Y-m',$salary->month)->format('M Y')}}</td>
+                                        <td>{{\Carbon\Carbon::createFromFormat('Y-m',$salary->month)->translatedFormat('M Y')}}</td>
                                         <td>{{dateFormat($salary->date)}}</td>
                                         <td>{{\Str::limit($salary->note,100,' ...')}}</td>
                                         <td>{{$salary->amount}}</td>
                                         @if(hasPermission('salary_read') == true || hasPermission('salary_update') == true || hasPermission('salary_delete') == true )
                                             <td>
                                                 <div class="row">
-                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                                     <div class="dropdown-menu">
                                                         @if(hasPermission('salary_update') == true)
                                                             <a href="{{route('salary.edit',$salary->id)}}" class="dropdown-item"><i class="fas fa-edit" aria-hidden="true"></i> {{ __('levels.edit') }}</a>

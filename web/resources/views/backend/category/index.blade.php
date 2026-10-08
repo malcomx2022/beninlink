@@ -6,13 +6,12 @@
     <div class="row">
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
             <div class="page-header">
-                <h2 class="pageheader-title">Category Manage</h2>
-                <p class="pageheader-text">Proin placerat ante duiullam scelerisque a velit ac porta, fusce sit amet vestibulum mi. Morbi lobortis pulvinar quam.</p>
+                <h2 class="pageheader-title">{{ __('Categories') }}</h2>
                 <div class="page-breadcrumb">
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="{{route('dashboard.index')}}" class="breadcrumb-link">Dashboard</a></li>
-                            <li class="breadcrumb-item"><a href="{{route('category.index')}}" class="breadcrumb-link active">Categrys</a></li>
+                            <li class="breadcrumb-item"><a href="{{route('dashboard.index')}}" class="breadcrumb-link">{{ __('levels.dashboard') }}</a></li>
+                            <li class="breadcrumb-item"><a href="{{route('category.index')}}" class="breadcrumb-link active">{{ __('Categories') }}</a></li>
                         </ol>
                     </nav>
                 </div>
@@ -37,8 +36,7 @@
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">Data Tables - Print, Excel, CSV, PDF Buttons</h5>
-                    <p>This example shows DataTables and the Buttons extension being used with the Bootstrap 4 framework providing the styling.</p>
+                    <h5 class="mb-0">{{ __('Categories') }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -46,10 +44,10 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Name</th>
-                                    <th>Description</th>
+                                    <th>{{ __('levels.name') }}</th>
+                                    <th>{{ __('levels.description') }}</th>
                                     @if ( hasPermission('category_update') || hasPermission('category_delete')  )
-                                    <th>Action</th>
+                                    <th>{{ __('levels.actions') }}</th>
                                     @endif
                                 </tr>
                             </thead>
@@ -64,7 +62,7 @@
                                     <td>
 
                                        <div class="row">
-                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                             <div class="dropdown-menu">
                                                 @if ( hasPermission('category_update')  )
                                                 <a href="{{route('category.edit',$category->id)}}" class="dropdown-item"><i class="fas fa-edit" aria-hidden="true"></i> {{ __('levels.edit') }}</a>

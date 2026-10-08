@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
     <meta charset="utf-8">
@@ -47,7 +47,7 @@
 
 <body>
     <div class="label-size" style="margin-bottom: 5px">
-        <span style="color:red">Label size: 7.5cm X 3.5cm</span>
+        <span style="color:red">{{ __('Label size: :size', ['size' => '7,5 cm × 3,5 cm']) }}</span>
     </div>
     <div class="label-section"> 
         <table width="100%" border="0" cellpadding="0" cellspacing="0" class="main-table">
@@ -76,9 +76,9 @@
                                     </td>   
                                     <td  style="line-height:1.2;width:50%;border-top:#000000  1px solid;border-bottom:#000000 1px solid;padding:2px">
                                         <div  >
-                                            <b>Hub</b> :  <span>{{ optional($parcel->hub)->name }}</span><br>
-                                            <b>Cash</b> : <span> {{ $parcel->cash_collection }}</span></br>
-                                            <b>Route</b> :<span> ISD </span>
+                                            <b>{{ __('levels.hub') }}</b> : <span>{{ optional($parcel->hub)->name }}</span><br>
+                                            <b>{{ __('Cash Collection') }}</b> : <span>{{ formatAmount($parcel->cash_collection) }}</span></br>
+                                            <b>{{ __('delivery_zone.zone') }}</b> : <span>{{ optional($parcel->zone)->name }}</span>
                                         </div>
                                     </td>
                                 </tr>

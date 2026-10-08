@@ -81,7 +81,7 @@
                 <div class="col-lg-3  col-sm-6">
                     <div class="card">
                         <div class="card-body">
-                            <p>Total Recharge</p>
+                            <p>{{ __('Total Recharge') }}</p>
                             <h3 class="mb-0">{{ formatAmount(\App\Models\Backend\Wallet::companywise()->where('type',App\Enums\Wallet\WalletType::INCOME)->sum('amount'))}}</h3>
                         </div>
                     </div>
@@ -89,7 +89,7 @@
                 <div class="col-lg-3 col-sm-6">
                     <div class="card">
                         <div class="card-body">
-                            <p>Total Deducations</p>
+                            <p>{{ __('Total Deducations') }}</p>
                             <h3 class="mb-0">{{ formatAmount(\App\Models\Backend\Wallet::companywise()->where('type',App\Enums\Wallet\WalletType::EXPENSE)->sum('amount'))}}</h3>
                         </div>
                     </div>
@@ -99,15 +99,15 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-lg-4">
-                                    <p>Pending</p>
+                                    <p>{{ __('Pending') }}</p>
                                     <h3 class="mb-0">{{ \App\Models\Backend\Wallet::companywise()->where('status',\App\Enums\Wallet\WalletStatus::PENDING)->count()}}</h3>
                                 </div>
                                 <div class="col-lg-4">
-                                    <p>Confirm</p>
+                                    <p>{{ __('Confirm') }}</p>
                                     <h3 class="mb-0">{{ \App\Models\Backend\Wallet::companywise()->where('status',\App\Enums\Wallet\WalletStatus::APPROVED)->count()}}</h3>
                                 </div>
                                 <div class="col-lg-4">
-                                    <p>Rejected</p>
+                                    <p>{{ __('Rejected') }}</p>
                                     <h3 class="mb-0">{{ \App\Models\Backend\Wallet::companywise()->where('status',\App\Enums\Wallet\WalletStatus::REJECTED)->count()}}</h3>
                                 </div>
                             </div>
@@ -119,11 +119,11 @@
                     <div class="card">
                         <div class="card-body text-center">
                             <a href="#" class="d-block" 
-                                data-title="Recharge your Wallet" data-bs-toggle="modal"
+                                data-title="{{ __('Recharge Wallet') }}" data-bs-toggle="modal"
                                 data-bs-target="#add-to-wallet-modal"
                                 data-modalsize="modal-lg"
                                 >
-                                <p>Recharge Wallet</p>
+                                <p>{{ __('Recharge Wallet') }}</p>
                                 <h3 class="mb-0 "><i class="fa fa-plus"></i></h3>
                             </a>
                         </div>
@@ -141,8 +141,8 @@
 
                     <nav>
                         <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                          <button class="nav-link @if(!$request->recharge_page) active @endif" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">All Transaction</button>
-                          <button class="nav-link @if($request->recharge_page) active @endif" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false">Recharges</button>
+                          <button class="nav-link @if(!$request->recharge_page) active @endif" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">{{ __('All Transaction') }}</button>
+                          <button class="nav-link @if($request->recharge_page) active @endif" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false">{{ __('Recharges') }}</button>
                           </div>
                       </nav>
                       <div class="tab-content" id="nav-tabContent">

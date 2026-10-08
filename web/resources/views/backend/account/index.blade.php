@@ -50,9 +50,9 @@
                                 <label for="bank">{{ __('levels.bank') }}</label> <span class="text-danger">*</span>
                                 <select name="bank" class="form-control">
                                     <option selected disabled>{{ __('menus.select') }} {{ __('placeholder.Bank_name') }}</option>
-                                    <option value = "1">BB</option>
-                                    <option value = "2">DBBL</option>
-                                    <option value = "3">IB</option>
+                                    @foreach (trans('account_bank') as $code => $libelle)
+                                        <option value = "{{ $code }}">{{ $libelle }}</option>
+                                    @endforeach
                                 </select>
                                 @error('bank')
                                 <small class="text-danger mt-2">{{ $message }}</small>
@@ -101,17 +101,7 @@
                                 <tr>
                                     <td>{{$i++}}</td>
                                     <td>
-                                        @if($account->gateway == 1)
-                                            Cash
-                                        @elseif($account->gateway == 2)
-                                            Bank
-                                        @elseif($account->gateway == 3)
-                                            bKash
-                                        @elseif($account->gateway == 4)
-                                            Rocket
-                                        @elseif($account->gateway == 5)
-                                            Nagad
-                                        @endif
+                                        {{ __('account_gateway.' . $account->gateway) }}
                                     </td>
                                     <td colspan="2" >
                                         @if($account->user)
@@ -128,59 +118,53 @@
                                         @endif
                                         @if($account->account_holder_name != null)
                                             <div class="d-flex width300px">
-                                                <div class="width100px "> Holder Name  </div>
+                                                <div class="width100px ">{{ __('levels.holder_name') }}</div>
                                                 <div  class=" "> : {{$account->account_holder_name}} </div>
                                             </div>
                                         @endif
                                         @if($account->account_no != null)
                                             <div class="d-flex width300px">
-                                                <div class="width100px">Account No. </div>
+                                                <div class="width100px">{{ __('levels.account_no') }}</div>
                                                 <div  class="active"> : {{$account->account_no}} </div>
                                             </div>
                                         @endif
                                         @if($account->bank != null)
                                             <div class="d-flex">
-                                                <div class="width100px"> Bank Name  </div>
+                                                <div class="width100px">{{ __('levels.bank_name') }}</div>
                                                 <div  class="">:
-                                                    @if($account->bank == 1)
-                                                        BB <br>
-                                                    @elseif($account->bank == 2)
-                                                        DBBL <br>
-                                                    @elseif($account->bank == 3)
-                                                        IB <br>
-                                                    @endif
+                                                    {{ __('account_bank.' . $account->bank) }} <br>
                                                 </div>
                                             </div>
                                         @endif
                                         @if($account->branch_name != null)
                                             <div class="d-flex width300px">
-                                                <div class="width100px"> Branch Name  </div>
+                                                <div class="width100px">{{ __('levels.branch_name') }}</div>
                                                 <div  class=""> : {{$account->branch_name}} </div>
                                             </div>
                                         @endif
 
                                         @if($account->mobile != null)
                                             <div class="d-flex width300px">
-                                                <div class="width100px"> Mobile  </div>
+                                                <div class="width100px">{{ __('levels.mobile') }}</div>
                                                 <div  class=""> : {{$account->mobile}} </div>
                                             </div>
                                         @endif
                                         @if($account->account_type != null)
                                             <div class="d-flex width300px">
-                                                <div class="width100px"> Account Type  </div>
-                                                <div  class=""> : {{$account->account_type == 1 ? 'Merchant' : 'Personal'}} </div>
+                                                <div class="width100px">{{ __('levels.account_type') }}</div>
+                                                <div  class=""> : {{ $account->account_type == 1 ? __('merchant.merchant') : __('merchant.personal') }} </div>
                                             </div>
                                         @endif
 
                                         @if($account->opening_balance != null)
                                             <div class="d-flex width300px">
-                                                <div class="width100px"> Opening  Balance  </div>
+                                                <div class="width100px">{{ __('levels.opening_balance') }}</div>
                                                 <div  class="" > : {{ formatAmount($account->opening_balance) }} </div>
                                             </div>
                                         @endif
                                         @if($account->balance != null)
                                             <div class="d-flex width300px">
-                                                <div class="width100px"> Current Balance   </div>
+                                                <div class="width100px">{{ __('levels.current_balance') }}</div>
                                                 <div  class=""> : {{ formatAmount($account->balance) }} </div>
                                             </div>
                                         @endif
@@ -189,7 +173,7 @@
                                     @if(hasPermission('account_update') == true || hasPermission('account_delete') == true )
                                     <td>
                                         <div class="row">
-                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                             <div class="dropdown-menu">
                                                 @if(hasPermission('account_update') == true )
                                                     <a href="{{route('accounts.edit',$account->id)}}" class="dropdown-item"><i class="fas fa-edit" aria-hidden="true"></i> {{ __('levels.edit') }}</a>

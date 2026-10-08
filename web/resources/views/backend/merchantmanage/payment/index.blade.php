@@ -53,10 +53,10 @@
                                         @foreach ($merchantaccounts as $maccounts)
                                             @if($maccounts->payment_method == 'bank')
                                                 <option value='{{ $maccounts->id }}' @if($maccounts->id == $request->merchant_account) selected @endif> {{ $maccounts->holder_name  }} | {{ $maccounts->bank_name }} | {{ $maccounts->account_no }} | {{ $maccounts->branch_name}}</option>
-                                            @elseif($maccounts->payment_method == 'mobile'){
+                                            @elseif($maccounts->payment_method == 'mobile')
                                                 <option value='{{ $maccounts->id }}' @if($maccounts->id == $request->merchant_account) selected @endif>{{ $maccounts->mobile_company }} | {{ $maccounts->mobile_no }} | {{ $maccounts->account_type }}</option>
                                             @elseif($maccounts->payment_method == 'cash')
-                                                <option value='{{ $maccounts->id }}' @if($maccounts->id == $request->merchant_account) selected @endif> Cash </option>
+                                                <option value='{{ $maccounts->id }}' @if($maccounts->id == $request->merchant_account) selected @endif> {{ __('merchant.cash') }} </option>
                                             @endif
                                         @endforeach
                                     @endif
@@ -70,9 +70,9 @@
                                         @if ($account->gateway == 1)
                                             <option value="{{ $account->id }}" @if($request->from_account == $account->id) selected @endif>{{ $account->user->name }} | {{ __('merchant.cash') }} : {{ $account->balance }} </option>
                                         @elseif($account->gateway == 3 || $account->gateway == 4 || $account->gateway == 5)
-                                            <option value="{{ $account->id }}" @if($request->from_account == $account->id) selected @endif>{{$account->account_holder_name}} |No : {{ $account->mobile }}|  @if($account->account_type == 1) {{ __('merchant.title') }} @else {{ __('placeholder.persional') }} @endif | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }} </option>
+                                            <option value="{{ $account->id }}" @if($request->from_account == $account->id) selected @endif>{{$account->account_holder_name}} | {{ __('levels.mobile') }} : {{ $account->mobile }}|  @if($account->account_type == 1) {{ __('merchant.title') }} @else {{ __('placeholder.persional') }} @endif | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }} </option>
                                         @else
-                                            <option value="{{ $account->id }}" @if($request->from_account == $account->id) selected @endif>{{$account->account_holder_name}} | A.No : {{ $account->account_no }} | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }}</option>
+                                            <option value="{{ $account->id }}" @if($request->from_account == $account->id) selected @endif>{{$account->account_holder_name}} | {{ __('levels.account_no') }} : {{ $account->account_no }} | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }}</option>
                                         @endif
                                     @endforeach
                                 </select>
@@ -138,55 +138,55 @@
                                         </div>
                                         <br/>
                                         <div class="row">
-                                            <div class="col-4"> Business name </div>
+                                            <div class="col-4">{{ __('levels.business_name') }}</div>
                                             <div class="col-8"> : {{ @$payment->merchant->business_name }} </div>
                                         </div>
                                         @if ($payment->merchantAccount !==null && $payment->merchantAccount->payment_method == 'bank')
                                             <div class="row">
-                                                <div class="col-4"> Holder </div>
+                                                <div class="col-4">{{ __('levels.holder_name') }}</div>
                                                 <div class="col-8"> : {{ $payment->merchantAccount->holder_name }} </div>
                                             </div>
                                             <div class="row">
-                                                <div class="col-4"> Bank </div>
+                                                <div class="col-4">{{ __('levels.bank') }}</div>
                                                 <div class="col-8"> : {{ $payment->merchantAccount->bank_name }} </div>
                                             </div>
                                             <div class="row">
-                                                <div class="col-4"> Acc. No. </div>
+                                                <div class="col-4">{{ __('levels.account_no') }}</div>
                                                 <div class="col-8"> : {{ $payment->merchantAccount->account_no }} </div>
                                             </div>
                                             <div class="row">
-                                                <div class="col-4"> Branch </div>
+                                                <div class="col-4">{{ __('levels.branch_name') }}</div>
                                                 <div class="col-8"> : {{ $payment->merchantAccount->branch_name }} </div>
                                             </div>
                                             <div class="row">
-                                                <div class="col-4"> Routing No. </div>
+                                                <div class="col-4">{{ __('merchant.routing_no') }}</div>
                                                 <div class="col-8"> : {{ $payment->merchantAccount->routing_no }} </div>
                                             </div>
                                         @elseif ($payment->merchantAccount !==null &&  $payment->merchantAccount->payment_method == 'mobile')
                                             {{-- mobile --}}
                                             <div class="row">
-                                                <div class="col-4"> Compnay  </div>
+                                                <div class="col-4">{{ __('merchant.mobile_company') }}</div>
                                                 <div class="col-8"> : {{ $payment->merchantAccount->mobile_company }} </div>
                                             </div>
                                             <div class="row">
-                                                <div class="col-4"> Mobile  </div>
+                                                <div class="col-4">{{ __('levels.mobile') }}</div>
                                                 <div class="col-8"> : {{ $payment->merchantAccount->mobile_no }} </div>
                                             </div>
                                             <div class="row">
-                                                <div class="col-4"> Type  </div>
+                                                <div class="col-4">{{ __('levels.type') }}</div>
                                                 <div class="col-8"> : {{ $payment->merchantAccount->account_type }} </div>
                                             </div>
                                         @elseif ($payment->merchantAccount !==null &&  $payment->merchantAccount->payment_method == 'cash')
                                             <div class="row">
-                                                <div class="col-4"> Payment method  </div>
-                                                <div class="col-8"> :  Cash </div>
+                                                <div class="col-4">{{ __('merchant.payment_method') }}</div>
+                                                <div class="col-8"> : {{ __('merchant.cash') }} </div>
                                             </div>
                                         @endif
                                     </td>
                                     <td>{{$payment->transaction_id}}</td>
                                     <td>
                                         @if ($payment->frompayment !==null && $payment->frompayment->gateway == 1)
-                                           {{ @$payment->frompayment->user->name }} ( Cash)
+                                           {{ @$payment->frompayment->user->name }} ({{ __('account_gateway.1') }})
                                         @elseif($payment->frompayment !==null && $payment->frompayment->gateway == 2)
                                             {{ @$payment->frompayment->account_holder_name}}<br/>
                                             {{ @$payment->frompayment->account_no }}<br/>
@@ -197,23 +197,17 @@
                                             @$payment->frompayment->gateway == 4 ||
                                             @$payment->frompayment->gateway == 5
                                         )
-                                            @if($payment->frompayment->gateway == 3)
-                                                Bkash
-                                            @elseif($payment->frompayment->gateway == 4)
-                                                Rocket
-                                            @elseif($payment->frompayment->gateway == 5)
-                                                Nagad
-                                            @endif <br/>
+                                            {{ __('account_gateway.' . $payment->frompayment->gateway) }} <br/>
                                             {{ @$payment->frompayment->account_holder_name}}<br/>
                                             {{ @$payment->frompayment->mobile }}<br/>
                                            @if($payment->frompayment->account_type == 1)
-                                                Merchant
+                                                {{ __('merchant.merchant') }}
                                             @else
-                                                Persional
+                                                {{ __('merchant.personal') }}
                                            @endif
                                         @endif
                                     </td>
-                                    <td><a href="@if($payment->referencefile !==null){{ static_asset($payment->referencefile->original) }}@endif" download="">Download</a></td>
+                                    <td><a href="@if($payment->referencefile !==null){{ static_asset($payment->referencefile->original) }}@endif" download="">{{ __('backup.download') }}</a></td>
 
                                     <td>{{$payment->description}}</td>
                                     <td>
@@ -235,7 +229,7 @@
                                         <td>
                                             @if ($payment->status == \App\Enums\ApprovalStatus::PROCESSED || $payment->status == \App\Enums\ApprovalStatus::REJECT )
                                                 <div class="row">
-                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                                     <div class="dropdown-menu">
                                                         @if ( $payment->status == \App\Enums\ApprovalStatus::PROCESSED)
                                                             <a href="{{route('merchantmanage.payment.cancel-process',$payment->id)}}" class="dropdown-item"><i class="fas fa-check" aria-hidden="true"></i> {{ __('levels.cancel_process') }}</a>
@@ -246,7 +240,7 @@
                                                 </div>
                                             @else
                                                 <div class="row">
-                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                                     <div class="dropdown-menu">
                                                         @if ( $payment->status == \App\Enums\ApprovalStatus::PENDING)
                                                             @if(  hasPermission('payment_reject') == true  )

@@ -62,16 +62,10 @@
                                         @foreach($accounts as $account)
                                             @if ($account->type == App\Enums\AccountType::ADMIN)
                                                 @if( $account->gateway == 1 )
-                                                    <option {{ (old('to_account') == $account->id) ? 'selected' : '' }} value="{{ $account->id }}">{{ $account->user->name }} (Cash)</option>
+                                                    <option {{ (old('to_account') == $account->id) ? 'selected' : '' }} value="{{ $account->id }}">{{ $account->user->name }} ({{ __('account_gateway.1') }})</option>
                                                 @else
                                                     <option {{ (old('to_account') == $account->id) ? 'selected' : '' }} value="{{ $account->id }}">
-                                                        @if($account->gateway == 3)
-                                                        bKash ,
-                                                        @elseif ($account->gateway == 4)
-                                                        Rocket ,
-                                                        @elseif ($account->gateway == 5)
-                                                        Nagad ,
-                                                        @endif
+                                                        {{ __('account_gateway.' . $account->gateway) }} ,
                                                         {{$account->account_holder_name}}
                                                         ({{$account->account_no}}
                                                         {{$account->branch_name}}

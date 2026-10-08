@@ -35,6 +35,8 @@ class FrenchCatalogueTest extends TestCase
         'Aamarpay', 'BeninLink', 'Bkash', 'bKash', 'Dhaka', 'Facebook', 'Google', 'Mobile Money (FedaPay)',
         'Moov Money', 'MTN MoMo', 'Nagad', 'Payoneer', 'Paypal', 'Razorpay', 'Rocket', 'Skrill', 'SSL Commerz',
         'SSLCommerz', 'Stripe', 'Visa',
+        // banques du Bénin (account_bank, D16)
+        'Ecobank Bénin', 'BOA-Bénin', 'Orabank Bénin', 'NSIA Banque Bénin', 'UBA Bénin', 'Coris Bank Bénin', 'BIIC',
         // sigles et formats
         'ARR', 'CAC', 'CSV', 'Excel', 'FAQ', 'IFU', 'LTV', 'MRR', 'NID', 'PDF', 'RCCM',
         // gabarits sans mot à traduire
@@ -98,7 +100,7 @@ class FrenchCatalogueTest extends TestCase
                 if (! file_exists(lang_path("fr/{$fichier}.php"))) {
                     continue; // une chaîne à point qui n'est pas une clé de catalogue (« Total. »)
                 }
-                $catalogues[$fichier] ??= array_keys(Arr::dot(require lang_path("fr/{$fichier}.php")));
+                $catalogues[$fichier] ??= array_map('strval', array_keys(Arr::dot(require lang_path("fr/{$fichier}.php")))); // clés numériques : account_gateway.3 (S117)
                 $trouvee = str_ends_with($cle, '_')
                     ? (bool) preg_grep('/^' . preg_quote($cle, '/') . '/', $catalogues[$fichier])
                     : in_array($cle, $catalogues[$fichier], true) || preg_grep('/^' . preg_quote($cle, '/') . '\./', $catalogues[$fichier]);
@@ -120,8 +122,7 @@ class FrenchCatalogueTest extends TestCase
      */
     public function test_every_sentence_named_by_a_view_exists_in_french_json(): void
     {
-        $tels_quels = ['#', '###', 'Razorpay', 'REVE SMS', 'TWILIO SMS', 'NEXMO SMS',
-            'WemaxDevs Product Activation.']; // page d'avant installation, jamais servie à un client
+        $tels_quels = ['#', '###', 'Razorpay', 'REVE SMS', 'TWILIO SMS', 'NEXMO SMS'];
         $francais = json_decode(file_get_contents(lang_path('fr.json')), true, 512, JSON_THROW_ON_ERROR);
         $manquantes = [];
         foreach (\Symfony\Component\Finder\Finder::create()->files()->in(resource_path('views'))->name('*.blade.php') as $vue) {

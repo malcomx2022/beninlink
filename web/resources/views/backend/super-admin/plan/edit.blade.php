@@ -87,7 +87,7 @@
 
                                 <div class="col-12 col-md-6">
                                     <div class="form-group">
-                                        <label for="price">{{ __('levels.price') }} <small class="text-danger">( minimum $0.50 )</small></label> <span
+                                        <label for="price">{{ __('levels.price') }} <small class="text-danger">( {{ __('minimum :amount', ['amount' => formatAmount(1)]) }} )</small></label> <span
                                             class="text-danger">*</span>
                                         <input type="text" id="price" name="price"
                                             placeholder="{{ __('levels.price') }}" class="form-control"

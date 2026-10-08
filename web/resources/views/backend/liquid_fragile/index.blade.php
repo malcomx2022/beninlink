@@ -107,7 +107,7 @@
                                 <tbody>
                                     @php $i=1; @endphp
                                         <tr>
-                                            <td>Liquid/Fragile</td>
+                                            <td>{{ __('placeholder.Liquid_Fragile') }}</td>
                                             @if(hasPermission('liquid_status_change') == true)
                                             <td>
                                                 <div class="form-check form-switch">
@@ -119,7 +119,7 @@
                                             @if(hasPermission('liquid_fragile_update') == true)
                                                 <td>
                                                     <div class="row">
-                                                        <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                                        <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                                         <div class="dropdown-menu">
                                                             <a href="{{route('liquid.fragile.edit')}}" class="dropdown-item"><i class="fas fa-edit" aria-hidden="true"></i> {{__('levels.edit')}}</a>
                                                         </div>

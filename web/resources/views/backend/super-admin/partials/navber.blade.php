@@ -111,7 +111,7 @@
                                             <a class="nav-link nav-icons mt-md-3" href="#" id="navbarDropdownMenuLink1" data-toggle="dropdown"   aria-haspopup="true" aria-expanded="false"><i class="fas fa-fw fa-bell"></i> <span class="indicator"></span></a>
                                             <ul class="dropdown-menu dropdown-menu-right notification-dropdown">
                                                 <li>
-                                                    <div class="notification-title"> Notification</div>
+                                                    <div class="notification-title"> {{ __('Notification') }}</div>
                                                     <div class="notification-list">
                                                         <div class="list-group">
                                                             @foreach (notifications() as $notify )
@@ -184,7 +184,7 @@
                             <a class="nav-link nav-icons mt-md-3" href="#" id="navbarDropdownMenuLink1" data-toggle="dropdown"   aria-haspopup="true" aria-expanded="false"><i class="fas fa-fw fa-bell"></i> <span class="mobile-notification indicator admin"></span></a>
                             <ul class="dropdown-menu dropdown-menu-right notification-dropdown">
                                 <li>
-                                    <div class="notification-title"> Notification</div>
+                                    <div class="notification-title"> {{ __('Notification') }}</div>
                                     <div class="notification-list">
                                         <div class="list-group">
                                             @foreach (notifications() as $notify )

@@ -62,14 +62,14 @@
                                                 <div class="col-sm-6 m-auto  ">
                                                     <a href="{{ route('social.login', 'facebook') }}"
                                                         class="btn w-100 btn-social btn-primary mt-2" type="button"> <i
-                                                            class="fab fa-facebook"></i> Facebook</a>
+                                                            class="fab fa-facebook"></i> {{ __('levels.facebook') }}</a>
                                                 </div>
                                             @endif
                                             @if (globalSettings('google_status') == App\Enums\Status::ACTIVE)
                                                 <div class="col-sm-6 m-auto  ">
                                                     <a href="{{ route('social.login', 'google') }}"
                                                         class="btn  w-100 btn-social btn-primary mt-2" type="button"><i
-                                                            class="fab fa-google"></i> Google</a>
+                                                            class="fab fa-google"></i> {{ __('levels.google') }}</a>
                                                 </div>
                                             @endif
                                         </div>

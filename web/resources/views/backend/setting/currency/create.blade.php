@@ -42,7 +42,7 @@
                             @enderror
                         </div>
                         <div class="form-group pt-2">
-                            <label for="exchange_rate">{{ __('settings.exchange_rate') }} (1 Dollar = ) <span class="text-danger">*</span></label>
+                            <label for="exchange_rate">{{ __('settings.exchange_rate') }} ({{ __('1 USD =') }}) <span class="text-danger">*</span></label>
                             <input id="exchange_rate" type="number" name="exchange_rate" data-parsley-trigger="change" placeholder="{{ __('settings.enter_exchange_rate') }}" autocomplete="off" class="form-control" value="{{old('exchange_rate')}}" >
                             @error('exchange_rate')
                                 <small class="text-danger mt-2">{{ $message }}</small>

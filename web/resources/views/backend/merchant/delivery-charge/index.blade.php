@@ -51,7 +51,7 @@
                             )
                                 <td>
                                     <div class="row">
-                                        <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                        <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                         <div class="dropdown-menu">
                                             @if( hasPermission('merchant_delivery_charge_update') == true   )
                                             <a href="{{route('merchant.deliveryCharge.edit',[$singleMerchant->id,$merchantDeliveryCharge])}}" class="dropdown-item"><i class="fas fa-edit" aria-hidden="true"></i> {{ __('levels.edit') }}</a>

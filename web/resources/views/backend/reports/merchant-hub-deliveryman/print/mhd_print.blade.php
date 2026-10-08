@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>
         @if ($request->user_type     == 1)
-        Merchant reports
+        {{ __('reports.merchant_reports') }}
     @elseif ($request->user_type == 2)
-        Hub reports
+        {{ __('reports.hub_reports') }}
     @elseif ($request->user_type == 3)
-        Delivery man reports
+        {{ __('reports.delivery_man_reports') }}
     @endif
-         | print</title>
+         | {{ __('reports.print') }}</title>
     <link rel="shortcut icon" href="{{ static_asset(settings()->favicon_image)}}" type="image/x-icon">
     <link rel="stylesheet" href="{{ static_asset('backend/')}}/css/reports_print.css">
 

@@ -71,7 +71,7 @@
                                                 @else
                                                     <div class="input-group mb-3">
                                                         <div class="input-group-prepend be-addon">
-                                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                                             <div class="dropdown-menu">
                                                                 {!! $invoice->update_status !!}
                                                             </div>
@@ -81,7 +81,7 @@
                                             </td>
                                         @endif
                                         <td>
-                                            <a href="{{ route('merchant.invoice.details',[$merchant_id,$invoice->invoice_id]) }}" class="btn btn-sm btn-primary mt-1"><i class="fa fa-eye"></i> View</a>
+                                            <a href="{{ route('merchant.invoice.details',[$merchant_id,$invoice->invoice_id]) }}" class="btn btn-sm btn-primary mt-1"><i class="fa fa-eye"></i> {{ __('View') }}</a>
                                             <a href="{{ route('merchant.invoice.csv',[$merchant_id,$invoice->invoice_id]) }}" class="btn btn-sm btn-success mt-1"><i class="fa fa-download"></i> CSV</a>
                                         </td>
                                     </tr>

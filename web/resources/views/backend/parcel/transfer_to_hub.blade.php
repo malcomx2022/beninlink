@@ -23,7 +23,7 @@
                             <label for="transfer-hub">{{ __('hub.to_hub')}}</label> <span class="text-danger">*</span>
                             <div class="form-control-wrap  h">
                                 <select    class="form-control d" name="hub_id"  data-url="{{ route('parcel.transferHub') }}" >
-                                    <option selected disabled>Select Hub</option>
+                                    <option selected disabled>{{ __('Select Hub') }}</option>
                                     @foreach (hubs() as $hub)
                                     <option value="{{ $hub->id }}">{{ $hub->name }}</option>
                                     @endforeach
@@ -37,7 +37,7 @@
                         <label for="delivery_man_search">{{ __('deliveryman.title')}}</label>
                         <div class="form-control-wrap deliveryman-search">
                             <select id="delivery_man_search_hub" class="form-control delivery_man_search_hub" name="delivery_man_id" data-url="{{ route('parcel.deliveryman.search') }}" >
-                                <option selected disabled>Select delivery man</option>
+                                <option selected disabled>{{ __('Select Delivery Man') }}</option>
                                 @foreach ($deliverymans as $deliveryman)
                                 <option value="{{ $deliveryman->id }}">{{ $deliveryman->user->name }}</option>
                                 @endforeach

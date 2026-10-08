@@ -68,7 +68,7 @@
                                     <td>{{$i++}}</td>
                                     <td>
                                         @if ($payment->frompayment !==null && $payment->frompayment->gateway == 1)
-                                            Cash
+                                            {{ __('account_gateway.1') }}
                                         @elseif($payment->frompayment !==null && $payment->frompayment->gateway == 2)
                                             {{ @$payment->frompayment->account_holder_name}}<br/>
                                             {{ @$payment->frompayment->account_no }}<br/>
@@ -79,24 +79,18 @@
                                             @$payment->frompayment->gateway == 4 ||
                                             @$payment->frompayment->gateway == 5
                                         )
-                                            @if($payment->frompayment->gateway == 3)
-                                                Bkash
-                                            @elseif($payment->frompayment->gateway == 4)
-                                                Rocket
-                                            @elseif($payment->frompayment->gateway == 5)
-                                                Nagad
-                                            @endif <br/>
+                                            {{ __('account_gateway.' . $payment->frompayment->gateway) }} <br/>
                                             {{ @$payment->frompayment->account_holder_name}}<br/>
                                             {{ @$payment->frompayment->mobile }}<br/>
                                             @if($payment->frompayment->account_type == 1)
-                                                Merchant
+                                                {{ __('merchant.merchant') }}
                                             @else
-                                                Persional
+                                                {{ __('merchant.personal') }}
                                             @endif
                                         @endif
                                     </td>
                                     <td>{{$payment->transaction_id}}</td>
-                                    <td>@if(isset($payment->referencefile))<a href="{{ static_asset($payment->referencefile->original) }}" download="">Download</a>@endif</td>
+                                    <td>@if(isset($payment->referencefile))<a href="{{ static_asset($payment->referencefile->original) }}" download="">{{ __('backup.download') }}</a>@endif</td>
 
                                     <td>{{\Str::limit($payment->description,100,' ...')}}</td>
                                     <td>{{ formatAmount($payment->amount) }}</td>
@@ -119,7 +113,7 @@
                                         <td>
                                             @if ($payment->status == \App\Enums\ApprovalStatus::PROCESSED || $payment->status == \App\Enums\ApprovalStatus::REJECT )
                                                 <div class="row">
-                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                                     <div class="dropdown-menu">
                                                         @if ( $payment->status == \App\Enums\ApprovalStatus::PROCESSED)
                                                             <a href="{{route('hub-payment.cancel-process',$payment->id)}}" class="dropdown-item"><i class="fas fa-check" aria-hidden="true"></i> {{ __('levels.cancel_process') }}</a>
@@ -130,7 +124,7 @@
                                                 </div>
                                             @else
                                                 <div class="row">
-                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                                     <div class="dropdown-menu">
                                                         @if ( $payment->status == \App\Enums\ApprovalStatus::PENDING)
                                                             @if(  hasPermission('hub_payment_reject') == true  )

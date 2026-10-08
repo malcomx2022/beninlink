@@ -60,12 +60,6 @@
                                 <div> @yield('message')</div>
                                 @if(isset($administrator_contact))
                                     <a href="{{ url(env('APP_URL')) }}" class="btn btn-secondary btn-lg">{{ __('Contact :name', ['name' => App\Models\Backend\GeneralSettings::find(1)->name]) }}</a>
-                                @elseif(isset($purchase_verify))
-                                    <a href="https://wa.me/+8801912938002" class="btn btn-secondary btn-lg ">
-                                        <div class="d-flex align-items-center">
-                                            <i class="fa-brands fa-whatsapp me-3" style="font-size: 30px;margin-right:5px"></i> <span>Contact with WemaxDevs</span>
-                                        </div>
-                                    </a>
                                 @else
                                     <a href="{{ url('/') }}" class="btn btn-secondary btn-lg">{{ __('Back to homepage') }}</a>
                                 @endif

@@ -345,6 +345,9 @@ avant les apps.
   Le **panneau marchand** entier suit la même règle (**S116**, `MerchantPanelSpeaksFrenchTest`, détecteur
   partagé `Tests\Concerns\FindsHardcodedText`) : aucun texte en dur hors unités et pages exemptées avec motif,
   aucun « Tk » (la devise vient de `formatAmount()`), portefeuilles dits « Mobile Money » (codes 3-5 : **D16**).
+  Puis **toute vue servie** (**S117**, `BackOfficeSpeaksFrenchTest`) : exemptions avec motif seulement.
+  Le libellé d'un compte vient de `__('account_gateway.' . $code)`, sa banque de `__('account_bank.' . $code)`
+  (**D16**, défaut réversible) — jamais d'`<option>` ni de `@if gateway ==` qui écrit un nom en dur.
 - **Le livreur voit l'alerte douanière de sa course, en lecture seule** (**S95**).
   `deliveryman/parcel/details/{id}` porte `customs_alerts` (même `CustomsAlertResource` que S82)
   sur le colis déjà vérifié par `notOwned()` ; un domestique rend `[]`, la course d'un collègue

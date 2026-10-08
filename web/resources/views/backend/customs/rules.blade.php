@@ -25,7 +25,7 @@
                     <div class="col-8">
                         <p class="h3">{{ __('customs.rules') }}</p>
                         {{-- Le référentiel livré est un point de départ : il engage l'exploitation. --}}
-                        <small class="text-muted">{{ __('customs.export') }} — référentiel de départ, à faire valider par un transitaire.</small>
+                        <small class="text-muted">{{ __('customs.export') }} {{ __('customs.referentiel_a_valider') }}</small>
                     </div>
                 </div>
                 <div class="card-body">
