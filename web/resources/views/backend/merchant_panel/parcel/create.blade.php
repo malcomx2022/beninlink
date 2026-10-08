@@ -341,43 +341,43 @@
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('parcel.Cash_Collection') }}</span>
-                                <span class="float-right" id="totalCashCollection">{{ __('0.00') }}</span>
+                                <span class="float-right" id="totalCashCollection">0</span>
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('parcel.Delivery_Charge') }}</span>
-                                <span class="float-right" id="deliveryChargeAmount">{{ __('0.00') }}</span>
+                                <span class="float-right" id="deliveryChargeAmount">0</span>
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('reports.COD_Charge') }}</span>
-                                <span class="float-right" id="codChargeAmount">{{ __('0.00') }}</span>
+                                <span class="float-right" id="codChargeAmount">0</span>
                             </li>
 
 
                             <li class="list-group-item profile-list-group-item hideShowLiquidFragile">
                                 <span class="float-left font-weight-bold">{{ __('parcel.Liquid/Fragile_Charge') }}</span>
-                                <span class="float-right" id="liquidFragileAmount">{{ __('0.00') }}</span>
+                                <span class="float-right" id="liquidFragileAmount">0</span>
                             </li>
                             <li class="list-group-item profile-list-group-item" id="packagingShow">
                                 <span class="float-left font-weight-bold">{{ __('reports.P.Charge') }}</span>
-                                <span class="float-right" id="packagingAmount">{{ __('0.00') }}</span>
+                                <span class="float-right" id="packagingAmount">0</span>
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('parcel.Total_Charge') }}</span>
-                                <span class="float-right" id="totalDeliveryChargeAmount">{{ __('0.00') }}</span>
+                                <span class="float-right" id="totalDeliveryChargeAmount">0</span>
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('parcel.Vat') }}</span>
-                                <span class="float-right" id="VatAmount">{{ __('0.00') }}</span>
+                                <span class="float-right" id="VatAmount">0</span>
                             </li>
 
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('parcel.Net_Payable') }}</span>
-                                <span class="float-right" id="netPayable">{{ __('0.00') }}</span>
+                                <span class="float-right" id="netPayable">0</span>
                             </li>
 
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('parcel.Current_payable') }}</span>
-                                <span class="float-right" id="currentPayable">{{ __('0.00') }}</span>
+                                <span class="float-right" id="currentPayable">0</span>
                             </li>
                         </ul>
                     </div>

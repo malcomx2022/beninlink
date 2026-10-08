@@ -1,7 +1,7 @@
 
 
 <!doctype html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
     <!-- Required meta tags -->
@@ -59,7 +59,7 @@
                                 <h2  >@yield('message-title')</h2>
                                 <div> @yield('message')</div>
                                 @if(isset($administrator_contact))
-                                    <a href="{{ url(env('APP_URL')) }}" class="btn btn-secondary btn-lg">Contact with {{ App\Models\Backend\GeneralSettings::find(1)->name }}</a>
+                                    <a href="{{ url(env('APP_URL')) }}" class="btn btn-secondary btn-lg">{{ __('Contact :name', ['name' => App\Models\Backend\GeneralSettings::find(1)->name]) }}</a>
                                 @elseif(isset($purchase_verify))
                                     <a href="https://wa.me/+8801912938002" class="btn btn-secondary btn-lg ">
                                         <div class="d-flex align-items-center">
@@ -67,7 +67,7 @@
                                         </div>
                                     </a>
                                 @else
-                                    <a href="{{ url('/') }}" class="btn btn-secondary btn-lg">Back to homepage</a>
+                                    <a href="{{ url('/') }}" class="btn btn-secondary btn-lg">{{ __('Back to homepage') }}</a>
                                 @endif
                             </div>
                         </div>
@@ -83,7 +83,14 @@
             <div class="container-fluid">
                 <div class="row">
                     <div class=" col-12">
-                            Copyright © 2022 Concept. All rights reserved. Development by <a href="https://wemaxdevs.com">WemaxDevs</a>.
+                            {{-- S114 : le pied de page du socle créditait l'éditeur (« Development by WemaxDevs ») sur
+                                 toutes les pages d'erreur publiques. La marque est celle de la plateforme ; une
+                                 erreur 500 peut venir de la base, d'où le repli sur le nom de l'application. --}}
+                            @php
+                                try { $marque = \App\Models\Backend\GeneralSettings::query()->orderBy('id')->value('name'); }
+                                catch (\Throwable $e) { $marque = null; }
+                            @endphp
+                            © {{ date('Y') }} {{ $marque ?: config('app.name') }}
                     </div>
 
                 </div>

@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-08 (S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-08 (S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8930,3 +8930,41 @@ finit par `_` (suffixe calculé) compte si une clé française commence par elle
 remis à `levels.lsit` — rouge, la vue nommée.
 
 Suite complète : **1 312 tests, 51 188 assertions** (1 311 avant ; +1).
+
+## S114 — les pages d'erreur et les phrases des vues parlent français (2026-10-08)
+
+### D'où ça vient
+
+S112 et S113 tiennent les clés de fichier (`levels.import`). Les vues traduisent aussi des
+**phrases** (`__('Page Not Found')`), cherchées dans `lang/fr.json` : relevé contre ce fichier,
+**23 phrases absentes**. Les pages d'erreur 401, 403, 404, 405, 419, 429 et 500 en avaient la moitié
+(« Opps ! Something went wrong. »), la page de domaine inactif et la vérification d'e-mail aucune, et les
+**73 listes paginées** du back-office affichaient « Affichage de 1 to 10 of 50 results ».
+
+Le test écrit pour ce relevé a trouvé trois autres choses :
+
+| Constat | Où |
+|---|---|
+| pied de page « Copyright © 2022 Concept. All rights reserved. Development by WemaxDevs » avec un lien vers l'éditeur | **toutes les pages d'erreur publiques** (`errors/layout`) — même famille que S111 |
+| montants affichés `0.00` avant le premier calcul (FCFA entiers) | création de colis, back-office et panneau marchand (18 cases) |
+| clés vers un fichier qui n'existe pas (`todo.delete`, `DeliveryType.*`) | liste des tâches ; écrans de type de livraison (sans route) |
+
+### Ce qui est fait
+
+- `lang/fr.json` : 26 entrées ajoutées (les 23 phrases, « Retour à l'accueil », « Contacter :name »).
+- `errors/layout` : `lang` de la page suit la locale ; « Contact with … » et « Back to homepage » passent par
+  `__()` ; le pied de page devient « © année — nom de la plateforme », lu en base avec un repli sur
+  `config('app.name')` (une erreur 500 peut venir de la base). Le bouton WhatsApp de l'éditeur reste sur
+  la seule page d'activation d'avant installation (`purchase_verify`), jamais servie à un client.
+- Montants initiaux `0` ; `to_do.delete` ; `levels.delivery_type`.
+
+### Le filet
+
+`FrenchCatalogueTest` gagne deux tests : toute phrase traduite par une vue existe dans `lang/fr.json`
+(une clé dont le préfixe nomme un fichier de `lang/fr/` relève du test S113, quelques noms propres
+restent tels quels) ; la page 404, servie en HTTP, se lit en français (`<html lang="fr">`, « La page
+demandée est introuvable. », « Retour à l'accueil ») sans « Opps », « Back to homepage » ni « WemaxDevs ».
+Sabotages : le pied de page de l'éditeur remis — rouge ; « to » retiré de `fr.json` — rouge, les deux
+vues nommées.
+
+Suite complète : **1 314 tests, 51 197 assertions** (1 312 avant ; +2).

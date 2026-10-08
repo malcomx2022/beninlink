@@ -14,7 +14,7 @@
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="{{route('dashboard.index')}}" class="breadcrumb-link">{{ __('levels.dashboard') }}</a></li>
                             <li class="breadcrumb-item"><a href="" class="breadcrumb-link">{{__('menus.settings')}}</a></li>
-                            <li class="breadcrumb-item"><a href="{{ route('delivery-type.index') }}" class="breadcrumb-link">{{ __('DeliveryType.delivery_type') }}</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('delivery-type.index') }}" class="breadcrumb-link">{{ __('levels.delivery_type') }}</a></li>
                             <li class="breadcrumb-item"><a href="" class="breadcrumb-link active">{{ __('levels.create') }}</a></li>
                         </ol>
                     </nav>
@@ -29,7 +29,7 @@
         <div class="col-6">
             <div class="card">
                 <div class="card-body">
-                    <h2 class="pageheader-title">{{ __('DeliveryType.create_delivery_type') }}</h2>
+                    <h2 class="pageheader-title">{{ __('levels.delivery_type') }}</h2>
                     <form action="{{route('delivery-type.store')}}"  method="POST" enctype="multipart/form-data" id="basicform">
                         @csrf
                         <div class="row">

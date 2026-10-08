@@ -337,6 +337,8 @@ avant les apps.
   « Hub » se dit **Agence** (comme les semences S92), « Front web » **Site public**.
   Et toute clé qu'une vue nomme (`__('fichier.cle')`) existe dans `lang/fr/` (**S113**) : sinon l'écran
   affiche la clé brute. Une clé à suffixe calculé (`'customs.category_' . $x`) compte par son préfixe.
+  Une **phrase** traduite par `__('Phrase…')` existe dans `lang/fr.json` (**S114**) ; les pages d'erreur ne
+  portent plus de marque tierce (pied de page « © année — nom de la plateforme »).
 - **Le livreur voit l'alerte douanière de sa course, en lecture seule** (**S95**).
   `deliveryman/parcel/details/{id}` porte `customs_alerts` (même `CustomsAlertResource` que S82)
   sur le colis déjà vérifié par `notOwned()` ; un domestique rend `[]`, la course d'un collègue

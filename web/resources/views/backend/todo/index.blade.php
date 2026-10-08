@@ -83,7 +83,7 @@
                                                 <form id="delete" value="Test" action="{{route('todo.delete',$todo->id)}}" method="POST" data-title="{{ __('delete.to_do') }}">
                                                     @method('DELETE')
                                                     @csrf
-                                                    <input type="hidden" name="" value="{{ __('todo.delete') }}" id="deleteTitle">
+                                                    <input type="hidden" name="" value="{{ __('to_do.delete') }}" id="deleteTitle">
                                                     <button type="submit" class="dropdown-item"><i class="fa fa-trash" aria-hidden="true"></i> {{ __('to_do.delete') }}</button>
                                                 </form>
                                                 @endif
