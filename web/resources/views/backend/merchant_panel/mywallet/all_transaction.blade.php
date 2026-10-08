@@ -19,7 +19,7 @@
             @foreach ($wallets as $wallet)
                 <tr>
                     <td>{{ ++$i }}</td>
-                    <td>{{ $wallet->source }}</td>
+                    <td>{{ $wallet->source_label }}</td>
                     <td> {{ dateFormat($wallet->created_at) }} </td>
                     <td>{{ @$wallet->transaction_id }}</td>
                     <td>{{ __('WalletPaymentMethod.' . $wallet->payment_method) }}</td>

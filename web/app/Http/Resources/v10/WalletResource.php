@@ -18,8 +18,8 @@ class WalletResource extends JsonResource
         return [
             'id'                => $this->id,
             'transaction_id'    => (string) $this->transaction_id,
-            /** Origine du mouvement (« fedapay », « admin »…), libre côté socle. */
-            'source'            => $this->source,
+            /** Origine du mouvement, dans la langue négociée (S123) : « Recharge du portefeuille », « FedaPay »… */
+            'source'            => $this->source_label,
             'amount'            => (int) round((float) $this->amount),
             'type'              => (int) $this->type,
             'typeName'          => $this->type == WalletType::EXPENSE
