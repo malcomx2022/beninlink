@@ -75,24 +75,10 @@ class WebAdminPermissionCoverageTest extends TestCase
      * Elle ne grandit jamais — le plafond ci-dessous le garde.
      */
     private const HERITAGE = [
-        // Les addons : module de plateforme, aucun droit `addons_*` au catalogue.
-        'GET admin/addons', 'POST admin/addons', 'GET admin/addons/create',
-        // ⚠️ `GET` et `DELETE admin/addons/{addon}` sont SORTIES de cette liste (S69) :
-        // la ressource les déclarait sur `show()` et `destroy()`, qui n'existent pas.
-        'GET admin/addons/{addon}/edit', 'PUT|PATCH admin/addons/{addon}',
-        'POST admin/addons/activation',
-        // Réglages Google Maps : aucun droit déduit de l'écran.
-        'GET admin/googlemap-settings/index', 'PUT admin/googlemap-settings/update',
-        // Abonnement : à départager entre droit et type de compte.
-        // ⚠️ `payout` et `payout/merchant/payout` sont SORTIES de cette liste : S43
-        // (PR #115) les a gardées par `payout_read` — un droit qui existait déjà au
-        // catalogue sans être utilisé — parce qu'elles bloquaient la garde des deux
-        // sélecteurs partagés. Troisième cliquet, deuxième fois qu'il sert.
-        'GET admin/subscription/history', 'GET admin/paid/invoice',
-        // NON RELIÉE : aucune vue, aucun JS ne la nomme (sa méthode existe).
-        // ⚠️ `GET admin/parcel/file-export` est SORTIE de cette liste (S69) : sa méthode,
-        // `ParcelController::parcelExport`, n'existait PAS — la route est retirée.
-        'GET admin/reports/mhd-pdf',
+        // ⚠️ S124 : les six routes `admin/addons` sont RETIRÉES (installateur de code ouvert à tout
+        // compte du back-office, AddonInstallerClosedTest) ; Google Maps, l'historique d'abonnement,
+        // les relevés payés et `reports/mhd-pdf` sont gardés par le droit que le menu lit déjà
+        // pour leur entrée (voir `gardesPosees()`).
         // Aides AJAX à jeu de droits LARGE : de 6 à 19 droits déduits, sur des
         // listes d'écrans polluées par le motif court. À lire une par une.
         // ⚠️ `parcel/filter`, `parcel/merchant/shops` et `parcel/deliveryman/search`
@@ -118,7 +104,7 @@ class WebAdminPermissionCoverageTest extends TestCase
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 18;
+    private const PLAFOND_HERITAGE = 7;
 
     /**
      * Les gardes posées par ce lot, et le droit mesuré pour chacune.
@@ -154,6 +140,12 @@ class WebAdminPermissionCoverageTest extends TestCase
             ['POST', 'admin/accounts/current-balance', 'fund_transfer_create|fund_transfer_update'],
             ['GET', 'admin/parcel/specific/search', 'parcel_read'],
             ['POST', 'admin/push-notification/users', 'push_notification_create'],
+            // S124 — le droit que le menu latéral lit pour l'entrée de l'écran.
+            ['GET', 'admin/googlemap-settings/index', 'notification_settings_read'],
+            ['PUT', 'admin/googlemap-settings/update', 'notification_settings_update'],
+            ['GET', 'admin/subscription/history', 'subscription_read'],
+            ['GET', 'admin/paid/invoice', 'paid_invoice_read'],
+            ['GET', 'admin/reports/mhd-pdf', 'merchant_hub_deliveryman'],
         ];
 
         return array_combine(array_map(fn ($c) => $c[0] . ' ' . $c[1], $cas), $cas);

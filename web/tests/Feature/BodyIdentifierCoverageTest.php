@@ -246,7 +246,6 @@ class BodyIdentifierCoverageTest extends TestCase
         'PUT subscription/success' => 'même route, autre verbe',
         'PATCH subscription/success' => 'même route, autre verbe',
         'DELETE subscription/success' => 'même route, autre verbe',
-        'POST admin/addons/activation' => 'bascule d\'un module de la plateforme : l\'identifiant désigne un module, pas une ressource de société',
         'POST super-admin/category/store' => 'S65 — même motif que `PUT category/update` juste en dessous : le catalogue des catégories ne porte AUCUNE colonne `company_id`, il est commun à toutes les sociétés. Entrée dans le filet par l\'élargissement de `estIdentifiant()` à `slug`',
                 'PUT super-admin/category/update' => 'S35 — le catalogue des catégories ne porte AUCUNE colonne `company_id` : il est commun à toutes les sociétés, et `UserAndSettingsScopeTest` l\'inscrit',
             'POST admin/fraud/store' => 'S51 — la fiche de fraude ne porte AUCUN identifiant de locataire : `phone`, `name`, `details` et `tracking_id` sont des chaines (voir la migration : `tracking_id` est un `string`, pas une cle etrangere). `company_id` vient de `settings()` et `created_by` de la session',
