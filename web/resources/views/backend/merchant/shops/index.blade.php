@@ -59,7 +59,7 @@
                             @if(hasPermission('merchant_shop_update') || hasPermission('merchant_shop_delete') )
                                 <td>
                                     <div class="row">
-                                        <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                        <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                         <div class="dropdown-menu">
                                             @if(hasPermission('merchant_shop_update') )
                                                 <a href="{{route('merchant.shops.edit',$shop->id)}}" class="dropdown-item"><i class="fas fa-edit" aria-hidden="true"></i> {{ __('levels.edit') }}</a>

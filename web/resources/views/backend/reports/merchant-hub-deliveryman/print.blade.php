@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>
         @if ($user_type == 1)
-            Merchant Reports
+            {{ __('reports.merchant_reports') }}
         @elseif ($user_type == 2)
-            Hub Reports
+            {{ __('reports.hub_reports') }}
         @elseif ($user_type == 3)
-            Deliveryman Reports
+            {{ __('reports.delivery_man_reports') }}
         @endif
-        | print</title>
+        | {{ __('reports.print') }}</title>
     <link rel="shortcut icon" href="{{ static_asset(settings()->favicon_image)}}" type="image/x-icon">
     <link rel="stylesheet" href="{{ static_asset('backend/')}}/css/reports_print.css">
 
@@ -28,7 +28,7 @@
 </head>
 <body>
 <div class="print" style="text-align: right" >
-    <a href="#" class="btn-danger"  id="close" onclick="window.close()">Close</a>
+    <a href="#" class="btn-danger"  id="close" onclick="window.close()">{{ __('Close') }}</a>
 </div>
 <div>
     <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" class="officehead">
@@ -62,7 +62,7 @@
                     <span  style="float: left">
 
                     </span>
-                    <span style="float: right" > <font style="font-weight: bold">Date :</font>  {{ dateFormat(date('Y-m-d')) }}</span>
+                    <span style="float: right" > <font style="font-weight: bold">{{ __('levels.date') }} :</font>  {{ dateFormat(date('Y-m-d')) }}</span>
                 </div>
             </div>
             <hr>
@@ -91,31 +91,31 @@
                                                         <div class="row" style="color:black">
                                                             <span class="col-6 mt-2">
                                                                 <div class="row">
-                                                                    <span class="col-3">Name</span>
+                                                                    <span class="col-3">{{ __('levels.name') }}</span>
                                                                     <span class="col-9">: {{ $MHDreports['merchant']->business_name }}</span>
                                                                 </div>
                                                             </span>
                                                             <span class="col-6 mt-2">
                                                                 <div class="row">
-                                                                    <span class="col-3">Mobile</span>
+                                                                    <span class="col-3">{{ __('levels.mobile') }}</span>
                                                                     <span class="col-9">: {{ @$MHDreports['merchant']->user->mobile }}</span>
                                                                 </div>
                                                             </span>
                                                             <span class="col-6 mt-2">
                                                                 <div class="row">
-                                                                    <span class="col-3">Address</span>
+                                                                    <span class="col-3">{{ __('levels.address') }}</span>
                                                                     <span class="col-9">: {{ @$MHDreports['merchant']->address }}</span>
                                                                 </div>
                                                             </span>
                                                             <span class="col-6 mt-2">
                                                                 <div class="row">
-                                                                    <span class="col-3">Total Shops</span>
+                                                                    <span class="col-3">{{ __('dashboard.total_shop') }}</span>
                                                                     <span class="col-9">: {{ @$MHDreports['merchant']->merchantShops->count() }}</span>
                                                                 </div>
                                                             </span>
                                                             <span class="col-6 mt-2">
                                                                 <div class="row">
-                                                                    <span class="col-3">Total Parcels</span>
+                                                                    <span class="col-3">{{ __('parcel.parcel_count') }}</span>
                                                                     <span class="col-9">: {{ @$MHDreports['total_parcel']}}</span>
                                                                 </div>
                                                             </span>
@@ -241,25 +241,25 @@
                                                     <div class="row">
                                                         <span class="col-6 mt-2">
                                                             <div class="row">
-                                                                <span class="col-3">Name</span>
+                                                                <span class="col-3">{{ __('levels.name') }}</span>
                                                                 <span class="col-9">: {{ @$MHDreports['hub']->name }}</span>
                                                             </div>
                                                         </span>
                                                         <span class="col-6 mt-2">
                                                             <div class="row">
-                                                                <span class="col-3">Mobile</span>
+                                                                <span class="col-3">{{ __('levels.mobile') }}</span>
                                                                 <span class="col-9">: {{ @$MHDreports['hub']->phone }}</span>
                                                             </div>
                                                         </span>
                                                         <span class="col-6 mt-2">
                                                             <div class="row">
-                                                                <span class="col-3">Address</span>
+                                                                <span class="col-3">{{ __('levels.address') }}</span>
                                                                 <span class="col-9">: {{ @$MHDreports['hub']->address }}</span>
                                                             </div>
                                                         </span>
                                                         <span class="col-6 mt-2">
                                                             <div class="row">
-                                                                <span class="col-3">Current Balance</span>
+                                                                <span class="col-3">{{ __('reports.current_balance') }}</span>
                                                                 <span class="col-9">: {{ formatAmount(@$MHDreports['hub']->current_balance) }}</span>
                                                             </div>
                                                         </span>
@@ -288,7 +288,7 @@
                                         @foreach ($MHDreports['hub_statements'] as $h_statement)
                                             <dl class="row card-header pt-0">
                                                 <dt class="col-6   " style="font-weight: 200">
-                                                    <b class="font-weight-bold"> Note: </b>{{ $h_statement->note }}
+                                                    <b class="font-weight-bold">{{ __('levels.note') }} : </b>{{ $h_statement->note }}
                                                 </dt>
                                                 <dd class="col-3 text-left font-16 font-weight-bold">
                                                     {{ __('AccountHeads.'.$h_statement->type) }}
@@ -349,25 +349,25 @@
                                                     <div class="row">
                                                         <span class="col-6 mt-2">
                                                             <div class="row">
-                                                                <span class="col-3">Name</span>
+                                                                <span class="col-3">{{ __('levels.name') }}</span>
                                                                 <span class="col-9">: {{ @$MHDreports['deliveryman']->user->name }}</span>
                                                             </div>
                                                         </span>
                                                         <span class="col-6 mt-2">
                                                             <div class="row">
-                                                                <span class="col-3">Mobile</span>
+                                                                <span class="col-3">{{ __('levels.mobile') }}</span>
                                                                 <span class="col-9">: {{ @$MHDreports['deliveryman']->user->mobile }}</span>
                                                             </div>
                                                         </span>
                                                         <span class="col-6 mt-2">
                                                             <div class="row">
-                                                                <span class="col-3">Address</span>
+                                                                <span class="col-3">{{ __('levels.address') }}</span>
                                                                 <span class="col-9">: {{ @$MHDreports['deliveryman']->user->address }}</span>
                                                             </div>
                                                         </span>
                                                         <span class="col-6 mt-2">
                                                             <div class="row">
-                                                                <span class="col-3">Current Balance</span>
+                                                                <span class="col-3">{{ __('reports.current_balance') }}</span>
                                                                 <span class="col-9">: {{ formatAmount(@$MHDreports['deliveryman']->current_balance) }}</span>
                                                             </div>
                                                         </span>
@@ -398,9 +398,9 @@
 
                                                 <dt class="col-6   " style="font-weight: 200">
                                                     @if($d_statement->parcel_id)
-                                                        <b class="font-weight-bold">Parcel :</b> <a class="active" href="{{ route('parcel.details',$d_statement->parcel_id) }}" target="_blank">{{ @$d_statement->parcel->tracking_id }}</a><br/>
+                                                        <b class="font-weight-bold">{{ __('levels.parcel') }} :</b> <a class="active" href="{{ route('parcel.details',$d_statement->parcel_id) }}" target="_blank">{{ @$d_statement->parcel->tracking_id }}</a><br/>
                                                     @endif
-                                                <b class="font-weight-bold"> Note: </b>{{ $d_statement->note }}
+                                                <b class="font-weight-bold">{{ __('levels.note') }} : </b>{{ $d_statement->note }}
                                                 </dt>
                                                 <dd class="col-3 text-left font-16 font-weight-bold">
                                                         {{ __('AccountHeads.'.$d_statement->type) }}

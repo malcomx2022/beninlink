@@ -40,7 +40,7 @@
     <table style="width:100%;max-width:650px;margin:auto;background-color:white;">
         <tr>
             <td style="padding:30px;line-height:1.6;">
-                <p>Bonjour <b style="font-style:italic;">{{ $destinataire }}</b>,</p>
+                <p>{{ __('Hi') }} <b style="font-style:italic;">{{ $destinataire }}</b>,</p>
 
                 <p style="color:#12503A;font-weight:bold;font-size:17px;margin-bottom:6px;">
                     {{ __('statement.title') }} {{ __('statement.number') }} {{ $statement['number'] }}

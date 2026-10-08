@@ -302,7 +302,7 @@
                                             <option data-packagingamount="{{ $packaging->price }}"
                                                 value="{{ $packaging->id }}"
                                                 {{ old('packaging_id') == $packaging->id ? 'selected' : '' }}>
-                                                {{ $packaging->name }} ( {{ formatAmount($packaging->price) }} Tk)
+                                                {{ $packaging->name }} ({{ formatAmount($packaging->price) }})
                                             </option>
                                         @endforeach
                                     </select>

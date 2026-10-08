@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-08 (S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-08 (S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -9037,3 +9037,43 @@ une passerelle désactivée (S21) — et chaque exemption doit viser un fichier 
 Sabotages : « Tk » remis — rouge (deux tests) ; « Low » remis en dur — rouge.
 
 Suite complète : **1 321 tests, 51 297 assertions** (1 317 avant ; +4).
+
+## S117 — le back-office parle français, ses comptes sont béninois (2026-10-08)
+
+### D'où ça vient
+
+S116 tenait le panneau marchand. Appliqué à **toutes** les vues, le même détecteur a relevé 404
+textes écrits en dur dans 133 fichiers : écrans de colis, impressions et étiquettes, rapports,
+comptes, virements, salaires, réglages, vitrine. Trois constats dépassaient la langue :
+
+| Constat | Où |
+|---|---|
+| un compte du transporteur se créait en choisissant **bKash, Rocket, Nagad**, sa banque parmi **BB, DBBL, IB** (banques du Bangladesh) ; une cinquantaine d'écrans les réécrivaient en dur | `account/*`, `fund_transfer/*`, `bank_transaction/*`, `salary/*`, `income/*`, `expense/*`, `hub_payment/*`, `merchantmanage/payment/*`… |
+| **« Tk »** après le prix de l'emballage, « Amount(Tk) » dans deux rapports, étiquettes « Route : ISD » (Dhaka) | `parcel/create`, `edit`, `duplicate`, `print-label`, rapports livreur et agence |
+| la page « domaine inactif » portait le **logo et le WhatsApp de l'éditeur** et parlait de CodeCanyon | `purchase_verify`, `errors/layout`, `public/wemaxdevs.png` |
+
+### Ce qui est fait
+
+- **D16, défaut réversible** : `lang/*/account_gateway.php` (1 Espèces, 2 Banque, 3 MTN MoMo, 4 Moov
+  Money, 5 Autre Mobile Money) et `lang/*/account_bank.php` (huit banques béninoises, « Autre banque »)
+  sont la **seule source** ; formulaires et listes bouclent dessus, les `@if gateway == 3` deviennent
+  une expression. `Account\StoreRequest` / `UpdateRequest` refusent un code de banque hors liste.
+  Rien n'est réécrit en base (voir D16 pour les comptes créés avant).
+- Vues traduites par trois agents en parallèle (clés existantes d'abord, 41 phrases ajoutées à
+  `lang/fr.json`) ; « Tk » retiré ; la zone du colis remplace « ISD » sur l'étiquette ; pages
+  d'impression en `lang` de la locale ; « when billed annually » retiré (faux pour un plan mensuel).
+- `purchase_verify` (jamais servie : `PurchaseVerify::purchaseVerify()` rend vrai) dit seulement
+  « Ce domaine est inactif » au nom de la plateforme ; la branche WhatsApp du gabarit d'erreur et
+  `public/wemaxdevs.png` sont retirés.
+
+### Le filet
+
+`tests/Feature/BackOfficeSpeaksFrenchTest` (5 tests) : **aucune vue servie** n'a de texte en dur
+(hors `kg`, `FCFA`, `CSV`), avec seize exemptions motivées (installateur S88, page Laravel sans
+route, pages des modules coupés D10/S21) qui doivent exister ; aucun taka, banque ou portefeuille du
+Bangladesh, ni l'éditeur, ni dans le texte ni dans les phrases de `__()` (sauf l'écran de réglage du
+module coupé, qui nomme ses passerelles) ; libellés D16 fixés ; page « domaine inactif » sans
+éditeur. `PublicBrandAssetsTest` refuse le logo de l'éditeur par empreinte. `FrenchCatalogueTest`
+lit les clés numériques (`account_gateway.3`).
+Sabotages, tous rouges : une option « BB » en dur, « Tk » remis, le logo de l'éditeur remis sous un autre nom.
+

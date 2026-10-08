@@ -60,11 +60,9 @@
                                     <label for="gateway">{{ __('levels.gateway') }}</label> <span class="text-danger">*</span>
                                     <select id="gateway" name="gateway" class="form-control @error('gateway') is-invalid @enderror">
                                         <option selected disabled>{{ __('menus.select') }} {{ __('levels.gateway') }}</option>
-                                        <option {{ (old('gateway') == 1) ? 'selected' : '' }} value = "1">Cash</option>
-                                        <option {{ (old('gateway') == 2) ? 'selected' : '' }} value = "2">Bank</option>
-                                        <option {{ (old('gateway') == 3) ? 'selected' : '' }} value = "3">bKash</option>
-                                        <option {{ (old('gateway') == 4) ? 'selected' : '' }} value = "4">Rocket</option>
-                                        <option {{ (old('gateway') == 5) ? 'selected' : '' }} value = "5">Nagad</option>
+                                        @foreach (trans('account_gateway') as $code => $libelle)
+                                            <option {{ (old('gateway') == $code) ? 'selected' : '' }} value = "{{ $code }}">{{ $libelle }}</option>
+                                        @endforeach
                                     </select>
                                     @error('gateway')
                                         <small class="text-danger mt-2">{{ $message }}</small>
@@ -100,9 +98,9 @@
                                     <label for="bank">{{ __('levels.bank') }}</label> <span class="text-danger">*</span>
                                     <select name="bank" class="form-control">
                                         <option selected disabled>{{ __('menus.select') }} {{ __('placeholder.Bank_name') }}</option>
-                                        <option value = "1">BB</option>
-                                        <option value = "2">DBBL</option>
-                                        <option value = "3">IB</option>
+                                        @foreach (trans('account_bank') as $code => $libelle)
+                                            <option value = "{{ $code }}">{{ $libelle }}</option>
+                                        @endforeach
                                     </select>
                                     @error('bank')
                                         <small class="text-danger mt-2">{{ $message }}</small>

@@ -11,7 +11,7 @@
 </head>
 <body>
 <div class="print" style="text-align: right" >
-    <a href="#" onclick="window.close();" class="btn-danger">Close</a>
+    <a href="#" onclick="window.close();" class="btn-danger">{{ __('pickupRequest.close') }}</a>
 </div>
 <div>
     <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" class="officehead">
@@ -63,17 +63,11 @@
                                         <div class="row">
                                             <div class="col-4">{{__('levels.bank')}}</div>
                                             <div class="col-8">:
-                                                @if ($fund_transfer->fromAccount->bank == 1)
-                                                    BB
-                                                @elseif($fund_transfer->fromAccount->bank == 2)
-                                                    DBBL
-                                                @elseif($fund_transfer->fromAccount->bank == 3)
-                                                    IB
-                                                @endif
+                                                {{ __('account_bank.' . $fund_transfer->fromAccount->bank) }}
                                             </div>
                                         </div>
                                         <div class="row">
-                                            <div class="col-4">Branch</div>
+                                            <div class="col-4">{{ __('levels.branch_name') }}</div>
                                             <div class="col-8">: {{$fund_transfer->fromAccount->branch_name}}</div>
                                         </div>
                                         <div class="row">
@@ -89,9 +83,9 @@
                                             <div class="col-4">{{__('levels.type')}}</div>
                                             <div class="col-8">:
                                                 @if ($fund_transfer->fromAccount->account_type == 1)
-                                                    Merchant
+                                                    {{ __('merchant.merchant') }}
                                                 @else
-                                                    Personal
+                                                    {{ __('merchant.personal') }}
                                                 @endif
                                             </div>
                                         </div>
@@ -111,17 +105,11 @@
                                         <div class="row">
                                             <div class="col-4">{{__('levels.bank')}}</div>
                                             <div class="col-8">:
-                                                @if ($fund_transfer->toAccount->bank == 1)
-                                                    BB
-                                                @elseif($fund_transfer->toAccount->bank == 2)
-                                                    DBBL
-                                                @elseif($fund_transfer->toAccount->bank == 3)
-                                                    IB
-                                                @endif
+                                                {{ __('account_bank.' . $fund_transfer->toAccount->bank) }}
                                             </div>
                                         </div>
                                         <div class="row">
-                                            <div class="col-4">Branch</div>
+                                            <div class="col-4">{{ __('levels.branch_name') }}</div>
                                             <div class="col-8">: {{$fund_transfer->toAccount->branch_name}}</div>
                                         </div>
                                         <div class="row">
@@ -138,9 +126,9 @@
                                             <div class="col-4">{{__('levels.type')}}</div>
                                             <div class="col-8">:
                                                 @if ($fund_transfer->toAccount->account_type == 1)
-                                                    Merchant
+                                                    {{ __('merchant.merchant') }}
                                                 @else
-                                                    Personal
+                                                    {{ __('merchant.personal') }}
                                                 @endif
                                             </div>
                                         </div>

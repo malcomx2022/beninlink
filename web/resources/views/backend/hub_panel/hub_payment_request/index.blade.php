@@ -76,7 +76,7 @@
                                         <td>
                                             @if($payment->status == \App\Enums\ApprovalStatus::PENDING)
                                                 <div class="row">
-                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                                     <div class="dropdown-menu">
                                                         @if( hasPermission('hub_payment_request_delete') == true )
                                                             <form id="delete"  action="{{route('hub-panel.payment-request.delete',$payment->id)}}" method="POST" data-title="{{ __('delete.hub_payment_request') }}">

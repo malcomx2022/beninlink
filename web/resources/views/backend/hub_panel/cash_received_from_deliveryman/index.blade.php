@@ -98,7 +98,7 @@
                                         <td>{{dateFormat($statement->date)}}</td>
 
                                         <td>
-                                            <a href="{{ static_asset($statement->upload->original) }}" download="" >Download</a>
+                                            <a href="{{ static_asset($statement->upload->original) }}" download="">{{ __('backup.download') }}</a>
                                         </td>
                                         <td>{{ formatAmount($statement->amount) }}</td>
                                         @if(
@@ -107,7 +107,7 @@
                                         )
                                             <td>
                                                 <div class="row">
-                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                                     <div class="dropdown-menu">
                                                         @if(hasPermission('cash_received_from_delivery_man_update') == true  )
                                                             <a href="{{route('cash.received.deliveryman.edit',$statement->id)}}" class="dropdown-item"><i class="fas fa-edit" aria-hidden="true"></i> {{ __('levels.edit') }}</a>

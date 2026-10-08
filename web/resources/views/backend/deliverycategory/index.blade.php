@@ -66,7 +66,7 @@
                                     @if (hasPermission('delivery_category_update') || hasPermission('delivery_category_delete') )
                                     <td>
                                         <div class="row">
-                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                             <div class="dropdown-menu">
                                                 @if (hasPermission('delivery_category_update'))
                                                     <a href="{{route('delivery-category.edit',$deliverycategory->id)}}" class="dropdown-item"><i class="fas fa-edit" aria-hidden="true"></i> {{ __('levels.edit') }}</a>

@@ -45,11 +45,11 @@
         <table style="width:100%;height:50px;max-width:650px;margin: auto;background-color: white;">
             <tr>
                 <td style="padding:30px;" colspan="2">
-                    <p>Name  :   <b style="font-style: italic;">{{ @$data['name'] }}</b></p>
-                    <p>Email :   <b style="font-style: italic;">{{ @$data['email'] }}</b></p>
-                    <p>Subject : <b style="font-style: italic;">{{ @$data['subject'] }}</b></p>
+                    <p>{{ __('support.name') }} :   <b style="font-style: italic;">{{ @$data['name'] }}</b></p>
+                    <p>{{ __('levels.email') }} :   <b style="font-style: italic;">{{ @$data['email'] }}</b></p>
+                    <p>{{ __('support.subject') }} : <b style="font-style: italic;">{{ @$data['subject'] }}</b></p>
                     <span>
-                        <b>Message:</b>
+                        <b>{{ __('support.message') }} :</b>
                     </span>
                     <p style="line-height: 1.5;">{!! @$data['message'] !!}</p>
                 </td>

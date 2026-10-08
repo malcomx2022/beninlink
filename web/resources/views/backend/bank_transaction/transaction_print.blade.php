@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>   Bank transaction | print</title>
+    <title>{{ __('dashboard.bank_transaction') }} | {{ __('levels.print') }}</title>
     <link rel="shortcut icon" href="{{ asset(settings()->favicon_image)}}" type="image/x-icon">
     <link rel="stylesheet" href="{{ asset('backend/')}}/css/bulk_print.css">
 
@@ -12,7 +12,7 @@
 </head>
 <body>
         <div class="print" style="text-align: right" >
-            <a href="#" onclick="window.close();" class="btn-danger">Close</a>
+            <a href="#" onclick="window.close();" class="btn-danger">{{ __('pickupRequest.close') }}</a>
 
         </div>
 
@@ -59,34 +59,22 @@
 
                                         <td>
                                             @if ($transaction->fund_transfer_id !==null)
-                                                <span>From :</span>
+                                                <span>{{ __('levels.from') }} :</span>
                                                     @if($transaction->fundTransfer->fromAccount->gateway == 1)
-                                                        {{@$transaction->fromAccount->user->name}} (Cash)
+                                                        {{@$transaction->fromAccount->user->name}} ({{ __('account_gateway.1') }})
                                                     @else
-                                                        @if($transaction->fundTransfer->fromAccount->gateway == 3)
-                                                            bKash ,
-                                                        @elseif ($transaction->fundTransfer->fromAccount->gateway == 4)
-                                                            Rocket ,
-                                                        @elseif ($transaction->fundTransfer->fromAccount->gateway == 5)
-                                                            Nagad ,
-                                                        @endif
+                                                        {{ __('account_gateway.' . $transaction->fundTransfer->fromAccount->gateway) }} ,
                                                         {{$transaction->fundTransfer->fromAccount->account_holder_name}}
                                                         ({{$transaction->fundTransfer->fromAccount->account_no}}
                                                         {{$transaction->fundTransfer->fromAccount->branch_name}}
                                                         {{$transaction->fundTransfer->fromAccount->mobile}})
                                                     @endif
                                                 </br>
-                                                <span>To :</span>
+                                                <span>{{ __('To') }} :</span>
                                                     @if($transaction->fundTransfer->toAccount->gateway == 1)
-                                                        {{@$transaction->toAccount->user->name}} (Cash)
+                                                        {{@$transaction->toAccount->user->name}} ({{ __('account_gateway.1') }})
                                                     @else
-                                                        @if($transaction->fundTransfer->toAccount->gateway == 3)
-                                                            bKash ,
-                                                        @elseif ($transaction->fundTransfer->toAccount->gateway == 4)
-                                                            Rocket ,
-                                                        @elseif ($transaction->fundTransfer->toAccount->gateway == 5)
-                                                            Nagad ,
-                                                        @endif
+                                                        {{ __('account_gateway.' . $transaction->fundTransfer->toAccount->gateway) }} ,
                                                         {{$transaction->fundTransfer->toAccount->account_holder_name}}
                                                         ({{$transaction->fundTransfer->toAccount->account_no}}
                                                         {{$transaction->fundTransfer->toAccount->branch_name}}
@@ -94,15 +82,9 @@
                                                     @endif
                                             @else
                                                 @if($transaction->account->gateway == 1)
-                                                    {{@$transaction->account->user->name}} (Cash)
+                                                    {{@$transaction->account->user->name}} ({{ __('account_gateway.1') }})
                                                 @else
-                                                    @if($transaction->account->gateway == 3)
-                                                        bKash ,
-                                                    @elseif ($transaction->account->gateway == 4)
-                                                        Rocket ,
-                                                    @elseif ($transaction->account->gateway == 5)
-                                                        Nagad ,
-                                                    @endif
+                                                    {{ __('account_gateway.' . $transaction->account->gateway) }} ,
                                                     {{$transaction->account->account_holder_name}}
                                                     ({{$transaction->account->account_no}}
                                                     {{$transaction->account->branch_name}}

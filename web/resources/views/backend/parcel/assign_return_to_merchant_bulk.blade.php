@@ -26,7 +26,7 @@
                             <label for="return_todeliveryman_bulk">{{ __('deliveryman.title')}}<span class="text-danger">*</span></label>
                             <div class="form-control-wrap deliveryman-search">
                                 <select id="return_todeliveryman_bulk" class="form-control " name="delivery_man_id" data-url="{{ route('parcel.deliveryman.search') }}" >
-                                    <option selected disabled>Select delivery man</option>
+                                    <option selected disabled>{{ __('Select Delivery Man') }}</option>
                                     @foreach ($deliverymans as $deliveryman)
                                         <option value="{{ $deliveryman->id }}">{{ $deliveryman->user->name }}</option>
                                     @endforeach
@@ -45,13 +45,13 @@
                         <div class="form-group ">
                             <input type="hidden" name="_token" id="token" value="{{ csrf_token() }}">
                             <div id="ids"></div>
-                            <small id="transfer_to_hub_track_id_not_found4" class="text-danger mt-2" style="display: none">Parcel not found!</small>
-                            <small id="transfer_to_hub_track_id_found4" class="text-success mt-2" style="display: none">Parcel added successfully.</small>
-                            <small id="transfer_to_hub_track_id_already_added4" class="text-danger mt-2" style="display: none">Already added!</small>
+                            <small id="transfer_to_hub_track_id_not_found4" class="text-danger mt-2" style="display: none">{{ __('parcel.not_found') }}</small>
+                            <small id="transfer_to_hub_track_id_found4" class="text-success mt-2" style="display: none">{{ __('parcel.added_msg') }}</small>
+                            <small id="transfer_to_hub_track_id_already_added4" class="text-danger mt-2" style="display: none">{{ __('Already added!') }}</small>
                         </div>
                         <div class="form-group">
                             <label class="custom-control custom-checkbox">
-                                <input id="send_sms" name="send_sms" class="custom-control-input" type="checkbox"><span class="custom-control-label">Send SMS</span>
+                                <input id="send_sms" name="send_sms" class="custom-control-input" type="checkbox"><span class="custom-control-label">{{ __('Send SMS') }}</span>
                             </label>
                         </div>
                     </div>

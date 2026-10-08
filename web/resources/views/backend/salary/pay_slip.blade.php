@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title> Salary pay slip | print</title>
+    <title>{{ __('salary.pay_slip') }} | {{ __('levels.print') }}</title>
     <link rel="shortcut icon" href="{{ static_asset(settings()->favicon_image)}}" type="image/x-icon">
     <link rel="stylesheet" href="{{ static_asset('backend/')}}/css/payslip.css">
 </head>
@@ -38,7 +38,7 @@
                         </h3>
                     </div>
                 </div>
-                <div style="overflow:hidden;padding:0px 20px;"><span style="float: right;font-size:12px;" > <font style="font-weight: bold ">Date :</font>  {{ dateFormat($salary->date ) }}</span></div>
+                <div style="overflow:hidden;padding:0px 20px;"><span style="float: right;font-size:12px;" > <font style="font-weight: bold ">{{ __('levels.date') }} :</font>  {{ dateFormat($salary->date ) }}</span></div>
                 <hr>
                 <div class="row" style="margin-top: 20px">
                     <div class="col-sm-12 table-responsive">
@@ -84,7 +84,7 @@
                                             <div class="row">
                                                 <div class="col-4">{{ __('salary.pay_period') }}</div>
 
-                                                <div class="col-8">: {{ @\Carbon\Carbon::createFromFormat('Y-m',$salary->month)->format('M Y')}}</div>
+                                                <div class="col-8">: {{ @\Carbon\Carbon::createFromFormat('Y-m',$salary->month)->translatedFormat('M Y')}}</div>
                                             </div>
                                         </div>
                                     </div>

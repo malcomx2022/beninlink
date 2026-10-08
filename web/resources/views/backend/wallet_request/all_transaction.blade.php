@@ -61,7 +61,7 @@
                             <div class="row">
                                 <button tabindex="-1" data-toggle="dropdown" type="button"
                                     class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span
-                                        class="sr-only">Toggle Dropdown</span></button>
+                                        class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                 <div class="dropdown-menu">
                                     @if (App\Enums\Wallet\WalletType::EXPENSE != $wallet->type)
                                         @if (@$wallet->status == \App\Enums\Wallet\WalletStatus::PENDING)
@@ -72,7 +72,7 @@
                                                     method="post">
                                                     @csrf
                                                     @method('put')
-                                                    <button type="submit" title="Approve" class="dropdown-item"><i
+                                                    <button type="submit" title="{{ __('parcel.approve') }}" class="dropdown-item"><i
                                                             class="fa fa-check  me-2 "></i>
                                                         {{ __('parcel.approve') }}</button>
                                                 </form>
@@ -84,7 +84,7 @@
                                                     method="post">
                                                     @csrf
                                                     @method('put')
-                                                    <button type="submit" class="dropdown-item" title="Reject"><i
+                                                    <button type="submit" class="dropdown-item" title="{{ __('parcel.reject') }}"><i
                                                             class="fa fa-close me-2 "></i>
                                                         {{ __('parcel.reject') }}</button>
                                                 </form>
@@ -97,7 +97,7 @@
                                                 method="post">
                                                 @csrf
                                                 @method('delete')
-                                                <button type="submit" title="Delete" class="dropdown-item"><i
+                                                <button type="submit" title="{{ __('levels.delete') }}" class="dropdown-item"><i
                                                         class="fa fa-trash me-2"></i>{{ __('levels.delete') }}</button>
                                             </form>
                                         @endif

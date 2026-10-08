@@ -101,7 +101,7 @@
                                         @endif
                                         <br/>
                                         @if (hasPermission('company_subscribe')) 
-                                            <button class="btn btn-primary btn-sm  modalBtn mt-2" data-bs-toggle="modal" data-bs-target="#dynamic-modal" data-title="{{ @$company->company->name }}" data-url="{{ route('company.subscription.switch',$company->id) }}">Subscribe Now</button>
+                                            <button class="btn btn-primary btn-sm  modalBtn mt-2" data-bs-toggle="modal" data-bs-target="#dynamic-modal" data-title="{{ @$company->company->name }}" data-url="{{ route('company.subscription.switch',$company->id) }}">{{ __('Subscribe now') }}</button>
                                         @endif
                                     </td>
                                     <td>{!! $company->my_status !!}</td>
@@ -111,7 +111,7 @@
                                     )
                                         <td>
                                             <div class="row">
-                                                <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                                <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                                 <div class="dropdown-menu">
                                                     
                                                     @if( hasPermission('company_update') == true )

@@ -15,7 +15,7 @@
                         <label for="delivery_man_search_assign">{{ __('parcel.pickup_man')}}</label> <span class="text-danger">*</span>
                         <div class="form-control-wrap deliveryman-search">
                             <select id="delivery_man_search_assign" class="form-control delivery_man_search" name="delivery_man_id" data-url="{{ route('parcel.deliveryman.search') }}" >
-                                <option selected disabled>Select delivery man</option>
+                                <option selected disabled>{{ __('Select Delivery Man') }}</option>
                                 @foreach ($deliverymans as $deliveryman)
                                 <option value="{{ $deliveryman->id }}">{{ $deliveryman->user->name }}</option>
                                 @endforeach
@@ -35,14 +35,14 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="custom-control custom-checkbox">
-                                    <input id="send_sms_pickuman" name="send_sms_pickuman" class="custom-control-input" type="checkbox"><span class="custom-control-label">Send SMS for pickup man</span>
+                                    <input id="send_sms_pickuman" name="send_sms_pickuman" class="custom-control-input" type="checkbox"><span class="custom-control-label">{{ __('Send SMS to the pickup man') }}</span>
                                 </label>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="custom-control custom-checkbox">
-                                    <input id="send_sms_merchant" name="send_sms_merchant" class="custom-control-input" type="checkbox"><span class="custom-control-label">Send SMS for merchant </span>
+                                    <input id="send_sms_merchant" name="send_sms_merchant" class="custom-control-input" type="checkbox"><span class="custom-control-label">{{ __('Send SMS to the merchant') }}</span>
                                 </label>
                             </div>
                         </div>

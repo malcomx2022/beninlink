@@ -13,7 +13,7 @@
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="{{route('dashboard.index')}}" class="breadcrumb-link">{{ __('parcel.dashboard') }}</a></li>
                             <li class="breadcrumb-item"><a href="{{route('parcel.index') }}" class="breadcrumb-link">{{ __('parcel.title') }}</a></li>
-                            <li class="breadcrumb-item"><a href="" class="breadcrumb-link active">Print</a></li>
+                            <li class="breadcrumb-item"><a href="" class="breadcrumb-link active">{{ __('levels.print') }}</a></li>
                         </ol>
                     </nav>
                 </div>
@@ -30,33 +30,33 @@
                         </h3>
                     </div>
                     <div class="col-sm-6">
-                        <h5 class="float-sm-right">Date: {{ dateFormat($parcel->created_at)}}</h5>
+                        <h5 class="float-sm-right">{{ __('levels.date') }} : {{ dateFormat($parcel->created_at)}}</h5>
                     </div>
                 </div>
                 <hr>
                 <div class="row invoice-info">
                     <div class="col-sm-4 invoice-col" style="float:left;">
-                        From  <address class="font-weight-light">
+                        {{ __('Merchant') }}  <address class="font-weight-light">
                             <strong>{{ $parcel->merchant->business_name }}</strong><br>
                             {{ $parcel->merchant->merchant_unique_id }}<br>
-                            Phone: {{ $parcel->merchant->user->mobile }} <br>
-                            Email: {{ $parcel->merchant->user->email }}
+                            {{ __('levels.phone') }} : {{ $parcel->merchant->user->mobile }} <br>
+                            {{ __('levels.email') }} : {{ $parcel->merchant->user->email }}
                         </address>
                     </div>
                     <div class="col-sm-4 invoice-col" style="float:left;">
-                        To
+                        {{ __('Customer Info') }}
                         <address class="font-weight-light">
                             <strong>{{ $parcel->customer_name}}</strong><br>
-                            Phone: {{ $parcel->customer_phone }}<br>
-                            Address: {{ $parcel->customer_address }}
+                            {{ __('levels.phone') }} : {{ $parcel->customer_phone }}<br>
+                            {{ __('levels.address') }} : {{ $parcel->customer_address }}
                         </address>
                     </div>
 
                     <div class="col-sm-4 font-weight-light" style="float:right;">
-                        <b>Track ID:</b> {{ $parcel->tracking_id }}<br>
-                        <b>Delivery Type:</b> {{ $parcel->delivery_type_name }}<br>
-                        <b>Pickup Date:</b> {{ dateFormat($parcel->pickup_date)}}<br>
-                        <b>Delivery Date:</b> {{ dateFormat($parcel->delivery_date) }}
+                        <b>{{ __('Tracking ID') }} :</b> {{ $parcel->tracking_id }}<br>
+                        <b>{{ __('levels.delivery_type') }} :</b> {{ $parcel->delivery_type_name }}<br>
+                        <b>{{ __('Pickup Date') }} :</b> {{ dateFormat($parcel->pickup_date)}}<br>
+                        <b>{{ __('Delivery Date') }} :</b> {{ dateFormat($parcel->delivery_date) }}
                     </div>
                 </div>
 
@@ -66,10 +66,10 @@
                             <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Category</th>
-                                <th>Weight</th>
-                                <th>Qty</th>
-                                <th>Total</th>
+                                <th>{{ __('levels.category') }}</th>
+                                <th>{{ __('levels.weight') }}</th>
+                                <th>{{ __('Qty') }}</th>
+                                <th>{{ __('Total') }}</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -78,17 +78,17 @@
                                 <td data-label="Category">{{ $parcel->deliveryCategory->title }}</td>
                                 <td data-label="Weight">{{ $parcel->weight }}</td>
                                 <td data-label="Qty">1</td>
-                                <td data-label="Total">{{ $parcel->cash_collection }}</td>
+                                <td data-label="Total">{{ formatAmount($parcel->cash_collection) }}</td>
                             </tr>
                             </tbody>
                             <tfoot>
                             <tr>
-                                <td colspan="4"><span class="pull-right"><b>Delivery Amount</b></span></td>
-                                <td><b>{{$parcel->total_delivery_amount}}</b></td>
+                                <td colspan="4"><span class="pull-right"><b>{{ __('Total Charge') }}</b></span></td>
+                                <td><b>{{ formatAmount($parcel->total_delivery_amount) }}</b></td>
                             </tr>
                             <tr>
-                                <td colspan="4"><span class="pull-right"><b>Current Payable</b></span></td>
-                                <td><b>{{$parcel->current_payable}}</b></td>
+                                <td colspan="4"><span class="pull-right"><b>{{ __('parcel.current_payable') }}</b></span></td>
+                                <td><b>{{ formatAmount($parcel->current_payable) }}</b></td>
                             </tr>
                             </tfoot>
                         </table>
@@ -99,7 +99,7 @@
             <div class="row no-print">
                 <div class="col-sm-12">
                     <div class="float-sm-right">
-                        <button class="btn btn-primary m-1" onclick="printDiv('printablediv')"><i class="fa fa-download"></i>Print</button>
+                        <button class="btn btn-primary m-1" onclick="printDiv('printablediv')"><i class="fa fa-download"></i> {{ __('levels.print') }}</button>
                     </div>
                 </div>
             </div>

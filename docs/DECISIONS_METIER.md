@@ -2,7 +2,7 @@
 
 > Registre des décisions qui ne relèvent pas du code seul. Chaque entrée dit ce
 > qui a été **tranché** (et livré), ce qui reste **à trancher** par le métier, et
-> par qui. Mis à jour le 2026-10-08, S116 (D1-D16 ; les décisions R1-R9 du porteur du
+> par qui. Mis à jour le 2026-10-08, S117 (D1-D16 ; les décisions R1-R9 du porteur du
 > 2026-10-03 sont ventilées dans les lignes qu'elles tranchent).
 
 | # | Sujet | État | Livré dans le code | Reste à trancher |
@@ -14,7 +14,7 @@
 | D5 | Fiches de fraude sans `company_id` | ✅ tranché | migration de rattachement par l'auteur | — |
 | D14 | Décisions produit R3–R9 | ✅ tranché (S75) | pas de prorata mais **dit avant confirmation** (R3) ; SMS français seul (R4) ; menu Réglages visible en **OU** (R5) ; catalogue catégories **super-admin** (R6) ; statut TVA explicite (R7 b) ; relevés **par courriel** à l'émission (R9) | signature sur retour (R8) après la recette ; expansion anglophone des SMS ; personnalisation des catalogues par société |
 | D15 | Dette technique T2, T3, T9 | ✅ tranché (S107) | **pas** de migration des colonnes `decimal` (constat `beninlink:montants-non-entiers`) ; Bootstrap 4 + 5 cohabitent, étapes C–E non entreprises ; **pas** de re-fusion We Courier, le fork est le produit | rouvrir T3 après la recette si un écran le demande ; T9 à chaque version de l'éditeur, contre la grille « ce qui nous manque » |
-| D16 | Comptes de paiement : codes 3, 4, 5 | ⏳ **à trancher** (relevé S116) | affichage neutre « Mobile Money » côté marchand (S116) ; rien n'est renommé en base | quel opérateur béninois porte chaque code — proposition : 3 = MTN MoMo, 4 = Moov Money, 5 = à préciser |
+| D16 | Comptes de paiement : codes 3, 4, 5 et banques | 🔁 **défaut réversible** (S117) | 3 = MTN MoMo, 4 = Moov Money, 5 = Autre Mobile Money ; banques 1-8 béninoises ; une seule source, `lang/*/account_gateway.php` et `account_bank.php` ; rien n'est renommé en base | le porteur confirme ou corrige les libellés (un fichier) ; le transporteur vérifie la banque de ses comptes créés avant S117 |
 
 ---
 
@@ -1087,7 +1087,7 @@ trois dans le même sens : on ne refait pas ce qui marche, on le **tient**.
 décision mais une attente : il s'ouvrira quand `league/commonmark` et ses
 dépendances le permettront.
 
-## D16 — Comptes de paiement : à quel opérateur béninois correspondent les codes 3, 4, 5 ? ⏳ (relevé S116)
+## D16 — Comptes de paiement : à quel opérateur béninois correspondent les codes 3, 4, 5 ? 🔁 (relevé S116, défaut réversible S117)
 
 Un compte de paiement (`accounts.gateway`) porte un code : 1 espèces, 2 banque, et **3, 4, 5**
 que le socle nomme **bKash, Rocket, Nagad** — les portefeuilles mobiles du Bangladesh. Le
@@ -1108,4 +1108,21 @@ semences (S92, `MTN MoMo` / `Moov Money`, les deux opérateurs servis par FedaPa
 
 Une fois tranché : libellés du formulaire de compte et des écrans du back-office (`merchantmanage/
 payment/*`), clés `merchant.mtn_momo` / `merchant.moov_money` déjà présentes dans `lang/fr/merchant.php`.
+
+**Ce que S117 a fait — défaut réversible, comme R1, R2 et R8 (S106).** Le back-office ne pouvait pas
+attendre : un compte du transporteur se créait en choisissant bKash, Rocket ou Nagad, et sa banque
+(`accounts.bank`, autre code entier) parmi **BB, DBBL, IB** — trois banques du Bangladesh. Les
+libellés vivent désormais en **un seul endroit**, et tous les écrans les lisent :
+
+| Fichier | Codes |
+|---|---|
+| `lang/fr/account_gateway.php` | 1 Espèces · 2 Banque · **3 MTN MoMo** · **4 Moov Money** · 5 Autre Mobile Money |
+| `lang/fr/account_bank.php` | 1 Ecobank Bénin · 2 BOA-Bénin · 3 Orabank Bénin · 4 NSIA Banque Bénin · 5 UBA Bénin · 6 Coris Bank Bénin · 7 BIIC · 8 Autre banque |
+
+Rien n'est réécrit en base. ⚠️ Un compte **créé avant S117** avec la banque « BB », « DBBL » ou « IB »
+s'affiche maintenant sous le nom béninois du même code : le transporteur relit la banque de ses
+comptes (Comptes → modifier) — sur une installation béninoise, le libellé d'origine n'a jamais été vrai.
+Le panneau marchand garde « Mobile Money » (S116), vrai quel que soit l'opérateur.
+**Pour corriger** : changer la ligne du fichier, et sa jumelle `lang/en/` ; `BackOfficeSpeaksFrenchTest`
+fixe les valeurs, on le change avec la décision.
 

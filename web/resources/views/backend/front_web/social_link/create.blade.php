@@ -37,7 +37,7 @@
                                 @enderror
                             </div>
                             <div class="form-group  col-md-6">
-                                <label for="icon">{{ __('levels.icon') }} <span class="text-danger">*</span> <small><b>(Example: fa fa-facebook ) </small><a href="https://fontawesome.com/icons" target="_blank" class="text-primary">{{ __('levels.click_here') }}</a></b></label>
+                                <label for="icon">{{ __('levels.icon') }} <span class="text-danger">*</span> <small><b>({{ __('Example: fa fa-facebook') }}) </small><a href="https://fontawesome.com/icons" target="_blank" class="text-primary">{{ __('levels.click_here') }}</a></b></label>
                                 <input id="icon" type="text" name="icon" data-parsley-trigger="change" placeholder="{{ __('levels.enter_icon') }}" autocomplete="off" class="form-control @error('icon') is-invalid @enderror" value="{{old('icon')}}" >
                                 @error('icon')
                                     <small class="text-danger mt-2">{{ $message }}</small>

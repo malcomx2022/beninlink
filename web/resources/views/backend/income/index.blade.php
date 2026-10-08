@@ -40,15 +40,9 @@
 
                                             <option {{ (old('account_id',$request->account_id) == $account->id) ? 'selected' : '' }} value="{{ $account->id }}">
                                                 @if($account->gateway == 1)
-                                                    {{$account->user->name}} (Cash)
+                                                    {{$account->user->name}} ({{ __('account_gateway.1') }})
                                                 @else
-                                                    @if($account->gateway == 3)
-                                                        bKash ,
-                                                    @elseif ($account->gateway == 4)
-                                                        Rocket ,
-                                                    @elseif ($account->gateway == 5)
-                                                        Nagad ,
-                                                    @endif
+                                                    {{ __('account_gateway.' . $account->gateway) }} ,
                                                     {{$account->account_holder_name}}
                                                     ({{$account->account_no}}
                                                     {{$account->branch_name}}
@@ -200,7 +194,7 @@
                                         )
                                             <td>
                                                 <div class="row">
-                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                                    <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                                     <div class="dropdown-menu">
                                                         @if(  hasPermission('income_update') == true  )
                                                             <a href="{{route('income.edit',$income->id)}}" class="dropdown-item"><i class="fas fa-edit" aria-hidden="true"></i> {{ __('levels.edit') }}</a>

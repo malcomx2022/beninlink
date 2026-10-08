@@ -33,4 +33,7 @@ return [
     'update_msg'            => 'Règle douanière mise à jour.',
     'delete_msg'            => 'Règle douanière supprimée.',
     'error_msg'             => 'Une erreur est survenue.',
+
+    /** Mention sous le titre des règles : le référentiel livré reste à faire valider. */
+    'referentiel_a_valider' => '— référentiel de départ, à faire valider par un transitaire.',
 ];

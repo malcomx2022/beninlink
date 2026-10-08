@@ -82,7 +82,7 @@
                                                     <a class="dropdown-item {{ (request()->is('admin/merchant*')) ? 'active' : '' }}" href="{{route('merchant.index')}}" aria-expanded="false" data-target="#submenu-1" aria-controls="submenu-1">{{ __('menus.merchants') }}</a>
                                                     @endif
                                                     @if(hasPermission('payment_read') == true)
-                                                    <a class="dropdown-item {{ (request()->is('admin/payment*')) ? 'active' : '' }}" href="{{ route('merchant.manage.payment.index') }}">Payments</a>
+                                                    <a class="dropdown-item {{ (request()->is('admin/payment*')) ? 'active' : '' }}" href="{{ route('merchant.manage.payment.index') }}">{{ __('menus.payments') }}</a>
                                                     @endif
                                                 @endif
                                             </div>
@@ -354,7 +354,7 @@
                                             <a class="nav-link nav-icons mt-md-3" href="#" id="navbarDropdownMenuLink1" data-toggle="dropdown"   aria-haspopup="true" aria-expanded="false"><i class="fas fa-fw fa-bell"></i> <span class="indicator"></span></a>
                                             <ul class="dropdown-menu dropdown-menu-right notification-dropdown">
                                                 <li>
-                                                    <div class="notification-title"> Notification</div>
+                                                    <div class="notification-title"> {{ __('Notification') }}</div>
                                                     <div class="notification-list">
                                                         <div class="list-group">
                                                             @foreach (notifications() as $notify )
@@ -431,7 +431,7 @@
                             <a class="nav-link nav-icons mt-md-3" href="#" id="navbarDropdownMenuLink1" data-toggle="dropdown"   aria-haspopup="true" aria-expanded="false"><i class="fas fa-fw fa-bell"></i> <span class="mobile-notification indicator admin"></span></a>
                             <ul class="dropdown-menu dropdown-menu-right notification-dropdown">
                                 <li>
-                                    <div class="notification-title"> Notification</div>
+                                    <div class="notification-title"> {{ __('Notification') }}</div>
                                     <div class="notification-list">
                                         <div class="list-group">
                                             @foreach (notifications() as $notify )

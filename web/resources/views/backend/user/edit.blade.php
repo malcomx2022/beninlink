@@ -135,7 +135,7 @@
                                 <div class="form-group pt-1">
                                     <label for="hub-select">{{ __('levels.hub') }}</label>
                                     <select class="form-control @error('hub_id') is-invalid @enderror" id="hub-select" name="hub_id">
-                                        <option value="" >None</option>
+                                        <option value="" >{{ __('No hub') }}</option>
                                         @foreach($hubs as $hub)
                                         <option {{$user->hub_id == $hub->id ? 'selected':''}} value="{{$hub->id}}">{{$hub->name}}</option>
                                         @endforeach

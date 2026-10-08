@@ -1,16 +1,9 @@
-
-@extends('errors.layout',['purchase_verify'=>'purchase_verify'])
-@section('title', __('WemaxDevs Product Activation')) 
+{{-- S117 : la page d'activation du socle portait le logo et le WhatsApp de l'éditeur, et parlait de
+     CodeCanyon. Elle n'est plus servie (PurchaseVerify::purchaseVerify() rend toujours vrai) ; si elle
+     revenait, elle dirait seulement que le domaine est inactif, au nom de la plateforme. --}}
+@extends('errors.layout', ['administrator_contact' => true])
+@section('title', __('This domain is inactive.'))
 @section('message-headline', __('This domain is inactive.'))
-@section('message-title', __('WemaxDevs Product Activation.')) 
-@section('logo')
-<img alt="WemaxDevs" src="{{ static_asset('wemaxdevs.png') }}" width="200px"/>
-@endsection
-@section('message') 
-    <h4>Instruction for activating purchase code</h4>
-    <ol class="d-inline-block">
-        <li class="text-left">Make sure you have valid purchase code.</li>
-        <li class="text-left">Make sure your CodeCanyon username is correct.</li>
-        <li class="text-left">Make sure your domain is correct. example:https://yourdomain.com</li>
-    </ol> 
+@section('message')
+    <p>{{ __('Please contact the platform administrator to activate it.') }}</p>
 @endsection

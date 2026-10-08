@@ -344,7 +344,7 @@
                                                                 <button tabindex="-1" data-toggle="dropdown"
                                                                     type="button"
                                                                     class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span
-                                                                        class="sr-only">Toggle Dropdown</span></button>
+                                                                        class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                                                 <div class="dropdown-menu">
                                                                     {!! parcelStatus($parcel) !!}
                                                                 </div>
@@ -360,7 +360,7 @@
                                                     <p>{{ __('invoice.' . @$parcel->invoice->status) }}</p>
                                                     {{ @$parcel->invoice->invoice_id }}<br />
                                                     @if ($parcel->invoice->status == App\Enums\InvoiceStatus::PAID)
-                                                        Paid At: {{ @dateFormat(@$parcel->invoice->updated_at) }}
+                                                        {{ __('Paid At:') }} {{ @dateFormat(@$parcel->invoice->updated_at) }}
                                                     @endif
                                                 @else
                                                     N/A

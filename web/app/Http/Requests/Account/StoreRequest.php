@@ -40,7 +40,7 @@ class StoreRequest extends FormRequest
                 'gateway'             => ['required'],
                 'account_holder_name' => ['required'],
                 'account_no'          => ['required','numeric'],
-                'bank'                => ['required'],
+                'bank'                => ['required', 'in:' . implode(',', array_keys(trans('account_bank')))], // D16 (S117) : codes de account_bank
                 'branch_name'         => ['required'],
                 'opening_balance'     => ['required','numeric'],
             ];

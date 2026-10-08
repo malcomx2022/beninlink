@@ -15,7 +15,7 @@
                         <label for="deliverymanreschedule">{{ __('deliveryman.title')}}</label> <span class="text-danger">*</span>
                         <div class="form-control-wrap deliveryman-search">
                             <select id="deliverymanreschedule" class="form-control deliverymanreschedule" name="delivery_man_id" data-url="{{ route('parcel.deliveryman.search') }}" >
-                                <option selected disabled>Select delivery man</option>
+                                <option selected disabled>{{ __('Select Delivery Man') }}</option>
                                 @foreach ($deliverymans as $deliveryman)
                                 <option value="{{ $deliveryman->id }}">{{ $deliveryman->user->name }}</option>
                                 @endforeach
@@ -40,7 +40,7 @@
                     </div>
                     <div class="form-group">
                         <label class="custom-control custom-checkbox">
-                            <input id="send_sms" name="send_sms" class="custom-control-input" type="checkbox"><span class="custom-control-label">Send SMS</span>
+                            <input id="send_sms" name="send_sms" class="custom-control-input" type="checkbox"><span class="custom-control-label">{{ __('Send SMS') }}</span>
                         </label>
                     </div>
                 </div>

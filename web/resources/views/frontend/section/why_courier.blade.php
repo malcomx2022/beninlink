@@ -3,7 +3,7 @@
     <div class="container mb-5">
         <div class="row  mb-3">
             <div class="col-lg-8 m-auto">
-                <h3 class="display-6 title text-center mb-5"><span class="section-title">{{ __('levels.why') }} Choose US</span></h3>
+                <h3 class="display-6 title text-center mb-5"><span class="section-title">{{ __('Why choose us') }}</span></h3>
             </div>
         </div>
         <div class="row py-2 align-items-top "> 

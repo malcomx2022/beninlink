@@ -63,7 +63,7 @@
                                     @if(hasPermission('asset_category_update') == true || hasPermission('asset_category_delete') == true )
                                     <td>
                                         <div class="row">
-                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                             <div class="dropdown-menu">
                                                 @if(hasPermission('asset_category_update'))
                                                     <a href="{{route('asset-category.edit',$assetcategory->id)}}" class="dropdown-item"><i class="fas fa-edit" aria-hidden="true"></i> {{ __('levels.edit') }}</a>

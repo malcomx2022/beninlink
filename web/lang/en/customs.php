@@ -32,4 +32,6 @@ return [
     'update_msg'            => 'Customs rule updated.',
     'delete_msg'            => 'Customs rule deleted.',
     'error_msg'             => 'Something went wrong.',
+
+    'referentiel_a_valider' => '— starting reference, to be validated by a customs broker.',
 ];

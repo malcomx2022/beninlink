@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title> {{ __('parcelStatus.'.$bulk_type) }} | print</title>
+    <title> {{ __('parcelStatus.'.$bulk_type) }} | {{ __('levels.print') }}</title>
     <link rel="shortcut icon" href="{{ asset(settings()->favicon_image)}}" type="image/x-icon">
     <link rel="stylesheet" href="{{ asset('backend/')}}/css/bulk_print.css">
     {{-- Document autonome : il ne charge ni Bootstrap ni les feuilles de la
@@ -51,7 +51,7 @@
                         <span  style="float: left">
                             <font style="font-weight: bold">{{ __('parcel.delivery_man') }} :</font>  <small>{{ @$deliveryman->user->name }}</small>
                         </span>
-                        <span style="float: right" > <font style="font-weight: bold">Date :</font>  {{ dateFormat(date('Y-m-d')) }}</span>
+                        <span style="float: right" > <font style="font-weight: bold">{{ __('levels.date') }} :</font>  {{ dateFormat(date('Y-m-d')) }}</span>
                     </div>
                 </div>
                 <hr>
@@ -89,7 +89,7 @@
                                             {{ $parcel->customer_address }}
                                         </td>
                                         @if(@$transfered_hub)
-                                        <td data-label="hub">{{ $parcel->hub->name }} To {{ $parcel->transferhub->name }}</td>
+                                        <td data-label="hub">{{ $parcel->hub->name }} {{ __('to') }} {{ $parcel->transferhub->name }}</td>
                                         @endif
                                         <td data-label="status ">{!! StatusParcel($parcel->status) !!}</td>
                                         <td data-label="cash_collection ">{{ formatAmount($parcel->cash_collection) }}</td>

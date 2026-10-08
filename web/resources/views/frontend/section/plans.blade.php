@@ -19,11 +19,10 @@
                                 <h3 class="mt-2px font-weight-bold">{{ formatAmount(@$plan->price) }} </h3>
                                 <div class="mx-2 text-start">
                                     <p class="mb-2 font-weight-bold "> / {{ @$plan->intval_name }}</p>
-                                    <p>when billed annually</p>
                                 </div>
                             </div>
                             <ul class="list-unstyled text-start plan-accordion">
-                                <li><i class="fa fa-check text-success me-3"></i>Total parcel count
+                                <li><i class="fa fa-check text-success me-3"></i>{{ __('levels.parcel_count') }}
                                     {{ @$plan->parcel_count }}</li>
 
                                 @foreach ($allmodules as $key=>$module)
@@ -40,7 +39,7 @@
                             </ul>
                         </div>
                         <div class="align-bottom"> 
-                            <a class="btn btn-primary subscribe-btn" href="{{ route('register') }}" >Subscribe</a> 
+                            <a class="btn btn-primary subscribe-btn" href="{{ route('register') }}" >{{ __('Subscribe') }}</a> 
                         </div>
                     </div>
                 </div>

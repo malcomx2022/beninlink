@@ -33,14 +33,14 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="custom-control custom-checkbox">
-                                    <input id="send_sms_customer" name="send_sms_customer" class="custom-control-input" type="checkbox"><span class="custom-control-label">Send SMS for customer</span>
+                                    <input id="send_sms_customer" name="send_sms_customer" class="custom-control-input" type="checkbox"><span class="custom-control-label">{{ __('Send SMS to the customer') }}</span>
                                 </label>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="custom-control custom-checkbox">
-                                    <input id="send_sms_merchant" name="send_sms_merchant" class="custom-control-input" type="checkbox"><span class="custom-control-label">Send SMS for merchant </span>
+                                    <input id="send_sms_merchant" name="send_sms_merchant" class="custom-control-input" type="checkbox"><span class="custom-control-label">{{ __('Send SMS to the merchant') }}</span>
                                 </label>
                             </div>
                         </div>

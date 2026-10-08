@@ -109,15 +109,9 @@
                                             @if ($account->type == App\Enums\AccountType::ADMIN)
                                                 <option {{ (old('account_id') == $account->id) ? 'selected' : '' }} value="{{ $account->id }}">
                                                     @if($account->gateway == 1)
-                                                        {{$account->user->name}} (Cash)
+                                                        {{$account->user->name}} ({{ __('account_gateway.1') }})
                                                     @else
-                                                        @if($account->gateway == 3)
-                                                            bKash ,
-                                                        @elseif ($account->gateway == 4)
-                                                            Rocket ,
-                                                        @elseif ($account->gateway == 5)
-                                                            Nagad ,
-                                                        @endif
+                                                        {{ __('account_gateway.' . $account->gateway) }} ,
                                                         {{$account->account_holder_name}}
                                                         ({{$account->account_no}}
                                                         {{$account->branch_name}}

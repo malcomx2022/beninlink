@@ -1,5 +1,5 @@
 @if (!blank($plan->modules))
-    <h3>Module list</h3>
+    <h3>{{ __('Module list') }}</h3>
     <div class="row">
         @foreach ($plan->modules as $module)
             <div class="col-md-6">
@@ -9,5 +9,5 @@
         @endforeach
     </div>
 @else
-    <div class="text-center">Modules not found.</div>
+    <div class="text-center">{{ __('Modules not found.') }}</div>
 @endif
