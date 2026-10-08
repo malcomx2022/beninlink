@@ -332,6 +332,9 @@ avant les apps.
   partenaires, et les visuels par défaut sont ceux de BeninLink (`resources/brand/generate.py`) — plus de
   « We Courier » en logo, favicon ou illustration de connexion. `PublicBrandAssetsTest` refuse par empreinte
   le retour de l'un des douze fichiers retirés, quel que soit son nom.
+- **Le catalogue français ne garde plus d'anglais** (**S112**) : une entrée de `lang/fr/` identique à sa jumelle
+  de `lang/en/` n'est admise que si sa valeur est dans `FrenchCatalogueTest::PERMISES` (marque, sigle, mot identique).
+  « Hub » se dit **Agence** (comme les semences S92), « Front web » **Site public**.
 - **Le livreur voit l'alerte douanière de sa course, en lecture seule** (**S95**).
   `deliveryman/parcel/details/{id}` porte `customs_alerts` (même `CustomsAlertResource` que S82)
   sur le colis déjà vérifié par `notOwned()` ; un domestique rend `[]`, la course d'un collègue

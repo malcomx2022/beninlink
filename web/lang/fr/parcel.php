@@ -44,7 +44,7 @@ return array (
   'liquid_check_label'  => 'Choisissez ce qui est nécessaire pour le colis',
   'liquid_fragile'      => 'Liquide/Fragile',
   'packaging'           => 'Emballage',
-  'current_payable'     => 'Payable',
+  'current_payable'     => 'À reverser',
   'import_parcel'       => 'Importer',
   'import'              => 'Importer',
   'validation_log'      => 'Journal de validation',
@@ -116,7 +116,7 @@ return array (
 'total_cash_collection'            => 'Collecte totale en espèces',
 'delivery_man'                     => 'Livreur',
 'transfered_hub'                   => 'Hub de transfert',
-'hub'                              => 'Hub',
+'hub'                              => 'Agence',
 'total_charge_amount'              => 'Montant total des frais',
 'vat_amount'                       => 'Montant de la TVA',
 

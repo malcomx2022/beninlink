@@ -166,7 +166,7 @@ return [
     'attributes' => [
         'dashboard' => 'Tableau de bord',
         'profile' => 'Profil',
-        'hub_id' => 'Hub',
+        'hub_id' => 'Agence',
         'image_id' => 'Image',
         'driving_license_image_id' => 'Permis de conduire',
         'image' => 'image',

@@ -16,7 +16,7 @@ return [
   'author'               => 'auteur',
   'name'                 => 'Nom',
   'assetcategory_id'     => 'Catégorie d\'actif',
-  'hub_id'               => 'Hub',
+  'hub_id'               => 'Agence',
   'supplyer_name'        => 'Nom du fournisseur',
   'quantity'             => 'Quantité',
   'warranty'             => 'Garantie',
