@@ -94,7 +94,7 @@ class BlogsRepository implements BlogsInterface
                     File::makeDirectory(public_path('uploads/blogs'));
                 endif;
                 $destinationPath       = public_path('uploads/blogs');
-                $img          = date('YmdHis') . "." . $file->getClientOriginalExtension();
+                $img          = date('YmdHis') . "." . safeUploadExtension($file);
                 $file->move($destinationPath, $img);
                 $file_name            = 'uploads/blogs/' . $img;
             }

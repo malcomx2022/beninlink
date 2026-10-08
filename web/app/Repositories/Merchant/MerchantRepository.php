@@ -427,7 +427,7 @@ class MerchantRepository implements MerchantInterface{
             $image_name = '';
             if(!blank($image)){
                 $destinationPath       = public_path('uploads/merchant/image');
-                $merchantImage         = date('YmdHis') . "." . $image->getClientOriginalExtension();
+                $merchantImage         = date('YmdHis') . "." . safeUploadExtension($image);
                 $image->move($destinationPath, $merchantImage);
                 $image_name            = 'uploads/merchant/image/'.$merchantImage;
             }
@@ -458,7 +458,7 @@ class MerchantRepository implements MerchantInterface{
             $image_name = '';
             if(!blank($image)){
                 $destinationPath       = public_path('uploads/merchant/trade_license');
-                $tradeLicense          = date('YmdHis') . "." . $image->getClientOriginalExtension();
+                $tradeLicense          = date('YmdHis') . "." . safeUploadExtension($image);
                 $image->move($destinationPath, $tradeLicense);
                 $image_name            = 'uploads/merchant/trade_license/'.$tradeLicense;
             }
@@ -489,7 +489,7 @@ class MerchantRepository implements MerchantInterface{
             $image_name = '';
             if(!blank($image)){
                 $destinationPath = public_path('uploads/merchant/nid');
-                $nid             = date('YmdHis') . "." . $image->getClientOriginalExtension();
+                $nid             = date('YmdHis') . "." . safeUploadExtension($image);
                 $image->move($destinationPath, $nid);
                 $image_name      = 'uploads/merchant/nid/'.$nid;
             }

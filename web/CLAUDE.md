@@ -222,6 +222,9 @@ avant les apps.
   donc au cœur de Laravel. C'est un autre chantier.
 
 ## Conventions
+- **Un fichier téléversé se nomme par `safeUploadExtension()`** (**S126**) : extension déduite du contenu et
+  bornée à une liste (`App\Support\SafeUpload`), jamais `getClientOriginalExtension()` — un marchand déposait
+  un `.php` exécuté par nginx. nginx n'exécute que `/index.php` (`UploadedPhpNeverLandsTest`).
 - Réutiliser les conventions We Courier (repérer un exemple avant d'écrire du neuf).
 - Tout module de paiement modifié est couvert par des tests PHPUnit (dont idempotence webhook).
 - Tout envoi sortant (SMS, push, e-mail) part **en file** (**D13**), jamais dans la

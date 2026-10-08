@@ -179,6 +179,14 @@ if(!function_exists('user')){
     }
 }
 
+if(!function_exists('safeUploadExtension')){
+    /** Extension d'un fichier téléversé, déduite de son contenu (S126) : voir `App\Support\SafeUpload`. */
+    function safeUploadExtension(\Illuminate\Http\UploadedFile $fichier): string
+    {
+        return \App\Support\SafeUpload::extension($fichier);
+    }
+}
+
 if(!function_exists('dateFormat')){
     /**
      * Date affichée dans la langue de la requête (S122) : « 8 octobre 2026 ».

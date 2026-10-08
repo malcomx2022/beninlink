@@ -84,7 +84,7 @@ class SectionRepository implements SectionInterface
                     File::makeDirectory(public_path('uploads/section'));
                 endif;
                 $destinationPath       = public_path('uploads/section');
-                $img          = date('YmdHis') . "." . $file->getClientOriginalExtension();
+                $img          = date('YmdHis') . "." . safeUploadExtension($file);
                 $file->move($destinationPath, $img);
                 $file_name            = 'uploads/section/' . $img;
             }

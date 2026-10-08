@@ -1718,7 +1718,7 @@ class ParcelRepository implements ParcelInterface {
             if ($request->hasFile('signatureImage')) {
                 $signatureImage     = $request->file('signatureImage');
                 $destinationPath    = public_path('uploads/parcel/signature/');
-                $signatureImageName = date('YmdHis') . uniqid() . rand(5, 10) . '.' . $signatureImage->getClientOriginalExtension();
+                $signatureImageName = date('YmdHis') . uniqid() . rand(5, 10) . '.' . safeUploadExtension($signatureImage);
                 $signatureImage->move($destinationPath, $signatureImageName);
                 $returntocourier->signature_image = 'uploads/parcel/signature/' . $signatureImageName;
             }
@@ -2346,7 +2346,7 @@ class ParcelRepository implements ParcelInterface {
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 $destinationPath   = public_path('uploads/parcel/image/');
-                $imageName         = date('YmdHis') .uniqid() . rand(5, 10).".".$image->getClientOriginalExtension();
+                $imageName         = date('YmdHis') .uniqid() . rand(5, 10).".".safeUploadExtension($image);
                 $image->move($destinationPath, $imageName);
                 $delivered_image            = 'uploads/parcel/image/'.$imageName;
                 $parcelDelivered->delivered_image  = $delivered_image;
@@ -2356,7 +2356,7 @@ class ParcelRepository implements ParcelInterface {
             if ($request->hasFile('signatureImage')) {
                 $signatureImage = $request->file('signatureImage');
                 $destinationPath   = public_path('uploads/parcel/signature/');
-                $signatureImageName         = date('YmdHis') .uniqid() . rand(5, 10).".".$signatureImage->getClientOriginalExtension();
+                $signatureImageName         = date('YmdHis') .uniqid() . rand(5, 10).".".safeUploadExtension($signatureImage);
                 $signatureImage->move($destinationPath, $signatureImageName);
                 $signature_image            = 'uploads/parcel/signature/'.$signatureImageName;
                 $parcelDelivered->signature_image  = $signature_image;

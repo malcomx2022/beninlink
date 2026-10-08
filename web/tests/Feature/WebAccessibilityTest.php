@@ -308,7 +308,7 @@ class WebAccessibilityTest extends TestCase
         // Dans le bloc PHP, pas ailleurs : ailleurs, elle ne servirait à rien.
         $this->assertLessThan(
             strpos($source, 'fastcgi_param HTTPS on'),
-            strpos($source, 'location ~ \.php$'),
+            strpos($source, 'location = /index.php'),
             'la ligne doit vivre dans le bloc qui passe la main à PHP-FPM'
         );
     }

@@ -600,7 +600,7 @@ class IncomeRepository implements IncomeInterface {
             $image_name = '';
             if(!blank($image)){
                 $destinationPath       = public_path('uploads/income');
-                $profileImage          = date('YmdHis') . "." . $image->getClientOriginalExtension();
+                $profileImage          = date('YmdHis') . "." . safeUploadExtension($image);
                 $image->move($destinationPath, $profileImage);
                 $image_name            = 'uploads/income/'.$profileImage;
             }

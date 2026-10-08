@@ -93,7 +93,7 @@ class NewsOfferRepository implements NewsOfferInterface{
             $file_name = '';
             if(!blank($file)){
                 $destinationPath       = public_path('uploads/news_offers');
-                $profileImage          = date('YmdHis') . "." . $file->getClientOriginalExtension();
+                $profileImage          = date('YmdHis') . "." . safeUploadExtension($file);
                 $file->move($destinationPath, $profileImage);
                 $file_name            = 'uploads/news_offers/'.$profileImage;
             }
