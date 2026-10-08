@@ -49,9 +49,9 @@
                                     <label for="status">{{ __('support.priority') }}</label> <span class="text-danger">*</span>
                                     <select name="priority" class="form-control @error('priority') is-invalid @enderror" >
                                         <option disabled selected>{{ __('merchantPlaceholder.priority') }}</option>
-                                        <option value="low"{{(old('priority') == 'low') ? 'selected' : ''}}>Low</option>
-                                        <option value="medium"{{(old('priority') == 'medium') ? 'selected' : ''}}>Medium</option>
-                                        <option value="high"{{(old('priority') == 'high') ? 'selected' : ''}}>High</option>
+                                        <option value="low"{{(old('priority') == 'low') ? 'selected' : ''}}>{{ __('Low') }}</option>
+                                        <option value="medium"{{(old('priority') == 'medium') ? 'selected' : ''}}>{{ __('Medium') }}</option>
+                                        <option value="high"{{(old('priority') == 'high') ? 'selected' : ''}}>{{ __('High') }}</option>
                                     </select>
                                     @error('status')
                                         <small class="text-danger mt-2">{{ $message }}</small>

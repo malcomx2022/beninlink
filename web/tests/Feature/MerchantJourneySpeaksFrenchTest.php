@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Mail\CompanySignup;
 use App\Mail\MerchantSignup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\FindsHardcodedText;
 use Tests\Concerns\MountsTenantRoutes;
 use Tests\Concerns\SeedsTenant;
 use Tests\TestCase;
@@ -24,6 +25,7 @@ use Tests\TestCase;
  */
 class MerchantJourneySpeaksFrenchTest extends TestCase
 {
+    use FindsHardcodedText;
     use MountsTenantRoutes;
     use RefreshDatabase;
     use SeedsTenant;
@@ -47,16 +49,8 @@ class MerchantJourneySpeaksFrenchTest extends TestCase
     {
         $litteraux = [];
         foreach (self::PARCOURS as $vue) {
-            $source = file_get_contents(resource_path('views/' . $vue));
-            // D'abord les expressions et directives Blade (`->` y contient un `>`), puis les nœuds de texte.
-            $source = preg_replace('/\{\{--.*?--\}\}|<script.*?<\/script>|<style.*?<\/style>|<!--.*?-->|\{\{.*?\}\}|\{!!.*?!!\}/s', ' ', $source);
-            $source = preg_replace('/@\w+\s*\((?:[^()]|\((?:[^()]|\([^()]*\))*\))*\)|@\w+/s', ' ', $source);
-            preg_match_all('/>([^<>]*)</', $source, $noeuds);
-            foreach ($noeuds[1] as $noeud) {
-                $texte = trim(preg_replace('/[\s:,.;!?()\-]+/u', ' ', $noeud));
-                if (preg_match('/\p{L}{2,}/u', $texte) && ! in_array($texte, self::TELS_QUELS, true)) {
-                    $litteraux[] = "{$vue} : « {$texte} »";
-                }
+            foreach ($this->textesEnDur(file_get_contents(resource_path('views/' . $vue)), self::TELS_QUELS) as $texte) {
+                $litteraux[] = "{$vue} : « {$texte} »";
             }
         }
 

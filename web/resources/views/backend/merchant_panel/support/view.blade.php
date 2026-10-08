@@ -144,7 +144,7 @@
                                 <div class="col-12 d-flex"style="align-items: center">
                                     <i class="fa fa-file" style="font-size: 30px"></i>
                                     <a href="{{ static_asset(@$chat->file->original) }}" download="" class="d-flex" style="align-items: center">
-                                        <span  style="padding:10px">Download File</span>
+                                        <span  style="padding:10px">{{ __('Download File') }}</span>
                                     </a>
                                 </div>
                             </div>
@@ -178,7 +178,7 @@
                                 <div class="col-12 d-flex"style="align-items: center">
                                     <i class="fa fa-file" style="font-size: 30px"></i>
                                     <a href="{{ static_asset(@$singleSupport->file->original) }}" download="" class="d-flex" style="align-items: center">
-                                        <span  style="padding:10px">Download File</span>
+                                        <span  style="padding:10px">{{ __('Download File') }}</span>
                                     </a>
                                 </div>
                             </div>

@@ -342,6 +342,9 @@ avant les apps.
   Dans les vues du **parcours PME** (inscription marchand et société, code OTP, courriels de bienvenue,
   portefeuille), tout texte visible passe par `__()` (**S115**, `MerchantJourneySpeaksFrenchTest::PARCOURS`) ;
   les courriels portent le vert de la charte, plus le violet de l'éditeur.
+  Le **panneau marchand** entier suit la même règle (**S116**, `MerchantPanelSpeaksFrenchTest`, détecteur
+  partagé `Tests\Concerns\FindsHardcodedText`) : aucun texte en dur hors unités et pages exemptées avec motif,
+  aucun « Tk » (la devise vient de `formatAmount()`), portefeuilles dits « Mobile Money » (codes 3-5 : **D16**).
 - **Le livreur voit l'alerte douanière de sa course, en lecture seule** (**S95**).
   `deliveryman/parcel/details/{id}` porte `customs_alerts` (même `CustomsAlertResource` que S82)
   sur le colis déjà vérifié par `notOwned()` ; un domestique rend `[]`, la course d'un collègue

@@ -60,7 +60,7 @@
                                         <td>{{ formatAmount(@$invoice->current_payable) }}</td>
                                         <td>{!! $invoice->my_status !!}</td>
                                         <td>
-                                            <a href="{{ route('merchant.panel.invoice.details',$invoice->invoice_id) }}" class="btn btn-sm btn-primary mt-1"><i class="fa fa-eye"></i> View</a>
+                                            <a href="{{ route('merchant.panel.invoice.details',$invoice->invoice_id) }}" class="btn btn-sm btn-primary mt-1"><i class="fa fa-eye"></i> {{ __('View') }}</a>
                                             <a href="{{ route('merchant.panel.invoice.csv',[$invoice->merchant_id,$invoice->invoice_id]) }}" class="btn btn-sm btn-success mt-1"><i class="fa fa-download"></i> CSV</a>
                                         </td>
                                     </tr>
