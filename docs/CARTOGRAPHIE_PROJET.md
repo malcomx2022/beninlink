@@ -1,10 +1,10 @@
 # Cartographie du projet BeninLink — et ce qui reste
 
-> Vue d'ensemble du monorepo au **2026-10-06** (`main` = fusion de la PR #168, session
-> S100 ; § 7.4 relu en S102 sur les runs d'*Actions*). Relevée sur le code et les documents du dépôt, pas sur les intentions.
+> Vue d'ensemble du monorepo au **2026-10-08** (`main` = fusion de la PR #187, session
+> S119 ; § 1 et § 7.4 relus en S120 : chiffres mesurés sur le dépôt, déploiements lus sur les runs d'*Actions*). Relevée sur le code et les documents du dépôt, pas sur les intentions.
 > Elle complète `web/CARTOGRAPHIE.md` (relevé technique du socle, blocs A-K + journal
 > S22-S68), `docs/REVUE_MODULES.md` (inventaire module par module) et
-> `docs/DECISIONS_METIER.md` (registre D1-D13). Elle ne les remplace pas : elle dit
+> `docs/DECISIONS_METIER.md` (registre D1-D16). Elle ne les remplace pas : elle dit
 > **où tout est**, et **ce qui n'est pas fini**.
 
 ---
@@ -25,12 +25,12 @@ Volumétrie (au 2026-10-03) :
 
 | | `web/` | `mobile/` | `mobile-livreur/` |
 |---|---|---|---|
-| Contrôleurs / modèles / migrations | 134 / 82 / 104 | — | — |
-| Routes | 105 API (`/api/v10`) · ~1 100 lignes `web.php` · 303 lignes `superadmin.php` | — | — |
-| Écrans (fichiers expo-router) | — | 23 | 11 |
-| Fichiers TypeScript | — | 49 | 32 |
-| Tests | 120 fichiers · 943 méthodes · **1 057 tests, 46 070 assertions**, verts (S66) | aucun lanceur | aucun lanceur |
-| Historique | 129 commits · 136 PR fusionnées · 0 PR ouverte | | |
+| Contrôleurs / modèles / migrations | 134 / 82 / 108 | — | — |
+| Routes | 106 API (`/api/v10`, `route:list`) · 1 088 lignes `web.php` · 315 lignes `superadmin.php` | — | — |
+| Écrans (fichiers expo-router) | — | 23 | 13 |
+| Fichiers TypeScript (hors tests) | — | 52 | 36 |
+| Tests | 161 fichiers · **1 334 tests, 51 464 assertions**, verts (S119) | `jest-expo` (S84, 47 tests en S103) | `jest-expo` (S84, 30 tests en S103) |
+| Historique | dernière PR fusionnée : #187 (S119) · 0 PR ouverte (le dépôt de travail est un clone partiel : les comptes de commits n'y sont pas fiables) | | |
 
 ## 2. Les flux
 
@@ -184,7 +184,7 @@ sécurité ouvert — les 32 constats S1-S32 et les 11 constats W/F sont fermés
 | E2 | **Serveur de recette** `recette.beninlink.app` — **vhost** sur la machine de production (décision du 2026-10-03), déployé depuis `main` par le job « Déploiement sur le serveur de recette » (S76 : secrets `RECETTE_SSH_*`, chemin `DEPLOY_PATH`, garde `verifier-env.sh` qui refuse une clé FedaPay live hors production). ✅ **Fonctionnel depuis le 2026-10-05** (vérifié par le porteur le 2026-10-07 : répond 200, worker `RUNNING`). S102 avait écrit « rien n'a encore été déployé en recette » : c'était faux, corrigé en S109. Les trois secrets `RECETTE_SSH_*` sont **posés** : au run 255 (fusion de S110, 2026-10-07) l'étape SSH de recette a **tourné** (elle sautait aux runs 251 et 253), puis `beninlink:comptes-amorcage` l'a **refusée** — les cinq comptes d'amorçage de la base de recette portent encore `12345678` — et le filet a remis la révision servie avant (`12b7d21`, S87). Les comptes ont été changés depuis : au **run 257** (fusion de S111, 2026-10-08) le job de recette a **réussi** (vu dans le journal d'*Actions*). La recette suit désormais chaque fusion de `main`. | recette §1 « Déploiement », §7 P0-P1 |
 | E3 | **Mise en service production** : ✅ **en service depuis le 2026-10-06** — après le run 212 (refusé par `comptes-amorcage`, remèdes appliqués sur le serveur), le run 217 (S91) a été le **premier déploiement de production réussi** ; chaque fusion suivante a déployé (219, 229, 231, 233…). Les gardes posés ensuite ont trouvé un serveur conforme : cache partagé (S97, run 229), `APP_DEBUG=false` (S99, run 233). Le piège « deux sociétés, une seule avec des zones » est fermé (S86), les comptes d'amorçage à `12345678` aussi (S87), l'installateur est fermé sur une base installée (S88). **Au 2026-10-07 (vérifié sur le serveur par le porteur, S109)** : worker Supervisor `RUNNING`, crontab posé — les SMS, courriels et pushs partent, le planificateur tourne ; sauvegarde quotidienne (2 h 15) avec exercice de restauration réussi le 06/10. Société 1 **renommée « beninlink » le 2026-10-07 à 17 h 50** (S110) ; la société 2 (« Company », données de démonstration) reste inchangée. **Plus rien à faire sur le serveur** pour la mise en service. (S108 avait annoncé le renommage fait trop tôt et la sauvegarde à faire : corrigé en S109.) | `infra/mise-en-service/` |
 | E4 | **Reprise du passé** si une production tournait avant les correctifs : `beninlink:colis-non-debites`, `ecarts-marchands`, `retours-annules`, `reglages-orphelins`, `invoice:generate --societe=N`. À lire, pas à brancher sur un cron (sortie 0 même avec écarts). | REVUE_FEDAPAY §24, `infra/supervision/` |
-| E5 | **Vérification visuelle humaine** des trois paniers d'écrans web (public, back-office, panneau marchand) : aucun lot charte ne l'a faite. Le porteur l'a commencée sur la page d'accueil le 2026-10-08 : elle affichait sous « Nos partenaires » des logos de vraies marques sans relation (Huawei, UPS…) — retirés en **S111**, avec les visuels « We Courier » des pages publiques (logo, favicon, illustration de connexion et d'inscription). Le menu du back-office disait « Web avant » → « Partner » : **S112** a traduit les 208 entrées de `lang/fr/` restées en anglais qui devaient l'être (rapports, droits, statuts), un test refuse les nouvelles. | charte-web §18 |
+| E5 | **Vérification visuelle humaine** des trois paniers d'écrans web (public, back-office, panneau marchand) : aucun lot charte ne l'a faite. Le porteur l'a commencée sur la page d'accueil le 2026-10-08 : elle affichait sous « Nos partenaires » des logos de vraies marques sans relation (Huawei, UPS…) — retirés en **S111**, avec les visuels « We Courier » des pages publiques. Le menu du back-office disait « Web avant » → « Partner » : **S112** a traduit le catalogue. Le même jour, **S113 à S119** ont fermé la francisation du web par des filets qui refusent tout retour de l'anglais : clés brutes (S113), phrases et pages d'erreur (S114), parcours PME (S115), panneau marchand (S116), **toute vue servie** avec banques et portefeuilles béninois (S117, D16 en défaut réversible), messages du code et de l'API (S118), scripts (S119). Ce que les filets ne voient pas reste à l'œil humain : mise en page, couleurs, textes trop longs pour leur bouton, et la **vérification par le transporteur de la banque de ses comptes** créés avant S117. | charte-web §18 |
 | E6 | **Document maître DAT** (`.docx`) à resynchroniser avec les décisions D6-D13, l'étape 6 du barème et les lots charte. | `LISEZMOI.txt` |
 
 ---
