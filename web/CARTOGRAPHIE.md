@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-08 (S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-08 (S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -9143,4 +9143,19 @@ dépenses, salaires et remises d'espèces (« Parcel not found! », « Ops! not 
 existe en français et en anglais, et aucune clé n'est orpheline ; le pied de page rend le catalogue
 et `montantFcfa` ; le format de période reste celui que lisent les filtres. Sabotages, tous rouges :
 « Are you confirm ? » remis, une clé retirée, « Parcel found. » remis dans un fragment.
+
+## S120 — le registre dit l'état du 2026-10-08 (2026-10-08)
+
+Lot de documentation. `docs/CARTOGRAPHIE_PROJET.md` datait du 2026-10-06 (PR #168, S100) : § 1 et
+§ 7.4 relus sur le dépôt et sur les runs d'*Actions*, rien de déduit.
+
+- § 1, **mesuré** : 134 contrôleurs, 82 modèles, 108 migrations (`find`) ; 106 routes `/api/v10`
+  (`route:list`) ; 161 fichiers de test, 1 334 tests, 51 464 assertions (suite de S119) ; 23 et 13
+  écrans expo-router, 52 et 36 fichiers TypeScript hors tests. Les compteurs de tests des apps restent
+  ceux de S103 (non relancés ici). Le nombre de commits n'est plus donné : le clone de travail est
+  partiel, `git log` y compte faux.
+- § 7.4 E5 : la francisation du web est fermée par filets (S113 à S119) ; reste à l'œil humain ce
+  qu'un filet ne voit pas, et la relecture par le transporteur de la banque de ses comptes (D16).
+- Les runs de déploiement de S116 (267), S117 (269) et S118 (271) sont verts en production et en
+  recette, lus dans *Actions*.
 
