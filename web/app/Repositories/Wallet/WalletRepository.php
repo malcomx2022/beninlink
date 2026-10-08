@@ -96,7 +96,7 @@ class WalletRepository implements WalletInterface{
     public function store($request){
         try {
             $wallet = new Wallet();
-            $wallet->source         = 'Wallet Recharge'; 
+            $wallet->source         = Wallet::SOURCE_RECHARGE; 
             $wallet->company_id     = settings()->id;
             $wallet->user_id        = Auth::user()->id;
             $wallet->merchant_id    = Auth::user()->merchant->id; 
@@ -251,7 +251,7 @@ class WalletRepository implements WalletInterface{
             DB::beginTransaction();
             $wallet                 = new Wallet();
             $wallet->company_id     = settings()->id; 
-            $wallet->source         = 'Wallet Recharge'; 
+            $wallet->source         = Wallet::SOURCE_RECHARGE; 
             $wallet->user_id        = $merchant->user_id;
             $wallet->merchant_id    = $merchant->id; 
             $wallet->transaction_id = $request->transaction_id;

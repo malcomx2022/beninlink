@@ -9889,6 +9889,7 @@
                     },
                     "source": {
                         "type": "string",
+                        "description": "Origine du mouvement, traduite (« Recharge du portefeuille », « Frais de livraison du colis #… »)",
                         "nullable": true
                     },
                     "amount": {

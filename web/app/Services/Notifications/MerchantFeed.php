@@ -70,7 +70,7 @@ class MerchantFeed
                 __('notification.wallet_credit_title'),
                 __('notification.wallet_credit_body', [
                     'amount' => formatAmount($amount),
-                    'source' => $wallet->source ?: __('notification.wallet_source_default'),
+                    'source' => $wallet->source_label ?: __('notification.wallet_source_default'),
                 ]),
                 ['amount' => $amount, 'reference' => (string) $wallet->transaction_id],
             );

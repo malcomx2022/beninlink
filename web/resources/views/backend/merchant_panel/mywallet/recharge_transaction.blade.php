@@ -19,7 +19,7 @@
             @foreach ($recharge_transactions as $recharge_wallet)
                 <tr>
                     <td>{{ ++$i }}</td>
-                    <td>{{ $recharge_wallet->source }}</td>
+                    <td>{{ $recharge_wallet->source_label }}</td>
                     <td> {{ dateFormat($recharge_wallet->created_at) }} </td>
                     <td>{{ @$recharge_wallet->transaction_id }}</td>
                     <td>{{ __('WalletPaymentMethod.' . $recharge_wallet->payment_method) }}</td>
