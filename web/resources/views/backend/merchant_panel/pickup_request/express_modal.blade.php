@@ -41,7 +41,7 @@
                     </div>
                 </div>
                 <div class="form-group  ">
-                    <label for="parcel">{{ __('pickupRequest.weight') }}(KG)</label>
+                    <label for="parcel">{{ __('pickupRequest.weight') }} (kg)</label>
                     <div class="form-control-wrap  ">
                        <input class="form-control" type="number" name="weight" />
                     </div>

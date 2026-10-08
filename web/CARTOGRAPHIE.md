@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-08 (S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-08 (S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -9002,3 +9002,38 @@ remis en dur — rouge (deux tests) ; violet remis dans le courriel — rouge.
 Reste au relevé : les autres vues du back-office (rapports, impressions, installateur…), lot par lot.
 
 Suite complète : **1 317 tests, 51 228 assertions** (1 314 avant ; +3).
+
+## S116 — le panneau marchand parle français et compte en FCFA (2026-10-08)
+
+### D'où ça vient
+
+Après l'inscription (S115), la PME vit dans `merchant_panel/`. Le détecteur de S115, appliqué au
+dossier, y a relevé 140 textes écrits en dur dans 29 fichiers. Le plus grave n'était pas de
+l'anglais :
+
+| Constat | Où |
+|---|---|
+| **« Tk »** (taka) après le prix de l'emballage — affiché « 1 000 FCFA Tk », `formatAmount()` portant déjà la devise | création, modification et duplication d'un colis |
+| export PDF des colis en anglais, colonne « Cash Collection (TK) », montants bruts (`1500.00` possible sur une colonne `decimal`, D15), `lang="en"` | `parcel/parcel_export_pdf` |
+| portefeuilles du Bangladesh nommés en dur (« Bkash », « Rocket », « Nagad ») et « Cash » | paiements reçus, liste des paiements en ligne (les deux pages restent atteignables) |
+| « Low / Medium / High », « Paid At », « Download File », « View », « Notification », « Toggle Dropdown », « (KG) » | assistance, colis, relevés, menu, listes |
+
+### Ce qui est fait
+
+- « Tk » retiré ; l'export PDF traduit, en FCFA, montants par `formatAmount()`, langue de la page
+  selon la locale ; « Cash » → `merchant.cash` ; codes 3-5 → **« Mobile Money »** (neutre et vrai :
+  quel opérateur porte chaque code reste à trancher, **D16** ouvert au registre) ; le reste par
+  `__()` et `lang/fr.json` (25 entrées).
+- Le détecteur devient un trait partagé, `Tests\Concerns\FindsHardcodedText` (il retire aussi les
+  blocs `@php … @endphp` et les entités HTML) ; `MerchantJourneySpeaksFrenchTest` (S115) l'utilise.
+
+### Le filet
+
+`tests/Feature/MerchantPanelSpeaksFrenchTest` (4 tests) : aucune vue du panneau n'a de texte en dur
+(hors `kg`, `FCFA`, `CSV`), huit pages **exemptées avec leur motif** — deux démonstrations SSLCommerz
+sans route, six pages de paiement en ligne dont la route est sous `onlinePayoutEnabled()` (D10) ou
+une passerelle désactivée (S21) — et chaque exemption doit viser un fichier qui existe ; aucun taka
+(`Tk`, `(TK)`, `BDT`, `৳`) ; les paiements reçus ne nomment plus les portefeuilles du Bangladesh.
+Sabotages : « Tk » remis — rouge (deux tests) ; « Low » remis en dur — rouge.
+
+Suite complète : **1 321 tests, 51 297 assertions** (1 317 avant ; +4).

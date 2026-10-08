@@ -26,18 +26,18 @@
                                         <td>
                                             <div>
                                                 @if(@$payment->account->gateway == 1)
-                                                    Cash
+                                                    {{ __('merchant.cash') }}
                                                 @elseif (@$payment->account->gateway == 2)
                                                     {{ @$payment->account->account_holder_name }} <br/>
                                                     {{ @$payment->account->account_no }} <br/>
                                                     {{ @$payment->account->branch_name }}
                                                 @else
                                                     @if (@$payment->account->gateway == 3)
-                                                        Bkash
+                                                        {{ __('Mobile Money') }}
                                                     @elseif (@$payment->account->gateway == 4)
-                                                        Rocket
+                                                        {{ __('Mobile Money') }}
                                                     @elseif (@$payment->account->gateway == 5)
-                                                        Nagad
+                                                        {{ __('Mobile Money') }}
                                                     @endif
                                                     {{ @$payment->account->mobile }} <br/>
                                                     {{ @$payment->account->account_type }}

@@ -2,7 +2,7 @@
 
 > Registre des décisions qui ne relèvent pas du code seul. Chaque entrée dit ce
 > qui a été **tranché** (et livré), ce qui reste **à trancher** par le métier, et
-> par qui. Mis à jour le 2026-10-08, S115 (D1-D15 ; les décisions R1-R9 du porteur du
+> par qui. Mis à jour le 2026-10-08, S116 (D1-D16 ; les décisions R1-R9 du porteur du
 > 2026-10-03 sont ventilées dans les lignes qu'elles tranchent).
 
 | # | Sujet | État | Livré dans le code | Reste à trancher |
@@ -14,6 +14,7 @@
 | D5 | Fiches de fraude sans `company_id` | ✅ tranché | migration de rattachement par l'auteur | — |
 | D14 | Décisions produit R3–R9 | ✅ tranché (S75) | pas de prorata mais **dit avant confirmation** (R3) ; SMS français seul (R4) ; menu Réglages visible en **OU** (R5) ; catalogue catégories **super-admin** (R6) ; statut TVA explicite (R7 b) ; relevés **par courriel** à l'émission (R9) | signature sur retour (R8) après la recette ; expansion anglophone des SMS ; personnalisation des catalogues par société |
 | D15 | Dette technique T2, T3, T9 | ✅ tranché (S107) | **pas** de migration des colonnes `decimal` (constat `beninlink:montants-non-entiers`) ; Bootstrap 4 + 5 cohabitent, étapes C–E non entreprises ; **pas** de re-fusion We Courier, le fork est le produit | rouvrir T3 après la recette si un écran le demande ; T9 à chaque version de l'éditeur, contre la grille « ce qui nous manque » |
+| D16 | Comptes de paiement : codes 3, 4, 5 | ⏳ **à trancher** (relevé S116) | affichage neutre « Mobile Money » côté marchand (S116) ; rien n'est renommé en base | quel opérateur béninois porte chaque code — proposition : 3 = MTN MoMo, 4 = Moov Money, 5 = à préciser |
 
 ---
 
@@ -1085,3 +1086,26 @@ trois dans le même sens : on ne refait pas ce qui marche, on le **tient**.
 **Ce que D15 ne décide pas.** T4 (PHP 8.4 fermé par trois dépendances) n'est pas une
 décision mais une attente : il s'ouvrira quand `league/commonmark` et ses
 dépendances le permettront.
+
+## D16 — Comptes de paiement : à quel opérateur béninois correspondent les codes 3, 4, 5 ? ⏳ (relevé S116)
+
+Un compte de paiement (`accounts.gateway`) porte un code : 1 espèces, 2 banque, et **3, 4, 5**
+que le socle nomme **bKash, Rocket, Nagad** — les portefeuilles mobiles du Bangladesh. Le
+formulaire de création d'un compte (`backend/account/create`) les propose encore sous ces noms,
+et les écrans qui les affichent les écrivaient en dur.
+
+**Ce que S116 a fait, sans rien décider** : côté marchand, les paiements reçus disent « Mobile
+Money » pour les trois codes. C'est vrai quel que soit l'opérateur, et rien n'est réécrit en base.
+
+**Ce qui reste au porteur** : attribuer chaque code à un opérateur. Proposition, alignée sur les
+semences (S92, `MTN MoMo` / `Moov Money`, les deux opérateurs servis par FedaPay) :
+
+| Code | Socle | Proposé |
+|---|---|---|
+| 3 | bKash | **MTN MoMo** |
+| 4 | Rocket | **Moov Money** |
+| 5 | Nagad | à préciser (troisième opérateur, ou code retiré du formulaire) |
+
+Une fois tranché : libellés du formulaire de compte et des écrans du back-office (`merchantmanage/
+payment/*`), clés `merchant.mtn_momo` / `merchant.moov_money` déjà présentes dans `lang/fr/merchant.php`.
+

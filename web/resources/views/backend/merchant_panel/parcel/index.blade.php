@@ -194,7 +194,7 @@
                                             <p>{{ __('invoice.'.@$parcel->invoice->status) }}</p> 
                                             {{ @$parcel->invoice->invoice_id }}<br/>
                                             @if ($parcel->invoice->status == App\Enums\InvoiceStatus::PAID)
-                                                    Paid At: {{ @dateFormat(@$parcel->invoice->updated_at) }}
+                                                    {{ __('Paid At:') }} {{ @dateFormat(@$parcel->invoice->updated_at) }}
                                             @endif
                                         @else
                                             N/A 

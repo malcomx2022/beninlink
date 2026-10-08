@@ -101,13 +101,13 @@
                                         <span>
                                             {{ @$parcel->parcel_invoice->invoice_id }}<br/>
                                             @if ($parcel->parcel_invoice !==null && $parcel->parcel_invoice->status == App\Enums\InvoiceStatus::PAID)
-                                                Paid At: {{ @dateFormat($parcel->parcel_invoice->updated_at) }}
+                                                {{ __('Paid At:') }} {{ @dateFormat($parcel->parcel_invoice->updated_at) }}
                                             @endif
                                         </span>
                                     </td>
                                     <td>
                                         <div class="row">
-                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">Toggle Dropdown</span></button>
+                                            <button tabindex="-1" data-toggle="dropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"><span class="sr-only">{{ __('Toggle Dropdown') }}</span></button>
                                             <div class="dropdown-menu">
                                                 <a href="{{ route('merchant-parcel.clone',$parcel->id) }}" class="dropdown-item"><i class="fas fa-clone" aria-hidden="true"></i> {{__('levels.clone')}}</a>
                                                 @if ($parcel->status == App\Enums\ParcelStatus::PENDING)
