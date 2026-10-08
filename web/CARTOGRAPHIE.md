@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-07 (S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-08 (S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8799,3 +8799,68 @@ posés, la **prochaine** fusion déploie aussi la recette ; son journal dira « 
 Le nom « beninlink » est écrit en minuscules dans la base, alors que la marque s'écrit « BeninLink »
 partout ailleurs (semences, vitrine, documents). C'est le nom qu'affichent les relevés et la
 vitrine : un seul champ à corriger dans Réglages → Généraux si la casse n'est pas voulue.
+
+## S111 — aucune marque tierce sur les pages publiques (2026-10-08)
+
+### D'où ça vient
+
+Le porteur a relu la page d'accueil de beninlink.app avant le démarchage des PME pilotes : la
+section « Nos partenaires » montrait les vignettes semées par le socle, dont `huawei.png` et
+`ups.png`. Vues une à une, **les six** sont des logos de vraies marques : 500px (`1.png` et
+`2.png`, le même fichier), Atom, Digg, Huawei et UPS. Aucune relation avec ces entreprises :
+c'était une fausse affiliation, sur la première page qu'un prospect ouvre.
+
+La revue des autres pages publiques demandée avec le correctif a trouvé le même défaut ailleurs :
+
+| Visuel | Où il s'affiche | Marque |
+|---|---|---|
+| `images/default/logo.png`, `light-logo.png`, `favicon.png` | en-tête, pied de page et onglet de toute page publique, et relevés PDF, tant qu'une société n'a pas envoyé ses propres logos | « WeCourier SAAS » |
+| `images/default/we-courier-process.png` | connexion, mot de passe oublié et réinitialisation, inscription marchand, inscription et vérification d'une société | camions « We Courier DELIVERY » |
+| `frontend/logo.png`, `light-logo.png`, `favicon.png` | nulle part (aucune référence), mais servis par URL | « We Courier » |
+
+Le reste des images publiques (bannières, services, atouts, compteurs, « colis introuvable ») est
+fait d'illustrations sans marque. `purchase_verify.blade.php` (logo de l'éditeur WemaxDevs) ne
+s'affiche qu'avant l'installation : laissé.
+
+### Ce qui est fait
+
+| Où | Quoi |
+|---|---|
+| `public/frontend/images/partner/` | les six fichiers supprimés, le dossier avec eux |
+| `CompanyFrontendDataSeeder`, `PartnerSeeder` | plus aucun partenaire semé, ni pour la plateforme ni pour une société créée par le super-admin |
+| `frontend/home.blade.php` | la section n'est incluse que si `$partners` n'est pas vide : elle revient d'elle-même quand le transporteur saisit de vrais partenaires (menu « Web avant » → « Partner ») |
+| migration `2026_10_08_100000_remove_socle_brand_partners` | retire, toutes sociétés, les partenaires dont l'image est un fichier de `frontend/images/partner/` (chemin brut ou JSON des anciennes semences MySQL, `\/` compris) et leurs lignes `uploads` ; un partenaire saisi au back-office (`uploads/partner/…`) reste. `down()` ne remet rien |
+| `images/default/logo.png`, `light-logo.png`, `favicon.png` | remplacés par le mot-symbole BeninLink (Sora, « Benin » vert ou blanc, « Link » ocre ; favicon « BL » sur vert), mêmes dimensions ; source `web/resources/brand/generate.py` (ImageMagick, Sora de `mobile/node_modules`) |
+| six vues d'authentification et d'inscription | l'illustration « We Courier » remplacée par `frontend/images/banner1.png` (livreur sur une carte, sans marque, inutilisé jusque-là) ; le fichier est supprimé |
+| `public/frontend/logo.png`, `light-logo.png`, `favicon.png` | supprimés |
+
+### Le filet
+
+`tests/Feature/PublicBrandAssetsTest` (6 tests) :
+
+- aucune image de `public/` (hors `uploads/` et `vendor/`) n'a l'**empreinte SHA-1** d'un des
+  douze fichiers retirés : un logo remis sous un autre nom est vu ;
+- aucune vue ne nomme un chemin retiré ;
+- les logos par défaut gardent les dimensions que les gabarits attendent, et ont leur source ;
+- aucune semence ne pose de partenaire ;
+- la page d'accueil, servie par HTTP, n'a pas de section « Nos partenaires » sans partenaire, et
+  l'affiche avec un vrai partenaire saisi ;
+- la migration retire les trois formes de ligne du socle et garde le vrai partenaire.
+
+`StorefrontSpeaksFrenchTest` (S93) ne compte plus les partenaires parmi les tables semées et
+vérifie qu'une société neuve n'en reçoit aucun.
+
+Sabotages, chacun rouge : une copie de `huawei.png` remise sous `services/x.png` ; la garde de
+`home.blade.php` remplacée par `@if (true)` ; la migration sans normaliser `\/` ; la semence
+d'avant S111 restaurée.
+
+Suite complète : **1 308 tests, 51 090 assertions** (1 302 avant ; +6).
+
+### En production
+
+La migration tourne au déploiement (`migrate` de `deploy.sh`) : la section disparaît de
+beninlink.app dès la fusion déployée. Les logos par défaut ne changent ce qu'affiche une société
+que si elle **n'a pas** envoyé les siens dans Réglages → Généraux ; un logo envoyé reste prioritaire.
+
+La recette ne suivra pas tant que le garde `comptes-amorcage` la refuse (run 255 :
+les cinq comptes d'amorçage de sa base portent encore `12345678`, voir le registre E2).

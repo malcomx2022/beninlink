@@ -101,7 +101,7 @@ class StorefrontSpeaksFrenchTest extends TestCase
         (new CompanyFrontendDataSeeder)->companySiteData($this->societe);
 
         $textes = $this->textes($this->societe);
-        $this->assertGreaterThan(40, count($textes), 'services, atouts, questions, articles, partenaires, pages et sections');
+        $this->assertGreaterThan(40, count($textes), 'services, atouts, questions, articles, pages et sections');
         foreach ($textes as [$quoi, $texte]) {
             $this->assertEnFrancais($texte, $quoi);
         }
@@ -120,12 +120,14 @@ class StorefrontSpeaksFrenchTest extends TestCase
         $this->assertStringContainsString('6.3703,2.3912', DB::table('sections')->where('company_id', $this->societe)->where('key', 'map_link')->value('value'), 'la carte pointe Cotonou');
 
         // Tout est à la société qui vient d'être créée, et la société de démonstration (semée par le même chemin) a reçu la même chose.
-        foreach (['services', 'why_couriers', 'faqs', 'blogs', 'partners', 'social_links', 'pages', 'sections'] as $table) {
+        foreach (['services', 'why_couriers', 'faqs', 'blogs', 'social_links', 'pages', 'sections'] as $table) {
             $this->assertGreaterThan(0, DB::table($table)->where('company_id', $this->societe)->count(), $table);
             $this->assertSame(DB::table($table)->where('company_id', self::DEMO)->count(), DB::table($table)->where('company_id', $this->societe)->count(), $table);
             $this->assertSame(0, DB::table($table)->whereNotIn('company_id', [self::DEMO, $this->societe])->count(), "{$table} : rien hors des sociétés semées");
         }
         $this->assertCount(6, SocialLink::where('company_id', $this->societe)->get());
+        // S111 : aucun partenaire inventé — les six logos du socle étaient de vraies marques (PublicBrandAssetsTest).
+        $this->assertSame(0, Partner::where('company_id', $this->societe)->count());
     }
 
     public function test_the_platform_storefront_is_the_same_french_content(): void

@@ -135,7 +135,7 @@
                 </div>
             </div>
             <div class="col-lg-7 footer-img">
-                <img alt="" class="img-responsive margin-t-20 " src="{{ static_asset('images/default/we-courier-process.png') }}"
+                <img alt="" class="img-responsive margin-t-20 " src="{{ static_asset('frontend/images/banner1.png') }}"
                     width="100%" />
             </div>
         </div>
