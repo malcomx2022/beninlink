@@ -225,6 +225,9 @@ avant les apps.
 - **Un fichier téléversé se nomme par `safeUploadExtension()`** (**S126**) : extension déduite du contenu et
   bornée à une liste (`App\Support\SafeUpload`), jamais `getClientOriginalExtension()` — un marchand déposait
   un `.php` exécuté par nginx. nginx n'exécute que `/index.php` (`UploadedPhpNeverLandsTest`).
+- **Un texte riche écrit par un autre que le lecteur se rend par `{!! safeHtml(…) !!}`** (**S127**,
+  `App\Support\SafeHtml`, HTMLPurifier) : jamais `{!! $x->description !!}` — le middleware `XSS` exempte
+  `description` et ne couvre pas l'API (`RichTextIsSanitizedTest`).
 - Réutiliser les conventions We Courier (repérer un exemple avant d'écrire du neuf).
 - Tout module de paiement modifié est couvert par des tests PHPUnit (dont idempotence webhook).
 - Tout envoi sortant (SMS, push, e-mail) part **en file** (**D13**), jamais dans la

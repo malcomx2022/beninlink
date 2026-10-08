@@ -25,7 +25,7 @@
                         <img src="{{$news_offer->image}}" class="pb-3" alt="" width="100%" height="350">
                     @endif
                     <div>
-                        {!! $news_offer->description !!}
+                        {!! safeHtml($news_offer->description) !!}
                     </div>
                 </div>
             </div>

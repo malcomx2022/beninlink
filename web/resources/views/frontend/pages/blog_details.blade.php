@@ -21,7 +21,7 @@
                     <img src="{{ $blog->image }}" class="card-img-top" alt="{{ $blog->title }}"> 
                 </div> 
                 <div class="page-content">
-                    {!! $blog->description !!}
+                    {!! safeHtml($blog->description) !!}
                 </div>
             </div>
             <div class="col-xl-4 mt-5 pt-5 latest-blog"> 

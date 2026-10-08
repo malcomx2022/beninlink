@@ -21,7 +21,7 @@
                                     </div>
                                 </div>
                             </div> 
-                            <p class="my-5 ">{!! $service->description !!}</p>  
+                            <p class="my-5 ">{!! safeHtml($service->description) !!}</p>  
                         </div>
                     </div> 
                 </div>

@@ -137,7 +137,7 @@
                                 </div>
                             </div>
                             <div class="card-body" style="padding-left: 0px">
-                                {!! $chat->message !!}
+                                {!! safeHtml($chat->message) !!}
                             </div>
                             @if(@$chat->file)
                             <div class="row" >
@@ -170,7 +170,7 @@
                             </div>
                         </div>
                         <div class="card-body" style="padding-left: 0px">
-                            {!! $singleSupport->description !!}
+                            {!! safeHtml($singleSupport->description) !!}
                         </div>
                         {{-- download file --}}
                         @if(@$singleSupport->file)
