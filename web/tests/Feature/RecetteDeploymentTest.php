@@ -249,6 +249,37 @@ class RecetteDeploymentTest extends TestCase
         $this->assertStringContainsString('APP_DEBUG=true', $sortie);
     }
 
+    /** S132 — un cookie de session sans `secure` part en clair : `false` refusé en production. */
+    public function test_le_cookie_de_session_non_securise_est_refuse_en_production(): void
+    {
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=production\nFEDAPAY_ENVIRONMENT=live\nSESSION_SECURE_COOKIE=false\n");
+        $this->assertSame(1, $code, $sortie);
+        $this->assertStringContainsString('SESSION_SECURE_COOKIE=false', $sortie);
+
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=production\nFEDAPAY_ENVIRONMENT=live\nSESSION_SECURE_COOKIE=true\n");
+        $this->assertSame(0, $code, "true : $sortie");
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=production\nFEDAPAY_ENVIRONMENT=live\n");
+        $this->assertSame(0, $code, 'absent suit APP_URL : ' . $sortie);
+        [$code, $sortie] = $this->garde(self::CLE . "APP_ENV=staging\nFEDAPAY_ENVIRONMENT=sandbox\nSESSION_SECURE_COOKIE=false\n");
+        $this->assertSame(0, $code, 'une recette en http reste possible : ' . $sortie);
+    }
+
+    /** S132 — sans valeur, le cookie est `secure` dès que l'application se sert en https. */
+    public function test_le_cookie_de_session_suit_le_https_de_app_url(): void
+    {
+        $avant = [$_ENV['APP_URL'] ?? null, $_SERVER['APP_URL'] ?? null];
+        try {
+            foreach (['https://beninlink.app' => true, 'http://localhost' => false] as $url => $attendu) {
+                $_ENV['APP_URL'] = $_SERVER['APP_URL'] = $url;
+                unset($_ENV['SESSION_SECURE_COOKIE'], $_SERVER['SESSION_SECURE_COOKIE']);
+                $config = require config_path('session.php');
+                $this->assertSame($attendu, $config['secure'], "APP_URL={$url}");
+            }
+        } finally {
+            [$_ENV['APP_URL'], $_SERVER['APP_URL']] = $avant;
+        }
+    }
+
     public function test_un_env_absent_est_refuse(): void
     {
         [$code, $sortie] = $this->garde(null);

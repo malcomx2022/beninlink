@@ -391,7 +391,8 @@ avant les apps.
   web et API) porte `throttle:public-web` / `public-api`, 20/min par adresse (**S131**, `PublicSurfaceThrottleTest`).
   **S99** : le
   même garde refuse `APP_DEBUG=true` en production (une page d'erreur montre la pile et l'environnement)
-  et le signale seulement en recette.
+  et le signale seulement en recette. **S132** : le cookie de session est `secure` dès que `APP_URL` est en
+  https, et le garde refuse `SESSION_SECURE_COOKIE=false` en production.
 - **Les deux apps ont leur filet de contrat** (**S85**). L'app marchand : `OpenApiSpecTest`
   (inventaire), `ParcelStageTest` (statuts), `MerchantAppCustomsContractTest` (pages, douane).
   L'app livreur : `DeliverymanAppContractTest` — inventaire dans la spec et jamais réservé au
