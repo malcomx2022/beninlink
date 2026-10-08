@@ -121,7 +121,7 @@
                 </div>
             </div>
             <div class="col-lg-7 footer-img">
-                <img alt="" class="img-responsive margin-t-20 py-5" src="{{ static_asset('images/default/we-courier-process.png') }}" width="100%"/>
+                <img alt="" class="img-responsive margin-t-20 py-5" src="{{ static_asset('frontend/images/banner1.png') }}" width="100%"/>
             </div>
         </div>
     </div>

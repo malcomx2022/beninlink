@@ -327,6 +327,11 @@ avant les apps.
 - **Dette technique tranchée (D15, S107)** : pas de migration des colonnes `decimal` — la règle « FCFA entiers »
   se vérifie par `beninlink:montants-non-entiers` (constat, rien d'écrit) ; Bootstrap 4 + 5 cohabitent à dessein ;
   pas de re-fusion We Courier, le fork est le produit.
+- **Aucune marque tierce sur les pages publiques** (**S111**) : aucun partenaire semé (les six vignettes du
+  socle étaient Huawei, UPS, Digg, Atom, 500px), la section « Nos partenaires » ne s'affiche qu'avec de vrais
+  partenaires, et les visuels par défaut sont ceux de BeninLink (`resources/brand/generate.py`) — plus de
+  « We Courier » en logo, favicon ou illustration de connexion. `PublicBrandAssetsTest` refuse par empreinte
+  le retour de l'un des douze fichiers retirés, quel que soit son nom.
 - **Le livreur voit l'alerte douanière de sa course, en lecture seule** (**S95**).
   `deliveryman/parcel/details/{id}` porte `customs_alerts` (même `CustomsAlertResource` que S82)
   sur le colis déjà vérifié par `notOwned()` ; un domestique rend `[]`, la course d'un collègue

@@ -14,6 +14,9 @@
         @include('frontend.section.plans')
     @endif
     @include('frontend.section.achievement')
-    @include('frontend.section.partner')
+    {{-- S111 : la section n'existe que si le transporteur a saisi de vrais partenaires. --}}
+    @if ($partners->isNotEmpty())
+        @include('frontend.section.partner')
+    @endif
     @include('frontend.section.blogs')
 @endsection

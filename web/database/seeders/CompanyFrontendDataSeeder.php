@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Backend\FrontWeb\Blog;
 use App\Models\Backend\FrontWeb\Faq;
-use App\Models\Backend\FrontWeb\Partner;
 use App\Models\Backend\FrontWeb\Service;
 use App\Models\Backend\FrontWeb\SocialLink;
 use App\Models\Backend\FrontWeb\WhyCourier;
@@ -25,6 +24,12 @@ use Illuminate\Support\Facades\DB;
  * Vitrine → Sections), inséré par Eloquent et `DB::table()` — la suite le joue.
  *
  * Les images restent celles du socle (`public/frontend/images/...`).
+ *
+ * **S111** — aucun partenaire n'est semé. Les six vignettes du socle étaient des
+ * logos de vraies marques (Huawei, UPS, Digg, Atom, 500px) avec lesquelles aucune
+ * société n'a de relation : les montrer sous « Nos partenaires » affichait une
+ * fausse affiliation. La section n'apparaît que lorsque le transporteur saisit ses
+ * vrais partenaires (back-office, menu « Web avant » → « Partner »).
  */
 class CompanyFrontendDataSeeder extends Seeder
 {
@@ -41,7 +46,6 @@ class CompanyFrontendDataSeeder extends Seeder
         $this->services($company_id);
         $this->atouts($company_id);
         $this->faq($company_id);
-        $this->partenaires($company_id);
         $this->articles($company_id);
         $this->pages($company_id);
         $this->sections($company_id);
@@ -153,26 +157,6 @@ class CompanyFrontendDataSeeder extends Seeder
             $faq->answer     = $reponse;
             $faq->position   = $position + 1;
             $faq->save();
-        }
-    }
-
-    /** Les logos de démonstration du socle ; le transporteur les remplace par ses vrais partenaires. */
-    public function partenaires(int $company_id): void
-    {
-        $images = ['1.png', 'atom.png', 'digg.png', '2.png', 'huawei.png', 'ups.png'];
-
-        foreach ($images as $position => $image) {
-            $upload           = new Upload();
-            $upload->original = 'frontend/images/partner/' . $image;
-            $upload->save();
-
-            $partner             = new Partner();
-            $partner->company_id = $company_id;
-            $partner->name       = 'Partenaire ' . ($position + 1);
-            $partner->image_id   = $upload->id;
-            $partner->link       = '#';
-            $partner->position   = $position + 1;
-            $partner->save();
         }
     }
 
