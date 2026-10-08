@@ -314,12 +314,8 @@ class WebIsolationCoverageTest extends TestCase
         'DELETE super-admin/plan/delete/{id}' => 'panneau central ; un plan est un objet de plateforme',
         'GET super-admin/plan/modules/{plan_id}' => 'panneau central ; un plan est un objet de plateforme',
 
-        // Un module de la plateforme : la table `addons` ne porte pas de company_id.
-        // (S69) `GET` et `DELETE admin/addons/{addon}` ne sont plus déclarées : `show()` et
-        // `destroy()` n'existaient pas sur le contrôleur, la ressource les exclut.
-        'GET admin/addons/{addon}/edit' => 'un module de la plateforme : la table `addons` n\'a pas de `company_id`',
-        'PUT admin/addons/{addon}' => 'un module de la plateforme',
-        'PATCH admin/addons/{addon}' => 'un module de la plateforme',
+        // (S124) Les routes `admin/addons` sont retirées : l'installateur de modules écrivait dans le
+        // code du serveur pour tout compte du back-office (AddonInstallerClosedTest).
 
         // La section : le parametre nomme est un TYPE de section, pas un identifiant
         // de ressource — `SectionController::edit($type)` le dit, et la lecture est

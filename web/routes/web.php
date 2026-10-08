@@ -11,7 +11,6 @@
 */
 
 use App\Http\Controllers\AamarpayController;
-use App\Http\Controllers\Backend\AddonController;
 use App\Http\Controllers\Backend\DatabaseBackupController;
 use App\Http\Controllers\Backend\GoogleMapSettingsController;
 use App\Http\Controllers\Backend\NotificationSettingsController;
@@ -197,7 +196,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                 // S41 — declaree hors du groupe `admin` A DESSEIN : elle est aussi hors de
                 // `subscriptionCheck`, pour rester consultable sans abonnement en cours. La
                 // garde se pose donc sur la route, plutot qu'en la deplacant.
-                Route::get('/admin/subscription/history',  [PlanController::class, 'subscriptionHistory'])->name('admin.subscription.history')->middleware('panel:back-office');
+                Route::get('/admin/subscription/history',  [PlanController::class, 'subscriptionHistory'])->name('admin.subscription.history')->middleware(['panel:back-office', 'hasPermission:subscription_read']);
                 Route::group(['middleware' => ['subscriptionCheck', 'XSS']], function () {
                     // Route::get('/home',[HomeController::class, 'index'])->name('home');
                     //Admin Dashbord Controller
@@ -208,9 +207,11 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                     // Admin Routes
                     Route::group(['prefix' => 'admin', 'middleware' => 'panel:back-office'], function () {
 
-                        // (S69) `show` et `destroy` n'existent pas sur le contrôleur : la ressource les exclut.
-                        Route::resource('addons', AddonController::class)->except(['show', 'destroy']);
-                        Route::post('/addons/activation', [AddonController::class, 'activation'])->name('addons.activation');
+                        // S124 — les six routes `addons` sont RETIRÉES. `AddonController::store()` dépliait une
+                        // archive téléversée dans le code du serveur (`copy()` vers `base_path()`) et exécutait
+                        // son `sql/update.sql` (`DB::unprepared`) : n'importe quel compte du back-office de
+                        // n'importe quel transporteur, sans aucun droit, pouvait installer du code sur la
+                        // plateforme. Aucun menu ne les liait ; BeninLink se déploie par git (deploy.sh).
 
                         Route::get('logs',                   [ActiveLogController::class, 'index'])->name('logs.index')->middleware('hasPermission:log_read');
                         Route::get('log-activity-view/{id}', [ActiveLogController::class, 'view'])->name('log-activity-view')->middleware('hasPermission:log_read');
@@ -384,7 +385,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                             Route::get('/journal/{invoice_id}', [MerchantInvoiceController::class, 'InvoiceJournal'])->name('journal')->middleware('hasPermission:invoice_read');
                             Route::get('/csv/{invoice_id}',     [MerchantInvoiceController::class, 'InvoiceCSV'])->name('csv')->middleware('hasPermission:invoice_read');
                         });
-                        Route::get('paid/invoice',               [MerchantInvoiceController::class, 'PaidInvoice'])->name('paid.invoice.index');
+                        Route::get('paid/invoice',               [MerchantInvoiceController::class, 'PaidInvoice'])->name('paid.invoice.index')->middleware('hasPermission:paid_invoice_read');
                         // Chantier 4 — export journal SYSCOHADA des relevés d'une période.
                         Route::get('paid/invoice/syscohada-journal', [MerchantInvoiceController::class, 'JournalPeriod'])->name('paid.invoice.journal')->middleware('hasPermission:invoice_read');
                         //liquid fragile
@@ -655,7 +656,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('reports/mhd-reports',                    [ReportsController::class, 'MHDreports'])->name('reports.mhd.reports')->middleware('hasPermission:merchant_hub_deliveryman');
                         Route::get('reports/merchnat-hub-delivery-reports-print-page',   [ReportsController::class, 'MerchantHubDeliveryReportsPrintPage'])->name('merchant.hub.deliveryman.reports.print-page')->middleware('hasPermission:merchant_hub_deliveryman');
                         //export
-                        Route::get('reports/mhd-pdf',                        [ReportsController::class, 'mhdPDF'])->name('merchant.hub.deliveryman.pdf');
+                        Route::get('reports/mhd-pdf',                        [ReportsController::class, 'mhdPDF'])->name('merchant.hub.deliveryman.pdf')->middleware('hasPermission:merchant_hub_deliveryman');
                         // database backup
                         Route::get('/database-backup',             [DatabaseBackupController::class, 'index'])->name('database.backup.index')->middleware('hasPermission:database_backup_read');
                         Route::get('database-backup/download',     [DatabaseBackupController::class, 'databaseBackup'])->name('database.backup.download')->middleware('hasPermission:database_backup_read');
@@ -679,8 +680,8 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         //parcel search
                         Route::get('parcel/specific/search',                    [ParcelController::class, 'ParcelSearchs'])->name('parcel.specific.search')->middleware('hasPermission:parcel_read');
                         // GoogleMap settings
-                        Route::get('googlemap-settings/index',        [GoogleMapSettingsController::class, 'index'])->name('googlemap-settings.index');
-                        Route::put('googlemap-settings/update',       [GoogleMapSettingsController::class, 'update'])->name('googlemap-settings.update');
+                        Route::get('googlemap-settings/index',        [GoogleMapSettingsController::class, 'index'])->name('googlemap-settings.index')->middleware('hasPermission:notification_settings_read');
+                        Route::put('googlemap-settings/update',       [GoogleMapSettingsController::class, 'update'])->name('googlemap-settings.update')->middleware('hasPermission:notification_settings_update');
 
                         // Notification settings
                         Route::get('notification-settings/index',        [NotificationSettingsController::class, 'index'])->name('notification-settings.index')->middleware('hasPermission:notification_settings_read');

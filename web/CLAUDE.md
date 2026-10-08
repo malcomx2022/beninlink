@@ -537,6 +537,9 @@ avant les apps.
   (`SuperAdminPermission`) : il est déjà refusé sur les routes gardées du back-office
   locataire, donc une route liée depuis **son** menu ne se garde pas par un droit de
   locataire mais par le **type de compte** (S41).
+  ⚠️ **S124** : les routes `admin/addons` sont **retirées** — l'installateur de modules copiait une archive
+  dans `base_path()` et exécutait son SQL pour tout compte du back-office (`AddonInstallerClosedTest`). Ne
+  pas les remettre : un module s'installe par git. Arriéré 18 → 7 (les aides AJAX à jeu de droits large).
 - Un **sabotage vert** interroge le test — **et d'abord son propre ancrage** (**S44**) :
   vérifier que le fichier a changé ne suffit pas, il faut vérifier qu'il a changé **là**.
   Un ancrage non unique (`hasPermission:parcel_update`) frappe une autre ligne et rend le
