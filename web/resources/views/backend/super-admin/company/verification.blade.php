@@ -8,7 +8,7 @@
                         <a href="{{url('/')}}">
                             <img class="logo-img" src="{{ settings()->logo_image }}" alt="{{ settings()->name }}">
                         </a>
-                        <span class="splash-description">Confirm OTP</span>
+                        <span class="splash-description">{{ __('Confirm OTP') }}</span>
                     </div>
                     <div class="card-body">
                         @if (\Session::has('success'))
@@ -22,7 +22,7 @@
                         @endif
                         <form method="POST" action="{{route('company.otp-verification')}}">
                             @csrf
-                            <p class="text-center">Check Email. We have sent you a 5 digit OTP. Please confirm that OTP to verify your email for registration. <br><strong>{{ substr(session('email'), 0, 2).'********'.substr(session('email'), -4)}}<br>
+                            <p class="text-center">{{ __('Check Email. We have sent you a 5 digit OTP. Please confirm that OTP to verify your email for registration.') }} <br><strong>{{ substr(session('email'), 0, 2).'********'.substr(session('email'), -4)}}<br>
                                 </strong> <br>
                             </p>
                             <div class="form-group">
@@ -34,16 +34,16 @@
                                     </span>
                                 @enderror
                             </div>
-                            <button type="submit" class="btn btn-block btn-primary btn-xl">Submit</button>
+                            <button type="submit" class="btn btn-block btn-primary btn-xl">{{ __('Submit') }}</button>
                         </form>
                         <form id="resend" method="POST" action="{{route('company.resend-otp')}}">
                             @csrf
                             <input type="hidden" name="email" value="{{session('email')}}">
-                            <p class="text-center pt-4">Didn't get? <a href="javascript:$('#resend').submit();" class="text-primary">Resend Code!</a></p>
+                            <p class="text-center pt-4">{{ __('Didn\'t get?') }} <a href="javascript:$('#resend').submit();" class="text-primary">{{ __('Resend Code!') }}</a></p>
                         </form>
                     </div>
                     <div class="card-footer bg-white ">
-                        <p class="text-center">Already member? <a href="{{ route('login') }}" class="text-primary">Login Here.</a></p>
+                        <p class="text-center">{{ __('Already member?') }} <a href="{{ route('login') }}" class="text-primary">{{ __('Login Here.') }}</a></p>
                     </div>
                 </div>
                 <div class="col-lg-7 footer-img">

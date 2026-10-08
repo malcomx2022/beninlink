@@ -15,8 +15,8 @@
                         <a href="{{url('/')}}" class="navbar-brand">
                             <img class="logo-img" src="{{ settings()->logo_image }}"  class="logo" alt="{{ settings()->name }}">
                         </a>
-                        <h3 class="mb-1">Registrations Form</h3>
-                        <p>Please enter your user information.</p>
+                        <h3 class="mb-1">{{ __('Registrations Form') }}</h3>
+                        <p>{{ __('Please enter your user information.') }}</p>
                     </div>
                     <div class="card-body">
                         <div class="form-group">
@@ -68,7 +68,7 @@
                         </div>
                         <div class="form-group">
                             <select class="form-control   select2" name="hub_id" id="hub_id" >
-                                <option selected disabled>Select Hub</option>
+                                <option selected disabled>{{ __('Select Hub') }}</option>
                                 @foreach ($hubs as $hub)
                                     <option value="{{ $hub->id }}">{{ $hub->name }}</option>
                                 @endforeach
@@ -107,16 +107,16 @@
 
                         <div class="form-group">
                             <label class=" form-check">
-                                <input id="merchant_registration_checkbox" name="policy" class="  form-check-input" type="checkbox"><span class=" ">I agree to <a href="#" class="text-primary">{{ settings()->name }}</a> Privacy Policy & Terms.</span>
+                                <input id="merchant_registration_checkbox" name="policy" class="  form-check-input" type="checkbox"><span class=" ">{{ __('I agree to') }} <a href="#" class="text-primary">{{ settings()->name }}</a>.</span>
                             </label>
                         </div>
                         <div class="form-group pt-2">
-                            <button id="merchant_registration_submit" class="btn btn-block btn-primary" type="submit">Register My Account</button>
+                            <button id="merchant_registration_submit" class="btn btn-block btn-primary" type="submit">{{ __('Register My Account') }}</button>
                         </div>
 
                     </div>
                     <div class="card-footer bg-white">
-                        <p>Already member? <a href="{{ route('login') }}" class="text-primary">Login Here.</a></p>
+                        <p>{{ __('Already member?') }} <a href="{{ route('login') }}" class="text-primary">{{ __('Login Here.') }}</a></p>
                     </div>
                 </div>
             </div>

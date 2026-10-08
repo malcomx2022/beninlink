@@ -47,6 +47,6 @@ class CompanySignup extends Mailable implements ShouldQueue
     {
         $data          = $this->data;
         $courier_email = $this->expediteur;
-        return $this->from($courier_email)->subject('Welcome to new company')->view('backend.super-admin.company.mail.signup',compact('data') + ['companyName' => $this->marque, 'companyLogo' => $this->logo] + $this->societe);
+        return $this->from($courier_email)->subject(__('Welcome to :name', ['name' => $this->marque]))->view('backend.super-admin.company.mail.signup',compact('data') + ['companyName' => $this->marque, 'companyLogo' => $this->logo] + $this->societe);
     }
 }

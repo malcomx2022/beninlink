@@ -59,6 +59,6 @@ class MerchantSignup extends Mailable implements ShouldQueue
     {
         $data = $this->data;
         $courier_email = $this->expediteur;
-        return $this->from($courier_email)->subject('Welcome to new merchant')->view('backend.merchant.mail.signup',compact('data') + ['companyName' => $this->marque, 'companyLogo' => $this->logo] + $this->societe);
+        return $this->from($courier_email)->subject(__('Welcome to :name', ['name' => $this->marque]))->view('backend.merchant.mail.signup',compact('data') + ['companyName' => $this->marque, 'companyLogo' => $this->logo] + $this->societe);
     }
 }

@@ -90,11 +90,11 @@
                     <div class="col-lg-3 col-sm-6">
                         <div class="card">
                             <div class="card-body">
-                                <p>Total Wallet Balance</p>
+                                <p>{{ __('Total Wallet Balance') }}</p>
                                 <h3 class="mb-0">{{ formatAmount(Auth::user()->merchant->wallet_balance) }}
                                 </h3>
                                 @if (Auth::user()->merchant->wallet_balance <= 10)
-                                    <p class="text-danger"> You are low on balance. Please recharge</p>
+                                    <p class="text-danger"> {{ __('You are low on balance. Please recharge') }}</p>
                                 @endif
                             </div>
                         </div>
@@ -104,13 +104,13 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-lg-6">
-                                        <p>Total Recharge</p>
+                                        <p>{{ __('Total Recharge') }}</p>
                                         <h3 class="mb-0">
                                            {{ formatAmount(\App\Models\Backend\Wallet::where(['user_id'=>Auth::user()->id,'type'=>App\Enums\Wallet\WalletType::INCOME])->sum('amount')) }}
                                         </h3>
                                     </div>
                                     <div class="col-lg-6">
-                                        <p>Total Deducations</p>
+                                        <p>{{ __('Total Deducations') }}</p>
                                         <h3 class="mb-0">
                                             {{ formatAmount(\App\Models\Backend\Wallet::where(['user_id'=>Auth::user()->id,'type'=>App\Enums\Wallet\WalletType::EXPENSE])->sum('amount')) }}
                                         </h3>
@@ -124,19 +124,19 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-lg-4">
-                                        <p>Pending</p>
+                                        <p>{{ __('Pending') }}</p>
                                         <h3 class="mb-0">
                                             {{ \App\Models\Backend\Wallet::where('user_id', Auth::user()->id)->where('status', \App\Enums\Wallet\WalletStatus::PENDING)->count() }}
                                         </h3>
                                     </div>
                                     <div class="col-lg-4">
-                                        <p>Confirm</p>
+                                        <p>{{ __('Confirm') }}</p>
                                         <h3 class="mb-0">
                                             {{ \App\Models\Backend\Wallet::where('user_id', Auth::user()->id)->where('status', \App\Enums\Wallet\WalletStatus::APPROVED)->count() }}
                                         </h3>
                                     </div>
                                     <div class="col-lg-4">
-                                        <p>Rejected</p>
+                                        <p>{{ __('Rejected') }}</p>
                                         <h3 class="mb-0">
                                             {{ \App\Models\Backend\Wallet::where('user_id', Auth::user()->id)->where('status', \App\Enums\Wallet\WalletStatus::REJECTED)->count() }}
                                         </h3>
@@ -153,7 +153,7 @@
                                     data-title="Recharge your Wallet" data-bs-toggle="modal"
                                     data-modalsize="modal-lg"
                                     data-bs-target="#dynamic-modal">
-                                    <p>Recharge Wallet</p>
+                                    <p>{{ __('Recharge Wallet') }}</p>
                                     <h3 class="mb-0 "><i class="fa fa-plus"></i></h3>
                                 </a>
                             </div>
