@@ -193,7 +193,7 @@ class DeliveryManRepository implements DeliveryManInterface {
             $image_name = '';
             if(!blank($image)){
                 $destinationPath       = public_path('uploads/users');
-                $profileImage          = date('YmdHis') . "." . $image->getClientOriginalExtension();
+                $profileImage          = date('YmdHis') . "." . safeUploadExtension($image);
                 $image->move($destinationPath, $profileImage);
                 $image_name            = 'uploads/users/'.$profileImage;
             }
@@ -219,7 +219,7 @@ class DeliveryManRepository implements DeliveryManInterface {
             $image_name = '';
             if(!blank($image)){
                 $destinationPath       = public_path('uploads/deliveryMan/image');
-                $deliveryManImage      = date('YmdHis') . "." . $image->getClientOriginalExtension();
+                $deliveryManImage      = date('YmdHis') . "." . safeUploadExtension($image);
                 $image->move($destinationPath, $deliveryManImage);
                 $image_name            = 'uploads/deliveryMan/image/'.$deliveryManImage;
             }

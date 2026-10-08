@@ -116,7 +116,7 @@ class SupportRepository implements SupportInterface {
             $image_name = '';
             if(!blank($image)){
                 $destinationPath       = public_path('uploads/support');
-                $profileImage          = date('YmdHis') . "." . $image->getClientOriginalExtension();
+                $profileImage          = date('YmdHis') . "." . safeUploadExtension($image);
                 $image->move($destinationPath, $profileImage);
                 $image_name            = 'uploads/support/'.$profileImage;
             }

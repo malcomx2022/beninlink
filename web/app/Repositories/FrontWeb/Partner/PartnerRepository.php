@@ -84,7 +84,7 @@ class PartnerRepository implements PartnerInterface
                     File::makeDirectory(public_path('uploads/partner'));
                 endif;
                 $destinationPath       = public_path('uploads/partner');
-                $img          = date('YmdHis') . "." . $file->getClientOriginalExtension();
+                $img          = date('YmdHis') . "." . safeUploadExtension($file);
                 $file->move($destinationPath, $img);
                 $file_name            = 'uploads/partner/' . $img;
             }

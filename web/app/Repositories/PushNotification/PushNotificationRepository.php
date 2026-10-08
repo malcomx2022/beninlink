@@ -150,7 +150,7 @@ class PushNotificationRepository implements PushNotificationInterface{
             $file_name = '';
             if(!blank($file)){
                 $destinationPath       = public_path('uploads/pushNotification');
-                $profileImage          = date('YmdHis') . "." . $file->getClientOriginalExtension();
+                $profileImage          = date('YmdHis') . "." . safeUploadExtension($file);
                 $file->move($destinationPath, $profileImage);
                 $file_name            = 'uploads/pushNotification/'.$profileImage;
             }

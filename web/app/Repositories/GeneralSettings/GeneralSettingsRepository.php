@@ -85,7 +85,7 @@ class GeneralSettingsRepository implements GeneralSettingsInterface{
             $image_name = '';
             if(!blank($image)){
                 $destinationPath       = public_path('uploads/settings');
-                $profileImage          = date('YmdHis') .random_int(1000,9999). "." . $image->getClientOriginalExtension();
+                $profileImage          = date('YmdHis') .random_int(1000,9999). "." . safeUploadExtension($image);
                 $image->move($destinationPath, $profileImage);
                 $image_name            = 'uploads/settings/'.$profileImage;
             }

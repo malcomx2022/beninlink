@@ -61,7 +61,7 @@ class ProfileRepository implements ProfileInterface{
             $image_name = '';
             if(!blank($image)){
                 $destinationPath       = public_path('uploads/users');
-                $profileImage          = date('YmdHis') . "." . $image->getClientOriginalExtension();
+                $profileImage          = date('YmdHis') . "." . safeUploadExtension($image);
                 $image->move($destinationPath, $profileImage);
                 $image_name            = 'uploads/users/'.$profileImage;
             }

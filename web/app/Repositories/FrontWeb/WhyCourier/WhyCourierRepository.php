@@ -83,7 +83,7 @@ class WhyCourierRepository implements WhyCourierInterface
                     File::makeDirectory(public_path('uploads/whycourier'));
                 endif;
                 $destinationPath       = public_path('uploads/whycourier');
-                $img          = date('YmdHis') . "." . $file->getClientOriginalExtension();
+                $img          = date('YmdHis') . "." . safeUploadExtension($file);
                 $file->move($destinationPath, $img);
                 $file_name            = 'uploads/whycourier/' . $img;
             }

@@ -263,5 +263,6 @@
     "A new verification code has been sent.": "Un nouveau code de vérification a été envoyé.",
     "Successfully verified.": "Vérification réussie.",
     "Invalid OTP.": "Code de vérification invalide.",
-    "Invalid API key.": "Clé d'API invalide."
+    "Invalid API key.": "Clé d'API invalide.",
+    "This file type is not accepted.": "Ce type de fichier n'est pas accepté."
 }

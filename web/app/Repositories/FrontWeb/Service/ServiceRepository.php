@@ -95,7 +95,7 @@ class ServiceRepository implements ServiceInterface
                     File::makeDirectory(public_path('uploads/service'));
                 endif;
                 $destinationPath       = public_path('uploads/service');
-                $img          = date('YmdHis') . "." . $file->getClientOriginalExtension();
+                $img          = date('YmdHis') . "." . safeUploadExtension($file);
                 $file->move($destinationPath, $img);
                 $file_name            = 'uploads/service/' . $img;
             }

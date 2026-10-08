@@ -220,7 +220,7 @@ class PaymentRepository implements PaymentInterface{
             $image_name = '';
             if(!blank($image)){
                 $destinationPath       = public_path('uploads/reference');
-                $profileImage          = date('YmdHis') . "." . $image->getClientOriginalExtension();
+                $profileImage          = date('YmdHis') . "." . safeUploadExtension($image);
                 $image->move($destinationPath, $profileImage);
                 $image_name            = 'uploads/reference/'.$profileImage;
             }
