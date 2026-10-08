@@ -74,9 +74,9 @@
                                             @if ($account->gateway == 1)
                                                     <option value="{{ $account->id }}" @if($account->id == $singlePayment->from_account) selected @endif>{{ $account->user->name }} | {{ __('merchant.cash') }}</option>
                                                 @elseif($account->gateway == 3 || $account->gateway == 4 || $account->gateway == 5)
-                                                    <option value="{{ $account->id }}" @if($account->id == $singlePayment->from_account) selected @endif>{{$account->account_holder_name}} | {{ __('levels.mobile') }} : {{ $account->mobile }}|  @if($account->type == 1) {{ __('merchant.title') }} @else {{ __('placeholder.persional') }} @endif | {{ __('hub_payment.current_balance') }}: {{ $account->balance }} </option>
+                                                    <option value="{{ $account->id }}" @if($account->id == $singlePayment->from_account) selected @endif>{{$account->account_holder_name}} | {{ __('levels.mobile') }} : {{ $account->mobile }}|  @if($account->type == 1) {{ __('merchant.title') }} @else {{ __('placeholder.persional') }} @endif | {{ __('hub_payment.current_balance') }}: {{ formatAmount($account->balance) }} </option>
                                                 @else
-                                                    <option value="{{ $account->id }}" @if($account->id == $singlePayment->from_account) selected @endif>{{$account->account_holder_name}} | {{ __('levels.account_no') }} : {{ $account->account_no }} | {{ __('hub_payment.current_balance') }}: {{ $account->balance }}</option>
+                                                    <option value="{{ $account->id }}" @if($account->id == $singlePayment->from_account) selected @endif>{{$account->account_holder_name}} | {{ __('levels.account_no') }} : {{ $account->account_no }} | {{ __('hub_payment.current_balance') }}: {{ formatAmount($account->balance) }}</option>
                                                 @endif
                                             @endforeach
                                         </select>

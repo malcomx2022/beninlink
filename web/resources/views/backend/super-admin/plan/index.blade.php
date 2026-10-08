@@ -71,7 +71,7 @@
                                             <td>{{ $plan->parcel_count }}</td>
                                             <td>{{ $plan->deliveryman_count }}</td>
                                             <td>{{ $plan->days_count }}</td>
-                                            <td>{{ $plan->price }}</td>
+                                            <td>{{ formatAmount($plan->price) }}</td>
                                             <td>{{ $plan->description }}</td>
                                             <td>{{ $plan->position }}</td>
                                             <td>{{ count($plan->modules??[]) }}</td>

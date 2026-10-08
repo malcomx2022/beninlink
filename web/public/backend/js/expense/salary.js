@@ -60,7 +60,7 @@ $(document).ready(function(){
                 }
                 $('#account_balance').val(parseInt(data['balance']));
 
-                if(parseInt($('#account_balance_').text()) >= parseInt($("#amount").val()) && $("#amount").val() != ''){
+                if(montantLu($('#account_balance_').text()) >= parseInt($("#amount").val()) && $("#amount").val() != ''){
                     $(".btn").prop('disabled', false);
                     $('.check_message').empty();
                 }
@@ -79,7 +79,7 @@ $(document).ready(function(){
 
     // Check balance
     $("#amount").on('keyup', function(){
-        if(parseInt($('#account_balance_').text()) >= parseInt($("#amount").val()) && $("#amount").val() != ''){
+        if(montantLu($('#account_balance_').text()) >= parseInt($("#amount").val()) && $("#amount").val() != ''){
             $(".btn").prop('disabled', false);
             $('.check_message').empty();
         }

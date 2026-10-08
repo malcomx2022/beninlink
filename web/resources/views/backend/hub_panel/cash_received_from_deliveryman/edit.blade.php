@@ -40,7 +40,7 @@
                                         <option value="{{ $singleCashAmount->delivery_man_id }}" selected>{{ $singleCashAmount->deliveryman->user->name }}</option>
                                     </select>
                                     <input type="hidden" id="deliveryman_amount" value="0"/>
-                                    <div  class="deliveryman_balance active show">{{ __('levels.current_balance') }} : {{$singleCashAmount->deliveryman->current_balance}}</div>
+                                    <div  class="deliveryman_balance active show">{{ __('levels.current_balance') }} : {{ formatAmount($singleCashAmount->deliveryman->current_balance) }}</div>
                                     @error('delivery_man_id')
                                     <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror

@@ -71,7 +71,7 @@
                                         <td>{{@$express->name}}</td>
                                         <td>{{@$express->phone}}</td>
                                         <td>{{@$express->address}}</td>
-                                        <td>{{@$express->cod_amount}}</td>
+                                        <td>{{ formatAmount(@$express->cod_amount) }}</td>
                                         <td>{{@$express->invoice}}</td>
                                         <td>{{@$express->weight}}</td>
                                         <td>{{@$express->exchange == 1? __('delete.yes') : __('delete.no') }}</td>

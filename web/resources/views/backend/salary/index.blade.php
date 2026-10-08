@@ -119,7 +119,7 @@
                                         <td>{{\Carbon\Carbon::createFromFormat('Y-m',$salary->month)->translatedFormat('M Y')}}</td>
                                         <td>{{dateFormat($salary->date)}}</td>
                                         <td>{{\Str::limit($salary->note,100,' ...')}}</td>
-                                        <td>{{$salary->amount}}</td>
+                                        <td>{{ formatAmount($salary->amount) }}</td>
                                         @if(hasPermission('salary_read') == true || hasPermission('salary_update') == true || hasPermission('salary_delete') == true )
                                             <td>
                                                 <div class="row">

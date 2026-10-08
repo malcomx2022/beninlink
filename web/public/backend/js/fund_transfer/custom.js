@@ -33,7 +33,7 @@ $(document).ready(function(){
 
     // Check balance
     $("#amount").on('keyup', function(){
-        if(parseInt($('#currentBalance').text()) < parseInt($("#amount").val())){
+        if(montantLu($('#currentBalance').text()) < parseInt($("#amount").val())){
             $('.check_message').empty(); 
             $('.check_message').append('<small class="text-danger">' + trad.not_enough_balance + '</small>');
         }

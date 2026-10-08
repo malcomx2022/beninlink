@@ -67,7 +67,7 @@
                                             </div>
                                         </td>
                                         <td> {{ @$payment->transaction_id }} </td>
-                                        <td> {{ @$payment->amount }} </td>
+                                        <td> {{ formatAmount(@$payment->amount) }} </td>
                                     </tr>
                                 @endforeach
                                 </tbody>

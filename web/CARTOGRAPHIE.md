@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-08 (S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-08 (S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -9158,4 +9158,31 @@ Lot de documentation. `docs/CARTOGRAPHIE_PROJET.md` datait du 2026-10-06 (PR #16
   qu'un filet ne voit pas, et la relecture par le transporteur de la banque de ses comptes (D16).
 - Les runs de déploiement de S116 (267), S117 (269) et S118 (271) sont verts en production et en
   recette, lus dans *Actions*.
+
+## S121 — un montant affiché est en FCFA entiers (2026-10-08)
+
+### D'où ça vient
+
+D15 a tranché : les colonnes d'argent restent `decimal`, la règle « FCFA entiers » se tient à
+l'**affichage**. Un relevé des nœuds de texte des vues a trouvé **66 montants écrits bruts** —
+« 15000.00 » au lieu de « 15 000 FCFA » : soldes des comptes dans les listes de virement, de paiement
+marchand et d'agence ; salaires ; prix des plans et historique d'abonnement ; COD et encaissement sur
+les fiches colis ; récapitulatif d'un colis modifié ou dupliqué au panneau marchand (`?? '0.00'`).
+
+### Ce qui est fait
+
+- Les 66 passent par `formatAmount()` (avec la devise, ou sans dans les cases que les scripts
+  réécrivent, comme le back-office depuis S116). Rien n'a changé dans un attribut `value=` ni dans un script.
+- ⚠️ Deux écrans relisaient un solde affiché par `parseInt($('#account_balance_').text())` (dépense,
+  salaire) ou `#currentBalance` (virement) pour refuser un montant supérieur au compte : sur
+  « 15 000 FCFA », `parseInt` rend **15**, et la dépense aurait été refusée à tort. Ils lisent par
+  `montantLu()` (pied de page), qui comprend « 15 000 FCFA » comme « 15000.00 ».
+
+### Le filet
+
+`tests/Feature/MoneyIsDisplayedInFcfaTest` (4 tests) : aucun champ d'argent n'est affiché brut dans un
+nœud de texte (hors pages inatteignables : installateur, modules coupés D10/S21) ; le détecteur est
+lui-même éprouvé (il voit `<td>{{ $account->balance }}</td>`, épargne `value="{{ … }}"`) ;
+`formatAmount('15000.00')` rend « 15 000 FCFA » ; aucun script ne relit un montant affiché par
+`parseInt`. Sabotages, tous rouges : un salaire remis brut, un `parseInt(… .text())` remis.
 

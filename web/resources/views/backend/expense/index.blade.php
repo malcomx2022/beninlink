@@ -131,7 +131,7 @@
                                                 <a href="{{ route('parcel.details',$expense->parcel->id) }}">
                                                     {{$expense->parcel->customer_name}}<br>
                                                     {{$expense->parcel->tracking_id}}<br>
-                                                    {{$expense->parcel->cash_collection}}<br>
+                                                    {{ formatAmount($expense->parcel->cash_collection) }}<br>
                                                 </a>
                                             @endif
                                         </td>

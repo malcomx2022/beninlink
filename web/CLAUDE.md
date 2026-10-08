@@ -354,6 +354,8 @@ avant les apps.
   jamais une ligne par sa note seule (forme S118 : `CancelledReturnsCommand::formes()`).
   Les **scripts** de `public/backend/js` aussi (**S119**, `BackOfficeScriptsSpeakFrenchTest`) : un texte
   affiché vient de `trad.cle` (`lang/*/js.php`, rendu par le pied de page), un montant de `montantFcfa()`.
+  Un **montant affiché** par une vue passe par `formatAmount()` (**S121**, `MoneyIsDisplayedInFcfaTest`) ; un script
+  qui relit un montant affiché le fait par `montantLu()`, jamais `parseInt(… .text())`.
 - **Le livreur voit l'alerte douanière de sa course, en lecture seule** (**S95**).
   `deliveryman/parcel/details/{id}` porte `customs_alerts` (même `CustomsAlertResource` que S82)
   sur le colis déjà vérifié par `notOwned()` ; un domestique rend `[]`, la course d'un collègue

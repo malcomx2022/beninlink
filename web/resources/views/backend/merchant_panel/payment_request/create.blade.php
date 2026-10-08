@@ -31,7 +31,7 @@
                         @csrf
                         <div class="row">
                             <div class="col-12 col-md-6">
-                                <h4 class="active">{{__('levels.current_balance')}}: {{$merchant->current_balance}}</h4>
+                                <h4 class="active">{{__('levels.current_balance')}}: {{ formatAmount($merchant->current_balance) }}</h4>
                                 <div class="form-group">
                                     <label for="amount">{{ __('merchantmanage.amount') }}</label> <span class="text-danger">*</span>
                                     <input id="amount" type="number" name="amount" data-parsley-trigger="change" placeholder="{{ __('merchantPlaceholder.amount') }}" autocomplete="off" class="form-control" value="{{old('amount')}}" require>

@@ -48,11 +48,11 @@
                                         @foreach ($accounts as $account)
                                             @if ($account->type == App\Enums\AccountType::ADMIN)
                                                 @if ($account->gateway == 1)
-                                                    <option value="{{ $account->id }}">{{ $account->user->name }} | {{ __('merchant.cash') }} : {{ $account->balance }}</option>
+                                                    <option value="{{ $account->id }}">{{ $account->user->name }} | {{ __('merchant.cash') }} : {{ formatAmount($account->balance) }}</option>
                                                 @elseif($account->gateway == 3 || $account->gateway == 4 || $account->gateway == 5)
-                                                    <option value="{{ $account->id }}">{{$account->account_holder_name}} | {{ __('levels.mobile') }} : {{ $account->mobile }}|  @if($account->type == 1) {{ __('merchant.title') }} @else {{ __('placeholder.persional') }} @endif | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }} </option>
+                                                    <option value="{{ $account->id }}">{{$account->account_holder_name}} | {{ __('levels.mobile') }} : {{ $account->mobile }}|  @if($account->type == 1) {{ __('merchant.title') }} @else {{ __('placeholder.persional') }} @endif | {{ __('merchantmanage.current_balance') }}: {{ formatAmount($account->balance) }} </option>
                                                 @else
-                                                    <option value="{{ $account->id }}">{{$account->account_holder_name}} | {{ __('levels.account_no') }} : {{ $account->account_no }} | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }}</option>
+                                                    <option value="{{ $account->id }}">{{$account->account_holder_name}} | {{ __('levels.account_no') }} : {{ $account->account_no }} | {{ __('merchantmanage.current_balance') }}: {{ formatAmount($account->balance) }}</option>
                                                 @endif
                                             @endif
                                         @endforeach
