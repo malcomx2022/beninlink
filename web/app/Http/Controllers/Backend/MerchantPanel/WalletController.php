@@ -119,10 +119,10 @@ class WalletController extends Controller
         $this->proprieteVerifiee($id);
 
         if($this->repo->delete($id)):
-            Toastr::success(__('parcel.wallet_recharge_update_successfully'),__('success'));
+            Toastr::success(__('parcel.wallet_recharge_update_successfully'),__('message.success'));
             return redirect()->back();
         else:
-            Toastr::error(__('error'),__('errors'));
+            Toastr::error(__('Something went wrong.'), __('message.error'));
             return redirect()->back();
         endif;
     }

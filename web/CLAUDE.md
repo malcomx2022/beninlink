@@ -348,6 +348,10 @@ avant les apps.
   Puis **toute vue servie** (**S117**, `BackOfficeSpeaksFrenchTest`) : exemptions avec motif seulement.
   Le libellé d'un compte vient de `__('account_gateway.' . $code)`, sa banque de `__('account_bank.' . $code)`
   (**D16**, défaut réversible) — jamais d'`<option>` ni de `@if gateway ==` qui écrit un nom en dur.
+  Et le **code** de même (**S118**, `FlashMessagesSpeakFrenchTest`) : message et titre de `Toastr`, de
+  `responseWith*()` et de `->with('success'|…)` passent par `__()`, et toute clé que `app/` nomme existe.
+  ⚠️ Une ligne de relevé garde le texte de sa note **dans la langue de l'écriture** : on ne cherche
+  jamais une ligne par sa note seule (forme S118 : `CancelledReturnsCommand::formes()`).
 - **Le livreur voit l'alerte douanière de sa course, en lecture seule** (**S95**).
   `deliveryman/parcel/details/{id}` porte `customs_alerts` (même `CustomsAlertResource` que S82)
   sur le colis déjà vérifié par `notOwned()` ; un domestique rend `[]`, la course d'un collègue

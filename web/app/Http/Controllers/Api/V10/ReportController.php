@@ -85,10 +85,10 @@ class ReportController extends Controller
             $payableToMerchant['total_payable_merchant']                = $parcelsTotal['totalPaybleAmount'];
             $payableToMerchant['total_paid_by_merchant']                = $merchantTotalPayment['paidAmount'];  
             $this->data['payableToMerchant']    = $payableToMerchant; 
-            return $this->responseWithSuccess('Data filtered successfully.',$this->data);
+            return $this->responseWithSuccess(__('Data filtered successfully.'),$this->data);
 
         } catch (\Throwable $th) {
-            return $this->responseWithError('Something went wrong.',$th);
+            return $this->responseWithError(__('Something went wrong.'),$th);
         } 
     }
 }

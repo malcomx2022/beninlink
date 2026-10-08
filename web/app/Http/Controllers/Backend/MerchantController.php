@@ -199,7 +199,7 @@ class MerchantController extends Controller
         }
 
         $this->invoiceRepo->store($merchant->id);
-        Toastr::success('Invoice generated successfully','Success');
+        Toastr::success(__('Statement generated successfully.'), __('message.success'));
         return redirect()->back();
     }
 

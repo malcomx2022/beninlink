@@ -32,10 +32,10 @@ class DeliverycategoryController extends Controller
     public function store(StoreRequest $request)
     {
         if($this->repo->store($request)){
-            Toastr::success('Deliverycategory successfully added.',__('message.success'));
+            Toastr::success(__('Delivery category successfully added.'),__('message.success'));
             return redirect()->route('delivery-category.index');
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }
@@ -50,10 +50,10 @@ class DeliverycategoryController extends Controller
     {
 
         if($this->repo->update($request)){
-            Toastr::success('Deliverycategory successfully updated.',__('message.success'));
+            Toastr::success(__('Delivery category successfully updated.'),__('message.success'));
             return redirect()->route('delivery-category.index');
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
 
@@ -64,7 +64,7 @@ class DeliverycategoryController extends Controller
         // S35 — succes annonce sans regarder ce que le depot avait fait.
         abort_unless($this->repo->delete($id), 404);
 
-        Toastr::success('Deliverycategory successfully deleted.',__('message.success'));
+        Toastr::success(__('Delivery category successfully deleted.'),__('message.success'));
         return back();
     }
 }

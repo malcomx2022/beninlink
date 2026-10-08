@@ -94,13 +94,13 @@ class ProfileController extends Controller
         $this->refuserSiCeNestPasMoi($id);
 
         if($this->repo->update(auth()->user()->id, $request)){
-            Toastr::success('Profile updated successfully.',__('message.success'));
+            Toastr::success(__('Profile updated successfully.'),__('message.success'));
             // La destination vient de l'utilisateur CONNECTE, pas de l'URL : le
             // garde ci-dessus les rend egaux, et l'ecrire ainsi empeche le defaut
             // de revenir si quelqu'un relache un jour ce garde.
             return redirect()->route('profile.index', auth()->user()->id);
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }
@@ -111,16 +111,16 @@ class ProfileController extends Controller
 
         $result = $this->repo->updatePassword(auth()->user()->id, $request);
         if($result == 1){
-            Toastr::success('Password updated successfully',__('message.success'));
+            Toastr::success(__('Password updated successfully.'),__('message.success'));
             return redirect()->route('profile.index', auth()->user()->id);
         }
         elseif($result == 0){
-            Toastr::warning('Old password not match!',__('message.warning'));
+            Toastr::warning(__('The current password is incorrect.'),__('message.warning'));
             return redirect()->back()->withInput();
         }
         else
         {
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }

@@ -114,10 +114,10 @@ class ParcelController extends Controller
 
         $parcel_count = Parcel::companywise()->count(); 
         if(!settings()->subscription): 
-            Toastr::error('Something went wrong!', 'Error');
+            Toastr::error(__('Something went wrong.'), __('message.error'));
             return redirect()->route('subscription.index');
         elseif(settings()->subscription && settings()->subscription->parcel_count <= $parcel_count ):
-            Toastr::error('You have limited parcel manage. Please upgrade your package.', 'Error');
+            Toastr::error(__('Your plan\'s parcel limit is reached. Please upgrade your plan.'), __('message.error'));
             return redirect()->back(); 
         endif;
 
@@ -160,7 +160,7 @@ class ParcelController extends Controller
                 $request->destination_country
             );
             if ($charges['total_delivery_amount'] > $merchant->wallet_balance) :
-                Toastr::error('This merchant has a low balance.', 'Error');
+                Toastr::error(__('This merchant has a low balance.'), __('message.error'));
                 return redirect()->back()->withInput($request->all());
             endif;
         endif;
@@ -187,10 +187,10 @@ class ParcelController extends Controller
 
         $parcel_count = Parcel::companywise()->count();
         if(!settings()->subscription): 
-            Toastr::error('Something went wrong!', 'Error');
+            Toastr::error(__('Something went wrong.'), __('message.error'));
             return redirect()->back();
         elseif(settings()->subscription && settings()->subscription->parcel_count <= $parcel_count ):
-            Toastr::error('You have limited parcel manage. Please upgrade your package.', 'Error');
+            Toastr::error(__('Your plan\'s parcel limit is reached. Please upgrade your plan.'), __('message.error'));
             return redirect()->back(); 
         endif;
          
@@ -1363,7 +1363,7 @@ class ParcelController extends Controller
             'parcels' =>'required'
         ]);
         if($validator->fails()):
-            Toastr::error('Must be select parcel.',__('message.error'));
+            Toastr::error(__('Please select at least one parcel.'),__('message.error'));
             return redirect()->back();
         endif;
         $parcels = $this->repo->parcelMultiplePrintLabel($request);

@@ -112,7 +112,7 @@ class BkashController extends Controller
             $account                   = Account::find($request->account_id);
             $account->balance          = ($account->balance + $request->get('amount'));
             $account->save();
-            Toastr::success('Payment successfully completed.', __('message.success'));
+            Toastr::success(__('Payment successfully completed.'), __('message.success'));
             return redirect()->route('online.payment.index');
 
         } catch (\Exception $e) {

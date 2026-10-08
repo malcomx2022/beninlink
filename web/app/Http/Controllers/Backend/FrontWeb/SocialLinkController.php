@@ -58,7 +58,7 @@ class SocialLinkController extends Controller
     public function delete($id)
     {
         if(env('DEMO')):
-            Toastr::error('Delete system is disable for the demo mode.',__('message.error'));
+            Toastr::error(__('Deletion is disabled in demo mode.'),__('message.error'));
             return redirect()->back();
         endif;
         

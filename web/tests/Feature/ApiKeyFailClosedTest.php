@@ -55,7 +55,7 @@ class ApiKeyFailClosedTest extends TestCase
             config(['rxcourier.api_key' => $absente]);
 
             $this->getJson(self::ROUTE, ['apiKey' => self::CLE_DU_SOCLE])
-                ->assertStatus(400)->assertJsonPath('success', false)->assertJsonPath('message', 'Invalid Api Key');
+                ->assertStatus(400)->assertJsonPath('success', false)->assertJsonPath('message', "Clé d'API invalide.");
             $this->getJson(self::ROUTE, ['apiKey' => ''])
                 ->assertStatus(400, 'vide contre vide : le == du socle laissait passer');
             $this->getJson(self::ROUTE)->assertStatus(400);

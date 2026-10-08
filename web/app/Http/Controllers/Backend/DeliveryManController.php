@@ -39,10 +39,10 @@ class DeliveryManController extends Controller
 
         $deliveryman_count = DeliveryMan::companywise()->count();
         if(!settings()->subscription): 
-            Toastr::error('Something went wrong!', 'Error');
+            Toastr::error(__('Something went wrong.'), __('message.error'));
             return redirect()->back()->withInput($request->all());
         elseif(settings()->subscription && settings()->subscription->deliveryman_count <= $deliveryman_count ):
-            Toastr::error('You have limited deliveryman manage. Please upgrade your package.', 'Error');
+            Toastr::error(__('Your plan\'s delivery man limit is reached. Please upgrade your plan.'), __('message.error'));
             return redirect()->back()->withInput($request->all()); 
         endif;
  

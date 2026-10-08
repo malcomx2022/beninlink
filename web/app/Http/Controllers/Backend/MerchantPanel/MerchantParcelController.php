@@ -116,7 +116,7 @@ class MerchantParcelController extends Controller
                 $request->destination_country
             );
             if($charges['total_delivery_amount'] > Auth::user()->merchant->wallet_balance):
-                Toastr::error('You are low on balance. Please recharge', 'Error');
+                Toastr::error(__('You are low on balance. Please recharge'), __('message.error'));
                 return redirect()->route('merchant-panel.my.wallet.index');
             endif;
         endif;

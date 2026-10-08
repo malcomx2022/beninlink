@@ -24,7 +24,7 @@ class AamarpayController extends Controller
             endif;
 
             if(globalSettings('aamarpay_store_id') == null):
-                Toastr::error('Invalid Store id', __('message.error'));
+                Toastr::error(__('Invalid store ID.'), __('message.error'));
                 return redirect()->back()->withInput();
             endif;
             $fields = [
@@ -95,7 +95,7 @@ class AamarpayController extends Controller
     }
 
     public function success(Request $request){
-        Toastr::success('Payment successfully completed', __('message.success'));
+        Toastr::success(__('Payment successfully completed.'), __('message.success'));
         return redirect()->route('onlinie.payment.index');
         // return $request;
     }

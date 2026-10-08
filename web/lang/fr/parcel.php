@@ -206,4 +206,7 @@ return array (
     'delivered_photo' => 'Photo de livraison',
     'signature' => 'Signature',
 
+    // S118 : clés nommées par le code et absentes du catalogue (la clé brute s'affichait)
+    'pickup_reschedule_canceled' => 'Reprogrammation du ramassage annulée avec succès',
+    'delivery_re_schedule_cancel' => 'Report de la livraison annulé avec succès',
 );

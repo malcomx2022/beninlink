@@ -79,11 +79,11 @@ class MerchantProfileController extends Controller
         $this->refuserSiCeNestPasMoi($id);
 
         if($this->repo->update(auth()->user()->id, $request)){
-            Toastr::success('Merchant Profile updated successfully.',__('message.success'));
+            Toastr::success(__('Merchant profile updated successfully.'),__('message.success'));
             // La destination vient de l'utilisateur CONNECTE, pas de l'URL.
             return redirect()->route('merchant-profile.index',auth()->user()->id);
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }
@@ -94,16 +94,16 @@ class MerchantProfileController extends Controller
 
         $result = $this->repo->updatePassword(auth()->user()->id, $request);
         if($result == 1){
-            Toastr::success('Password updated successfully',__('message.success'));
+            Toastr::success(__('Password updated successfully.'),__('message.success'));
             return redirect()->route('merchant-profile.index',auth()->user()->id);
         }
         elseif($result == 0){
-            Toastr::warning('Old password not match!',__('message.warning'));
+            Toastr::warning(__('The current password is incorrect.'),__('message.warning'));
             return redirect()->back()->withInput();
         }
         else
         {
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }

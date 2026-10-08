@@ -29,20 +29,20 @@ class SalaryGenerateController extends Controller
 
     public function salaryAutoGenerate(AutoGenerateRequest $request){
         if($this->repo->autogenerate($request)):
-            Toastr::success('Salary Generated successfully.',__('message.success'));
+            Toastr::success(__('Salaries generated successfully.'),__('message.success'));
             return redirect()->route('salary.generate.index');
         else:
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         endif;
     }
 
     public function salaryGenerateDelete($id){
         if($this->repo->salaryGenerateDelete($id)):
-            Toastr::success('Salary Generate Deleted successfully.',__('message.success'));
+            Toastr::success(__('Generated salaries deleted.'),__('message.success'));
             return redirect()->route('salary.generate.index');
         else:
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         endif;
     }
@@ -58,14 +58,14 @@ class SalaryGenerateController extends Controller
         $user  = User::companywise()->find($request->user_id);
         $salaryGenerated            = SalaryGenerate::companywise()->where('user_id',$request->user_id)->where('month',$request->month)->first();
         if($salaryGenerated):
-            Toastr::error('Already salary generated.',__('message.error'));
+            Toastr::error(__('Salaries already generated.'),__('message.error'));
             return redirect()->back();
         endif;
         if($this->repo->salaryGenerateStore($request)):
-            Toastr::success('Salary created successfully.',__('message.success'));
+            Toastr::success(__('Salary created successfully.'),__('message.success'));
             return redirect()->route('salary.generate.index');
         else:
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         endif;
     }
@@ -79,10 +79,10 @@ class SalaryGenerateController extends Controller
     public function update(StoreRequest $request){
 
         if($this->repo->salaryGenerateUpdate($request)):
-            Toastr::success('Salary updated successfully.',__('message.success'));
+            Toastr::success(__('Salary updated successfully.'),__('message.success'));
             return redirect()->route('salary.generate.index');
         else:
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         endif;
     }

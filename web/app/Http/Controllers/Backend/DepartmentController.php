@@ -30,10 +30,10 @@ class DepartmentController extends Controller
     public function store(StoreRequest $request)
     {
         if($this->repo->store($request)){
-            Toastr::success('Department successfully added.',__('message.success'));
+            Toastr::success(__('Department successfully added.'),__('message.success'));
             return redirect()->route('departments.index');
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }
@@ -47,10 +47,10 @@ class DepartmentController extends Controller
     public function update(UpdateRequest $request)
     {
         if($this->repo->update($request->id, $request)){
-            Toastr::success('Department successfully updated.',__('message.success'));
+            Toastr::success(__('Department successfully updated.'),__('message.success'));
             return redirect()->route('departments.index');
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }
@@ -58,7 +58,7 @@ class DepartmentController extends Controller
     public function destroy($id)
     {
         $this->repo->delete($id);
-        Toastr::success('Department successfully deleted.',__('message.success'));
+        Toastr::success(__('Department successfully deleted.'),__('message.success'));
         return back();
     }
 }

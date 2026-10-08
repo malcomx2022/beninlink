@@ -45,6 +45,6 @@ class CheckApiKeyMiddleware
             return $next($request);
         }
 
-        return $this->responseWithError('Invalid Api Key', [], 400);
+        return $this->responseWithError(__('Invalid API key.'), [], 400);
     }
 }

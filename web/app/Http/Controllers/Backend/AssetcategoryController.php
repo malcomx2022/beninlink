@@ -46,10 +46,10 @@ class AssetcategoryController extends Controller
     public function store(StoreRequest $request)
     {
         if($this->repo->store($request)){
-            Toastr::success('Assetcategory successfully added.',__('message.success'));
+            Toastr::success(__('Asset category successfully added.'),__('message.success'));
             return redirect()->route('asset-category.index');
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }
@@ -87,10 +87,10 @@ class AssetcategoryController extends Controller
     public function update(StoreRequest $request)
     {
         if($this->repo->update($request)){
-            Toastr::success('Assetcategory successfully updated.',__('message.success'));
+            Toastr::success(__('Asset category successfully updated.'),__('message.success'));
             return redirect()->route('asset-category.index');
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }
@@ -104,7 +104,7 @@ class AssetcategoryController extends Controller
     public function destroy($id)
     {
         $this->repo->delete($id);
-        Toastr::success('Assetcategory successfully deleted.',__('message.success'));
+        Toastr::success(__('Asset category successfully deleted.'),__('message.success'));
         return back();
     }
 }

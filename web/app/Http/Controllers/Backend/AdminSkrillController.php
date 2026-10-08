@@ -61,7 +61,7 @@ class AdminSkrillController extends Controller
         $jsonSID = json_decode($sid);
         
         if ($jsonSID != null && $jsonSID->code == "BAD_REQUEST"):
-            Toastr::error($jsonSID->message,'Error');
+            Toastr::error($jsonSID->message, __('message.error'));
             return redirect()->back(); 
         endif;
         // do the payment
@@ -138,7 +138,7 @@ class AdminSkrillController extends Controller
         $skrill_ipn->save();
     }
     public function paymentCompleted(){
-        Toastr::success('Payment successfully completed.',__('message.success'));
+        Toastr::success(__('Payment successfully completed.'),__('message.success'));
         return redirect()->route('payout.index');
     }
     public function  PaymentCancelled(){

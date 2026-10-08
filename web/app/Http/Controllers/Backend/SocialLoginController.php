@@ -26,7 +26,7 @@ class SocialLoginController extends Controller
 
         if($social == 'google'):
             if(globalSettings('google_status') != Status::ACTIVE):
-                Toastr::error('Google login is not enabled.','error');
+                Toastr::error(__('Google login is not enabled.'), __('message.error'));
                 return redirect()->back();
             endif;
             \Config([
@@ -40,7 +40,7 @@ class SocialLoginController extends Controller
         elseif($social == 'facebook'):
 
             if(globalSettings('facebook_status') != Status::ACTIVE):
-                Toastr::error('Facebook login is not enabled.','error');
+                Toastr::error(__('Facebook login is not enabled.'), __('message.error'));
                 return redirect()->back();
             endif;
             \Config([
@@ -52,7 +52,7 @@ class SocialLoginController extends Controller
             return Socialite::driver('facebook')->redirect();
         endif;
 
-        Toastr::error('parcel.error_msg',__('message.error'));
+        Toastr::error(__('parcel.error_msg'),__('message.error'));
         return redirect()->back();
     }
     public function authGoogleLogin(Request $request){
@@ -75,13 +75,13 @@ class SocialLoginController extends Controller
                 Auth::login($merchantUser);
                 return redirect('/');
             else:
-                Toastr::error('parcel.error_msg',__('message.error'));
+                Toastr::error(__('parcel.error_msg'),__('message.error'));
                 return redirect()->back();
             endif;
         endif;
 
        } catch (\Throwable $th) {
-           Toastr::error('parcel.error_msg',__('message.error'));
+           Toastr::error(__('parcel.error_msg'),__('message.error'));
            return redirect()->back();
        }
     }
@@ -105,14 +105,14 @@ class SocialLoginController extends Controller
                     Auth::login($merchantUser);
                     return redirect('/');
                 else:
-                    Toastr::error('parcel.error_msg',__('message.error'));
+                    Toastr::error(__('parcel.error_msg'),__('message.error'));
                     return redirect()->back();
                 endif;
             endif;
 
         } catch (\Throwable $th) {
 
-            Toastr::error('parcel.error_msg',__('message.error'));
+            Toastr::error(__('parcel.error_msg'),__('message.error'));
             return redirect()->back();
         }
     }
@@ -128,7 +128,7 @@ class SocialLoginController extends Controller
             Toastr::success(__('parcel.settings_update_success'),__('message.success'));
             return redirect()->route('social.login.settings.index');
         else:
-            Toastr::error('parcel.error_msg',__('message.error'));
+            Toastr::error(__('parcel.error_msg'),__('message.error'));
             return redirect()->back();
         endif;
     }

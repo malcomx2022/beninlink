@@ -42,10 +42,10 @@ class UserController extends Controller
     public function store(StoreUserRequest $request)
     {
         if($this->repo->store($request)){
-            Toastr::success('User successfully added.',__('message.success'));
+            Toastr::success(__('User successfully added.'),__('message.success'));
             return redirect()->route('users.index');
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }
@@ -68,10 +68,10 @@ class UserController extends Controller
     {
 
         if($this->repo->update($request->id, $request)){
-            Toastr::success('User successfully updated.',__('message.success'));
+            Toastr::success(__('User successfully updated.'),__('message.success'));
             return redirect()->route('users.index');
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }
@@ -84,15 +84,15 @@ class UserController extends Controller
         $resultat = $this->repo->delete($id);
 
         if($resultat === 'delete'){
-            Toastr::success('User successfully deleted.',__('message.success'));
+            Toastr::success(__('User successfully deleted.'),__('message.success'));
             return back();
         }
         elseif($resultat === 0){
-            Toastr::warning('Super admin cannot be deleted!',__('message.warning'));
+            Toastr::warning(__('The super administrator cannot be deleted.'),__('message.warning'));
             return back();
         }
         else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }
@@ -111,10 +111,10 @@ class UserController extends Controller
     }
     public function permissionsUpdate(Request $request){
         if($this->repo->permissionUpdate($request->id,$request)){
-            Toastr::success('Permissions successfully updated.',__('message.success'));
+            Toastr::success(__('Permissions successfully updated.'),__('message.success'));
             return redirect()->route('users.index');
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }

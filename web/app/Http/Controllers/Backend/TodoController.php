@@ -123,7 +123,7 @@ class TodoController extends Controller {
     public function destroy($id)
     {
         $this->repo->delete($id);
-        Toastr::success('Todo successfully deleted.',__('message.success'));
+        Toastr::success(__('Task successfully deleted.'),__('message.success'));
         return redirect()->route('todo.index');
     }
 }

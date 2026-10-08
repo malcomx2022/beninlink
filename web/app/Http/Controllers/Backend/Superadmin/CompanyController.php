@@ -52,10 +52,10 @@ class CompanyController extends Controller
     public function store(StoreRequest $request)
     {
         if ($this->repo->store($request)) {
-            Toastr::success('Company successfully added.', __('message.success'));
+            Toastr::success(__('Company successfully added.'), __('message.success'));
             return redirect()->route('company.index');
         } else {
-            Toastr::error('Something went wrong.', __('message.error'));
+            Toastr::error(__('Something went wrong.'), __('message.error'));
             return redirect()->back();
         }
     }
@@ -73,10 +73,10 @@ class CompanyController extends Controller
     public function update(UpdateRequest $request)
     {
         if ($this->repo->update($request->id, $request)) {
-            Toastr::success('Company successfully updated.', __('message.success'));
+            Toastr::success(__('Company successfully updated.'), __('message.success'));
             return redirect()->route('company.index');
         } else {
-            Toastr::error('Something went wrong.', __('message.error'));
+            Toastr::error(__('Something went wrong.'), __('message.error'));
             return redirect()->back();
         }
     }
@@ -84,14 +84,14 @@ class CompanyController extends Controller
     public function delete($id)
     {
         if(env('DEMO')):
-            Toastr::error('Delete system is disable for the demo mode.',__('message.error'));
+            Toastr::error(__('Deletion is disabled in demo mode.'),__('message.error'));
             return redirect()->back();
         endif;
         if ($this->repo->delete($id)) {
-            Toastr::success('Company successfully deleted.', __('message.success'));
+            Toastr::success(__('Company successfully deleted.'), __('message.success'));
             return redirect()->route('company.index');
         } else {
-            Toastr::error('Something went wrong.', __('message.error'));
+            Toastr::error(__('Something went wrong.'), __('message.error'));
             return redirect()->back();
         }
     }
@@ -108,10 +108,10 @@ class CompanyController extends Controller
     public function switchSubscriptionStore(Request $request)
     {
         if ($this->repo->switchPlan($request)) {
-            Toastr::success('Subscribed successfully.', __('message.success'));
+            Toastr::success(__('Subscribed successfully.'), __('message.success'));
             return redirect()->route('company.index');
         } else {
-            Toastr::error('Something went wrong.', __('message.error'));
+            Toastr::error(__('Something went wrong.'), __('message.error'));
             return redirect()->back();
         }
     }
@@ -128,7 +128,7 @@ class CompanyController extends Controller
         if ($this->repo->signUpStore($request)) {
             return redirect()->route('company.otp-verification-form');
         } else {
-            Toastr::error('Something went wrong.', __('message.error'));
+            Toastr::error(__('Something went wrong.'), __('message.error'));
             return redirect()->back();
         }
     }
@@ -142,7 +142,7 @@ class CompanyController extends Controller
     public function resendOTP(Request $request)
     {
         $this->repo->resendOTP($request);
-        return redirect()->route('company.otp-verification-form')->with('success', 'Resend OTP');
+        return redirect()->route('company.otp-verification-form')->with('success', __('A new verification code has been sent.'));
     }
 
  
@@ -150,10 +150,10 @@ class CompanyController extends Controller
     {
         $result     = $this->repo->otpVerification($request);
         if ($result != null) {
-            Toastr::success('Successfully verified.', __('message.error')); 
+            Toastr::success(__('Successfully verified.'), __('message.error')); 
             return redirect()->route('login'); 
         } elseif ($result == 0) {
-            return redirect()->route('company.otp-verification-form')->with('warning', 'Invalid OTP');
+            return redirect()->route('company.otp-verification-form')->with('warning', __('Invalid OTP.'));
         } else {
             Toastr::error(__('merchant.error_msg'), __('message.error'));
             return redirect()->back();

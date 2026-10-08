@@ -61,10 +61,10 @@ class CategoryController extends Controller
 
         $category->save();
         if($category){
-          Toastr::success('Success Title',__('message.success'));
-            return redirect()->route('category.index')->with('success','Catagory Insert Successfully!');
+          Toastr::success(__('message.success'), __('message.success'));
+            return redirect()->route('category.index')->with('success',__('Category successfully added.'));
         }else{
-            return redirect()->back()->with('danger','Oparation Failds!');
+            return redirect()->back()->with('danger',__('Operation failed.'));
         }
     }
 
@@ -117,9 +117,9 @@ class CategoryController extends Controller
         }
         $update->save();
         if($update){
-            return redirect()->route('category.index')->with('success','Catagory Update Successfully!');
+            return redirect()->route('category.index')->with('success',__('Category successfully updated.'));
         }else{
-            return redirect()->back()->with('danger','Oparation Failds!');
+            return redirect()->back()->with('danger',__('Operation failed.'));
         }
     }
 
@@ -133,9 +133,9 @@ class CategoryController extends Controller
     {
         $delete = Categorys::destroy($id);
         if($delete){
-            return redirect()->back()->with('success','Catagory Delete Successfully!');
+            return redirect()->back()->with('success',__('Category successfully deleted.'));
         }else{
-            return redirect()->back()->with('danger','Catagory Delete Faild!');
+            return redirect()->back()->with('danger',__('Category could not be deleted.'));
         }
     }
 }

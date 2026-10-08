@@ -40,7 +40,7 @@ class PlanController extends Controller
     public function store (StoreRequest $request){
 
         if($this->repo->store($request)){
-            Toastr::success('Plan created successfully.',__('message.success'));
+            Toastr::success(__('Plan created successfully.'),__('message.success'));
             return redirect()->route('plan.index');
         }else{
             Toastr::error(__('account.error_msg'),__('message.error'));
@@ -55,7 +55,7 @@ class PlanController extends Controller
     }
     public function update (StoreRequest $request){
         if($this->repo->update($request->id,$request)){
-            Toastr::success('Plan updated successfully.',__('message.success'));
+            Toastr::success(__('Plan updated successfully.'),__('message.success'));
             return redirect()->route('plan.index');
         }else{
             Toastr::error(__('account.error_msg'),__('message.error'));
@@ -64,7 +64,7 @@ class PlanController extends Controller
     }
     public function delete ($id){
         if($this->repo->delete($id)){
-            Toastr::success('Plan deleted successfully.',__('message.success'));
+            Toastr::success(__('Plan deleted successfully.'),__('message.success'));
             return redirect()->route('plan.index');
         }else{
             Toastr::error(__('account.error_msg'),__('message.error'));
@@ -224,7 +224,7 @@ class PlanController extends Controller
         endif;
 
         $this->companyRepo->switchPlan($request);
-        Toastr::success('Subscribed successfully.','Success');
+        Toastr::success(__('Subscribed successfully.'), __('message.success'));
         return redirect()->route('dashboard.index');
     }
 

@@ -68,7 +68,7 @@ class ShopsController extends Controller
         $validator = Validator::make($request->all(), $validator->rules());
 
         if ($validator->fails()) {
-            return $this->responseWithError(__('merchantshops.update_shops'), ['message' => $validator->errors()], 422);
+            return $this->responseWithError(__('merchantshops.update_msg'), ['message' => $validator->errors()], 422);
         }
 
         if(!$this->repo->get($id)){

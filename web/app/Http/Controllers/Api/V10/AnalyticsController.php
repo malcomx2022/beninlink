@@ -124,9 +124,9 @@ class AnalyticsController extends Controller
 
 
         if($data){
-            return $this->responseWithSuccess('Data founded Success!',$data, 200);
+            return $this->responseWithSuccess(__('Data found.'),$data, 200);
         }else{
-            return $this->responseWithError('Something went wrong', [], 500);
+            return $this->responseWithError(__('Something went wrong.'), [], 500);
         }
       
     }

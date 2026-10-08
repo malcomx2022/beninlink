@@ -44,10 +44,10 @@ class SalaryController extends Controller
         }
         $salary = $this->repo->store($request);
         if($salary):
-            Toastr::success('Salary successfully paid.',__('message.success'));
+            Toastr::success(__('Salary successfully paid.'),__('message.success'));
             return redirect()->route('salary.index');
         else:
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         endif;
     }
@@ -71,20 +71,20 @@ class SalaryController extends Controller
             return back()->withInput();
          endif;
         if($this->repo->update($request->id,$request)):
-            Toastr::success('Salary successfully updated paid.',__('message.success'));
+            Toastr::success(__('Salary payment updated.'),__('message.success'));
             return redirect()->route('salary.index');
         else:
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         endif;
     }
     public function delete($id){
 
         if($this->repo->delete($id)):
-            Toastr::success('Salary successfully deleted.',__('message.success'));
+            Toastr::success(__('Salary successfully deleted.'),__('message.success'));
             return redirect()->route('salary.index');
         else:
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         endif;
     }

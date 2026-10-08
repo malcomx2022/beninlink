@@ -53,7 +53,7 @@ class SkrillController extends Controller
         $sid     = $client->generateSID(); //return SESSION ID
         $jsonSID = json_decode($sid); 
         if ($jsonSID != null && $jsonSID->code == "BAD_REQUEST"):
-            Toastr::error($jsonSID->message,'Error');
+            Toastr::error($jsonSID->message, __('message.error'));
             return redirect()->back(); 
         endif;
         // do the payment
@@ -129,7 +129,7 @@ class SkrillController extends Controller
     }
 
     public function paymentCompleted(){
-        Toastr::success('Payment successfully completed.',__('message.success'));
+        Toastr::success(__('Payment successfully completed.'),__('message.success'));
         return redirect()->route('online.payment.index');
     }
    public function  PaymentCancelled(){

@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-08 (S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-08 (S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -9076,4 +9076,41 @@ module coupé, qui nomme ses passerelles) ; libellés D16 fixés ; page « domai
 éditeur. `PublicBrandAssetsTest` refuse le logo de l'éditeur par empreinte. `FrenchCatalogueTest`
 lit les clés numériques (`account_gateway.3`).
 Sabotages, tous rouges : une option « BB » en dur, « Tk » remis, le logo de l'éditeur remis sous un autre nom.
+
+## S118 — les messages du back-office et de l'API parlent français (2026-10-08)
+
+### D'où ça vient
+
+S117 tenait les vues. Restait ce que le **code** affiche : 128 notifications `Toastr` et douze
+réponses d'API écrites en anglais littéral (« Something went wrong. » trente-six fois,
+« Oparation Failds! », « Catagory Insert Successfully! », « Successfully sended. »), des titres
+« Error » / « Success » en dur, six `Toastr::error('parcel.error_msg')` qui affichaient **la clé
+brute**, et neuf clés nommées par le code mais absentes du catalogue — dont **cinq notes de relevé**
+du retour d'un colis au marchand : le relevé affichait `statementNote.return_received_by_merchant_statment`.
+L'API négocie sa langue depuis S90 : ses messages restaient pourtant anglais.
+
+### Ce qui est fait
+
+- Les 149 appels passent par `__()` ; les phrases du socle sont corrigées en anglais (clé) et
+  traduites dans `lang/fr.json` (80 entrées) ; les titres disent `message.success` / `message.error`.
+- Clés fautives redirigées (`paymentrequest.deleted_msg`, `merchantshops.update_msg`,
+  `account.update_msg`) ou ajoutées (`parcel.*`, `statementNote.*`). La note du transporteur en
+  regard d'un retour a sa propre clé (`return_to_merchant_courier_statement`, « Dépenses ») au lieu
+  de reprendre celle du livreur (« Revenus »), et l'annulation la sienne.
+- Les lignes déjà écrites ne sont **pas réécrites** (D8) : `App\Traits\TranslatesStoredNote` les
+  **lit** traduites sur les relevés marchand, livreur et transporteur.
+- ⚠️ `beninlink:retours-annules` retrouvait ses lignes **par la clé brute** (« stable parce que sa
+  traduction n'existe pas ») : il accepte maintenant toutes les formes (`CancelledReturnsCommand::formes()`
+  — clé, texte français, texte anglais).
+- Deux tests du socle cherchaient « low balance » / « Already salary generated » dont **un en
+  négatif** : il serait passé sans rien prouver ; ils lisent le message par `__()`.
+
+### Le filet
+
+`tests/Feature/FlashMessagesSpeakFrenchTest` (4 tests) : aucun message ni titre de `Toastr`, de
+`responseWith*()` ou de `->with('success'|…)` n'est littéral dans `app/` ; toute phrase ou clé que
+`app/` traduit existe dans `lang/fr` (clés à suffixe calculé comptées par leur fichier) ; une note
+stockée comme clé se lit en français, une note libre reste telle quelle, et la commande reconnaît les
+trois formes. Sabotages, tous rouges : un `Toastr::error('Something went wrong.')` remis, une clé de
+note retirée, le trait retiré d'un modèle.
 
