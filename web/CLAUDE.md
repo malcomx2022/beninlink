@@ -387,7 +387,9 @@ avant les apps.
   compteur vit dans le cache ; `verifier-env.sh` refuse `CACHE_DRIVER=array` ou `null` au déploiement
   (chaque requête repartirait de zéro), `file` ou `database` conviennent, absent vaut `file`. Le parcours OTP
   du **site** marchand porte `throttle:connexion-web` (**S130**, mêmes bornes, retour au formulaire,
-  `WebOtpThrottleTest`). **S99** : le
+  `WebOtpThrottleTest`). Toute entrée **publique** (suivi, contact, lettre d'information, inscription marchand,
+  web et API) porte `throttle:public-web` / `public-api`, 20/min par adresse (**S131**, `PublicSurfaceThrottleTest`).
+  **S99** : le
   même garde refuse `APP_DEBUG=true` en production (une page d'erreur montre la pile et l'environnement)
   et le signale seulement en recette.
 - **Les deux apps ont leur filet de contrat** (**S85**). L'app marchand : `OpenApiSpecTest`

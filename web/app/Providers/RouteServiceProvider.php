@@ -97,6 +97,20 @@ class RouteServiceProvider extends ServiceProvider
         // `merchant/resend-otp`). S96 n'avait limité que l'API : sur le web, un code à cinq chiffres
         // (90 000 possibilités) se devinait sans frein, et le renvoi envoyait un SMS payant à chaque
         // clic. Réponse d'écran : retour au formulaire avec le message, pas une enveloppe JSON.
+        // S131 — la surface publique, sans compte : suivi d'un colis (un numéro de suivi est un préfixe
+        // et huit chiffres tirés au sort ; la page montre les téléphones du marchand et des livreurs),
+        // formulaires de contact et de lettre d'information (un courriel par envoi), inscription marchand
+        // (un SMS par inscription). Rien ne bornait leur cadence : 20 par minute et par adresse.
+        RateLimiter::for('public-web', fn (Request $request) => Limit::perMinute(20)->by('public-web:' . $request->ip())
+            ->response(fn (Request $r, array $headers) => redirect()->back()
+                ->with('warning', __('auth.throttle', ['seconds' => $headers['Retry-After'] ?? 60]))));
+        RateLimiter::for('public-api', fn (Request $request) => Limit::perMinute(20)->by('public-api:' . $request->ip())
+            ->response(fn (Request $r, array $headers) => response()->json([
+                'success' => false,
+                'message' => __('auth.throttle', ['seconds' => $headers['Retry-After'] ?? 60]),
+                'data'    => [],
+            ], 429, $headers)));
+
         RateLimiter::for('connexion-web', function (Request $request) {
             $mobile = preg_replace('/\D+/', '', (string) $request->input('mobile', ''));
             $refus = fn (Request $r, array $headers) => redirect()->route('merchant.otp-verification-form')

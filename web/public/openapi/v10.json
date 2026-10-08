@@ -428,10 +428,14 @@
                                 }
                             }
                         }
+                    },
+                    "429": {
+                        "description": "Trop de requêtes (throttle:public-api)"
                     }
                 },
                 "x-middleware": [
-                    "api"
+                    "api",
+                    "throttle:public-api"
                 ],
                 "x-documented": true,
                 "security": []
@@ -4665,10 +4669,14 @@
                     },
                     "404": {
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
+                    },
+                    "429": {
+                        "description": "Trop de requêtes (throttle:public-api)"
                     }
                 },
                 "x-middleware": [
-                    "api"
+                    "api",
+                    "throttle:public-api"
                 ],
                 "x-documented": true,
                 "security": []
@@ -7782,10 +7790,14 @@
                                 }
                             }
                         }
+                    },
+                    "429": {
+                        "description": "Trop de requêtes (throttle:public-api)"
                     }
                 },
                 "x-middleware": [
-                    "api"
+                    "api",
+                    "throttle:public-api"
                 ],
                 "x-documented": true,
                 "security": []

@@ -220,9 +220,9 @@ Route::prefix('v10')->group(function() {
 
     Route::get('customer/installation',                               [InstallerController::class,'customerInstallation']);
     //frontend api
-    Route::get('parcel/tracking/{tracking_id}',                         [ParcelController::class,'parcelTrackingLogs']);
-    Route::post('/contact-us',                                          [ParcelController::class,'ContactUs']);
-    Route::post('/subscribe',                                           [ParcelController::class,'subscribe']);
+    Route::get('parcel/tracking/{tracking_id}',                         [ParcelController::class,'parcelTrackingLogs'])->middleware('throttle:public-api'); // S131
+    Route::post('/contact-us',                                          [ParcelController::class,'ContactUs'])->middleware('throttle:public-api'); // S131
+    Route::post('/subscribe',                                           [ParcelController::class,'subscribe'])->middleware('throttle:public-api'); // S131
 
     /*
     | S10 — `/delivery-charges` était PUBLIQUE. Sans utilisateur authentifié,
