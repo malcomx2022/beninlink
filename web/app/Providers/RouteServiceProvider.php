@@ -92,5 +92,20 @@ class RouteServiceProvider extends ServiceProvider
                 Limit::perMinute(30)->by('connexion-ip:' . $request->ip())->response($refus),
             ];
         });
+
+        // S130 — les mêmes bornes pour le parcours OTP du SITE marchand (`merchant/otp-verification`,
+        // `merchant/resend-otp`). S96 n'avait limité que l'API : sur le web, un code à cinq chiffres
+        // (90 000 possibilités) se devinait sans frein, et le renvoi envoyait un SMS payant à chaque
+        // clic. Réponse d'écran : retour au formulaire avec le message, pas une enveloppe JSON.
+        RateLimiter::for('connexion-web', function (Request $request) {
+            $mobile = preg_replace('/\D+/', '', (string) $request->input('mobile', ''));
+            $refus = fn (Request $r, array $headers) => redirect()->route('merchant.otp-verification-form')
+                ->with('warning', __('auth.throttle', ['seconds' => $headers['Retry-After'] ?? 60]));
+
+            return [
+                Limit::perMinute(5)->by('connexion-web:' . $mobile . '|' . $request->ip())->response($refus),
+                Limit::perMinute(30)->by('connexion-web-ip:' . $request->ip())->response($refus),
+            ];
+        });
     }
 }

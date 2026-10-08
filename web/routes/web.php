@@ -170,9 +170,9 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
 
             Route::get('merchant/sign-up',                [MerchantController::class, 'signUp'])->name('merchant.sign-up');
             Route::post('merchant/sign-up-store',         [MerchantController::class, 'signUpStore'])->name('merchant.sign-up-store');
-            Route::post('merchant/otp-verification',      [MerchantController::class, 'otpVerification'])->name('merchant.otp-verification');
+            Route::post('merchant/otp-verification',      [MerchantController::class, 'otpVerification'])->name('merchant.otp-verification')->middleware('throttle:connexion-web'); // S130
             Route::get('merchant/otp-verification-form',  [MerchantController::class, 'otpVerificationForm'])->name('merchant.otp-verification-form');
-            Route::post('merchant/resend-otp',            [MerchantController::class, 'resendOTP'])->name('merchant.resend-otp');
+            Route::post('merchant/resend-otp',            [MerchantController::class, 'resendOTP'])->name('merchant.resend-otp')->middleware('throttle:connexion-web'); // S130
             //social authentication
             Route::get('/login/{social}',                 [SocialLoginController::class, 'socialRedirect'])->name('social.login');
             Route::get('/google/login',                   [SocialLoginController::class, 'authGoogleLogin']); //google login , need url add in  your google app
