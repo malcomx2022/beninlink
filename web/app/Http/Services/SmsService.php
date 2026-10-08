@@ -8,6 +8,7 @@ use App\Jobs\SendSms;
 use App\Models\Backend\GeneralSettings;
 use App\Models\Backend\SmsSetting;
 use App\Services\Sms\SmsTemplate;
+use App\Support\BeninPhone;
 use http\Client;
 use Twilio\Rest\Client as TwilioClient;
 class SmsService
@@ -82,12 +83,13 @@ class SmsService
      */
     public function sendOtp($userPhone,$otpCode)
     {
-        SendSms::dispatch($this->companyId ?? settings()?->id, (string) $userPhone, (string) $otpCode, true);
+        SendSms::dispatch($this->companyId ?? settings()?->id, (string) BeninPhone::normalize((string) $userPhone), (string) $otpCode, true);
     }
 
     public function sendSms($userPhone,$msg)
     {
-        SendSms::dispatch($this->companyId ?? settings()?->id, (string) $userPhone, (string) $msg);
+        // S133 — un numéro rangé avant S133 (« 97000000 », « 0197000000 ») part avec son indicatif.
+        SendSms::dispatch($this->companyId ?? settings()?->id, (string) BeninPhone::normalize((string) $userPhone), (string) $msg);
     }
 
     /** Livraison réelle d'un code de vérification. Appelée par le job. */

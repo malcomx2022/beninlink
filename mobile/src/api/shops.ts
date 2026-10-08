@@ -1,9 +1,9 @@
 /**
  * Boutiques du marchand (`shops/*`).
  *
- * Le backend exige `status` (1 = active) et un `contact_no` numérique de 11 à
- * 14 chiffres — règle héritée du socle, calibrée sur l'indicatif : on saisit
- * donc « 22997000000 », pas « 97 00 00 00 ».
+ * Le backend exige `status` (1 = active) et un `contact_no`. Depuis S133 il
+ * range lui-même le numéro (« 01 97 00 00 00 », « +229 01 97 00 00 00 » →
+ * « 2290197000000 ») : l'app envoie ce que le marchand a tapé.
  *
  * Depuis le 2026-09-04, `edit`, `update` et `delete` ne rendent que les
  * boutiques du marchand connecté (404 sinon) : l'app n'a rien à vérifier.

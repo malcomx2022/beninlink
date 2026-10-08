@@ -369,6 +369,9 @@ avant les apps.
   `DatesSpeakFrenchTest`) : jamais `->format()` ni `date()` avec un mot anglais ou une heure sur 12 ; l'API suit la langue négociée.
   L'**origine d'un mouvement de portefeuille** s'affiche par `Wallet::source_label` (**S123**) : `wallets.source` garde
   la clé du socle (`WalletDebit::SOURCE` + suivi), on traduit à l'affichage (`WalletSourceSpeaksFrenchTest`).
+  Un **numéro de téléphone** saisi entre au format rangé `2290197010007` (**S133**, `App\Support\BeninPhone`,
+  middleware global `NormalizePhoneNumbers` sur les écritures) : une règle valide cette forme, une recherche en `GET`
+  garde ce qu'on tape, un champ téléphone neuf s'ajoute à `NormalizePhoneNumbers::CHAMPS` (`BeninPhoneNumbersTest`).
 - **Le livreur voit l'alerte douanière de sa course, en lecture seule** (**S95**).
   `deliveryman/parcel/details/{id}` porte `customs_alerts` (même `CustomsAlertResource` que S82)
   sur le colis déjà vérifié par `notOwned()` ; un domestique rend `[]`, la course d'un collègue

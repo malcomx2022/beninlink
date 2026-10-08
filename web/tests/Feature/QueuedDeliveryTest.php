@@ -68,7 +68,7 @@ class QueuedDeliveryTest extends TestCase
 
         app(SmsService::class)->sendSms('0022997000000', 'Votre colis BL-1 est livré.');
 
-        Queue::assertPushed(SendSms::class, fn (SendSms $job) => $job->phone === '0022997000000'
+        Queue::assertPushed(SendSms::class, fn (SendSms $job) => $job->phone === '2290197000000' // S133 : l'indicatif et le 01 du plan 2024
             && str_contains($job->message, 'BL-1')
             && $job->otp === false);
     }

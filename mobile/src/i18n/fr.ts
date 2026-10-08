@@ -208,7 +208,7 @@ export const fr = {
     editShop: 'Modifier la boutique',
     name: 'Nom de la boutique',
     phone: 'Téléphone de la boutique',
-    phoneHint: 'Avec l\'indicatif, sans espaces : 22997000000',
+    phoneHint: 'Numéro à 10 chiffres, avec ou sans +229 : 01 97 00 00 00',
     address: 'Adresse d\'enlèvement',
     saved: 'Boutique enregistrée.',
     deleted: 'Boutique supprimée.',

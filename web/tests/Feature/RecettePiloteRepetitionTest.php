@@ -275,7 +275,7 @@ class RecettePiloteRepetitionTest extends TestCase
         $this->postJson('/api/v10/register', ['ifu' => '123'] + $pme, $this->entetes())->assertStatus(422);
         $this->postJson('/api/v10/register', $pme, $this->entetes())->assertOk();
 
-        $compte = User::where('mobile', $pme['mobile'])->firstOrFail();
+        $compte = User::where('mobile', \App\Support\BeninPhone::normalize($pme['mobile']))->firstOrFail(); // S133 : rangé sous une seule forme
         $this->assertMatchesRegularExpression('/^\d{5}$/', (string) $compte->otp);
         Queue::assertPushed(SendSms::class);
 
@@ -411,10 +411,10 @@ class RecettePiloteRepetitionTest extends TestCase
     {
         $this->connecterMarchand('PIL-001');
         $this->postJson('/api/v10/fraud/store', ['phone' => '0022990000001', 'name' => 'Client fantôme', 'details' => 'Trois refus de colis'], $this->entetes())->assertOk();
-        $fiche = \App\Models\Backend\Fraud::where('phone', '0022990000001')->firstOrFail();
+        $fiche = \App\Models\Backend\Fraud::where('phone', '2290190000001')->firstOrFail(); // S133 : numéro rangé
 
         $this->connecterMarchand('PIL-002');
-        $this->getJson('/api/v10/fraud/index', $this->entetes())->assertOk()->assertJsonFragment(['phone' => '0022990000001']);
+        $this->getJson('/api/v10/fraud/index', $this->entetes())->assertOk()->assertJsonFragment(['phone' => '2290190000001']);
         $this->putJson("/api/v10/fraud/update/{$fiche->id}", ['phone' => '0022990000001', 'name' => 'X', 'details' => 'x'], $this->entetes())->assertStatus(404);
 
         $this->connecterMarchand('PIL-001');
