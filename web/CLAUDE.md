@@ -228,6 +228,9 @@ avant les apps.
 - **Un texte riche écrit par un autre que le lecteur se rend par `{!! safeHtml(…) !!}`** (**S127**,
   `App\Support\SafeHtml`, HTMLPurifier) : jamais `{!! $x->description !!}` — le middleware `XSS` exempte
   `description` et ne couvre pas l'API (`RichTextIsSanitizedTest`).
+- **Un retour de paiement n'applique rien à un identifiant de l'URL** (**S129**) : `switchPlan()` reçoit une
+  requête composée (`user_id = Auth::id()`), et une session Stripe ne sert qu'une fois
+  (`subscriptions.stripe_session_id` unique, `StripeSubscriptionReturnTest`).
 - Réutiliser les conventions We Courier (repérer un exemple avant d'écrire du neuf).
 - Tout module de paiement modifié est couvert par des tests PHPUnit (dont idempotence webhook).
 - Tout envoi sortant (SMS, push, e-mail) part **en file** (**D13**), jamais dans la

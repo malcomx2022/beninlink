@@ -242,7 +242,7 @@ class BodyIdentifierCoverageTest extends TestCase
         'POST super-admin/company/subscription/switch/store' => 'idem — changement de plan d\'une société, acte de plateforme',
         'PUT super-admin/plan/update' => 'idem — le catalogue des plans est celui de la plateforme',
         'POST subscription/fedapay' => 'S12 — `plan_id` désigne un plan de la plateforme ; le montant et le compte d\'encaissement sont résolus côté serveur (FedaPaySubscriptionTest)',
-        'POST subscription/success' => 'retour de paiement d\'abonnement : plan de plateforme, société déduite de la session',
+        'POST subscription/success' => 'retour de paiement d\'abonnement : plan de plateforme ; depuis S129 le compte vient de la session (Auth), le `user_id` de la requête est ignoré — StripeSubscriptionReturnTest',
         'PUT subscription/success' => 'même route, autre verbe',
         'PATCH subscription/success' => 'même route, autre verbe',
         'DELETE subscription/success' => 'même route, autre verbe',
