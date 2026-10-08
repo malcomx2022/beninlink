@@ -81,7 +81,7 @@
                                 </div>
                                 <div class="form-group pt-3">
                                     <label for="address">{{ __('levels.address') }}</label>
-                                    <textarea id="address" type="text" name="address" data-parsley-trigger="change" placeholder="{{ __('placeholder.enter_address') }}" autocomplete="off" class="form-control @error('address') is-invalid @enderror" require>{{ $settings->address }}</textarea>
+                                    <textarea id="address" type="text" name="address" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_address') }}" autocomplete="off" class="form-control @error('address') is-invalid @enderror" require>{{ $settings->address }}</textarea>
                                     @error('address')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror

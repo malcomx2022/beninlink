@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-08 (S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-08 (S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -8902,3 +8902,31 @@ Suite complète : **1 311 tests, 51 187 assertions** (1 308 avant ; +3).
 Le run 257 (fusion de S111) a déployé la production — la migration
 `remove_socle_brand_partners` y figure — **et la recette**, qui n'était plus refusée : les comptes
 d'amorçage de sa base ont été changés depuis le run 255. Registre E2 mis à jour.
+
+## S113 — aucune clé de traduction affichée brute (2026-10-08)
+
+### D'où ça vient
+
+S112 a comparé les deux catalogues entre eux ; il ne voyait pas une clé **nommée par une vue et
+absente des deux**. Laravel affiche alors la clé elle-même : « Colis levels.import », « Profil
+menus.update », une colonne « menus.merchant » sur la liste des alertes douanières, « delete.no » dans
+la liste des demandes express. Relevé des `__('fichier.cle')` des vues contre `lang/fr/` : **14 clés
+manquantes** (et deux préfixes calculés, `customs.category_*` et `levels.vat_status_*`, qui existent).
+
+### Ce qui est fait
+
+| Cas | Correction |
+|---|---|
+| fautes de frappe (`levels.lsit`, `placeholder.Persional`) | la vue nomme la clé existante (`levels.list`, `placeholder.persional`) |
+| casse ou fichier différent (`placeholder.enter_name`, `Enter_email`, `enter_address`, `opening_balance`, `levels.Enter_description`) | la vue nomme la clé existante (`Enter_name`, `enter_email`, `Enter_address`, `Enter_opening_balance`, `placeholder.Enter_description`) |
+| titre faux de l'écran de modification d'un partenaire (« Lien social Ajouter ») | `levels.partner` + `levels.edit` |
+| clés réellement absentes (`delete.no`, `levels.import`, `levels.payout`, `levels.select`, `menus.merchant`, `menus.update`) | ajoutées en français **et** en anglais (les deux catalogues gardent les mêmes clés) |
+
+### Le filet
+
+`FrenchCatalogueTest::test_every_key_named_by_a_view_exists_in_french` lit chaque vue Blade, relève
+les `__()`, `@lang()` et `trans()` à clé littérale, et exige la clé dans `lang/fr/` ; une clé qui
+finit par `_` (suffixe calculé) compte si une clé française commence par elle. Sabotage : `levels.list`
+remis à `levels.lsit` — rouge, la vue nommée.
+
+Suite complète : **1 312 tests, 51 188 assertions** (1 311 avant ; +1).

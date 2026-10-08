@@ -36,4 +36,5 @@ return [
     'company'              => 'Voulez-vous supprimer la société ?',
     'yes'                  => 'Oui',
     'cancel'               => 'Annuler',
+    'no' => 'Non',
 ];

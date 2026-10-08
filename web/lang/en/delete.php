@@ -36,4 +36,5 @@ return [
     'category'             => 'Do you want to delete the category?',
     'yes'                  => 'Yes',
     'cancel'               => 'Cancel',
+    'no' => 'No',
 ];

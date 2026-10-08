@@ -335,6 +335,8 @@ avant les apps.
 - **Le catalogue français ne garde plus d'anglais** (**S112**) : une entrée de `lang/fr/` identique à sa jumelle
   de `lang/en/` n'est admise que si sa valeur est dans `FrenchCatalogueTest::PERMISES` (marque, sigle, mot identique).
   « Hub » se dit **Agence** (comme les semences S92), « Front web » **Site public**.
+  Et toute clé qu'une vue nomme (`__('fichier.cle')`) existe dans `lang/fr/` (**S113**) : sinon l'écran
+  affiche la clé brute. Une clé à suffixe calculé (`'customs.category_' . $x`) compte par son préfixe.
 - **Le livreur voit l'alerte douanière de sa course, en lecture seule** (**S95**).
   `deliveryman/parcel/details/{id}` porte `customs_alerts` (même `CustomsAlertResource` que S82)
   sur le colis déjà vérifié par `notOwned()` ; un domestique rend `[]`, la course d'un collègue

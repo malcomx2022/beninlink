@@ -98,4 +98,6 @@ return [
     'group_relation'       => 'Relations and content',
     'group_administration' => 'Administration',
     'group_compte'         => 'My account',
+    'merchant' => 'Merchant',
+    'update' => 'Update',
 ];

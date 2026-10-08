@@ -1,6 +1,6 @@
 @extends('backend.partials.master')
 @section('title')
-    {{ __('delivery_charge.title') }} {{ __('levels.lsit') }}
+    {{ __('delivery_charge.title') }} {{ __('levels.list') }}
 @endsection
 @section('maincontent')
 <!-- wrapper  -->

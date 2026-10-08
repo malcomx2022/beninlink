@@ -24,7 +24,7 @@
         <div class="  col-sm-12 col-12">
             <div class="card">
                 <div class="card-body">
-                    <h2 class="pageheader-title">{{ __('settings.social_link') }} {{ __('levels.add') }}</h2>
+                    <h2 class="pageheader-title">{{ __('levels.partner') }} {{ __('levels.edit') }}</h2>
                     <form action="{{route('partner.update',$partner->id)}}"  method="POST" enctype="multipart/form-data" id="basicform">
                         @csrf
                         @method('put')
