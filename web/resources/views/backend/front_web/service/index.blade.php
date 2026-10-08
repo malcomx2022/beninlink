@@ -56,7 +56,7 @@
                                     <td>{{$i++}}</td>
                                     <td>{{@$service->title}}</td>
                                     <td><img alt="" src="{{ @$service->image }}"/> </td>
-                                    <td width="25%">{!! @$service->description !!}</td> 
+                                    <td width="25%">{!! safeHtml(@$service->description) !!}</td> 
                                     <td>{{@$service->position}}</td>
                                     <td>{!!@$service->my_status!!}</td>
                                     @if(hasPermission('service_update') == true || hasPermission('service_delete') == true )

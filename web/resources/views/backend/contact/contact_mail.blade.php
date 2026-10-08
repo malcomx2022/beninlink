@@ -51,7 +51,7 @@
                     <span>
                         <b>{{ __('support.message') }} :</b>
                     </span>
-                    <p style="line-height: 1.5;">{!! @$data['message'] !!}</p>
+                    <p style="line-height: 1.5;">{!! nl2br(e(@$data['message'])) !!}</p>
                 </td>
             </tr>
         </table>

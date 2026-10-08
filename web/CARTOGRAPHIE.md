@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-08 (S126 — un fichier téléversé ne devient jamais du code serveur ; S125 — l'arriéré des droits du back-office fermé ; S124 — l'installateur de modules fermé, cinq écrans gardés par leur droit ; S123 — l'origine d'un mouvement de portefeuille se lit en français ; S122 — une date affichée parle la langue de son lecteur ; S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-08 (S127 — un texte riche écrit par un autre est nettoyé avant d'être rendu ; S126 — un fichier téléversé ne devient jamais du code serveur ; S125 — l'arriéré des droits du back-office fermé ; S124 — l'installateur de modules fermé, cinq écrans gardés par leur droit ; S123 — l'origine d'un mouvement de portefeuille se lit en français ; S122 — une date affichée parle la langue de son lecteur ; S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -9345,3 +9345,31 @@ n'a que lui. Sabotage rouge : le dépôt du support marchand remis sur l'extensi
 La configuration nginx ne se déploie pas avec le code : copier la nouvelle `beninlink.conf` (et l'appliquer
 au vhost de recette), `nginx -t`, recharger. Puis chercher un dépôt antérieur :
 `find /var/www/beninlink*/web/public/uploads -type f \( -iname '*.php*' -o -iname '*.phtml' -o -iname '*.phar' \)`.
+
+## S127 — un texte riche écrit par un autre est nettoyé avant d'être rendu (2026-10-08)
+
+### D'où ça vient
+
+Suite de S126 (« ce qu'un utilisateur dépose devient-il actif chez un autre ? ») : **XSS stocké du marchand
+vers le back-office**. La description d'un ticket de support et ses réponses étaient rendues par
+`{!! … !!}` dans `backend/support/view`. Le middleware `XSS` du socle retire les balises de toute entrée
+**sauf `description`**, et l'API des apps n'y passe pas du tout : un marchand écrivait
+`<img src=x onerror=…>` et le script tournait dans la session de l'agent qui ouvrait le ticket.
+
+### Ce qui est fait
+
+- `App\Support\SafeHtml::clean()` (aide `safeHtml()`), sur HTMLPurifier **déjà présent** (tiré par
+  phpspreadsheet, `require`) : garde la mise en forme d'un éditeur (paragraphes, gras, listes, liens http/https/
+  mailto/tel, images, tableaux) et retire scripts, gestionnaires d'évènements, styles et `javascript:`.
+- Rendus par lui : tickets de support (fil et description, back-office et panneau marchand), actualités
+  du panneau marchand, pages, articles, services et FAQ du site public et leurs listes au back-office.
+- Le message du formulaire de contact public, du texte brut, est échappé (`nl2br(e(…))`) dans le courriel.
+- Les autres `{!! !!}` restants rendent des pastilles d'état composées par le code (`my_status`,
+  `parcel_status`, code-barres) : aucune saisie n'y entre.
+
+### Le filet
+
+`tests/Feature/RichTextIsSanitizedTest` (3 tests) : le nettoyeur garde `<strong>` et un lien https et retire
+`onerror`, `<script>`, `javascript:` ; un ticket piégé s'ouvre au back-office (HTTP) sans son script ; aucune
+vue ne rend brut un champ `description`, `message`, `answer`, `details` ou `note`. Sabotage rouge : la
+description du ticket remise en `{!! !!}`.

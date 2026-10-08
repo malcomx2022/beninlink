@@ -179,6 +179,14 @@ if(!function_exists('user')){
     }
 }
 
+if(!function_exists('safeHtml')){
+    /** Texte riche écrit par un autre que le lecteur, nettoyé avant rendu (S127) : voir `App\Support\SafeHtml`. */
+    function safeHtml(?string $html): string
+    {
+        return \App\Support\SafeHtml::clean($html);
+    }
+}
+
 if(!function_exists('safeUploadExtension')){
     /** Extension d'un fichier téléversé, déduite de son contenu (S126) : voir `App\Support\SafeUpload`. */
     function safeUploadExtension(\Illuminate\Http\UploadedFile $fichier): string

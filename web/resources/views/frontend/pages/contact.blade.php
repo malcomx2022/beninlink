@@ -7,7 +7,7 @@
     <div class="container pt-5 pb-5 "> 
         <h3 class="font-size-1-5rem display-6 font-weight-bold text-start my-4  ">  {{ @$page->title }} </h3>
         <div class="page-content">
-            {!! $page->description !!} 
+            {!! safeHtml($page->description) !!} 
             <div class="row align-items-start">
                 <div class="col-lg-8">
                     <div class="contact-form mt-4">

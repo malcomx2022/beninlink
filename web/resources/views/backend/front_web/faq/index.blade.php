@@ -54,7 +54,7 @@
                                 <tr>
                                     <td>{{$i++}}</td>
                                     <td width="25%">{{@$faq->question}}</td> 
-                                    <td width="25%">{!! @$faq->answer !!}</td> 
+                                    <td width="25%">{!! safeHtml(@$faq->answer) !!}</td> 
                                     <td>{{@$faq->position}}</td>
                                     <td>{!!@$faq->my_status!!}</td>
                                     @if(hasPermission('faq_update') == true || hasPermission('faq_delete') == true )
