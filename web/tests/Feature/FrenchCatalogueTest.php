@@ -111,6 +111,49 @@ class FrenchCatalogueTest extends TestCase
         $this->assertSame([], array_values(array_unique($manquantes)), "clés absentes de lang/fr/ :\n" . implode("\n", $manquantes));
     }
 
+    /**
+     * **S114** — une phrase qu'une vue traduit par `__('Phrase…')` existe dans `lang/fr.json`.
+     * Les pages d'erreur (401 à 500) n'en trouvaient que la moitié, la vérification d'e-mail et
+     * la page de domaine inactif aucune, et les 73 listes paginées affichaient « Affichage de 1
+     * to 10 of 50 results ». Une clé qui nomme un fichier de `lang/fr/` (`trans('status')` rend
+     * le tableau entier) n'est pas une phrase ; les noms propres restent tels quels.
+     */
+    public function test_every_sentence_named_by_a_view_exists_in_french_json(): void
+    {
+        $tels_quels = ['#', '###', 'Razorpay', 'REVE SMS', 'TWILIO SMS', 'NEXMO SMS',
+            'WemaxDevs Product Activation.']; // page d'avant installation, jamais servie à un client
+        $francais = json_decode(file_get_contents(lang_path('fr.json')), true, 512, JSON_THROW_ON_ERROR);
+        $manquantes = [];
+        foreach (\Symfony\Component\Finder\Finder::create()->files()->in(resource_path('views'))->name('*.blade.php') as $vue) {
+            preg_match_all('/(?:__|@lang|trans)\(\s*(?:\'((?:[^\'\\\\]|\\\\.)*)\'|"((?:[^"\\\\]|\\\\.)*)")\s*\)/', $vue->getContents(), $appels, PREG_SET_ORDER);
+            foreach ($appels as $appel) {
+                $cle = stripslashes(($appel[1] ?? '') !== '' ? $appel[1] : ($appel[2] ?? ''));
+                $fichier = preg_match('/^([a-zA-Z0-9_\-]+)\./', $cle, $prefixe) ? $prefixe[1] : $cle;
+                if ($cle === '' || file_exists(lang_path("fr/{$fichier}.php"))) {
+                    continue; // clé de fichier (test précédent) ou tableau entier
+                }
+                if (! isset($francais[$cle]) && ! in_array($cle, $tels_quels, true)) {
+                    $manquantes[] = "« {$cle} » ({$vue->getRelativePathname()})";
+                }
+            }
+        }
+
+        $this->assertSame([], array_values(array_unique($manquantes)), "phrases absentes de lang/fr.json :\n" . implode("\n", $manquantes));
+    }
+
+    /** Ce qu'un visiteur lit sur une page introuvable : du français, sans marque tierce. */
+    public function test_the_not_found_page_reads_in_french(): void
+    {
+        $page = html_entity_decode($this->get('/une-page-qui-n-existe-pas')->assertNotFound()->getContent(), ENT_QUOTES);
+
+        $this->assertStringContainsString('La page demandée est introuvable.', $page);
+        $this->assertStringContainsString('Retour à l\'accueil', $page);
+        $this->assertStringContainsString('<html lang="fr">', $page);
+        foreach (['Opps', 'Something went wrong', 'Back to homepage', 'WemaxDevs'] as $socle) {
+            $this->assertStringNotContainsString($socle, $page);
+        }
+    }
+
     /** Les libellés que le porteur a vus, et ceux de toutes les listes. */
     public function test_the_labels_seen_on_screen_read_in_french(): void
     {
