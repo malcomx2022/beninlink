@@ -123,7 +123,7 @@ $schemas = [
         'delay' => $str('Libellé du délai', true),
         'customs_pending' => $int('S101 — nombre d\'alertes douanières **en cours** sur ce colis (0 pour un domestique) : la liste signale le document à collecter sans ouvrir le colis'),
         'status' => $int('App\\Enums\\ParcelStatus (33 constantes)'), 'statusName' => $str('Libellé traduit', true),
-        'pickup_date' => $str('', true), 'delivery_date' => $str('', true), 'created_at' => $str('Déjà mise en forme (« 17 Aug 2026, 09:29 PM »)', true),
+        'pickup_date' => $str('', true), 'delivery_date' => $str('', true), 'created_at' => $str('Déjà mise en forme dans la langue négociée (« 17 août 2026, 21:29 »)', true),
         'parcel_date' => $str('', true), 'parcel_time' => $str('', true),
     ]),
     'ParcelEvent' => $obj(['id' => $int(), 'parcel_status' => $str(), 'parcel_status_name' => $str(), 'description' => $str('', true), 'delivered_image' => $str('URL absolue de la photo de livraison, posée par le livreur', true), 'signature_image' => $str('URL absolue de la signature du destinataire, posée par le livreur', true), 'hub_name' => $str(), 'delivery_man' => $str(), 'delivery_phone' => $str(), 'date' => $str(), 'time_date' => $str()]),
@@ -148,7 +148,7 @@ $schemas = [
         'customs' => ['allOf' => [$ref('CustomsRule')], 'nullable' => true, 'description' => 'Règle douanière applicable, `null` pour un colis domestique'],
     ]),
     'Shop' => $obj(['id' => $int(), 'merchant_id' => $int(), 'name' => $str(), 'contact_no' => $str(), 'address' => $str('', true), 'merchant_lat' => $str(), 'merchant_long' => $str(), 'default_shop' => $str('« 0 » ou « 1 »'), 'status' => $int(), 'statusName' => $str(), 'created_at' => $str(), 'updated_at' => $str()]),
-    'Invoice' => $obj(['id' => $int(), 'invoice_id' => $str('Numéro `PREFIXE-AAAA-NNNNNN` depuis le chantier 4'), 'status' => $str('Libellé traduit'), 'amount' => ['allOf' => [$amount()], 'description' => 'Net à reverser, retours déduits'], 'invoice_date' => $str('« 14 Jul 2026 »')]),
+    'Invoice' => $obj(['id' => $int(), 'invoice_id' => $str('Numéro `PREFIXE-AAAA-NNNNNN` depuis le chantier 4'), 'status' => $str('Libellé traduit'), 'amount' => ['allOf' => [$amount()], 'description' => 'Net à reverser, retours déduits'], 'invoice_date' => $str('« 14 juillet 2026 », dans la langue négociée')]),
     'InvoiceDetails' => $obj([
         'id' => $int(), 'invoice_id' => $str(), 'status' => $str(), 'total_deliverd_amount' => ['allOf' => [$amount()], 'description' => 'Encaissé COD (faute de frappe d\'origine conservée)'],
         'delivery_charge' => $amount(), 'cod_amount' => $amount(), 'total_return_fee' => $amount(), 'payable_amount' => $amount(), 'invoice_date' => $str(),

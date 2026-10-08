@@ -178,7 +178,7 @@
                                         <span class="mt-2 d-inline-block">{!! StatusParcel(\App\Enums\ParcelStatus::PARTIAL_DELIVERED) !!}</span>
                                     @endif
                                     <br/>
-                                    <span>{{__('parcel.updated_on')}}: {{\Carbon\Carbon::parse($parcel->updated_at)->format('Y-m-d h:i:s A')}}</span>
+                                    <span>{{__('parcel.updated_on')}}: {{dateTimeFormat($parcel->updated_at)}}</span>
                                     </td>
 
                                     <td>

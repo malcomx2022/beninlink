@@ -29,7 +29,7 @@ class WalletResource extends JsonResource
             'paymentMethodName' => trans('WalletPaymentMethod.' . $this->payment_method),
             'status'            => (int) $this->status,
             'statusName'        => trans('WalletStatus.' . $this->status),
-            'created_at'        => optional($this->created_at)->format('d M Y, h:i A'),
+            'created_at'        => dateTimeFormat($this->created_at),
         ];
     }
 }

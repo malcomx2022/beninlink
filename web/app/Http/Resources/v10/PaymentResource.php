@@ -32,9 +32,9 @@ class PaymentResource extends JsonResource
             "account_type"      => $this->merchantAccount->account_type,
             "status"            => (int) $this->status,
             "statusName"        => trans("approvalstatus.".$this->status),
-            'request_date'      => $this->created_at->format('d M Y, h:i A'),
-            'created_at'        => $this->created_at->format('d M Y, h:i A'),
-            'updated_at'        => $this->updated_at->format('d M Y, h:i A'),
+            'request_date'      => dateTimeFormat($this->created_at),
+            'created_at'        => dateTimeFormat($this->created_at),
+            'updated_at'        => dateTimeFormat($this->updated_at),
         ];
     }
 

@@ -36,7 +36,7 @@
                                             <span>{{__('levels.note')}}: {{@$log->note}}</span><br/>
                                             <div >
                                                 <strong>{!! @dateFormat($log->created_at) !!}</strong><br>
-                                                <small>{!! @date('h:i a', strtotime($log->created_at)) !!}</small>
+                                                <small>{!! @date('H:i', strtotime($log->created_at)) !!}</small>
                                             </div>
                                             <div class="row mt-2">
                                                 <div class="col-md-6">
@@ -60,7 +60,7 @@
                                             <span>{{__('levels.note')}}: {{@$log->note}}</span><br/>
                                             <div >
                                                 <strong>{!! @dateFormat($log->created_at) !!}</strong><br>
-                                                <small>{!! @date('h:i a', strtotime($log->created_at)) !!}</small>
+                                                <small>{!! @date('H:i', strtotime($log->created_at)) !!}</small>
                                             </div>
                                         </div>
                                         <!-- cd-timeline__content -->

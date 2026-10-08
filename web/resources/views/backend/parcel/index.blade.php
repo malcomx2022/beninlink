@@ -331,7 +331,7 @@
                                                 @endif
                                                 <br />
                                                 <span>{{ __('parcel.updated_on') }}:
-                                                    {{ \Carbon\Carbon::parse($parcel->updated_at)->format('Y-m-d h:i:s A') }}</span>
+                                                    {{ dateTimeFormat($parcel->updated_at) }}</span>
                                             </td>
                                             @if (hasPermission('parcel_status_update') == true)
                                                 <td>

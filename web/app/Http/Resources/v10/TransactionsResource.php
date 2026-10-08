@@ -23,8 +23,8 @@ class TransactionsResource extends JsonResource
             "currency"          => (string) settings()->currency,
             "status"            => (int)$this->status,
             "statusName"        => trans("approvalstatus.".$this->status),
-            'created_at'        => $this->created_at->format('d M Y, h:i A'),
-            'updated_at'        => $this->updated_at->format('d M Y, h:i A'),
+            'created_at'        => dateTimeFormat($this->created_at),
+            'updated_at'        => dateTimeFormat($this->updated_at),
         ];
     }
 

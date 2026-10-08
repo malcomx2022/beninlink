@@ -9130,7 +9130,7 @@
                     },
                     "created_at": {
                         "type": "string",
-                        "description": "Déjà mise en forme (« 17 Aug 2026, 09:29 PM »)",
+                        "description": "Déjà mise en forme dans la langue négociée (« 17 août 2026, 21:29 »)",
                         "nullable": true
                     },
                     "parcel_date": {
@@ -9421,7 +9421,7 @@
                     },
                     "invoice_date": {
                         "type": "string",
-                        "description": "« 14 Jul 2026 »"
+                        "description": "« 14 juillet 2026 », dans la langue négociée"
                     }
                 }
             },

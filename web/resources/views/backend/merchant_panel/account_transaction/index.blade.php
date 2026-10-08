@@ -121,7 +121,7 @@
                                     <td>{{$transaction->transaction_id}}</td>
                                     <td>
                                         <div class="w200">
-                                            {{ date('d M Y H:i:s a',strtotime($transaction->created_at)) }}
+                                            {{ dateTimeFormat($transaction->created_at) }}
                                         </div>
                                     </td>
                                     <td>
