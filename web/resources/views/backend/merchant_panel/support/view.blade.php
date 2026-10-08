@@ -131,7 +131,7 @@
                                                     {{ __('user.title')  }}
                                                 @endif
                                             </label>
-                                            <small class="float-right">  {{ \Carbon\Carbon::parse()->format('d M Y h:i A')}}</small>
+                                            <small class="float-right">  {{ dateTimeFormat($chat->created_at)}}</small>
                                         </span>
                                     </div>
                                 </div>
@@ -164,7 +164,7 @@
                                         <strong>{{@$singleSupport->user->name}}</strong><br/>
                                         <span>{{@$singleSupport->user->email}}</span><br/>
                                         <label class="badge badge-primary">{{ __('UserType.'.@$singleSupport->user->user_type)  }}</label>
-                                        <small class="float-right">  {{ \Carbon\Carbon::parse($singleSupport->created_at)->format('d M Y h:i A')}}</small>
+                                        <small class="float-right">  {{ dateTimeFormat($singleSupport->created_at)}}</small>
                                     </span>
                                 </div>
                             </div>

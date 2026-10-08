@@ -187,7 +187,7 @@
                                     </td>
                                      <td>
                                         <p>{!! $parcel->parcel_status !!}</p>
-                                        <span>{{__('parcel.updated_on')}}: {{\Carbon\Carbon::parse($parcel->updated_at)->format('Y-m-d h:i:s A')}}</span>
+                                        <span>{{__('parcel.updated_on')}}: {{dateTimeFormat($parcel->updated_at)}}</span>
                                     </td>
                                     <td> 
                                         @if ($parcel->invoice)     

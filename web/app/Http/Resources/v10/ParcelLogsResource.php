@@ -32,7 +32,7 @@ class ParcelLogsResource extends JsonResource
             "parcel_status"             => (string)$this->parcel_status,
             "parcel_status_name"        => __('parcelLogs.'.$this->parcel_status),
             'date'                      => dateFormat($this->created_at) ,
-            'time_date'                 => date('h:i a', strtotime($this->created_at)) ,
+            'time_date'                 => date('H:i', strtotime($this->created_at)) ,
         ];
     }
 

@@ -22,7 +22,7 @@ class NotificationResource extends JsonResource
             'title' => $data['title'] ?? '',
             'body' => $data['body'] ?? '',
             'read' => $this->read_at !== null,
-            'created_at' => optional($this->created_at)->format('d M Y, h:i A'),
+            'created_at' => dateTimeFormat($this->created_at),
             /** ISO 8601, pour trier ou relativiser côté app sans reparser le libellé. */
             'created_at_iso' => optional($this->created_at)->toIso8601String(),
         ], collect($data)->except(['kind', 'title', 'body'])->all());

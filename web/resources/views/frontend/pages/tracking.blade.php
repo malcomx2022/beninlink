@@ -74,7 +74,7 @@
 
                                 <div class="cd-timeline__date">
                                     <strong>{!! dateFormat($log->created_at) !!}</strong><br>
-                                    <small>{!! date('h:i a', strtotime($log->created_at)) !!}</small>
+                                    <small>{!! date('H:i', strtotime($log->created_at)) !!}</small>
                                 </div>
                             </div>
                             <!-- cd-timeline__content -->
@@ -93,7 +93,7 @@
         
                             <div class="cd-timeline__date">
                                 <strong>{!! dateFormat($parcel->created_at) !!}</strong><br>
-                                <small>{!! date('h:i a', strtotime($parcel->created_at)) !!}</small>
+                                <small>{!! date('H:i', strtotime($parcel->created_at)) !!}</small>
                             </div>
                         </div>
                         <!-- cd-timeline__content -->

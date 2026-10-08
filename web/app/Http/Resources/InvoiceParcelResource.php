@@ -4,7 +4,6 @@ namespace App\Http\Resources;
 
 use App\Enums\BooleanStatus;
 use App\Enums\ParcelStatus;
-use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class InvoiceParcelResource extends JsonResource
@@ -36,7 +35,7 @@ class InvoiceParcelResource extends JsonResource
             'customer_name'     => $this->parcel->customer_name,
             'zone'              => $this->parcel->customer_address,
             'status'            => trans("parcelStatus.".$this->parcel->status),
-            'date'              => Carbon::parse($this->parcel->delivered_date)->format('d-m-Y H:i A'),   
+            'date'              => dateTimeFormat($this->parcel->delivered_date),   
             'cash_collection'   =>$this->parcel->cash_collection,
             'delivery_charge'   => $this->total_charge_amount
         ];

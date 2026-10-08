@@ -180,12 +180,28 @@ if(!function_exists('user')){
 }
 
 if(!function_exists('dateFormat')){
+    /**
+     * Date affichée dans la langue de la requête (S122) : « 8 octobre 2026 ».
+     * Le socle écrivait « 08th october 2026 » (`date('dS')`, `date('F')` ne se traduisent pas)
+     * et « 01st january 1970 » pour une date absente : une date absente rend null.
+     */
     function dateFormat($newDate=null){
-        $day = date('dS', strtotime($newDate));
-        $month = strtolower(date('F', strtotime($newDate)));
-        $yearly = date('Y', strtotime($newDate));
+        if (blank($newDate)) {
+            return null;
+        }
 
-        return  $day. ' '.$month.' '.$yearly;
+        return \Carbon\Carbon::parse($newDate)->translatedFormat('j F Y');
+    }
+}
+
+if(!function_exists('dateTimeFormat')){
+    /** Date et heure affichées dans la langue de la requête, sur 24 heures (S122) : « 8 oct. 2026, 18:35 ». */
+    function dateTimeFormat($newDate=null){
+        if (blank($newDate)) {
+            return null;
+        }
+
+        return \Carbon\Carbon::parse($newDate)->translatedFormat('j M Y, H:i');
     }
 }
 

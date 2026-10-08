@@ -58,7 +58,7 @@
                         @foreach($salaries as $key=>$salarys)
                             <thead>
                                 <tr class="bg-primary">
-                                    <td colspan="6" style="text-align: center;margin-bottom:10px"> {{\Carbon\Carbon::createFromFormat('Y-m',$key)->format('M Y')}}</td>
+                                    <td colspan="6" style="text-align: center;margin-bottom:10px"> {{\Carbon\Carbon::createFromFormat('Y-m',$key)->translatedFormat('F Y')}}</td>
                                 </tr>
                                 <tr>
                                     <th>{{ __('#') }}</th>
@@ -80,7 +80,7 @@
                                         <span> {{@$salary->user->email}}</span><br>
                                         <span> {{@$salary->user->mobile}}</span><br>
                                     </td>
-                                    <td>{{\Carbon\Carbon::createFromFormat('Y-m',$key)->format('M Y')}}</td>
+                                    <td>{{\Carbon\Carbon::createFromFormat('Y-m',$key)->translatedFormat('F Y')}}</td>
                                     <td> {{ formatAmount($salary->amount) }}</td>
                                     @if(!blank($salaryPayments)  && isset($salaryPayments[$key]))
                                         @php($status = true)

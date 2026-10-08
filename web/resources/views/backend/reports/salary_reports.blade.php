@@ -86,7 +86,7 @@
                                     <tr class="bg-primary">
                                         <td></td>
                                         <td class="text-center">  </td>
-                                        <td class="ttext-white" style="color: white!important"> {{\Carbon\Carbon::createFromFormat('Y-m',$key)->format('M Y')}}</td>
+                                        <td class="ttext-white" style="color: white!important"> {{\Carbon\Carbon::createFromFormat('Y-m',$key)->translatedFormat('F Y')}}</td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
@@ -109,7 +109,7 @@
                                                 <span> {{@$salary->user->email}}</span><br>
                                                 <span> {{@$salary->user->mobile}}</span><br>
                                             </td>
-                                            <td>{{\Carbon\Carbon::createFromFormat('Y-m',$key)->format('M Y')}}</td>
+                                            <td>{{\Carbon\Carbon::createFromFormat('Y-m',$key)->translatedFormat('F Y')}}</td>
                                             <td> {{ formatAmount($salary->amount) }}</td>
                                             @if(!blank($salaryPayments)  && isset($salaryPayments[$key]))
                                                 @php($status = true)

@@ -50,10 +50,10 @@ class ParcelResource extends JsonResource
             "statusName"            => trans("parcelStatus.".$this->status),
             'pickup_date'           => dateFormat($this->pickup_date),
             'delivery_date'         => dateFormat($this->delivery_date),
-            'created_at'            => $this->created_at->format('d M Y, h:i A'),
-            'updated_at'            => $this->updated_at->format('d M Y, h:i A'),
+            'created_at'            => dateTimeFormat($this->created_at),
+            'updated_at'            => dateTimeFormat($this->updated_at),
             'parcel_date'           => dateFormat($this->created_at) ,
-            'parcel_time'           => date('h:i a', strtotime($this->created_at)) ,
+            'parcel_time'           => date('H:i', strtotime($this->created_at)) ,
         ];
     }
 

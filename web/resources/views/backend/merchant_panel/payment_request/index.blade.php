@@ -76,7 +76,7 @@
                                     </td>
                                     <td>
                                         <div class="w250">
-                                            {{ date('d M Y H:i:s a',strtotime($payment->created_at)) }}
+                                            {{ dateTimeFormat($payment->created_at) }}
                                         </div>
                                     </td>
                                     <td>

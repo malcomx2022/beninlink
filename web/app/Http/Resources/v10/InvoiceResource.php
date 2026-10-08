@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\v10;
 
-use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class InvoiceResource extends JsonResource
@@ -36,7 +35,7 @@ class InvoiceResource extends JsonResource
             // une valeur qu'une mutation ulterieure d'un colis ne fait plus
             // bouger — ce qu'on attend d'un releve de reglement.
             "amount"            => amountValue($this->current_payable),
-           "invoice_date"        =>Carbon::parse($this->invoice_date)->format('d M Y'),
+           "invoice_date"        =>dateFormat($this->invoice_date),
  
         ];
     }

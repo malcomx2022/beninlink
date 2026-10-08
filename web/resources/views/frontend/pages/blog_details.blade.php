@@ -14,7 +14,7 @@
                     </p>
                     <p class="card-text mb-0">
                         <i class="fa fa-eye me-2"></i><small class="text-body-secondary me-2">{{ $blog->views}}</small>
-                        <i class="fa fa-calendar me-2"></i><small class="text-body-secondary">{{ $blog->updated_at->format('d M Y h:i A')}}</small>
+                        <i class="fa fa-calendar me-2"></i><small class="text-body-secondary">{{ dateTimeFormat($blog->updated_at)}}</small>
                     </p>
                 </div> 
                 <div class="mb-3">
@@ -43,7 +43,7 @@
                                     </div>
                                     <div class="col-sm-6"> 
                                         <p class="card-text mb-0">
-                                            <i class="fa fa-calendar me-2"></i><small class="text-body-secondary">{{ $latest_blog->updated_at->format('d M Y')}}</small>
+                                            <i class="fa fa-calendar me-2"></i><small class="text-body-secondary">{{ dateFormat($latest_blog->updated_at)}}</small>
                                         </p>
                                     </div>
                                 </div> 

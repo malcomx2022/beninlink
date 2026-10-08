@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-08 (S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-08 (S122 — une date affichée parle la langue de son lecteur ; S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -9186,3 +9186,37 @@ lui-même éprouvé (il voit `<td>{{ $account->balance }}</td>`, épargne `value
 `formatAmount('15000.00')` rend « 15 000 FCFA » ; aucun script ne relit un montant affiché par
 `parseInt`. Sabotages, tous rouges : un salaire remis brut, un `parseInt(… .text())` remis.
 
+
+## S122 — une date affichée parle la langue de son lecteur (2026-10-08)
+
+### D'où ça vient
+
+`->format()` et `date()` ne se traduisent pas. Le socle affichait « 08 Oct 2026 06:35:00 pm » au
+back-office (demandes de paiement, transactions, tickets, fiches colis), « 08th october 2026 » par
+l'aide `dateFormat()` — aussi dans l'**API** (colis, journal, relevés, douane, fraudes) — et
+« 01st january 1970 » pour une date absente (`pickup_date` d'un colis non ramassé). L'API renvoyait
+`created_at` sous la forme « 17 Aug 2026, 09:29 PM » quel que soit l'`Accept-Language` négocié (S90).
+
+### Ce qui est fait
+
+- `dateFormat()` rend « 8 octobre 2026 », la nouvelle `dateTimeFormat()` « 8 oct. 2026, 18:35 » :
+  Carbon `translatedFormat`, qui suit la locale de la requête — l'API répond donc dans la langue
+  négociée. Une date absente rend `null` (les champs sont `nullable` dans la spec).
+- 25 champs de 14 ressources `v10` (`created_at`, `updated_at`, `invoice_date`…) et la ligne de colis
+  d'un relevé (`InvoiceParcelResource`, lue par l'export) passent par ces aides ; l'heure se dit sur **24 heures** partout (`H:i`), y compris
+  `parcel_time` et `time_date`.
+- 19 vues : 17 dates (blog public, tickets, demandes de paiement, transactions, fiches colis, rapport
+  des salaires) passent par les aides ou `translatedFormat`, et les heures des journaux de colis et du
+  suivi public passent à `H:i`. Au passage, le fil d'un ticket au panneau
+  marchand datait chaque message de **maintenant** (`Carbon::parse()` sans argument) : il lit
+  `$chat->created_at`.
+- Contrat des apps : les deux apps affichent ces chaînes telles quelles (aucun `new Date()` sur
+  elles) ; seule la description de l'overlay change (« 17 août 2026, 21:29 »).
+
+### Le filet
+
+`tests/Feature/DatesSpeakFrenchTest` (3 tests) : les aides suivent la langue (fr, en) et rendent
+`null` pour une date absente ; aucune vue servie, ressource d'API ni export n'appelle `->format()` ou
+`date()` avec un mot anglais (`D l N S F M`) ou une heure sur 12 (`a A h g`) ; la page d'accueil
+date ses articles « 17 août 2026 ». Sabotages, tous rouges : une aide forcée en anglais, un
+`format('Y-m-d h:i:s A')` remis sur la fiche d'agence.

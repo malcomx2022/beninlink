@@ -59,7 +59,7 @@
                                     <td>{{$payment->transaction_id}}</td>
                                     <td>{{$payment->description}}</td>
                                     <td>
-                                         {{ date('d M Y H:i:s a',strtotime($payment->created_at)) }}
+                                         {{ dateTimeFormat($payment->created_at) }}
                                     </td>
                                     <td>
 

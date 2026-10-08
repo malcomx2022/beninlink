@@ -25,8 +25,8 @@ class ShopResource extends JsonResource
             "default_shop"      => (string) $this->default_shop,
             "status"            => (int)$this->status,
             "statusName"        => trans("status.".$this->status),
-            'created_at'        => $this->created_at->format('d M Y, h:i A'),
-            'updated_at'        => $this->updated_at->format('d M Y, h:i A'),
+            'created_at'        => dateTimeFormat($this->created_at),
+            'updated_at'        => dateTimeFormat($this->updated_at),
         ];
     }
 

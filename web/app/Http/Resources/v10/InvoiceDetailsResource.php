@@ -5,7 +5,6 @@ namespace App\Http\Resources\v10;
 use App\Enums\BooleanStatus;
 use App\Enums\ParcelStatus;
 use App\Models\Backend\Parcel;
-use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class InvoiceDetailsResource extends JsonResource
@@ -37,7 +36,7 @@ class InvoiceDetailsResource extends JsonResource
             "cod_amount"            => $total_cod_charge, 
             "total_return_fee"      => $total_return_fee,
             "payable_amount"        => $payable_amount,
-            "invoice_date"          => Carbon::parse($this->invoice_date)->format('d M Y'),
+            "invoice_date"          => dateFormat($this->invoice_date),
             "merchant_name"         => $this->merchant->business_name,
             "merchant_phone"        => $this->merchant->user->mobile,
             "merchant_address"      => $this->merchant->address,

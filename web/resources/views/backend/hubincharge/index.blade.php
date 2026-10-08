@@ -74,7 +74,7 @@
                                         </div>
                                     </td>
                                     <td>{{$incharge->user->mobile}}</td>
-                                    <td>{{date('d M Y', strtotime($incharge->updated_at))}}</td>
+                                    <td>{{dateFormat($incharge->updated_at)}}</td>
                                     <td>{!! $incharge->my_status !!}</td>
                                     @if(
                                         hasPermission('hub_incharge_update')    == true ||
