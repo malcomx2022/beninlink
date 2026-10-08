@@ -92,7 +92,7 @@
                                                     @if ($account->gateway == 1)
                                                         <option value="{{ $account->id }}" @if($account->id == $singlePayment->from_account) selected @endif>{{ $account->user->name }} | {{ __('merchant.cash') }}</option>
                                                     @elseif($account->gateway == 3 || $account->gateway == 4 || $account->gateway == 5)
-                                                        <option value="{{ $account->id }}" @if($account->id == $singlePayment->from_account) selected @endif>{{$account->account_holder_name}} |No : {{ $account->mobile }}|  @if($account->type == 1) {{ __('merchant.title') }} @else {{ __('placeholder.Persional') }} @endif | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }} </option>
+                                                        <option value="{{ $account->id }}" @if($account->id == $singlePayment->from_account) selected @endif>{{$account->account_holder_name}} |No : {{ $account->mobile }}|  @if($account->type == 1) {{ __('merchant.title') }} @else {{ __('placeholder.persional') }} @endif | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }} </option>
                                                     @else
                                                         <option value="{{ $account->id }}" @if($account->id == $singlePayment->from_account) selected @endif>{{$account->account_holder_name}} | A.No : {{ $account->account_no }} | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }}</option>
                                                     @endif

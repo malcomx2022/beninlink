@@ -35,7 +35,7 @@
                             <div class="col-12 col-md-6">
                                 <div class="form-group">
                                     <label for="name">{{ __('levels.name') }}</label> <span class="text-danger">*</span>
-                                    <input id="name" type="text" name="name" data-parsley-trigger="change" placeholder="{{ __('placeholder.enter_name') }}" autocomplete="off" class="form-control @error('name') is-invalid @enderror" value="{{$user->name}}" require>
+                                    <input id="name" type="text" name="name" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_name') }}" autocomplete="off" class="form-control @error('name') is-invalid @enderror" value="{{$user->name}}" require>
                                     @error('name')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
@@ -104,7 +104,7 @@
                             <div class="col-12 col-md-6">
                                 <div class="form-group">
                                     <label for="email">{{ __('levels.email') }}</label> <span class="text-danger">*</span>
-                                    <input id="email" type="text" name="email" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_email') }}" autocomplete="off" class="form-control @error('email') is-invalid @enderror" value="{{$user->email}}" require>
+                                    <input id="email" type="text" name="email" data-parsley-trigger="change" placeholder="{{ __('placeholder.enter_email') }}" autocomplete="off" class="form-control @error('email') is-invalid @enderror" value="{{$user->email}}" require>
                                     @error('email')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror

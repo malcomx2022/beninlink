@@ -77,7 +77,7 @@
 
                                 <div class="form-group" id="balance">
                                     <label for="balance">{{ __('levels.opening_balance') }}</label> <span class="text-danger"  >*</span>
-                                    <input type="text" name="balance" data-parsley-trigger="change" placeholder="{{ __('placeholder.opening_balance') }}" autocomplete="off" class="form-control" value="{{$account->balance}}" require>
+                                    <input type="text" name="balance" data-parsley-trigger="change" placeholder="{{ __('placeholder.Enter_opening_balance') }}" autocomplete="off" class="form-control" value="{{$account->balance}}" require>
                                     @error('balance')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror

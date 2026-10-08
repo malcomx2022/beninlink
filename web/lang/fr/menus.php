@@ -103,5 +103,7 @@ return [
     'group_relation'       => 'Relation et contenu',
     'group_administration' => 'Administration',
     'group_compte'         => 'Mon compte',
+    'merchant' => 'Marchand',
+    'update' => 'Modifier',
 ];
 
