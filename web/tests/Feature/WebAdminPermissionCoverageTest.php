@@ -75,36 +75,13 @@ class WebAdminPermissionCoverageTest extends TestCase
      * Elle ne grandit jamais — le plafond ci-dessous le garde.
      */
     private const HERITAGE = [
-        // ⚠️ S124 : les six routes `admin/addons` sont RETIRÉES (installateur de code ouvert à tout
-        // compte du back-office, AddonInstallerClosedTest) ; Google Maps, l'historique d'abonnement,
-        // les relevés payés et `reports/mhd-pdf` sont gardés par le droit que le menu lit déjà
-        // pour leur entrée (voir `gardesPosees()`).
-        // Aides AJAX à jeu de droits LARGE : de 6 à 19 droits déduits, sur des
-        // listes d'écrans polluées par le motif court. À lire une par une.
-        // ⚠️ `parcel/filter`, `parcel/merchant/shops` et `parcel/deliveryman/search`
-        // sont SORTIES de cette liste, gardées par S43. Les deux sélecteurs partagés
-        // l'ont été par une liste DÉRIVÉE de leurs écrans appelants (8 et 10 droits),
-        // ce que ce lot-ci ne pouvait pas faire : leurs écrans n'étaient pas tous
-        // gardés. C'est exactement la lecture « une par une » que cette ligne
-        // annonçait, faite par l'autre bout de la chaîne.
-        'POST admin/parcel/search',
-        'POST admin/parcel/merchant', 'POST admin/parcel/hub',
-        'POST admin/merchant/account', 'POST admin/merchant/search',
-        // Écrans en lot : aucun droit déduit de la vue appelante.
-        // ⚠️ `parcel/recived-by-hub/search` est SORTIE de cette liste : le lot voisin
-        // (S42, PR #114) l'a gardée par `parcel_status_update` en mesurant son écran de
-        // masse. C'est le troisième cliquet de ce filet qui l'a exigé — une ligne
-        // d'arriéré dont la route est gardée doit être retirée, sinon le plafond ne
-        // veut plus rien dire.
-        'POST admin/assign-pickup/parcel/search',
-        'POST admin/assign-return-to-merchant/parcel/search',
-        // ⚠️ `POST admin/todo/momal` (la barre de navigation) est SORTIE de cette liste (S69) :
-        // `TodoController::todoModal` n'existait pas, et l'attribut qui la nommait n'était lu
-        // par aucun script. La route est retirée.
+        // S125 — vide. Les sept aides AJAX restantes portent la liste DÉRIVÉE des droits de leurs
+        // écrans appelants (voir `gardesPosees()`), comme les deux sélecteurs partagés de S43.
+        // S124 avait retiré les routes `addons` et gardé cinq écrans. Plus d'arriéré.
     ];
 
     /** Le cliquet. Ne monte jamais. */
-    private const PLAFOND_HERITAGE = 7;
+    private const PLAFOND_HERITAGE = 0;
 
     /**
      * Les gardes posées par ce lot, et le droit mesuré pour chacune.
@@ -146,6 +123,14 @@ class WebAdminPermissionCoverageTest extends TestCase
             ['GET', 'admin/subscription/history', 'subscription_read'],
             ['GET', 'admin/paid/invoice', 'paid_invoice_read'],
             ['GET', 'admin/reports/mhd-pdf', 'merchant_hub_deliveryman'],
+            // S125 — chaque aide AJAX porte les droits des écrans qui l'appellent (vues + `custom.js`).
+            ['POST', 'admin/parcel/search', 'parcel_status_update'],
+            ['POST', 'admin/assign-pickup/parcel/search', 'parcel_status_update'],
+            ['POST', 'admin/assign-return-to-merchant/parcel/search', 'parcel_status_update'],
+            ['POST', 'admin/parcel/merchant', 'salary_create|salary_update|cash_received_from_delivery_man_create|cash_received_from_delivery_man_update|salary_generate_create|salary_generate_update|income_create|income_update|parcel_wise_profit|parcel_status_reports|merchant_hub_deliveryman|parcel_total_summery|salary_reports|expense_create|expense_update|wallet_request_read|parcel_create|parcel_read|parcel_update|payout_read'],
+            ['POST', 'admin/parcel/hub', 'income_create|income_update|cash_received_from_delivery_man_create|cash_received_from_delivery_man_update|merchant_hub_deliveryman'],
+            ['POST', 'admin/merchant/account', 'payment_read|payment_create|payment_update'],
+            ['POST', 'admin/merchant/search', 'payment_read|payment_create|payment_update'],
         ];
 
         return array_combine(array_map(fn ($c) => $c[0] . ' ' . $c[1], $cas), $cas);

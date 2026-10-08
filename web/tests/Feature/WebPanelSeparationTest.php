@@ -261,7 +261,9 @@ class WebPanelSeparationTest extends TestCase
     /** Sans cette moitié, une garde qui refuse TOUT LE MONDE passerait au vert. */
     public function test_the_back_office_still_serves_its_own_agent(): void
     {
-        $this->actingAs($this->agent([]));
+        // S125 a posé sur cette aide les droits des paiements marchands qui l'appellent : même
+        // raisonnement que pour `payout` ci-dessous, on donne le droit et on mesure le panneau.
+        $this->actingAs($this->agent(['payment_read'], 'paiements'));
 
         $this->post(self::HOTE . '/admin/merchant/search', ['search' => 'PME'])->assertOk();
 

@@ -401,6 +401,10 @@ class ArrearsRemainderScopeTest extends TestCase
         '/admin/merchant/delivery-charge/info'=> ['merchant_delivery_charge_create'],
         '/admin/merchant/paymentmethod/change'=> ['merchant_payment_create'],
         '/admin/parcel/delivery-category'    => ['parcel_create'],
+        // S125 — ces trois aides portent désormais les droits de leurs écrans appelants.
+        '/admin/merchant/account'            => ['payment_read'],
+        '/admin/assign-pickup/parcel/search' => ['parcel_status_update'],
+        '/admin/assign-return-to-merchant/parcel/search' => ['parcel_status_update'],
     ];
 
     private function ajax(string $uri, array $donnees, int $attendu = 200): string

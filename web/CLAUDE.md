@@ -539,7 +539,8 @@ avant les apps.
   locataire mais par le **type de compte** (S41).
   ⚠️ **S124** : les routes `admin/addons` sont **retirées** — l'installateur de modules copiait une archive
   dans `base_path()` et exécutait son SQL pour tout compte du back-office (`AddonInstallerClosedTest`). Ne
-  pas les remettre : un module s'installe par git. Arriéré 18 → 7 (les aides AJAX à jeu de droits large).
+  pas les remettre : un module s'installe par git. Arriéré 18 → 7, puis **0** en **S125** : chaque aide AJAX porte
+  les droits de ses écrans appelants (`parcel/merchant` : 20). `HERITAGE` reste vide, plafond 0.
 - Un **sabotage vert** interroge le test — **et d'abord son propre ancrage** (**S44**) :
   vérifier que le fichier a changé ne suffit pas, il faut vérifier qu'il a changé **là**.
   Un ancrage non unique (`hasPermission:parcel_update`) frappe une autre ligne et rend le

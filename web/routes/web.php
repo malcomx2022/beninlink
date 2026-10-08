@@ -363,8 +363,8 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         //merchant manage payment
                         Route::get('payment/index',         [MerchantmanagePaymentController::class, 'index'])->name('merchant.manage.payment.index')->middleware('hasPermission:payment_read');
                         Route::get('payment/create',        [MerchantmanagePaymentController::class, 'create'])->name('merchant-manage.payment.create')->middleware('hasPermission:payment_create');
-                        Route::post('merchant/account',     [MerchantmanagePaymentController::class, 'merchantAccount'])->name('merchant-manage.merchant.account');
-                        Route::post('merchant/search',      [MerchantmanagePaymentController::class, 'merchantSearch'])->name('merchant-manage.merchant-search');
+                        Route::post('merchant/account',     [MerchantmanagePaymentController::class, 'merchantAccount'])->name('merchant-manage.merchant.account')->middleware('hasPermission:payment_read|payment_create|payment_update');
+                        Route::post('merchant/search',      [MerchantmanagePaymentController::class, 'merchantSearch'])->name('merchant-manage.merchant-search')->middleware('hasPermission:payment_read|payment_create|payment_update');
                         Route::post('payment/store',        [MerchantmanagePaymentController::class, 'paymentStore'])->name('merchantmanage.payment.store')->middleware('hasPermission:payment_create');
                         Route::get('payment/edit/{id}',     [MerchantmanagePaymentController::class, 'edit'])->name('merchatmanage.payment.edit')->middleware('hasPermission:payment_update');
                         Route::put('payment/update',        [MerchantmanagePaymentController::class, 'update'])->name('merchantmanage.payment.update')->middleware('hasPermission:payment_update');
@@ -429,7 +429,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::post('parcel/received-warehouse',            [ParcelController::class, 'receivedWarehouse'])->name('parcel.received.warehouse')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/received-warehouse/cancel',     [ParcelController::class, 'receivedWarehouseCancel'])->name('parcel.received-warehouse-cancel')->middleware('hasPermission:parcel_status_update');
                         Route::get('parcel/filter',                         [ParcelController::class, 'filter'])->name('parcel.filter')->middleware('hasPermission:parcel_read');
-                        Route::post('parcel/search',                        [ParcelController::class, 'search'])->name('parcel.search');
+                        Route::post('parcel/search',                        [ParcelController::class, 'search'])->name('parcel.search')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/search-delivery-man-assing-multiple-parcel', [ParcelController::class, 'searchDeliveryManAssingMultipleParcel'])->name('parcel.search-delivery-man-assing-multiple-parcel')->middleware('hasPermission:parcel_read');
                         Route::post('parcel/search-expense',                [ParcelController::class, 'searchExpense'])->name('parcel.search-expense')->middleware('hasPermission:expense_create|expense_update|salary_create|salary_update');
                         Route::post('parcel/search-income',                 [ParcelController::class, 'searchIncome'])->name('parcel.search-income')->middleware('hasPermission:income_create|income_update|cash_received_from_delivery_man_create|cash_received_from_delivery_man_update');
@@ -461,9 +461,9 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::post('/transertohub-selected-hub',               [ParcelController::class, 'transfertohubSelectedHub'])->name('transertohub.selected.hub')->middleware('hasPermission:parcel_status_update');
                         Route::post('/parcel/received-by-multiple-hub',         [ParcelController::class, 'parcelReceivedByMultipleHub'])->name('parcel.received-by-mulbiple-hub')->middleware('hasPermission:parcel_status_update');
                         Route::post('parcel/recived-by-hub/search',             [ParcelController::class, 'parcelRecivedByHubSearch'])->name('parcel.received-by-hub-search')->middleware('hasPermission:parcel_status_update'); //ajax
-                        Route::post('assign-pickup/parcel/search',              [ParcelController::class, 'AssignPickupParcelSearch'])->name('assign-pickup.parcel.search'); //ajax
+                        Route::post('assign-pickup/parcel/search',              [ParcelController::class, 'AssignPickupParcelSearch'])->name('assign-pickup.parcel.search')->middleware('hasPermission:parcel_status_update'); //ajax
                         Route::post('assign-pickup/bulk',                       [ParcelController::class, 'AssignPickupBulk'])->name('parcel.assign-pickup-bulk')->middleware('hasPermission:parcel_status_update');
-                        Route::post('assign-return-to-merchant/parcel/search',  [ParcelController::class, 'AssignReturnToMerchantParcelSearch'])->name('assign-return-to-merchant.parcel.search'); //ajax
+                        Route::post('assign-return-to-merchant/parcel/search',  [ParcelController::class, 'AssignReturnToMerchantParcelSearch'])->name('assign-return-to-merchant.parcel.search')->middleware('hasPermission:parcel_status_update'); //ajax
                         Route::post('parcel/assign-return-to-merchant-bulk',    [ParcelController::class, 'AssignReturnToMerchantBulk'])->name('parcel.assign-return-to-merchant-bulk')->middleware('hasPermission:parcel_status_update');
                         // new route add
                         Route::post('parcel/priority/update',                   [ParcelController::class, 'priorityUpdate'])->name('parcel.priority.status')->middleware('hasPermission:parcel_update');
@@ -473,8 +473,8 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
                         Route::get('parcel/delivered/logs/info/{id}',           [ParcelController::class, 'deliveredInfo'])->name('parcel.deliveredInfo')->middleware('hasPermission:parcel_read');
 
                         //end parcel status
-                        Route::post('parcel/merchant',                          [ParcelController::class, 'getMerchant'])->name('parcel.merchant.get');
-                        Route::post('parcel/hub',                               [ParcelController::class, 'getHub'])->name('parcel.hub.get');
+                        Route::post('parcel/merchant',                          [ParcelController::class, 'getMerchant'])->name('parcel.merchant.get')->middleware('hasPermission:salary_create|salary_update|cash_received_from_delivery_man_create|cash_received_from_delivery_man_update|salary_generate_create|salary_generate_update|income_create|income_update|parcel_wise_profit|parcel_status_reports|merchant_hub_deliveryman|parcel_total_summery|salary_reports|expense_create|expense_update|wallet_request_read|parcel_create|parcel_read|parcel_update|payout_read');
+                        Route::post('parcel/hub',                               [ParcelController::class, 'getHub'])->name('parcel.hub.get')->middleware('hasPermission:income_create|income_update|cash_received_from_delivery_man_create|cash_received_from_delivery_man_update|merchant_hub_deliveryman');
                         Route::post('parcel/merchant/shops',                    [ParcelController::class, 'merchantShops'])->name('parcel.merchant.shops')->middleware('hasPermission:parcel_read|parcel_create|parcel_update|income_create|income_update|parcel_wise_profit|parcel_status_reports|parcel_total_summery|merchant_hub_deliveryman|payout_read');
                         Route::post('parcel/delivery-category',                 [ParcelController::class, 'deliveryWeight'])->name('parcel.deliveryCategory.deliveryWeight')->middleware('hasPermission:parcel_create|parcel_update');
                         Route::post('parcel/quote',                             ParcelQuoteController::class)->middleware('hasPermission:parcel_create|parcel_update')->name('parcel.quote');

@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-08 (S124 — l'installateur de modules fermé, cinq écrans gardés par leur droit ; S123 — l'origine d'un mouvement de portefeuille se lit en français ; S122 — une date affichée parle la langue de son lecteur ; S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-08 (S125 — l'arriéré des droits du back-office fermé ; S124 — l'installateur de modules fermé, cinq écrans gardés par leur droit ; S123 — l'origine d'un mouvement de portefeuille se lit en français ; S122 — une date affichée parle la langue de son lecteur ; S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -9278,3 +9278,33 @@ compte du back-office reçoit 404 aux anciennes adresses. `WebAdminPermissionCov
 cinq gardes (refus sans droit, accès avec chacun de ses droits). Les exemptions `addons` sortent de
 `WebIsolationCoverageTest` et `BodyIdentifierCoverageTest`. Sabotages, tous rouges : une route
 `addons/activation` remise, la garde des relevés payés retirée.
+
+## S125 — l'arriéré des droits du back-office fermé (2026-10-08)
+
+### D'où ça vient
+
+Après S124, `WebAdminPermissionCoverageTest` gardait **7** routes `admin/*` sans droit : les aides AJAX
+dont S44 avait noté le « jeu de droits large ». Sans garde, tout compte du back-office les appelait :
+la liste des marchands et leurs comptes de versement, les agences, la recherche de colis par suivi.
+
+### Ce qui est fait
+
+Chaque aide porte la liste **dérivée** des droits de ses écrans appelants (vues **et** `custom.js`), la
+forme de S43 pour les deux sélecteurs partagés :
+- `parcel/merchant` — 20 droits : les 24 vues qui la nomment (`merchantUrl` ou `data-url`) (colis, revenus,
+  dépenses, salaires, paie, remises des livreurs, cinq rapports, recharges, versements) ;
+- `parcel/hub` — revenus, remises des livreurs, rapport marchands/agences/livreurs ;
+- `merchant/account`, `merchant/search` — `payment_read|payment_create|payment_update` (paiements marchands) ;
+- `parcel/search`, `assign-pickup/parcel/search`, `assign-return-to-merchant/parcel/search` —
+  `parcel_status_update`, le droit des écritures en masse qu'elles servent.
+
+Qui perd l'accès, mesuré : le chef d'agence garde le sélecteur de marchands et d'agences (il porte les
+droits des remises des livreurs) ; les trois recherches de colis en masse demandent l'écriture qu'elles
+préparent, qu'il n'avait pas. L'**arriéré passe à 0** (plafond 0), pour la première fois depuis S44.
+
+### Le filet
+
+`WebAdminPermissionCoverageTest` prouve les sept gardes (refus sans droit, accès avec **chacun** de
+ses droits). `ArrearsRemainderScopeTest` et `WebPanelSeparationTest` donnent le droit à leur agent (même
+forme que S43 pour `payout`). Sabotages, tous rouges : garde de `parcel/hub` retirée, un droit retiré de
+la liste de `parcel/merchant`.
