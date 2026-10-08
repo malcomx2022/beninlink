@@ -368,6 +368,7 @@ class CompanyRepository implements CompanyInterface
             $subscription->company_id   = $company->id;
             $subscription->user_id      = $user->id;
             $subscription->plan_id      = $plan->id;
+            $subscription->stripe_session_id = $request->stripe_session_id ?: null; // S129 : une session, un abonnement
             $subscription->days_count   = $plan->days_count;
             $subscription->parcel_count = $plan->parcel_count;
             $subscription->deliveryman_count = $plan->deliveryman_count;

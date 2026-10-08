@@ -140,7 +140,7 @@ class SearchSurfaceCoverageTest extends TestCase
     private const EXEMPTEES = [
         'GET finish' => 'installateur : `user_name`, `email`, `login_password` et `purchase_code` créent la PREMIÈRE société ; il n\'y a pas encore de locataire dont sortir',
         'GET subscription/payment' => 'S12 — `plan_id` désigne un plan de la PLATEFORME, dont le périmètre est la plateforme',
-        'GET subscription/success' => 'idem — retour de paiement d\'abonnement ; la société vient de la session, pas de la requête',
+        'GET subscription/success' => 'retour de paiement d\'abonnement : depuis S129 le plan va au compte connecté qui a payé (session Stripe vérifiée, jamais rejouée), le `user_id` de l\'URL est ignoré — StripeSubscriptionReturnTest',
         'GET super-admin/subscription/history' => 'surface SUPER-ADMINISTRATEUR : il administre les sociétés, il n\'est pas dans l\'une d\'elles',
         'GET admin/subscription/history' => 'S58 — les deux `where` vivent dans la MÊME fermeture, donc ils se conjuguent : `company_id = settings()->id AND company_id = $request->company_id` rend un ensemble VIDE si la société demandée n\'est pas la sienne. Aucun oracle : société étrangère et société inexistante rendent toutes deux le vide. Et la vue réserve le sélecteur de sociétés au `SUPER_ADMIN` (`subscription_history.blade.php`, ligne 28)',
         'GET tracking' => 'S58 — suivi PUBLIC. `ParcelRepository::parcelTracking()` borne par `if(tenant()): where(company_id, settings()->id)`. Hors locataire c\'est le site central, et l\'absence de portée y est le comportement voulu',

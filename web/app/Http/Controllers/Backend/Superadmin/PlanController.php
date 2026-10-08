@@ -196,6 +196,13 @@ class PlanController extends Controller
             return redirect()->route('dashboard.index');
         endif;
 
+        // S129 — une session payée n'active qu'un abonnement : la rappeler ne renouvelle rien.
+        if (Subscription::where('stripe_session_id', $sessionId)->exists()):
+            Log::warning('Abonnement : session Stripe déjà utilisée', ['session' => $sessionId]);
+            Toastr::error(__('account.error_msg'),__('message.error'));
+            return redirect()->route('dashboard.index');
+        endif;
+
         try {
             $stripe_secret_key = Setting::where('company_id',1)->where('key','stripe_secret_key')->first();
             \Stripe\Stripe::setApiKey($stripe_secret_key->value);
@@ -223,7 +230,18 @@ class PlanController extends Controller
             return redirect()->route('dashboard.index');
         endif;
 
-        $this->companyRepo->switchPlan($request);
+        // S129 — le plan s'applique au compte qui a PAYÉ (vérifié ci-dessus), jamais au `user_id` de
+        // l'URL : `switchPlan()` remplace les permissions du compte qu'on lui nomme.
+        $active = $this->companyRepo->switchPlan(new Request([
+            'plan_id'           => $plan->id,
+            'user_id'           => Auth::id(),
+            'stripe_session_id' => $sessionId,
+        ]));
+        if (! $active):
+            // L'index unique a refusé un second retour simultané sur la même session.
+            Toastr::error(__('account.error_msg'),__('message.error'));
+            return redirect()->route('dashboard.index');
+        endif;
         Toastr::success(__('Subscribed successfully.'), __('message.success'));
         return redirect()->route('dashboard.index');
     }
