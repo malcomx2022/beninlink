@@ -154,14 +154,14 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
             //frontend
             Route::controller(FrontendController::class)->group(function () {
                 Route::get('/',                      'index')->name('home');
-                Route::get('/tracking',              'tracking')->name('tracking.index');
+                Route::get('/tracking',              'tracking')->name('tracking.index')->middleware('throttle:public-web'); // S131
                 Route::get('/about-us',              'aboutUs')->name('aboutus.index');
                 Route::get('/privacy-and-policy',    'privacyPolicy')->name('privacy.policy.index');
                 Route::get('/terms-of-condition',    'termsOfCondition')->name('termsof.condition.index');
                 Route::get('/faq-list',              'faq')->name('get.faq.index');
-                Route::post('subscribe-store',       'subscribe')->name('subscribe.store');
+                Route::post('subscribe-store',       'subscribe')->name('subscribe.store')->middleware('throttle:public-web'); // S131
                 Route::get('contact-send',           'contactSendPage')->name('contact.send.page');
-                Route::post('contact-message-send',  'contactMessageSend')->name('contact.message.send');
+                Route::post('contact-message-send',  'contactMessageSend')->name('contact.message.send')->middleware('throttle:public-web'); // S131
                 Route::get('blog-details/{id}',      'blogDetails')->name('blog.details');
                 Route::get('get-blogs',              'blogs')->name('get.blogs');
                 Route::get('service-details/{id}',    'serviceDetails')->name('service.details');
@@ -169,7 +169,7 @@ Route::middleware(['XSS', 'IsInstalled'])->group(function () {
             //end frontend
 
             Route::get('merchant/sign-up',                [MerchantController::class, 'signUp'])->name('merchant.sign-up');
-            Route::post('merchant/sign-up-store',         [MerchantController::class, 'signUpStore'])->name('merchant.sign-up-store');
+            Route::post('merchant/sign-up-store',         [MerchantController::class, 'signUpStore'])->name('merchant.sign-up-store')->middleware('throttle:public-web'); // S131
             Route::post('merchant/otp-verification',      [MerchantController::class, 'otpVerification'])->name('merchant.otp-verification')->middleware('throttle:connexion-web'); // S130
             Route::get('merchant/otp-verification-form',  [MerchantController::class, 'otpVerificationForm'])->name('merchant.otp-verification-form');
             Route::post('merchant/resend-otp',            [MerchantController::class, 'resendOTP'])->name('merchant.resend-otp')->middleware('throttle:connexion-web'); // S130
