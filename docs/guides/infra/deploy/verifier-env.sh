@@ -86,6 +86,16 @@ if [ "$app_env" = "production" ] && [ "$app_debug" = "true" ]; then
     exit 1
 fi
 
+# S132 — le cookie de session sans `secure` part aussi sur une requête en clair (le premier appel
+# en http avant la redirection, un lien ancien) : qui écoute le réseau reprend la session. Absent,
+# il vaut `secure` dès que APP_URL est en https (config/session.php) ; `false` est refusé en production.
+session_secure="$(lire SESSION_SECURE_COOKIE)"
+if [ "$app_env" = "production" ] && [ "$session_secure" = "false" ]; then
+    echo "❌ APP_ENV=production mais SESSION_SECURE_COOKIE=false : le cookie de session partirait sur une connexion en clair." >&2
+    echo "   Retirer la ligne (elle suit alors APP_URL en https) ou mettre SESSION_SECURE_COOKIE=true, puis php artisan config:clear. Rien n'a été touché." >&2
+    exit 1
+fi
+
 if [ "$app_env" != "production" ]; then
     if [ "$app_debug" = "true" ]; then
         echo "⚠️  APP_ENV=${app_env:-vide} avec APP_DEBUG=true : les pages d'erreur montrent la pile et l'environnement — acceptable en recette, jamais en production." >&2

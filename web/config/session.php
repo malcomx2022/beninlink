@@ -168,7 +168,9 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // S132 — sans valeur, le socle laissait partir le cookie de session sur une requête en clair. Il est
+    // `secure` par défaut dès que l'application se sert en https ; `verifier-env.sh` refuse `false` en production.
+    'secure' => env('SESSION_SECURE_COOKIE', str_starts_with((string) env('APP_URL', ''), 'https://')),
 
     /*
     |--------------------------------------------------------------------------
