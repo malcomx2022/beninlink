@@ -13,7 +13,7 @@ function initMap() {
             // getLatLongPosition(position.coords.latitude, position.coords.longitude);
         });
     } else {
-        alert("Sorry, your browser does not support HTML5 geolocation.");
+        alert(trad.geolocation_unsupported);
     }
 }
 var mapLat = mapLat;
@@ -53,7 +53,7 @@ function getLocation(lat,long) {
             navigator.geolocation.getCurrentPosition(showPosition);
         }
     } else {
-        var msg = "Geolocation is not supported by this browser.";
+        var msg = trad.geolocation_unsupported;
         alert(msg);
     }
 }

@@ -63,7 +63,7 @@ $(document).ready(function(){
             data: {'search': value,'from':$('#account_head').val(),'deliveryman':$('#parcelDeliveryManID_').val(),'merchant':$('#parcelMerchantid_').val(),'income':'true'},
             success: function (data) {
 
-                $('.deliveryman_balance').text('Current Balance: '+parseFloat(data['mhd']['current_balance']));
+                $('.deliveryman_balance').text(trad.current_balance + montantFcfa(data['mhd']['current_balance']));
                 $("#deliveryman_amount").val(parseFloat(data['mhd']['current_balance']));
             }
         });
@@ -76,7 +76,7 @@ $(document).ready(function(){
                 data: {'search': value,'from':$('#account_head').val(),'deliveryman':$('#parcelDeliveryManID_').val(),'merchant':$('#parcelMerchantid_').val(),'income':'true'},
                 success: function (data) {
 
-                    $('.merchant_balance').text('Current Balance: '+parseFloat(data['mhd']['current_balance']));
+                    $('.merchant_balance').text(trad.current_balance + montantFcfa(data['mhd']['current_balance']));
                     $("#merchant_amount").val(parseFloat(data['mhd']['current_balance']));
                 }
             });
@@ -99,11 +99,11 @@ $(document).ready(function(){
             url: '/admin/income/balance-check',
             data: {'search': value,'from':$('#account_head').val(),'hub':$('#income_hub_id').val()},
             success: function (data) {
-                $('.hub_balance').text('Current Balance: '+parseInt(data['mhd']['current_balance']));
+                $('.hub_balance').text(trad.current_balance + montantFcfa(data['mhd']['current_balance']));
                 $("#hub_amount").val(parseInt(data['mhd']['current_balance']));
                 // option insert in hub users
                 $('#hub_users').empty();
-                $('#hub_users').append('<option selected disabled>Select User</option>');
+                $('#hub_users').append('<option selected disabled>' + trad.select_user + '</option>');
                 $('#hub_user_accounts').empty();
                 let n = 0;
                 for(n ; n < data['users'].length; n++){
@@ -122,7 +122,7 @@ $(document).ready(function(){
                 console.log(data.length);
                 // option insert in hub user accounts
                 $('#hub_user_accounts').empty();
-                $('#hub_user_accounts').append('<option selected disabled>Select Account</option>');
+                $('#hub_user_accounts').append('<option selected disabled>' + trad.select_account + '</option>');
                 let n = 0;
                 for(n ; n < data.length; n++){
                     $('#hub_user_accounts').append('<option value="'+ data[n]['id'] +'">'+ data[n]['account_holder_name'] +' | ('+ data[n]['balance'] +')</option>');
@@ -161,7 +161,7 @@ $(document).ready(function(){
                     else{
                         $(".btn").prop('disabled', true);
                         $('.check_message').empty();
-                        $('.check_message').append('<small class="text-danger">Ops! not enough blance.</small>');
+                        $('.check_message').append('<small class="text-danger">' + trad.not_enough_balance + '</small>');
                     }
 
                 }, 250);
@@ -174,11 +174,11 @@ $(document).ready(function(){
 
         if($('#from').val() == 1){
             if(parseInt($('#merchant_amount').val()) < parseInt($(this).val())){
-                $('.check_message').text('Ops! not enough blance.');
+                $('.check_message').text(trad.not_enough_balance);
             }
         }else if($('#from').val() == 2){
             if(parseInt($('#deliveryman_amount').val()) < parseInt($(this).val())){
-                $('.check_message').text('Ops! not enough blance.');
+                $('.check_message').text(trad.not_enough_balance);
             }
         }
         if(parseInt($('#account_balance').val()) >= parseInt($("#amount").val()) && $("#amount").val() != ''){
@@ -282,11 +282,11 @@ $(document).ready(function(){
                         if(data == 0){
                             $('#parcel_id').val(null);
                             $('.search_message').empty();
-                            $('.search_message').append('<small class="text-danger">Parcel not found!</small>');
+                            $('.search_message').append('<small class="text-danger">' + trad.parcel_not_found + '</small>');
                         }
                         else{
                             $('.search_message').empty();
-                            $('.search_message').append('<small class="text-success">Parcel found.</small>');
+                            $('.search_message').append('<small class="text-success">' + trad.parcel_found + '</small>');
                             $('#parcel_id').val(data['id']);
                         }
                     }, 250);
@@ -296,12 +296,12 @@ $(document).ready(function(){
         else if(value.length > 14 && submit == 0){
             $('#parcel_id').val(null);
             $('.search_message').empty();
-            $('.search_message').append('<small class="text-danger">Maximum 14 characters!</small>');
+            $('.search_message').append('<small class="text-danger">' + trad.max_14_characters + '</small>');
         }
         else{
             $('#parcel_id').val(null);
             $('.search_message').empty();
-            $('.search_message').append('<small class="text-danger">Minimum 14 characters!</small>');
+            $('.search_message').append('<small class="text-danger">' + trad.min_14_characters + '</small>');
         }
 
     })

@@ -30,6 +30,10 @@
     <script>var cancel = "{{ __('delete.cancel') }}";</script>
     <script>var confirmUpdate = "{{ __('levels.confirm_update') }}";</script>
     <script>var confirmCancel = @json(__('levels.confirm_cancel'));</script>
+    {{-- S119 : les textes des scripts du back-office (lang/*/js.php), lus sous trad.cle --}}
+    <script>var trad = @json(__('js'));
+        // FCFA en entiers, séparateur de milliers français (règle du projet)
+        function montantFcfa(n) { return Math.round(Number(n) || 0).toLocaleString('fr-FR') + '\u00a0FCFA'; }</script>
 
     <script type="text/javascript">
         "use strict";

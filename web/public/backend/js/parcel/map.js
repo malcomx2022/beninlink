@@ -42,7 +42,7 @@ function getLocation(lat,long) {
             navigator.geolocation.getCurrentPosition(showPosition);
         }
     } else {
-        var msg = "Geolocation is not supported by this browser.";
+        var msg = trad.geolocation_unsupported;
         alert(msg);
     }
 }

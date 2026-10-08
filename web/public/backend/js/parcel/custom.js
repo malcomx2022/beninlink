@@ -727,16 +727,16 @@ $(document).ready(function(){
                         _submit = 0;
                         if(data == 0){
                             $('.search_message_').empty();
-                            $('.search_message_').append('<small class="text-danger">Parcel not found!</small>');
+                            $('.search_message_').append('<small class="text-danger">' + trad.parcel_not_found + '</small>');
                         }
                         else if(ids.includes(data['id'].toString())){
                             $('.search_message_').empty();
-                            $('.search_message_').append('<small class="text-danger">Already added!</small>');
+                            $('.search_message_').append('<small class="text-danger">' + trad.already_added + '</small>');
                         }
                         else{
 
                             $('.search_message_').empty();
-                            $('.search_message_').append('<small class="text-success">Parcel added successfully.</small>');
+                            $('.search_message_').append('<small class="text-success">' + trad.parcel_added + '</small>');
                             $('#_t_body').append('<tr> <td>'+ _sl++ +'<input type="hidden" value="'+ data['id'] +'" name="parcel_ids_[]"></td><td>'+ data['tracking_id'] +'</td><td>'+ data['merchant']['business_name'] +'</td><td>'+ data['merchant']['user']['mobile'] +'</td><td>'+ data['delivery_date'] +'</td><td>'+ data['cash_collection'] +'</td><td><i class="fa fa-trash removerow" style="cursor:pointer"></i></td> </tr>');
                             $('#delivery_man_assign_track_id').val('');
                             $('.removerow').click(function(){
@@ -750,11 +750,11 @@ $(document).ready(function(){
         }
         // else if(valuelength > 20 && _submit == 0){
         //     $('.search_message_').empty();
-        //     $('.search_message_').append('<small class="text-danger">Maximum 14 characters!</small>');
+        //     $('.search_message_').append('<small class="text-danger">' + trad.max_14_characters + '</small>');
         // }
         // else{
         //     $('.search_message_').empty();
-        //     $('.search_message_').append('<small class="text-danger">Minimum 14 characters!</small>');
+        //     $('.search_message_').append('<small class="text-danger">' + trad.min_14_characters + '</small>');
         // }
 
         // on keyup submit button disabled true/false
@@ -786,16 +786,16 @@ $(document).ready(function(){
                         setTimeout(function() {
                             if(data == 0){
                                 $('.search_message_').empty();
-                                $('.search_message_').append('<small class="text-danger">Parcel not found!</small>');
+                                $('.search_message_').append('<small class="text-danger">' + trad.parcel_not_found + '</small>');
                             }
                             else if(ids.includes(data['id'].toString())){
                                 $('.search_message_').empty();
-                                $('.search_message_').append('<small class="text-danger">Already added!</small>');
+                                $('.search_message_').append('<small class="text-danger">' + trad.already_added + '</small>');
                             }
                             else{
 
                                 $('.search_message_').empty();
-                                $('.search_message_').append('<small class="text-success">Parcel added successfully.</small>');
+                                $('.search_message_').append('<small class="text-success">' + trad.parcel_added + '</small>');
                                 $('#_t_body').append('<tr> <td>'+ _sl++ +'<input type="hidden" value="'+ data['id'] +'" name="parcel_ids_[]"></td><td>'+ data['tracking_id'] +'</td><td>'+ data['merchant']['business_name'] +'</td><td>'+ data['merchant']['user']['mobile'] +'</td><td>'+ data['delivery_date'] +'</td><td>'+ data['cash_collection'] +'</td><td><i class="fa fa-trash removerow" style="cursor:pointer"></i></td> </tr>');
                                 $('#delivery_man_assign_track_id').val('');
                                 $('.removerow').click(function(){
@@ -862,16 +862,16 @@ $(document).ready(function(){
                         setTimeout(function() {
                             if(data == 0){
                                 $('.search_message').empty();
-                                $('.search_message').append('<small class="text-danger">Parcel not found!</small>');
+                                $('.search_message').append('<small class="text-danger">' + trad.parcel_not_found + '</small>');
                             }
                             else if(ids.includes(data['id'].toString())){
                                 $('.search_message').empty();
-                                $('.search_message').append('<small class="text-danger">Already added!</small>');
+                                $('.search_message').append('<small class="text-danger">' + trad.already_added + '</small>');
                             }
                             else{
 
                                 $('.search_message').empty();
-                                $('.search_message').append('<small class="text-success">Parcel added successfully.</small>');
+                                $('.search_message').append('<small class="text-success">' + trad.parcel_added + '</small>');
                                 $('#t_body').append('<tr> <td>'+ sl++ +'<input type="hidden" value="'+ data['id'] +'" name="parcel_ids[]"></td><td>'+ data['tracking_id'] +'</td><td>'+data['hub']['name']+'</td><td>'+ data['merchant']['business_name'] +'</td><td>'+ data['merchant']['user']['mobile'] +'</td><td>'+ data['delivery_date'] +'</td><td>'+ data['cash_collection'] +'</td><td><i class="fa fa-trash removerow" style="cursor:pointer"></i></td> </tr>');
                                 $('#transfer_to_hub_track_id').val('');
                                 $('.removerow').click(function(){
@@ -1025,16 +1025,16 @@ $(document).ready(function(){
                         submit = 0;
                         if(data == 0){
                             $('.search_message').empty();
-                            $('.search_message').append('<small class="text-danger">Parcel not found!</small>');
+                            $('.search_message').append('<small class="text-danger">' + trad.parcel_not_found + '</small>');
                         }
                         else if(ids.includes(data['id'].toString())){
                             $('.search_message').empty();
-                            $('.search_message').append('<small class="text-danger">Already added!</small>');
+                            $('.search_message').append('<small class="text-danger">' + trad.already_added + '</small>');
                         }
                         else{
 
                             $('.search_message').empty();
-                            $('.search_message').append('<small class="text-success">Parcel added successfully.</small>');
+                            $('.search_message').append('<small class="text-success">' + trad.parcel_added + '</small>');
                             $('#t_body').append('<tr> <td>'+ sl++ +'<input type="hidden" value="'+ data['id'] +'" name="parcel_ids[]"></td><td>'+ data['tracking_id'] +'</td><td>'+data['hub']['name']+'</td><td>'+ data['merchant']['business_name'] +'</td><td>'+ data['merchant']['user']['mobile'] +'</td><td>'+ data['delivery_date'] +'</td><td>'+ data['cash_collection'] +'</td><td><i class="fa fa-trash removerow" style="cursor:pointer"></i></td> </tr>');
                             $('#transfer_to_hub_track_id').val('');
                             $('.removerow').click(function(){
@@ -1048,11 +1048,11 @@ $(document).ready(function(){
         }
         else if(valuelength > 20 && submit == 0){
             $('.search_message').empty();
-            $('.search_message').append('<small class="text-danger">Maximum 14 characters!</small>');
+            $('.search_message').append('<small class="text-danger">' + trad.max_14_characters + '</small>');
         }
         else{
             $('.search_message').empty();
-            $('.search_message').append('<small class="text-danger">Minimum 14 characters!</small>');
+            $('.search_message').append('<small class="text-danger">' + trad.min_14_characters + '</small>');
         }
 
         // on keyup submit button disabled true/false

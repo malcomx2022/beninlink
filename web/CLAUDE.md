@@ -352,6 +352,8 @@ avant les apps.
   `responseWith*()` et de `->with('success'|…)` passent par `__()`, et toute clé que `app/` nomme existe.
   ⚠️ Une ligne de relevé garde le texte de sa note **dans la langue de l'écriture** : on ne cherche
   jamais une ligne par sa note seule (forme S118 : `CancelledReturnsCommand::formes()`).
+  Les **scripts** de `public/backend/js` aussi (**S119**, `BackOfficeScriptsSpeakFrenchTest`) : un texte
+  affiché vient de `trad.cle` (`lang/*/js.php`, rendu par le pied de page), un montant de `montantFcfa()`.
 - **Le livreur voit l'alerte douanière de sa course, en lecture seule** (**S95**).
   `deliveryman/parcel/details/{id}` porte `customs_alerts` (même `CustomsAlertResource` que S82)
   sur le colis déjà vérifié par `notOwned()` ; un domestique rend `[]`, la course d'un collègue

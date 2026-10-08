@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-08 (S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-08 (S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -9113,4 +9113,34 @@ L'API négocie sa langue depuis S90 : ses messages restaient pourtant anglais.
 stockée comme clé se lit en français, une note libre reste telle quelle, et la commande reconnaît les
 trois formes. Sabotages, tous rouges : un `Toastr::error('Something went wrong.')` remis, une clé de
 note retirée, le trait retiré d'un modèle.
+
+## S119 — les scripts du back-office parlent français (2026-10-08)
+
+### D'où ça vient
+
+Après les vues (S117) et le code PHP (S118), restait ce que les **scripts** affichent eux-mêmes :
+les cinq interrupteurs de statut et de priorité (« Are you confirm ? », boutons « Yes » / « Cancel »
+posés sur `denyButtonText`, option sans effet : **le bouton d'annulation n'apparaissait pas**, puis
+« Status updated successfully »), la confirmation de suppression, le sélecteur de période (« Today »,
+« Last 7 Days », « Clear »), les cartes (« Your current location. »), et les écrans de recettes,
+dépenses, salaires et remises d'espèces (« Parcel not found! », « Ops! not enough blance. »,
+« Current Balance: 15000.5 » — montant brut, décimales).
+
+### Ce qui est fait
+
+- `lang/*/js.php` : 28 textes, rendus une fois par `backend.partials.footer` sous `var trad` ; les
+  scripts lisent `trad.cle` ou les globales déjà traduites (`yes`, `cancel`, `confirmUpdate`).
+- Les interrupteurs ont un vrai bouton d'annulation (`showCancelButton` + `cancelButtonText`).
+- Les soldes passent par `montantFcfa()` (pied de page) : FCFA entiers, séparateur français.
+- Le sélecteur de période garde **son format et son séparateur** (`MM/DD/YYYY`, « To ») : les
+  filtres les découpent côté serveur ; seuls les libellés changent.
+
+### Le filet
+
+`tests/Feature/BackOfficeScriptsSpeakFrenchTest` (4 tests) : aucun script de `public/backend/js`
+(hors bibliothèques tierces nommées) n'affiche un littéral — options de dialogue, `alert()` /
+`confirm()`, `.text()`, plages de dates, nœud de texte d'un fragment HTML ; toute clé `trad.*` lue
+existe en français et en anglais, et aucune clé n'est orpheline ; le pied de page rend le catalogue
+et `montantFcfa` ; le format de période reste celui que lisent les filtres. Sabotages, tous rouges :
+« Are you confirm ? » remis, une clé retirée, « Parcel found. » remis dans un fragment.
 
