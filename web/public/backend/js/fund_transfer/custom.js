@@ -35,7 +35,7 @@ $(document).ready(function(){
     $("#amount").on('keyup', function(){
         if(parseInt($('#currentBalance').text()) < parseInt($("#amount").val())){
             $('.check_message').empty(); 
-            $('.check_message').append('<small class="text-danger">Ops! not enough blance.</small>');
+            $('.check_message').append('<small class="text-danger">' + trad.not_enough_balance + '</small>');
         }
         else{
             $('.check_message').empty(); 

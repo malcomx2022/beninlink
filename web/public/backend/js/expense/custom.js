@@ -70,7 +70,7 @@ $(document).ready(function(){
                 else{
                     $(".btn").prop('disabled', true);
                     $('.check_message').empty();
-                    $('.check_message').append('<small class="text-danger">Not enough blance!</small>');
+                    $('.check_message').append('<small class="text-danger">' + trad.not_enough_balance + '</small>');
                 }
             }
         })
@@ -89,7 +89,7 @@ $(document).ready(function(){
         else{
             $(".btn").prop('disabled', true);
             $('.check_message').empty();
-            $('.check_message').append('<small class="text-danger">Ops! not enough blance.</small>');
+            $('.check_message').append('<small class="text-danger">' + trad.not_enough_balance + '</small>');
         }
     });
 
@@ -182,11 +182,11 @@ $(document).ready(function(){
                         if(data == 0){
                             $('#parcel_id').val(null);
                             $('.search_message').empty();
-                            $('.search_message').append('<small class="text-danger">Parcel not found!</small>');
+                            $('.search_message').append('<small class="text-danger">' + trad.parcel_not_found + '</small>');
                         }
                         else{
                             $('.search_message').empty();
-                            $('.search_message').append('<small class="text-success">Parcel found.</small>');
+                            $('.search_message').append('<small class="text-success">' + trad.parcel_found + '</small>');
                             $('#parcel_id').val(data['id']);
                         }
                     }, 250);
@@ -196,12 +196,12 @@ $(document).ready(function(){
         else if(value.length > 14 && submit == 0){
             $('#parcel_id').val(null);
             $('.search_message').empty();
-            $('.search_message').append('<small class="text-danger">Maximum 14 characters!</small>');
+            $('.search_message').append('<small class="text-danger">' + trad.max_14_characters + '</small>');
         }
         else{
             $('#parcel_id').val(null);
             $('.search_message').empty();
-            $('.search_message').append('<small class="text-danger">Minimum 14 characters!</small>');
+            $('.search_message').append('<small class="text-danger">' + trad.min_14_characters + '</small>');
         }
 
     })
@@ -213,7 +213,7 @@ $(document).ready(function(){
             data: {'user_id': $(this).val(),'month':$('#month').val()},
             success: function (data) {
 
-                $('#user_salary').text('Salary : '+data);
+                $('#user_salary').text(trad.salary + montantFcfa(data));
             }
         })
     });

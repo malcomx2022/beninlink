@@ -4,12 +4,11 @@ $(document).ready(function () {
     $('.switch-id').change(function (e) {
 
         Swal.fire({
-            text: 'Are you confirm ?',
+            text: confirmUpdate,
             position: 'top',
-            showOkButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            denyButtonText: 'Cancel',
+            confirmButtonText: yes,
+            cancelButtonText: cancel,
           }).then((result) => {
             if (result.isConfirmed){
                     $.ajax({
@@ -33,7 +32,7 @@ $(document).ready(function () {
 
                             Toast.fire({
                                 icon: 'success',
-                                title: 'Status updated successfully'
+                                title: trad.status_updated
                             });
                             location.reload();
 
