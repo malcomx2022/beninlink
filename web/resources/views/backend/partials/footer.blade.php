@@ -33,7 +33,9 @@
     {{-- S119 : les textes des scripts du back-office (lang/*/js.php), lus sous trad.cle --}}
     <script>var trad = @json(__('js'));
         // FCFA en entiers, séparateur de milliers français (règle du projet)
-        function montantFcfa(n) { return Math.round(Number(n) || 0).toLocaleString('fr-FR') + '\u00a0FCFA'; }</script>
+        function montantFcfa(n) { return Math.round(Number(n) || 0).toLocaleString('fr-FR') + '\u00a0FCFA'; }
+        // S121 : relit un montant affiché (« 15 000 FCFA » comme « 15000.00 ») ; les décimales du socle sont ignorées
+        function montantLu(texte) { var n = parseInt(String(texte).split(/[.,]\d{1,2}(?!\d)/)[0].replace(/[^\d-]/g, ''), 10); return isNaN(n) ? 0 : n; }</script>
 
     <script type="text/javascript">
         "use strict";

@@ -68,7 +68,7 @@
                                     <td>{{ $asset->quantity}}</td>
                                     <td>{{ $asset->warranty}}</td>
                                     <td>{{ $asset->invoice_no }}</td>
-                                    <td>{{ $asset->amount }}</td>
+                                    <td>{{ formatAmount($asset->amount) }}</td>
                                     @if ( hasPermission('assets_update') == true || hasPermission('assets_delete') == true)
                                         <td>
                                             <div class="row">

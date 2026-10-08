@@ -17,7 +17,7 @@
 
     <li class="list-group-item profile-list-group-item">
         <span class="float-left font-weight-bold">{{ __('merchant.opening_balance') }}</span>
-        <span class="float-right">{{ $singleMerchant->opening_balance }}</span>
+        <span class="float-right">{{ formatAmount($singleMerchant->opening_balance) }}</span>
     </li>
     <li class="list-group-item profile-list-group-item">
         <span class="float-left font-weight-bold">{{ __('merchant.vat') }}</span>
@@ -25,7 +25,7 @@
     </li>
     <li class="list-group-item profile-list-group-item">
         <span class="float-left font-weight-bold">{{ __('merchant.cod_charges') }}</span>
-        <span class="float-right">{{ $singleMerchant->my_cod_charges}}</span>
+        <span class="float-right">{{ formatAmount($singleMerchant->my_cod_charges) }}</span>
     </li>
 
 

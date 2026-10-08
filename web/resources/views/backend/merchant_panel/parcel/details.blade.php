@@ -49,7 +49,7 @@
                                         </tr>
                                         <tr>
                                             <td>{{__('levels.cod')}}</td>
-                                            <td>{{@$parcel->cod_amount}}</td>
+                                            <td>{{ formatAmount(@$parcel->cod_amount) }}</td>
                                         </tr>
                                         <tr>
                                             <td  ><strong>{{__('levels.total_cost')}}</strong></td>
@@ -82,7 +82,7 @@
                                         </tr>
                                         <tr>
                                             <td>{{__('levels.amount_to_collect')}}</td>
-                                            <td>{{@$parcel->cash_collection}}</td>
+                                            <td>{{ formatAmount(@$parcel->cash_collection) }}</td>
                                         </tr>
                                     </tbody>
                                 </table>

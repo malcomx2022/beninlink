@@ -122,7 +122,7 @@
                         <div class="list-group-item ">
                             <div class="d-flex">
                                 <span class="w-25">{{ __('levels.opening_balance') }} : </span>
-                                <span>{{@$merchat->opening_balance}}</span>
+                                <span>{{ formatAmount(@$merchat->opening_balance) }}</span>
                             </div>
                         </div>
                         <div class="list-group-item ">

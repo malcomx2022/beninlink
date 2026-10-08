@@ -46,7 +46,7 @@
                                     <div class="mt-2 active" id="user_salary">
                                         @foreach ($singleSalary->getSalary as $getsalary)
                                             @if ($getsalary->month == $singleSalary->month)
-                                                {{ $getsalary->amount }}
+                                                {{ formatAmount($getsalary->amount) }}
                                             @endif
                                         @endforeach
                                     </div>
@@ -83,7 +83,7 @@
                                             @endif
                                         @endforeach
                                     </select>
-                                    <div class=" text-danger mt-2" id="account_balance_" >{{ @$singleSalary->account->balance }}</div>
+                                    <div class=" text-danger mt-2" id="account_balance_" >{{ formatAmount(@$singleSalary->account->balance) }}</div>
                                     @error('account_id')
                                         <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror

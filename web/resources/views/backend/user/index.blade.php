@@ -117,7 +117,7 @@
                                         <label class="badge badge-primary">{{ count($user->permissions) }}</label>
                                         @endif
                                     </td>
-                                    <td>{{@$user->salary}}</td>
+                                    <td>{{ formatAmount(@$user->salary) }}</td>
                                     <td>{!! $user->my_status !!}</td>
                                     @if(
                                         hasPermission('permission_update') == true ||

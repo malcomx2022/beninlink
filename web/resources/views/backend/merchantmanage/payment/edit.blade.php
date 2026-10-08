@@ -40,7 +40,7 @@
                                     <select id="merchant" class="form-control" name="merchant" data-url="{{ route('merchant-manage.merchant.account') }}" >
                                         <option selected disabled>{{ __('menus.select') }} {{ __('merchant.title') }}</option>
                                         @foreach ($merchants as $merchant)
-                                            <option value="{{ $merchant->id }}" @if ($singlePayment->merchant_id == $merchant->id) selected @endif>{{ $merchant->user->name }} | {{__('levels.current_balance')}}: {{$merchant->current_balance}}</option>
+                                            <option value="{{ $merchant->id }}" @if ($singlePayment->merchant_id == $merchant->id) selected @endif>{{ $merchant->user->name }} | {{__('levels.current_balance')}}: {{ formatAmount($merchant->current_balance) }}</option>
                                         @endforeach
                                     </select>
                                     @error('merchant')
@@ -92,9 +92,9 @@
                                                     @if ($account->gateway == 1)
                                                         <option value="{{ $account->id }}" @if($account->id == $singlePayment->from_account) selected @endif>{{ $account->user->name }} | {{ __('merchant.cash') }}</option>
                                                     @elseif($account->gateway == 3 || $account->gateway == 4 || $account->gateway == 5)
-                                                        <option value="{{ $account->id }}" @if($account->id == $singlePayment->from_account) selected @endif>{{$account->account_holder_name}} | {{ __('levels.mobile') }} : {{ $account->mobile }}|  @if($account->type == 1) {{ __('merchant.title') }} @else {{ __('placeholder.persional') }} @endif | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }} </option>
+                                                        <option value="{{ $account->id }}" @if($account->id == $singlePayment->from_account) selected @endif>{{$account->account_holder_name}} | {{ __('levels.mobile') }} : {{ $account->mobile }}|  @if($account->type == 1) {{ __('merchant.title') }} @else {{ __('placeholder.persional') }} @endif | {{ __('merchantmanage.current_balance') }}: {{ formatAmount($account->balance) }} </option>
                                                     @else
-                                                        <option value="{{ $account->id }}" @if($account->id == $singlePayment->from_account) selected @endif>{{$account->account_holder_name}} | {{ __('levels.account_no') }} : {{ $account->account_no }} | {{ __('merchantmanage.current_balance') }}: {{ $account->balance }}</option>
+                                                        <option value="{{ $account->id }}" @if($account->id == $singlePayment->from_account) selected @endif>{{$account->account_holder_name}} | {{ __('levels.account_no') }} : {{ $account->account_no }} | {{ __('merchantmanage.current_balance') }}: {{ formatAmount($account->balance) }}</option>
                                                     @endif
                                                 @endif
                                             @endforeach

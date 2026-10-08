@@ -100,7 +100,7 @@
                                         @endif
                                     </select>
                                     <input type="hidden" id="deliveryman_amount" value="0"/>
-                                    <div  class="deliveryman_balance active">{{ __('placeholder.current_balance') }}:{{ @$income->deliveryman->current_balance }}</div>
+                                    <div  class="deliveryman_balance active">{{ __('placeholder.current_balance') }}:{{ formatAmount(@$income->deliveryman->current_balance) }}</div>
                                     @error('delivery_man_id')
                                     <small class="text-danger mt-2">{{ $message }}</small>
                                     @enderror
@@ -114,7 +114,7 @@
                                         @endif
                                     </select>
                                     <input type="hidden" id="merchant_amount" value="0"/>
-                                    <div  class="merchant_balance active">{{ __('placeholder.current_balance') }} :{{ @$income->merchant->current_balance }}</div>
+                                    <div  class="merchant_balance active">{{ __('placeholder.current_balance') }} :{{ formatAmount(@$income->merchant->current_balance) }}</div>
                                     <small class="check_message text-danger"></small>
                                     @error('merchant_id')
                                     <small class="text-danger mt-2">{{ $message }}</small>
@@ -130,7 +130,7 @@
                                         @endif
                                     </select>
                                     <input type="hidden" id="hub_amount" value="0"/>
-                                    <div  class="hub_balance active">{{ __('placeholder.current_balance') }} :{{ @$income->hub->current_balance }}</div>
+                                    <div  class="hub_balance active">{{ __('placeholder.current_balance') }} :{{ formatAmount(@$income->hub->current_balance) }}</div>
                                     <small class="check_message text-danger"></small>
                                     @error('hub_id')
                                     <small class="text-danger mt-2">{{ $message }}</small>
@@ -155,7 +155,7 @@
                                     <select style="width: 100%" id="hub_user_accounts"  name="hub_user_accounts" class="form-control">
                                         <option value=""> {{ __('menus.select') }} {{ __('hub.title') }} {{ __('user.title') }} {{ __('placeholder.account') }}</option>
                                         @if ($income->hub_user_account_id  != null)
-                                            <option value="{{ $income->hub_user_account_id  }}" selected> {{ $income->hub_user_account->account_holder_name }} ({{ $income->hub_user_account->balance }})</option>
+                                            <option value="{{ $income->hub_user_account_id  }}" selected> {{ $income->hub_user_account->account_holder_name }} ({{ formatAmount($income->hub_user_account->balance) }})</option>
                                         @endif
                                     </select>
                                     @error('hub_user_accounts')

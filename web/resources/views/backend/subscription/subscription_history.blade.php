@@ -95,7 +95,7 @@
                                         </td>
                                           
                                         <td>{{ @$subscription->plan->name }}</td>
-                                        <td>{{ @$subscription->price }}</td> 
+                                        <td>{{ formatAmount(@$subscription->price) }}</td> 
                                         <td>{{ @$subscription->parcel_count }}</td>
                                         <td>{{ @$subscription->deliveryman_count }}</td>
                                         <td>{{ @$subscription->days_count }}</td>

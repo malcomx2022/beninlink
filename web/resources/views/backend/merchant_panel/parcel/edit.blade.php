@@ -332,51 +332,51 @@
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('parcel.Cash_Collection') }}</span>
                                 <span class="float-right"
-                                    id="totalCashCollection">{{ $parcel->cash_collection ?? '0.00' }}</span>
+                                    id="totalCashCollection">{{ formatAmount($parcel->cash_collection ?? 0, false) }}</span>
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('parcel.Delivery_Charge') }}</span>
                                 <span class="float-right"
-                                    id="deliveryChargeAmount">{{ $parcel->delivery_charge ?? '0.00' }}</span>
+                                    id="deliveryChargeAmount">{{ formatAmount($parcel->delivery_charge ?? 0, false) }}</span>
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('reports.COD_Charge') }}</span>
                                 <span class="float-right"
-                                    id="codChargeAmount">{{ $parcel->cod_amount ?? '0.00' }}</span>
+                                    id="codChargeAmount">{{ formatAmount($parcel->cod_amount ?? 0, false) }}</span>
                             </li>
 
 
                             <li class="list-group-item profile-list-group-item hideShowLiquidFragile">
                                 <span class="float-left font-weight-bold">{{ __('parcel.Liquid/Fragile_Charge') }}</span>
                                 <span class="float-right"
-                                    id="liquidFragileAmount">{{ $parcel->liquid_fragile_amount ?? '0.00' }}</span>
+                                    id="liquidFragileAmount">{{ formatAmount($parcel->liquid_fragile_amount ?? 0, false) }}</span>
                             </li>
                             <li class="list-group-item profile-list-group-item" id="packagingShow">
                                 <span class="float-left font-weight-bold">{{ __('reports.P.Charge') }}</span>
                                 <span class="float-right"
-                                    id="packagingAmount">{{ $parcel->packaging_amount ?? '0.00' }}</span>
+                                    id="packagingAmount">{{ formatAmount($parcel->packaging_amount ?? 0, false) }}</span>
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('parcel.Total_Charge') }}</span>
                                 <span class="float-right"
-                                    id="totalDeliveryChargeAmount">{{ $parcel->total_delivery_amount ?? '0.00' }}</span>
+                                    id="totalDeliveryChargeAmount">{{ formatAmount($parcel->total_delivery_amount ?? 0, false) }}</span>
                             </li>
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('parcel.Vat') }}</span>
-                                <span class="float-right" id="VatAmount">{{ $parcel->vat_amount ?? '0.00' }}</span>
+                                <span class="float-right" id="VatAmount">{{ formatAmount($parcel->vat_amount ?? 0, false) }}</span>
                             </li>
 
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('parcel.Net_Payable') }}</span>
                                 <span class="float-right"
-                                    id="netPayable">{{ $parcel->total_delivery_amount + $parcel->vat_amount }}</span>
+                                    id="netPayable">{{ formatAmount($parcel->total_delivery_amount + $parcel->vat_amount, false) }}</span>
                             </li>
 
 
                             <li class="list-group-item profile-list-group-item">
                                 <span class="float-left font-weight-bold">{{ __('parcel.Current_payable') }}</span>
                                 <span class="float-right"
-                                    id="currentPayable">{{ $parcel->current_payable ?? '0.00' }}</span>
+                                    id="currentPayable">{{ formatAmount($parcel->current_payable ?? 0, false) }}</span>
                             </li>
                         </ul>
                     </div>
