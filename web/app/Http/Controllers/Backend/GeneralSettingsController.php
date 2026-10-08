@@ -26,7 +26,7 @@ class GeneralSettingsController extends Controller
     public function update(Request $request){
         if(settings()->id == 1):
             if(env('DEMO')):
-                Toastr::error('Update system is disable for the demo mode.',__('message.error'));
+                Toastr::error(__('Updates are disabled in demo mode.'),__('message.error'));
                 return redirect()->back();
             endif;
         endif;

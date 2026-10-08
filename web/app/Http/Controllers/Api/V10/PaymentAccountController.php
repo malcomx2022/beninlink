@@ -69,7 +69,7 @@ class PaymentAccountController extends Controller
             $validator = Validator::make($request->all(), $validator->rules());
 
             if ($validator->fails()) {
-                return $this->responseWithError(__('account.update_account'), ['message' => $validator->errors()], 422);
+                return $this->responseWithError(__('account.update_msg'), ['message' => $validator->errors()], 422);
             }
 
             if (blank($this->repo->edit($request->id))) {

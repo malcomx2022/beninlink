@@ -27,4 +27,10 @@ return [
     'returned_to_merchant_income_cancel'                        => 'Parcel Returned To Merchant Cancel Income',
     'returned_to_merchant_expense_cancel'                       => 'Parcel Returned To Merchant Cancel Expense',
     'return_vat_merchant_statement' => 'Expense: VAT on return charges (D2, question 6)',
+    // S118 : clés nommées par le code et absentes du catalogue (la clé brute s'affichait)
+    'return_to_merchant_deliveryman_statement' => 'Income: return charge, parcel returned to merchant',
+    'return_to_merchant_courier_statement' => 'Expense: return charge paid to the delivery man',
+    'return_received_by_merchant_statment' => 'Expense: parcel return charge',
+    'return_received_by_statement' => 'Income: return charge billed to the merchant',
+    'return_received_by_statement_cancel' => 'Expense: cancellation of the return charge billed to the merchant',
 ];

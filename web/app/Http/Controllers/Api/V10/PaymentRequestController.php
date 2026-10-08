@@ -128,7 +128,7 @@ class PaymentRequestController extends Controller
             }
             if($payment->status == ApprovalStatus::PENDING){
                 $this->repo->delete($id);
-                return $this->responseWithSuccess(__('paymentrequest.delete_msg'), [], 200);
+                return $this->responseWithSuccess(__('paymentrequest.deleted_msg'), [], 200);
             } else {
                 return $this->responseWithError(__('paymentrequest.error_msg'), [], 500);
             }

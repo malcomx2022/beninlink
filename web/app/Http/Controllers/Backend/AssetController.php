@@ -49,10 +49,10 @@ class AssetController extends Controller
     public function store(StoreRequest $request)
     {
         if($this->repo->store($request)){
-            Toastr::success('Asset successfully added.',__('message.success'));
+            Toastr::success(__('Asset successfully added.'),__('message.success'));
             return redirect()->route('asset.index');
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back()->withInput();
         }
     }
@@ -92,10 +92,10 @@ class AssetController extends Controller
     public function update(StoreRequest $request)
     {
         if($this->repo->update($request)){
-            Toastr::success('Asset successfully Update.',__('message.success'));
+            Toastr::success(__('Asset successfully updated.'),__('message.success'));
             return redirect()->route('asset.index');
         }else{
-            Toastr::error('Something went wrong.',__('message.success'));
+            Toastr::error(__('Something went wrong.'),__('message.success'));
             return redirect()->back()->withInput();
         }
     }
@@ -109,7 +109,7 @@ class AssetController extends Controller
     public function destroy($id)
     {
         $this->repo->delete($id);
-        Toastr::success('Asset successfully deleted.',__('message.success'));
+        Toastr::success(__('Asset successfully deleted.'),__('message.success'));
         return back();
     }
 }

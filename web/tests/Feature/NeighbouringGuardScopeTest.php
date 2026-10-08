@@ -69,7 +69,7 @@ class NeighbouringGuardScopeTest extends TestCase
      * bien l'écriture, mais **après** que la réponse eut déjà renseigné.
      *
      * ⚠️ Le contrôle positif est la moitié qui compte. Il exige que le message
-     * « low balance » soit REÇU pour notre propre marchand dans exactement la
+     * « solde bas » (`This merchant has a low balance.`, traduit depuis S118) soit REÇU pour notre propre marchand dans exactement la
      * même situation. Sans lui, l'absence du message côté étranger pourrait
      * venir de n'importe quoi — une validation qui refuse, un abonnement
      * expiré, une route absente — et ne prouverait rien (leçon S53).
@@ -83,7 +83,7 @@ class NeighbouringGuardScopeTest extends TestCase
 
         $messages = $this->poserUnColisPour($sien->id);
 
-        $this->assertStringNotContainsString('low balance', $messages,
+        $this->assertStringNotContainsString(__('This merchant has a low balance.'), $messages,
             'la reponse renseigne sur le PORTEFEUILLE d\'un marchand d\'une autre societe : '
             . '`Merchant::find($request->merchant_id)` a reperdu son `companywise()`');
 
@@ -101,7 +101,7 @@ class NeighbouringGuardScopeTest extends TestCase
         $mien->wallet_balance = 0;
         $mien->save();
 
-        $this->assertStringContainsString('low balance', $this->poserUnColisPour($mien->id),
+        $this->assertStringContainsString(__('This merchant has a low balance.'), $this->poserUnColisPour($mien->id),
             'le chemin du portefeuille n\'est plus atteignable : le test d\'a cote ne prouve donc plus rien');
     }
 

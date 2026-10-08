@@ -37,10 +37,10 @@ class LiquidFragileController extends Controller
             $vat->save();
         }
         if($liquid){
-            Toastr::success('Liquid/Fragile updated successfully.',__('message.success'));
+            Toastr::success(__('Liquid/Fragile updated successfully.'),__('message.success'));
             return redirect()->route('liquid-fragile.index');
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }

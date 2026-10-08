@@ -26,5 +26,11 @@ return [
     'returned_to_merchant_income_cancel' => 'Revenus : annulation de colis retourné au marchand',
     'returned_to_merchant_expense_cancel' => 'Dépenses : annulation de colis retourné au marchand',
     'return_vat_merchant_statement' => 'Dépenses : TVA sur frais de retour (D2, question 6)',
+    // S118 : clés nommées par le code et absentes du catalogue (la clé brute s'affichait)
+    'return_to_merchant_deliveryman_statement' => 'Revenus : frais de retour, colis rendu au marchand',
+    'return_to_merchant_courier_statement' => 'Dépenses : frais de retour versés au livreur',
+    'return_received_by_merchant_statment' => 'Dépenses : frais de retour du colis',
+    'return_received_by_statement' => 'Revenus : frais de retour facturés au marchand',
+    'return_received_by_statement_cancel' => 'Dépenses : annulation des frais de retour facturés au marchand',
 ];
 

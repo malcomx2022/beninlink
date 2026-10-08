@@ -62,7 +62,7 @@ class InstallerController extends Controller
             }
         }
         if (isset($mysqli) && mysqli_connect_errno()) {
-           return redirect()->back()->with('error', 'Please input valid database information.')->withInput($request->all());
+           return redirect()->back()->with('error', __('Please enter valid database information.'))->withInput($request->all());
         }
         if(isset($mysqli)):
             $mysqli->close();
@@ -70,7 +70,7 @@ class InstallerController extends Controller
 
         //check for valid email
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-           return redirect()->back()->with('error', 'Please input a valid email.')->withInput($request->all());
+           return redirect()->back()->with('error', __('Please enter a valid email address.'))->withInput($request->all());
         }
  
         //  set database details

@@ -422,7 +422,7 @@ class ParcelController extends Controller
         try {
             $parcelEvent = $this->repo->parcelTrack($track_id);
             if($parcelEvent):
-                return $this->responseWithSuccess('Successfully parcel event founded.', $parcelEvent, 200);
+                return $this->responseWithSuccess(__('Parcel events found.'), $parcelEvent, 200);
             else:
                 return $this->responseWithError(__('parcel.error_msg'), [], 500);
             endif;
@@ -444,7 +444,7 @@ class ParcelController extends Controller
         ]);
         try {
             Mail::send(new ContactMail($data));
-            return $this->responseWithSuccess('Successfully sended.', [],200);
+            return $this->responseWithSuccess(__('Sent successfully.'), [],200);
         } catch (\Throwable $th) {
              return $this->responseWithError(__('parcel.error_msg'), [],500);
         }
@@ -454,9 +454,9 @@ class ParcelController extends Controller
         try {
 
            if($this->repo->subscribe($request) === true):
-                return $this->responseWithSuccess('Successfully subscribed.', [],200);
+                return $this->responseWithSuccess(__('Subscribed successfully.'), [],200);
            elseif($this->repo->subscribe($request) == 1):
-                return $this->responseWithError('Already subscribed.', ['exists' => 'true'],200);
+                return $this->responseWithError(__('Already subscribed.'), ['exists' => 'true'],200);
            endif;
         } catch (\Throwable $th) {
              return $this->responseWithError(__('parcel.error_msg'), [],500);
@@ -466,7 +466,7 @@ class ParcelController extends Controller
     public function DeliveryCharges(){
         try {
                 $delivery_charges = $this->deliveryCharges->allGet();
-                return $this->responseWithSuccess('Successfully delviery charge found.', $delivery_charges ,200);
+                return $this->responseWithSuccess(__('Delivery charge found.'), $delivery_charges ,200);
 
         } catch (\Throwable $th) {
              return $this->responseWithError(__('parcel.error_msg'), [],500);

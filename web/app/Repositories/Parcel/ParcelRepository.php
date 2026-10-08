@@ -2044,7 +2044,7 @@ class ParcelRepository implements ParcelInterface {
                 $courierStatement->amount               = $deliveryManStatement->amount;
                 $courierStatement->type                 = StatementType::EXPENSE;
                 $courierStatement->date                 = date('Y-m-d H:i:s');
-                $courierStatement->note                 = __('statementNote.return_to_merchant__deliveryman_statement');
+                $courierStatement->note                 = __('statementNote.return_to_merchant_courier_statement');
                 $courierStatement->save();
             }else{
                 $deliveryManAssign=ParcelEvent::where('parcel_id',$id)->where('parcel_status',ParcelStatus::DELIVERY_MAN_ASSIGN)->first();
@@ -2071,7 +2071,7 @@ class ParcelRepository implements ParcelInterface {
                 $courierStatement->amount               = $deliveryManStatement->amount;
                 $courierStatement->type                 = StatementType::EXPENSE;
                 $courierStatement->date                 = date('Y-m-d H:i:s');
-                $courierStatement->note                 = __('statementNote.return_to_merchant_deliveryman_statement');
+                $courierStatement->note                 = __('statementNote.return_to_merchant_courier_statement');
                 $courierStatement->save();
 
 
@@ -2276,7 +2276,7 @@ class ParcelRepository implements ParcelInterface {
             $courier_statement->amount          = $return_delivery_charge;
             $courier_statement->type            = StatementType::EXPENSE;
             $courier_statement->date            = date('Y-m-d H:i:s');
-            $courier_statement->note            = __('statementNote.return_received_by_statement');
+            $courier_statement->note            = __('statementNote.return_received_by_statement_cancel');
             $courier_statement->save();
 
             $returnreschedule     = ParcelEvent::where(['parcel_id'=>$id,'parcel_status'=>ParcelStatus::RETURN_MERCHANT_RE_SCHEDULE])->first();

@@ -151,7 +151,7 @@ class SupportController extends Controller
 
     public function statusUpdate(Request $request,$id){
         if($this->repo->statusUpdate($id,$request)):
-            Toastr::success('Status updated successfully.',__('message.success'));
+            Toastr::success(__('Status updated successfully.'),__('message.success'));
             return redirect()->route('support.index');
         else:
             Toastr::error(__('support.error_msg'),__('message.error'));

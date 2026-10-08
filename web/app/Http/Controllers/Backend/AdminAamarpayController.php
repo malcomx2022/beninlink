@@ -37,7 +37,7 @@ class AdminAamarpayController extends Controller
             endif;
 
             if(MerchantSearchSettings($request->merchant_id,'aamarpay_store_id') == null):
-                Toastr::error('Invalid Store id', __('message.error'));
+                Toastr::error(__('Invalid store ID.'), __('message.error'));
                 return redirect()->back()->withInput();
             endif;
 
@@ -110,7 +110,7 @@ class AdminAamarpayController extends Controller
     }
 
     public function success(Request $request){
-        Toastr::success('Payment successfully completed', __('message.success'));
+        Toastr::success(__('Payment successfully completed.'), __('message.success'));
         return redirect()->route('payout.index');
         // return $request;
     }

@@ -37,10 +37,10 @@ class RoleController extends Controller
     public function store(StoreRoleRequest $request)
     {
         if($this->repo->store($request)){
-            Toastr::success('Role successfully added.',__('message.success'));
+            Toastr::success(__('Role successfully added.'),__('message.success'));
             return redirect()->route('roles.index');
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }
@@ -55,10 +55,10 @@ class RoleController extends Controller
     public function update(UpdateRoleRequest $request)
     {
         if($this->repo->update($request->id, $request)){
-            Toastr::success('Role successfully updated.',__('message.success'));
+            Toastr::success(__('Role successfully updated.'),__('message.success'));
             return redirect()->route('roles.index');
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }
@@ -66,15 +66,15 @@ class RoleController extends Controller
     public function destroy($id)
     {
         if(env('DEMO')):
-            Toastr::error('Delete system is disable for the demo mode.',__('message.error'));
+            Toastr::error(__('Deletion is disabled in demo mode.'),__('message.error'));
             return redirect()->back();
         endif;
 
         if($this->repo->delete($id)):
-            Toastr::success('Role successfully deleted.',__('message.success'));
+            Toastr::success(__('Role successfully deleted.'),__('message.success'));
             return back();
         else:
-            Toastr::error('Something went wrong!',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return back();
         endif; 
     }

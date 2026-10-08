@@ -89,7 +89,7 @@ class CancelledReturnsCommand extends Command
         $colis = Parcel::query()
             ->when($this->option('societe'), fn ($q, $id) => $q->where('company_id', $id))
             ->when($this->option('marchand'), fn ($q, $id) => $q->where('merchant_id', $id))
-            ->whereIn('id', MerchantStatement::where('note', self::NOTE_MARCHAND)->select('parcel_id'))
+            ->whereIn('id', MerchantStatement::whereIn('note', self::formes(self::NOTE_MARCHAND))->select('parcel_id'))
             ->orderBy('id')
             ->get();
 
@@ -237,7 +237,7 @@ class CancelledReturnsCommand extends Command
      */
     private function ecartsLivreurs(Parcel $parcel): array
     {
-        $lignes = DeliverymanStatement::where('parcel_id', $parcel->id)->where('note', self::NOTE_LIVREUR)->get();
+        $lignes = DeliverymanStatement::where('parcel_id', $parcel->id)->whereIn('note', self::formes(self::NOTE_LIVREUR))->get();
         $tient = (int) $parcel->status === ParcelStatus::RETURN_RECEIVED_BY_MERCHANT;
 
         $ecarts = [];
@@ -259,23 +259,31 @@ class CancelledReturnsCommand extends Command
     }
 
     /**
-     * Les notes qui marquent une ligne de retour du marchand.
+     * Les formes qu'une note de relevé a pu prendre en base : la clé brute, ou
+     * son texte dans l'une des langues servies au moment de l'écriture.
      *
-     * `NOTE_MARCHAND` est stable parce que sa traduction n'existe pas (la clé
-     * est écrite telle quelle). `NOTE_TVA`, elle, est traduite — la ligne porte
-     * donc le texte de la locale au moment du retour. On accepte toutes ses
-     * formes, plutôt que de parier sur la locale de la commande.
+     * Jusqu'à S118, `NOTE_MARCHAND` et `NOTE_LIVREUR` n'avaient pas de traduction :
+     * le dépôt écrivait la clé telle quelle, et le relevé du marchand l'affichait
+     * brute. Elles en ont une depuis — les lignes neuves portent donc le texte,
+     * les anciennes la clé. On accepte toutes les formes plutôt que de parier sur
+     * la locale de l'écriture ou celle de la commande.
      *
      * @return list<string>
      */
-    private static function notesDuRetour(): array
+    public static function formes(string $cle): array
     {
-        $notes = [self::NOTE_MARCHAND, self::NOTE_TVA];
-        foreach (['fr', 'en'] as $locale) {
-            $notes[] = __(self::NOTE_TVA, [], $locale);
+        $formes = [$cle];
+        foreach (['fr', 'en'] as $locale) { // les langues servies (config/locales.php)
+            $formes[] = __($cle, [], $locale);
         }
 
-        return array_values(array_unique($notes));
+        return array_values(array_unique($formes));
+    }
+
+    /** Les notes qui marquent une ligne de retour du marchand (frais et sa TVA). */
+    private static function notesDuRetour(): array
+    {
+        return array_values(array_unique(array_merge(self::formes(self::NOTE_MARCHAND), self::formes(self::NOTE_TVA))));
     }
 
     /** Un frais laissé sur un colis dont le retour ne tient plus. */

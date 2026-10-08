@@ -19,11 +19,11 @@ class GeneralSettingCotroller extends Controller
     }
     public function index(){
         $generalSettings = $this->repo->all();
-        return $this->responseWithSuccess('General settings information.',$generalSettings,200);
+        return $this->responseWithSuccess(__('General settings information.'),$generalSettings,200);
     }
 
     public function currencies(){
         $currencies = $this->currencies->getActive();
-        return $this->responseWithSuccess('All Currency.',$currencies,200);
+        return $this->responseWithSuccess(__('All currencies.'),$currencies,200);
     }
 }

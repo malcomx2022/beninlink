@@ -141,7 +141,7 @@ class CancelledReturnsCommandTest extends TestCase
         $this->assertSame(0.0, $this->soldeMarchand());
         // On inverse, on n'efface pas : les deux lignes coexistent.
         $this->assertSame(2, MerchantStatement::where('parcel_id', $this->colis->id)
-            ->where('note', CancelledReturnsCommand::NOTE_MARCHAND)->count());
+            ->whereIn('note', CancelledReturnsCommand::formes(CancelledReturnsCommand::NOTE_MARCHAND))->count()); // S118 : texte ou clé brute
         $this->assertSame(1, MerchantStatement::where('parcel_id', $this->colis->id)
             ->where('type', StatementType::INCOME)->count());
     }

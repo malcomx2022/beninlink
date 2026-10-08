@@ -232,7 +232,7 @@ class NakedReadRemainderScopeTest extends TestCase
             'user_id' => $sonSalarie->id, 'month' => now()->format('Y-m'), 'amount' => 100000,
         ])->assertRedirect();
 
-        $this->assertStringNotContainsString('Already salary generated', $this->messagesToastr(),
+        $this->assertStringNotContainsString(__('Salaries already generated.'), $this->messagesToastr(),
             'la réponse révèle qu\'un bulletin EXISTE chez une autre société : oracle d\'existence');
     }
 

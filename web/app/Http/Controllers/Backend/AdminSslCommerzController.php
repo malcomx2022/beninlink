@@ -122,7 +122,7 @@ class AdminSslCommerzController extends Controller
 
     public function success(Request $request)
     {
-        Toastr::success('Payment successfully completed',__('message.success'));
+        Toastr::success(__('Payment successfully completed.'),__('message.success'));
         return redirect()->route('dashboard.index');
     }
 
@@ -134,7 +134,7 @@ class AdminSslCommerzController extends Controller
     public function cancel(Request $request)
     {
 
-        Toastr::error('Payment canceled.',__('message.error'));
+        Toastr::error(__('Payment canceled.'),__('message.error'));
         return redirect()->back();
     }
 

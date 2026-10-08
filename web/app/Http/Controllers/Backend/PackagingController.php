@@ -30,11 +30,11 @@ class PackagingController extends Controller
     public function store(StoreRequest $request)
     {
         if($this->repo->store($request)){
-            Toastr::success('Packaging successfully added.',__('message.success'));
+            Toastr::success(__('Packaging successfully added.'),__('message.success'));
             return redirect()->route('packaging.index');
 
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
     }
@@ -49,10 +49,10 @@ class PackagingController extends Controller
     {
 
         if($this->repo->update($request)){
-            Toastr::success('Packaging successfully updated.',__('message.success'));
+            Toastr::success(__('Packaging successfully updated.'),__('message.success'));
             return redirect()->route('packaging.index');
         }else{
-            Toastr::error('Something went wrong.',__('message.error'));
+            Toastr::error(__('Something went wrong.'),__('message.error'));
             return redirect()->back();
         }
 
@@ -61,7 +61,7 @@ class PackagingController extends Controller
     public function destroy($id)
     {
         $this->repo->delete($id);
-        Toastr::success('Packaging successfully deleted.',__('message.success'));
+        Toastr::success(__('Packaging successfully deleted.'),__('message.success'));
         return back();
     }
 }
