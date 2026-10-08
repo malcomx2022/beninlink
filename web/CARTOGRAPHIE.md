@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-08 (S132 — le cookie de session ne part plus en clair ; S131 — la surface publique a une cadence bornée ; S130 — le parcours OTP du site marchand est limité comme l'API ; S129 — le retour Stripe n'active qu'un abonnement, pour le compte qui a payé ; S128 — la partie serveur de S126 est close ; S127 — un texte riche écrit par un autre est nettoyé avant d'être rendu ; S126 — un fichier téléversé ne devient jamais du code serveur ; S125 — l'arriéré des droits du back-office fermé ; S124 — l'installateur de modules fermé, cinq écrans gardés par leur droit ; S123 — l'origine d'un mouvement de portefeuille se lit en français ; S122 — une date affichée parle la langue de son lecteur ; S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-08 (S133 — un numéro béninois se saisit comme on le dit ; S132 — le cookie de session ne part plus en clair ; S131 — la surface publique a une cadence bornée ; S130 — le parcours OTP du site marchand est limité comme l'API ; S129 — le retour Stripe n'active qu'un abonnement, pour le compte qui a payé ; S128 — la partie serveur de S126 est close ; S127 — un texte riche écrit par un autre est nettoyé avant d'être rendu ; S126 — un fichier téléversé ne devient jamais du code serveur ; S125 — l'arriéré des droits du back-office fermé ; S124 — l'installateur de modules fermé, cinq écrans gardés par leur droit ; S123 — l'origine d'un mouvement de portefeuille se lit en français ; S122 — une date affichée parle la langue de son lecteur ; S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -474,7 +474,8 @@ décider avec le métier, hors de ce chantier.
     ⚠️ `nid`, `trade_license`, `vat`, `opening_balance`, `return_charges` du
     formulaire admin **ne sont validés nulle part**.
   - ⚠️ `mobile: digits_between:11,14` — calibré sur le format BD, **à revoir pour
-    le Bénin** (numéros à 8 chiffres, +229 → 11 avec indicatif).
+    le Bénin** (numéros à 8 chiffres, +229 → 11 avec indicatif). ✅ **S133** : le numéro saisi entre
+    au format rangé `2290197010007` avant la validation (`NormalizePhoneNumbers`).
 
 ### ✅ Chantier 2 réalisé le 2026-08-17
 - **Migration additive** `2026_08_17_120000_add_legal_identifiers_…` — la **première
@@ -9491,3 +9492,52 @@ et une recette en `false` ; la configuration rend `secure` pour une `APP_URL` en
 
 Rien à faire si le `.env` ne porte pas `SESSION_SECURE_COOKIE=false` et que `APP_URL` est en `https://`.
 Après le déploiement, les sessions ouvertes restent valides ; le cookie suivant reçoit l'attribut.
+
+## S133 — un numéro béninois se saisit comme on le dit (2026-10-08)
+
+### D'où ça vient
+
+Vingt et une règles de validation du socle exigent `numeric|digits_between:11,14` : le format du Bangladesh
+(bloc F, « à revoir pour le Bénin »). Depuis la migration ARCEP du 30 novembre 2024, un numéro béninois a
+**dix chiffres** et commence par `01`. Une PME pilote qui tapait « 01 97 01 00 07 » était refusée à
+l'inscription (dix chiffres), « +229 01 97 01 00 07 » aussi (pas `numeric`), et ce même « +229… », lu comme
+une adresse électronique, ne la connectait pas. L'aide de l'app marchand demandait encore l'ancien format à
+huit chiffres (« 22997000000 »), qui n'aboutit plus. Les SMS partaient vers le numéro tel que rangé, sans
+indicatif s'il avait été saisi sans (bloc H, « aucun formatage E.164 »).
+
+### Ce qui est fait
+
+- `App\Support\BeninPhone::normalize()` : forme rangée `2290197010007` (international sans « + », 13
+  chiffres). National `01XXXXXXXX` → `229` devant ; ancien national à 8 chiffres et ancien international
+  `229XXXXXXXX` → le `01` de la migration ; séparateurs et préfixe `+` / `00` retirés. Un numéro d'un autre
+  pays garde ses chiffres ; ce qui n'est pas un numéro ressort tel quel, et la validation le refuse.
+- `NormalizePhoneNumbers`, middleware **global** (après `ConvertEmptyStringsToNull`) : `mobile`, `phone`,
+  `contact_no`, `mobile_no`, `customer_phone` — imbriqués compris — passent par `normalize()` sur toute
+  **écriture**, web et API. Les vingt et une règles restent telles quelles : elles valident la forme rangée.
+  Un `GET` n'est pas touché : les filtres de recherche (`?phone=`) cherchent par morceau dans des numéros
+  rangés avant S133.
+- Connexion web : un identifiant qui se lit comme un numéro se cherche sous la forme rangée ; un compte rangé
+  avant S133 sous une autre forme reste joignable par ce que l'on tape (`LoginController::mobileSaisi()`).
+- `SmsService::sendSms()` / `sendOtp()` : le numéro part en forme rangée, même rangé sans indicatif.
+- App marchand : l'aide du champ téléphone dit « 01 97 00 00 00 », avec ou sans +229.
+
+### Ce qui reste
+
+Les numéros **déjà en base** gardent leur forme (aucune migration de données) : un doublon ancien format /
+forme rangée n'est pas vu par `unique:users,mobile`. Un compte inscrit avant S133 dont le code OTP n'est pas
+encore validé doit le redemander après le déploiement (sa recherche se fait sous la forme rangée).
+
+### Le filet
+
+`BeninPhoneNumbersTest` : neuf écritures d'un même numéro → une forme, ce qui n'est pas un numéro reste
+intact ; le middleware touche les écritures (imbriquées comprises), jamais un `GET`, et il est global ;
+inscription par l'API en « +229 01 97 01 00 07 » puis code OTP saisi en « 01 97 01 00 07 » ; connexion web
+par « +229 01 97 92 00 02 » ; compte ancien format connecté par ce qu'il tape ; SMS et OTP vers un numéro
+rangé sans indicatif. Trois tests qui attendaient l'ancien format brut sont mis à la forme rangée
+(`QueuedDeliveryTest`, `RecettePiloteRepetitionTest` M9 et A4). Sabotages, tous rouges : middleware retiré,
+règle `01` retirée, repli de connexion retiré, SMS non normalisé, `GET` normalisé.
+
+### Côté serveur (au porteur)
+
+Rien à faire. Après le déploiement, un numéro saisi au format national est accepté ; les numéros déjà en base
+ne changent pas.

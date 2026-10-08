@@ -6,6 +6,7 @@ use App\Enums\UserType;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
+use App\Support\BeninPhone;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -50,6 +51,7 @@ class LoginController extends Controller
         $user    = User::where(function($query)use ($request){
             $query->where('email',$request->email);
             $query->orWhere('mobile',$request->email);
+            $query->orWhere('mobile',BeninPhone::normalize((string) $request->email)); // S133
         })->first();
         
         // S104 — un compte LIVREUR n'a aucun écran web : il se connecte dans
@@ -126,10 +128,10 @@ class LoginController extends Controller
          
         if(tenant()): 
           
-            if(is_numeric($request->get('email')))
+            if(($mobile = $this->mobileSaisi($request, settings()->id)) !== null)
             {
                 return [ 
-                        'mobile'        => $request->get('email'),
+                        'mobile'        => $mobile,
                         'company_id'    => settings()->id,
                         'password'      => $request->get('password'),
                         'status'        => '1', 
@@ -145,11 +147,31 @@ class LoginController extends Controller
                 ];
          
         else:  
-            if(is_numeric($request->get('email')))
+            if(($mobile = $this->mobileSaisi($request)) !== null)
             {
-                return ['mobile' => $request->get('email'),'password' => $request->get('password'), 'status' => '1', 'verification_status' => '1' ];
+                return ['mobile' => $mobile,'password' => $request->get('password'), 'status' => '1', 'verification_status' => '1' ];
             }
             return ['email' => $request->get('email'),'password' => $request->get('password'), 'status' => '1', 'verification_status' => '1'];
         endif;
+    }
+
+    /**
+     * S133 — l'identifiant saisi est un numéro (« 01 97 00 00 00 », « +229… ») : il se cherche au
+     * format rangé (`BeninPhone`). Un compte rangé avant S133 sous une autre forme reste joignable
+     * par ce qu'on tape. `null` : l'identifiant est une adresse électronique.
+     */
+    private function mobileSaisi(Request $request, ?int $companyId = null): ?string
+    {
+        $saisie = (string) $request->get('email');
+        $range  = BeninPhone::normalize($saisie);
+        if ($range === $saisie && ! is_numeric($saisie)) {
+            return null;
+        }
+
+        $existe = User::where('mobile', $range)
+            ->when($companyId !== null, fn ($q) => $q->where('company_id', $companyId))
+            ->exists();
+
+        return $existe ? $range : $saisie;
     }
 }
