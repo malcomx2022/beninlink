@@ -101,6 +101,9 @@ Rien de tout ceci ne peut être versionné — ce sont des secrets et des liens 
 ## Conventions
 - Réutiliser les patterns de l'app (navigation, services d'API, i18n) ; repérer un écran
   existant avant d'en créer un. Toute chaîne visible passe par l'i18n FR.
+- **Un jeton qui tombe déconnecte l'écran** (**S144**) : le client d'API efface le jeton sur un 401, et `clearToken()`
+  prévient `SessionProvider` (`onTokenCleared`), qui revient à la connexion. Depuis S135/S136 le serveur révoque des jetons
+  en cours de session ; un écran ne garde jamais un compte dont le jeton n'existe plus (`SessionProvider.test.tsx`).
 - Chaînes **natives** (nom d'app, demandes de permission iOS/Android) : `src/i18n/expo-fr.json`,
   déclaré par `expo.locales` dans `app.json`. Sans ce fichier, Expo ne fait qu'avertir au
   `prebuild` et les textes natifs restent en anglais.

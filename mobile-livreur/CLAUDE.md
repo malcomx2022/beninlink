@@ -113,3 +113,6 @@ Icônes Ionicons ; visuels d'app générés depuis `assets/source/generate.py`.
 - `.env` : copier `.env.example` (`EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_API_KEY`).
 - Dépendances propres à cette app (en plus de `mobile/`) : `expo-location`,
   `expo-image-picker`, `@expo/vector-icons` — textes d'autorisation dans `app.json`.
+- **Un jeton qui tombe déconnecte l'écran** (**S144**) : le client d'API efface le jeton sur un 401, et `clearToken()`
+  prévient `SessionProvider` (`onTokenCleared`), qui revient à la connexion. Depuis S135/S136 le serveur révoque des jetons
+  en cours de session ; un écran ne garde jamais un compte dont le jeton n'existe plus (`SessionProvider.test.tsx`).
