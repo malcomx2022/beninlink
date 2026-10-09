@@ -21,16 +21,18 @@ documents locaux. Ce lot complète le guide `guides/recette-pilote/README.md`.
 - URL confirmée par le responsable de recette : `https://recette.beninlink.app`, réponse HTTP 200 rapportée ; API des deux APK : `https://recette.beninlink.app/api/v10`.
 - APK historiques déclarés terminés le **2026-10-07 à 14:40 UTC** : marchand `0bd31084`, livreur `8b3ff02d` (identifiants abrégés fournis). Ils précèdent les corrections récentes des apps et le lot 3 ; ils ne permettent pas de valider ces corrections.
 - Artefacts historiques fournis : [marchand](https://expo.dev/artifacts/eas/sTCYMqh04f3RgzCOUAKv5CFSQ3Y7n8ExgWh5zXXniqM.apk), [livreur](https://expo.dev/artifacts/eas/cpe02BmK4w3V4BYg0qqEQx0UAIEEjLRlMohHw-4qEVw.apk). Métadonnées rapportées par le responsable, non vérifiées directement auprès d'EAS.
-- Rebuilds nécessaires depuis le commit final retenu sur `main`, avec profil `recette`. Consigner pour chaque nouveau build le SHA source complet, l'identifiant EAS complet et le lien APK. L'installation et la disponibilité des appareils ne sont pas confirmées ; aucun appareil n'est accessible dans cet environnement.
+- **Nouveaux rebuilds déclarés FINISHED le 2026-10-09**, depuis `main` avec S133/S134/S144 : [marchand](https://expo.dev/artifacts/eas/GDXArOtZlQrzqdhwVJcqi4hHCGLB_RAze_lFvdnV2ww.apk), [livreur](https://expo.dev/artifacts/eas/fBrEqrB0enCuueY5gU0hx8zhq_bqcC61inFKi3uU0jA.apk). Ces liens remplacent les APK historiques pour la recette. Disponibilité et contenu rapportés par le responsable, non vérifiés directement auprès d'EAS.
+- SHA source complet et identifiants EAS complets de ces nouveaux builds à consigner. L'installation et la disponibilité des appareils ne sont pas confirmées ; aucun appareil n'est accessible dans cet environnement. La mention S133/S134/S144 seule ne prouve pas l'inclusion du lot 3 : le SHA du build doit contenir le commit `874795d1cad40052c6ac562276bef9c0138edb68` dans son historique.
 
 Une réponse HTTP 200 ne prouve pas la version du serveur. Une URL API correcte
 ne prouve pas que les APK contiennent le lot 3. Vérifier le SHA déployé via le
 processus d'exploitation existant et les métadonnées EAS/build des deux APK.
 Ne publier aucun secret ni mot de passe dans les preuves.
 
-Les rebuilds sont actuellement bloqués par l'absence d'authentification Expo
-dans l'environnement de build. Configurer `EXPO_TOKEN` via le gestionnaire de
-secrets de cet environnement ou de la CI, jamais dans le chat ni dans le dépôt.
+Le blocage de reconstruction est levé selon le retour du responsable : les deux
+nouveaux APK sont terminés. Pour une reconstruction ultérieure depuis cet
+environnement, configurer `EXPO_TOKEN` via son gestionnaire de secrets ou celui
+de la CI, jamais dans le chat ni dans le dépôt.
 Conserver les projets et keystores EAS existants. Depuis une copie propre du
 commit retenu, exécuter dans chacune des deux apps :
 
