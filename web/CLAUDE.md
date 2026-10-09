@@ -232,6 +232,7 @@ avant les apps.
   création et modification d'un compte, changement, réinitialisation ; jamais la connexion (`NewPasswordPolicyTest`).
   Et un mot de passe **changé ferme les autres accès** (**S135**) : `User::booted()` révoque les jetons sauf celui de
   l'appareil qui le change, `CloseSessionsOnPasswordChange` ferme les autres sessions web (`PasswordChangeClosesOtherAccessTest`).
+  `sign-out` et `refresh` ne touchent que le jeton de l'appareil qui appelle (**S136**, `ApiSignOutScopeTest`).
 - **Un retour de paiement n'applique rien à un identifiant de l'URL** (**S129**) : `switchPlan()` reçoit une
   requête composée (`user_id = Auth::id()`), et une session Stripe ne sert qu'une fois
   (`subscriptions.stripe_session_id` unique, `StripeSubscriptionReturnTest`).

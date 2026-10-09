@@ -6404,7 +6404,7 @@
                     "Authentification"
                 ],
                 "summary": "Renouveler le jeton",
-                "description": "Révoque tous les jetons du compte et en émet un nouveau.",
+                "description": "Remplace le jeton de cet appareil par un nouveau (même nom, mêmes droits) ; les autres appareils gardent le leur (S136).",
                 "responses": {
                     "200": {
                         "description": "Succès",
@@ -7261,6 +7261,7 @@
                     "Authentification"
                 ],
                 "summary": "Déconnexion (révocation du jeton)",
+                "description": "Révoque le seul jeton de cet appareil ; les autres appareils restent connectés (S136). Un changement de mot de passe les ferme tous sauf celui-ci (S135).",
                 "responses": {
                     "200": {
                         "description": "Succès",
