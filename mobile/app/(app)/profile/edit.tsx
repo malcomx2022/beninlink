@@ -30,11 +30,14 @@ export default function ProfileEditScreen() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const locked = saving || saved;
 
   const set = (key: keyof typeof values) => (value: string) =>
     setValues((v) => ({ ...v, [key]: value }));
 
   async function save() {
+    if (saving) return;
     setError('');
     setFieldErrors({});
     const payload = {
@@ -44,13 +47,16 @@ export default function ProfileEditScreen() {
       mobile: values.mobile.replace(/\s/g, ''),
       address: values.address.trim(),
     };
-    if (!payload.name || !payload.business_name || !payload.address) {
+    if (!saved && (!payload.name || !payload.business_name || !payload.address)) {
       setError(t('errors.requiredField'));
       return;
     }
     setSaving(true);
     try {
-      await updateProfile(payload);
+      if (!saved) {
+        await updateProfile(payload);
+        setSaved(true);
+      }
       await refresh(); // relit /profile : la session reflète les nouvelles valeurs
       router.back();
     } catch (e) {
@@ -76,14 +82,14 @@ export default function ProfileEditScreen() {
           value={values.business_name}
           onChangeText={set('business_name')}
           error={fieldErrors.business_name?.[0]}
-          editable={!saving}
+          editable={!locked}
         />
         <Field
           label={t('auth.managerName')}
           value={values.name}
           onChangeText={set('name')}
           error={fieldErrors.name?.[0]}
-          editable={!saving}
+          editable={!locked}
         />
         <Field
           label={t('auth.phone')}
@@ -92,7 +98,7 @@ export default function ProfileEditScreen() {
           keyboardType="phone-pad"
           placeholder="22997000000"
           error={fieldErrors.mobile?.[0]}
-          editable={!saving}
+          editable={!locked}
         />
         <Field
           label={t('auth.email')}
@@ -102,18 +108,19 @@ export default function ProfileEditScreen() {
           autoCorrect={false}
           keyboardType="email-address"
           error={fieldErrors.email?.[0]}
-          editable={!saving}
+          editable={!locked}
         />
         <Field
           label={t('profile.address')}
           value={values.address}
           onChangeText={set('address')}
           error={fieldErrors.address?.[0]}
-          editable={!saving}
+          editable={!locked}
         />
         <Muted>{t('profile.allFieldsNotice')}</Muted>
+        {saved && <Muted>{t('profile.saved')}</Muted>}
         <ErrorText>{error}</ErrorText>
-        <Button title={t('common.save')} onPress={save} loading={saving} />
+        <Button title={t(saved ? 'profile.refresh' : 'common.save')} onPress={save} loading={saving} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
