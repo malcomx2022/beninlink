@@ -251,11 +251,11 @@ class MerchantRepository implements MerchantInterface{
                 }
             }
 
+            // S138 — ni le mot de passe ni le code ne vont dans la session : ce qui suit l'inscription
+            // n'a besoin que du numéro (masqué à l'écran) et de l'identifiant marchand.
             session([
-                'otp'     => $otp,
                 'merchant_id'     => $merchantUser->unique_id,
-                'mobile'  => $request->mobile,
-                'password'=> $request->password
+                'mobile'  => $merchantUser->mobile,
             ]);
             $response =  app(SmsService::class)->sendOtp($merchantUser->mobile,$merchantUser->otp);
             DB::commit();
@@ -275,8 +275,7 @@ class MerchantRepository implements MerchantInterface{
             $merchantUser->save();
 
             session([
-                'otp'     => $otp,
-                'mobile'  => $request->mobile,
+                'mobile'  => $merchantUser->mobile,
             ]);
             $response =  app(SmsService::class)->sendOtp($merchantUser->mobile,$merchantUser->otp);
             return true;

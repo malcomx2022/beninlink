@@ -495,10 +495,9 @@ class CompanyRepository implements CompanyInterface
                 $company->plan_id         = $plan->id;
                 $company->save();
 
+                // S138 — seul le courriel (masqué à l'écran) sert à la suite : ni code ni mot de passe en session.
                 session([
-                    'otp'     => $otp,
                     'email'   => $request->email,
-                    'password' => $request->password
                 ]);
 
                 if ($user && $company) :

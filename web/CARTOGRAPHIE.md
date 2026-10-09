@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-09 (S137 — un code SMS ne sert qu'une fois, et pas longtemps ; S136 — se déconnecter d'un appareil ne déconnecte pas les autres ; S135 — un mot de passe changé ferme les autres accès ; S134 — un mot de passe neuf a huit caractères au moins ; S133 — un numéro béninois se saisit comme on le dit ; S132 — le cookie de session ne part plus en clair ; S131 — la surface publique a une cadence bornée ; S130 — le parcours OTP du site marchand est limité comme l'API ; S129 — le retour Stripe n'active qu'un abonnement, pour le compte qui a payé ; S128 — la partie serveur de S126 est close ; S127 — un texte riche écrit par un autre est nettoyé avant d'être rendu ; S126 — un fichier téléversé ne devient jamais du code serveur ; S125 — l'arriéré des droits du back-office fermé ; S124 — l'installateur de modules fermé, cinq écrans gardés par leur droit ; S123 — l'origine d'un mouvement de portefeuille se lit en français ; S122 — une date affichée parle la langue de son lecteur ; S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-09 (S138 — la session d'une inscription ne garde ni mot de passe ni code ; S137 — un code SMS ne sert qu'une fois, et pas longtemps ; S136 — se déconnecter d'un appareil ne déconnecte pas les autres ; S135 — un mot de passe changé ferme les autres accès ; S134 — un mot de passe neuf a huit caractères au moins ; S133 — un numéro béninois se saisit comme on le dit ; S132 — le cookie de session ne part plus en clair ; S131 — la surface publique a une cadence bornée ; S130 — le parcours OTP du site marchand est limité comme l'API ; S129 — le retour Stripe n'active qu'un abonnement, pour le compte qui a payé ; S128 — la partie serveur de S126 est close ; S127 — un texte riche écrit par un autre est nettoyé avant d'être rendu ; S126 — un fichier téléversé ne devient jamais du code serveur ; S125 — l'arriéré des droits du back-office fermé ; S124 — l'installateur de modules fermé, cinq écrans gardés par leur droit ; S123 — l'origine d'un mouvement de portefeuille se lit en français ; S122 — une date affichée parle la langue de son lecteur ; S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -9659,3 +9659,33 @@ code non effacé, échéance ignorée (marchand, société), échéance non pos�
 
 Rien à faire : la migration passe au déploiement. Un code envoyé **avant** le déploiement n'a pas d'échéance et
 sera refusé : la PME qui n'avait pas fini son inscription demande un nouveau code (« Renvoyer le code »).
+
+## S138 — la session d'une inscription ne garde ni mot de passe ni code (2026-10-09)
+
+### D'où ça vient
+
+`MerchantRepository::signUpStore()` rangeait dans la session, **en clair**, le mot de passe tapé à l'inscription et
+le code OTP envoyé ; `resendOTP()` y remettait le code ; `CompanyRepository` faisait de même pour l'inscription
+d'une société (courriel, code, mot de passe). Toute fuite d'un fichier de session (sauvegarde du serveur, accès
+au disque, débogage) donnait les deux. Le mot de passe ne servait qu'à `MerchantController::otpVerification()`,
+qui rejouait `auth()->attempt()` après le code ; le code n'était relu nulle part, ni le mot de passe société.
+
+### Ce qui est fait
+
+- Les trois écritures de session ne gardent que ce que l'écran suivant affiche : le numéro (masqué) et
+  l'identifiant marchand, ou le courriel de la société.
+- Après un code vérifié, `MerchantController::otpVerification()` ouvre la session **du compte que le code vient de
+  vérifier** (`Auth::login()`, session régénérée), seulement si ce compte est de la société du site ; une ancienne
+  session qui portait encore un mot de passe le perd.
+
+### Le filet
+
+`SignupSessionHoldsNoSecretTest` : une inscription web ne laisse ni `password` ni `otp` en session, le code saisi
+connecte la PME ; aucun `session([...])` des trois fichiers ne range `password` ou `otp`, aucun ne relit
+`session('password')`. Sabotages, tous rouges : connexion retirée, mot de passe remis en session, code société
+remis en session.
+
+### Côté serveur (au porteur)
+
+Rien à faire. Les sessions d'inscription ouvertes avant le déploiement perdent le mot de passe à la vérification
+du code.
