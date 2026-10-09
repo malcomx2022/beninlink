@@ -55,8 +55,19 @@ class User extends Authenticatable
      * survivait au changement de mot de passe qui devait l'éteindre. Les sessions web suivent
      * par `CloseSessionsOnPasswordChange` (groupe `web`).
      */
+    /** S137 — durée de validité d'un code SMS (inscription, renvoi). */
+    public const OTP_TTL_MINUTES = 10;
+
     protected static function booted(): void
     {
+        // S137 — tout code posé (inscription, renvoi, inscription sociale) reçoit son échéance ;
+        // un code effacé l'efface aussi.
+        static::saving(function (User $user) {
+            if ($user->isDirty('otp')) {
+                $user->otp_expires_at = filled($user->otp) ? now()->addMinutes(self::OTP_TTL_MINUTES) : null;
+            }
+        });
+
         static::updated(function (User $user) {
             if (! $user->wasChanged('password')) {
                 return;
@@ -102,6 +113,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at'    => 'datetime',
+        'otp_expires_at'       => 'datetime',
         'permissions'          => 'array', 
     ];
 
