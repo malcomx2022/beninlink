@@ -64,28 +64,14 @@ class SocialLoginController extends Controller
             'services.google.redirect'         => url('google/login')
         ]);
 
-        $user      = Socialite::driver('google')->user();
-        $existUser = User::where('google_id',$user->id)->first();
-        if($existUser):
-            Auth::login($existUser);
-            return redirect('/');
-        else:
-            $merchantUser = $this->merchantRepo->socialSignupStore($user,'google');
-            if($merchantUser):
-                Auth::login($merchantUser);
-                return redirect('/');
-            else:
-                Toastr::error(__('parcel.error_msg'),__('message.error'));
-                return redirect()->back();
-            endif;
-        endif;
+        return $this->connecter($request, 'google', Socialite::driver('google')->user());
 
        } catch (\Throwable $th) {
            Toastr::error(__('parcel.error_msg'),__('message.error'));
            return redirect()->back();
        }
     }
-    public function authFacebookLogin(){
+    public function authFacebookLogin(Request $request){
         try {
 
             \Config([
@@ -93,28 +79,48 @@ class SocialLoginController extends Controller
                 'services.facebook.client_secret'    => globalSettings('facebook_client_secret'),
                 'services.facebook.redirect'         => url('facebook/login')
             ]);
-            $user        = Socialite::driver('facebook')->user();
-
-            $existUser   = User::where('facebook_id',$user->id)->first();
-            if($existUser):
-                Auth::login($existUser);
-                return redirect('/');
-            else:
-                $merchantUser = $this->merchantRepo->socialSignupStore($user,'facebook');
-                if($merchantUser):
-                    Auth::login($merchantUser);
-                    return redirect('/');
-                else:
-                    Toastr::error(__('parcel.error_msg'),__('message.error'));
-                    return redirect()->back();
-                endif;
-            endif;
+            return $this->connecter($request, 'facebook', Socialite::driver('facebook')->user());
 
         } catch (\Throwable $th) {
 
             Toastr::error(__('parcel.error_msg'),__('message.error'));
             return redirect()->back();
         }
+    }
+
+    /**
+     * **S140** — le retour Google ou Facebook ouvre la session d'un compte **de la société du site**, marchand,
+     * actif et vérifié, comme `LoginController`. Le socle cherchait le compte par son
+     * identifiant social **sur toutes les sociétés** et ouvrait sa session sans autre contrôle : la PME d'un
+     * transporteur entrait sur le site d'un autre, un compte désactivé ou un agent du back-office entrait encore.
+     * `Auth::login()` régénère l'identifiant de session. `google_id` et `facebook_id` sont uniques sur la plateforme : un compte
+     * social déjà rattaché ailleurs ne s'inscrit pas une seconde fois ici.
+     */
+    private function connecter(Request $request, string $social, $profil)
+    {
+        $colonne = $social === 'google' ? 'google_id' : 'facebook_id';
+        $compte  = User::where($colonne, (string) $profil->id)->first();
+
+        if ($compte === null) {
+            $compte = $this->merchantRepo->socialSignupStore($profil, $social);
+            if (! $compte) {
+                Toastr::error(__('parcel.error_msg'), __('message.error'));
+                return redirect()->back();
+            }
+            $compte = $compte->fresh(); // statut et vérification : valeurs par défaut de la base
+        }
+
+        if ((int) $compte->company_id !== (int) settings()->id
+            || (int) $compte->user_type !== UserType::MERCHANT
+            || (int) $compte->status !== Status::ACTIVE
+            || (int) $compte->verification_status !== Status::ACTIVE) {
+            Toastr::error(__('auth.social_refused'), __('message.error'));
+            return redirect()->route('login');
+        }
+
+        Auth::login($compte);
+
+        return redirect('/');
     }
 
     public function socialLoginSettingsIndex(){

@@ -238,6 +238,8 @@ avant les apps.
   Jamais de mot de passe ni de code dans la session (**S138**, `SignupSessionHoldsNoSecretTest`) : le code vérifié
   ouvre la session du compte qu'il vérifie (`Auth::login()`, société du site). « Se souvenir de moi » garde l'identifiant,
   jamais le mot de passe, et un mot de passe changé change `remember_token` (**S139**, `RememberMeKeepsNoPasswordTest`).
+  La connexion Google / Facebook ouvre un compte de la société du site, marchand, actif et vérifié — les conditions de
+  `LoginController::credentials()` (**S140**, `SocialLoginController::connecter()`, `SocialLoginStaysInItsCompanyTest`).
 - **Un retour de paiement n'applique rien à un identifiant de l'URL** (**S129**) : `switchPlan()` reçoit une
   requête composée (`user_id = Auth::id()`), et une session Stripe ne sert qu'une fois
   (`subscriptions.stripe_session_id` unique, `StripeSubscriptionReturnTest`).

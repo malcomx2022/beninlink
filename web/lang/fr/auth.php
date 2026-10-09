@@ -16,6 +16,7 @@ return [
     'courier_app_only' => 'Ce compte est un compte livreur : il se connecte dans l\'application livreur, pas sur le site.',
     'failed' => 'Vous n\'êtes pas une personne active, veuillez contacter l\'administrateur !',
     // 'failed' => 'These credentials do not match our records.',
+    'social_refused' => 'Ce compte ne peut pas se connecter sur ce site. Connectez-vous avec votre identifiant et votre mot de passe, ou contactez votre transporteur.',
     'password'          => 'Le mot de passe fourni est incorrect.',
     'throttle'          => 'Trop de tentatives de connexion. Veuillez réessayer dans :seconds secondes.',
     'token_refresh'     => 'Actualisation des jetons',
