@@ -56,6 +56,7 @@ Le module **FedaPay** vit **entièrement dans `web/`**. Les apps ouvrent seuleme
 l'`payment_url` renvoyée par le backend ; elles n'accèdent jamais aux clés.
 
 ## Travailler avec Claude Code
+- Preuves de livraison (lot 8, 2026-10-09) : `docs/LOT_8_PREUVES_LIVRAISON.md`.
 - Profil et session réseau des apps (lot 7, 2026-10-09) : `docs/LOT_7_SESSION_RESEAU.md`.
 - Renvoi SMS marchand (lot 6, 2026-10-09) : `docs/LOT_6_RENVOI_SMS.md`.
 - Saisie inscription marchand (lot 5, 2026-10-09) : `docs/LOT_5_SAISIE_INSCRIPTION.md`.

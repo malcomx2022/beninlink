@@ -133,6 +133,7 @@ export function ChoiceGroup<T extends string | number>({
   onChange,
   error,
   testID,
+  disabled = false,
 }: {
   label: string;
   options: { value: T; label: string }[];
@@ -140,6 +141,7 @@ export function ChoiceGroup<T extends string | number>({
   onChange: (value: T) => void;
   error?: string;
   testID?: string;
+  disabled?: boolean;
 }) {
   return (
     <View style={styles.field}>
@@ -150,6 +152,8 @@ export function ChoiceGroup<T extends string | number>({
           return (
             <Pressable
               key={String(option.value)}
+              disabled={disabled}
+              accessibilityState={{ disabled }}
               onPress={() => onChange(option.value)}
               style={[styles.choice, active && styles.choiceActive]}
               testID={testID ? `${testID}-${index}` : undefined}

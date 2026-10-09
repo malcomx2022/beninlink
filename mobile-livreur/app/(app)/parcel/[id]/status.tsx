@@ -52,8 +52,18 @@ export default function ParcelStatusScreen() {
   }, [load]);
 
   const expected = toAmount(parcel?.cash_collection);
+  const locked = saving || !!done;
+
+  function changeAction(next: StatusAction) {
+    if (locked || next === action) return;
+    signatureRef.current?.clear();
+    setHasSignature(false);
+    setDrawing(false);
+    setAction(next);
+  }
 
   async function capture() {
+    if (locked) return;
     setError('');
     try {
       const uri = await takeDeliveryPhoto();
@@ -64,6 +74,7 @@ export default function ParcelStatusScreen() {
   }
 
   async function submit() {
+    if (locked) return;
     setError('');
     setFieldError('');
     if (!action) {
@@ -87,6 +98,10 @@ export default function ParcelStatusScreen() {
         (action === 'delivered' || action === 'return') && hasSignature
           ? await signatureRef.current?.capture()
           : null;
+      if ((action === 'delivered' || action === 'return') && hasSignature && !signatureUri) {
+        setError(t('status.signatureCaptureFailed'));
+        return;
+      }
       if (action === 'delivered') {
         await reportDelivered(parcelId, {
           note,
@@ -135,7 +150,7 @@ export default function ParcelStatusScreen() {
 
         <Card>
           <Title>{t('status.title')}</Title>
-          <ChoiceGroup label="" options={ACTIONS} value={action} onChange={setAction} />
+          <ChoiceGroup label="" options={ACTIONS} value={action} onChange={changeAction} disabled={locked} />
 
           {action === 'partial' && (
             <>
@@ -146,6 +161,7 @@ export default function ParcelStatusScreen() {
                 keyboardType="number-pad"
                 placeholder={String(expected)}
                 error={fieldError}
+                editable={!locked}
               />
               <Muted>{t('status.collectedHint')}</Muted>
             </>
@@ -157,8 +173,8 @@ export default function ParcelStatusScreen() {
               <Muted>{t('status.proofHint')}</Muted>
               {photoUri && <Image source={{ uri: photoUri }} style={styles.preview} resizeMode="cover" />}
               <View style={styles.proofActions}>
-                <Button title={photoUri ? t('common.retakePhoto') : t('common.photo')} onPress={capture} />
-                {photoUri && <Button title={t('common.removePhoto')} onPress={() => setPhotoUri(null)} />}
+                <Button title={photoUri ? t('common.retakePhoto') : t('common.photo')} onPress={capture} disabled={locked} />
+                {photoUri && <Button title={t('common.removePhoto')} onPress={() => setPhotoUri(null)} disabled={locked} />}
               </View>
             </View>
           )}
@@ -168,9 +184,11 @@ export default function ParcelStatusScreen() {
             <View style={styles.proof}>
               <Text style={styles.proofLabel}>{t('status.signature')}</Text>
               <Muted>{action === 'return' ? t('status.signatureReturnHint') : t('status.signatureHint')}</Muted>
-              <SignaturePad ref={signatureRef} onChange={setHasSignature} onDrawingChange={setDrawing} />
+              <View pointerEvents={locked ? 'none' : 'auto'}>
+                <SignaturePad key={action} ref={signatureRef} onChange={setHasSignature} onDrawingChange={setDrawing} />
+              </View>
               {hasSignature && (
-                <Button title={t('common.clearSignature')} onPress={() => signatureRef.current?.clear()} />
+                <Button title={t('common.clearSignature')} onPress={() => signatureRef.current?.clear()} disabled={locked} />
               )}
             </View>
           )}
@@ -181,6 +199,7 @@ export default function ParcelStatusScreen() {
             onChangeText={setNote}
             placeholder={t('status.notePlaceholder')}
             multiline
+            editable={!locked}
           />
 
           <Muted>{t('status.warning')}</Muted>

@@ -7,7 +7,7 @@
  *
  * ⚠️ `@testing-library/react-native` 14 rend en **asynchrone** (`await render`, `await fireEvent`).
  */
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import * as SecureStore from 'expo-secure-store';
@@ -36,6 +36,7 @@ jest.mock('expo-location', () => ({
   getCurrentPositionAsync: jest.fn(),
   Accuracy: { Balanced: 3 },
 }));
+const mockCapture = jest.fn<Promise<string | null>, []>();
 jest.mock('../components/SignaturePad', () => {
   const { forwardRef, useImperativeHandle } = jest.requireActual<typeof import('react')>('react');
   const { Pressable, Text } = jest.requireActual<typeof import('react-native')>('react-native');
@@ -44,7 +45,7 @@ jest.mock('../components/SignaturePad', () => {
     ref: React.Ref<{ capture: () => Promise<string | null>; clear: () => void }>,
   ) {
     useImperativeHandle(ref, () => ({
-      capture: async () => 'file:///signature.png',
+      capture: mockCapture,
       clear: () => onChange?.(false),
     }));
     return (
@@ -113,6 +114,7 @@ afterAll(() => {
 beforeEach(async () => {
   jest.resetAllMocks();
   jest.useFakeTimers();
+  mockCapture.mockResolvedValue('file:///signature.png');
   jest.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
   jest.mocked(SecureStore.setItemAsync).mockResolvedValue(undefined);
   jest.mocked(SecureStore.deleteItemAsync).mockResolvedValue(undefined);
@@ -131,6 +133,79 @@ afterEach(() => {
 });
 
 describe('issue de la course', () => {
+  it('efface la signature lors du changement d’issue, même après un passage par le partiel', async () => {
+    await afficher();
+    await choisir(t('status.delivered'));
+    await fireEvent.press(screen.getByText('signer (test)'));
+    await choisir(t('status.partial'));
+    await choisir(t('status.returned'));
+
+    expect(screen.queryByText(t('common.clearSignature'))).toBeNull();
+    await fireEvent.press(screen.getByText('signer (test)'));
+    await enregistrer();
+    expect((appel(0, envois())[1].body as RNForm).getAll('signatureImage')).toHaveLength(1);
+  });
+
+  it('ne réutilise pas une signature de livraison pour un retour', async () => {
+    await afficher();
+    await choisir(t('status.delivered'));
+    await fireEvent.press(screen.getByText('signer (test)'));
+    await choisir(t('status.returned'));
+    expect(screen.queryByText(t('common.clearSignature'))).toBeNull();
+    await enregistrer();
+    expect(mockCapture).not.toHaveBeenCalled();
+    expect(JSON.parse(appel(0, envois())[1].body as string)).toEqual({ parcel_id: 12, status_action: 24 });
+  });
+
+  it.each(['delivered', 'returned'] as const)('ne perd pas une signature dont la capture est vide (%s), et permet de réessayer', async (issue) => {
+    mockCapture.mockResolvedValueOnce(null);
+    await afficher();
+    await choisir(t(`status.${issue}`));
+    await fireEvent.press(screen.getByText('signer (test)'));
+    await enregistrer();
+
+    expect(envois()).toEqual([]);
+    expect(screen.getByText(t('status.signatureCaptureFailed'))).toBeTruthy();
+    await enregistrer();
+    expect(await screen.findByText(t(issue === 'delivered' ? 'status.successDelivered' : 'status.successReturned'))).toBeTruthy();
+    expect((appel(0, envois())[1].body as RNForm).getAll('signatureImage')).toHaveLength(1);
+  });
+
+  it('n’envoie rien si la capture de signature échoue', async () => {
+    mockCapture.mockRejectedValueOnce(new Error('capture failed'));
+    await afficher();
+    await choisir(t('status.returned'));
+    await fireEvent.press(screen.getByText('signer (test)'));
+    await enregistrer();
+    expect(envois()).toEqual([]);
+    expect(screen.getByText(t('errors.unexpected'))).toBeTruthy();
+    expect(mockDismissTo).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByText(t('common.clearSignature')));
+    await enregistrer();
+    expect(await screen.findByText(t('status.successReturned'))).toBeTruthy();
+    expect(mockCapture).toHaveBeenCalledTimes(1);
+  });
+
+  it('fige l’issue et les preuves pendant une capture lente', async () => {
+    let resolve!: (uri: string) => void;
+    mockCapture.mockImplementationOnce(() => new Promise((r) => { resolve = r; }));
+    await afficher();
+    await choisir(t('status.delivered'));
+    await fireEvent.press(screen.getByText('signer (test)'));
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    await user.press(screen.getByText(t('status.confirm')));
+    await waitFor(() => expect(mockCapture).toHaveBeenCalledTimes(1));
+
+    await choisir(t('status.partial'));
+    expect(screen.queryByText(t('status.collected'))).toBeNull();
+    expect(screen.getByText(t('common.clearSignature'))).toBeDisabled();
+    expect(screen.getByText(t('common.photo'))).toBeDisabled();
+    expect(screen.getByPlaceholderText(t('status.notePlaceholder'))).toHaveProp('editable', false);
+    await act(async () => resolve('file:///signature.png'));
+    expect(await screen.findByText(t('status.successDelivered'))).toBeTruthy();
+    expect(envois()).toHaveLength(1);
+  });
+
   it('charge la course, affiche le montant attendu en FCFA entiers et les trois issues permises', async () => {
     await afficher();
 

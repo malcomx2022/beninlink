@@ -125,6 +125,7 @@ export const fr = {
     signature: 'Signature du destinataire',
     signatureHint: 'Faites signer le destinataire au doigt (facultatif). La signature est jointe à la déclaration.',
     signatureReturnHint: 'Si vous le souhaitez, faites signer la personne qui reprend le colis (facultatif). La signature est jointe au retour.',
+    signatureCaptureFailed: 'La signature n’a pas pu être jointe. Réessayez ou effacez-la pour continuer sans signature.',
     confirm: 'Enregistrer',
     successDelivered: 'Course déclarée livrée.',
     successPartial: 'Livraison partielle enregistrée.',
