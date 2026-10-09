@@ -12,6 +12,7 @@ use App\Http\Requests\Profile\UpdateRequest;
 use App\Http\Resources\v10\DeliverymanUserResource;
 use App\Http\Resources\v10\UserResource;
 use App\Models\User;
+use Laravel\Sanctum\PersonalAccessToken;
 use App\Repositories\MerchantProfile\MerchantProfileInterface;
 use App\Repositories\Profile\ProfileInterface;
 use Illuminate\Http\Request;
@@ -136,17 +137,34 @@ class AuthController extends Controller
         return $this->responseWithSuccess(__('auth.profile_msg'), ['user'=>new UserResource(auth()->user())], 200);
     }
 
+    /**
+     * S136 — renouvelle le jeton de CET appareil. Le socle supprimait tous les jetons du compte :
+     * rafraîchir sur le téléphone déconnectait la tablette du même marchand.
+     */
     public function refresh(Request $request)
     {
-        $user = $request->user();
-        $user->tokens()->delete();
-        return $this->responseWithSuccess(__('auth.token_refresh'), ['token' =>  $user->createToken($user->mobile, UserTypeMiddleware::abilitiesFor($user))->plainTextToken], 200);
+        $user   = $request->user();
+        $ancien = $user->currentAccessToken();
+        $jeton  = $user->createToken(
+            $ancien instanceof PersonalAccessToken ? $ancien->name : (string) $user->mobile,
+            UserTypeMiddleware::abilitiesFor($user)
+        )->plainTextToken;
+        if ($ancien instanceof PersonalAccessToken) {
+            $ancien->delete();
+        }
+        return $this->responseWithSuccess(__('auth.token_refresh'), ['token' => $jeton], 200);
     }
 
-    public function logout()
+    /**
+     * S136 — ferme la session de CET appareil seulement. Fermer tous les accès est le rôle du
+     * changement de mot de passe (S135).
+     */
+    public function logout(Request $request)
     {
-        
-        auth()->user()->tokens()->delete();
+        $jeton = $request->user()->currentAccessToken();
+        if ($jeton instanceof PersonalAccessToken) {
+            $jeton->delete();
+        }
         return $this->responseWithSuccess(__('auth.token_delete'), [], 200);
     }
 
