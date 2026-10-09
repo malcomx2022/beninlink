@@ -19,12 +19,30 @@ documents locaux. Ce lot complète le guide `guides/recette-pilote/README.md`.
 - Vérification locale du commit fusionné : `RecettePiloteRepetitionTest`, `RecetteDeploymentTest`, `DeploymentRehearsalTest` et `ThreeApplicationsAlignmentTest` : **72 tests réussis, 370 assertions** (PHP 8.3, SQLite, sans réseau).
 - Deux exports Android de production locaux réussis, Hermes : marchand environ 3 Mo, livreur environ 3,5 Mo. Export effectué hors ligne avec une clé API factice ; bundles réservés à la vérification, non distribuables.
 - URL confirmée par le responsable de recette : `https://recette.beninlink.app`, réponse HTTP 200 rapportée ; API des deux APK : `https://recette.beninlink.app/api/v10`.
-- APK déjà compilés selon le responsable. Leur commit source, leur identifiant de build et leur installation sur les appareils restent à consigner.
+- APK historiques déclarés terminés le **2026-10-07 à 14:40 UTC** : marchand `0bd31084`, livreur `8b3ff02d` (identifiants abrégés fournis). Ils précèdent les corrections récentes des apps et le lot 3 ; ils ne permettent pas de valider ces corrections.
+- Artefacts historiques fournis : [marchand](https://expo.dev/artifacts/eas/sTCYMqh04f3RgzCOUAKv5CFSQ3Y7n8ExgWh5zXXniqM.apk), [livreur](https://expo.dev/artifacts/eas/cpe02BmK4w3V4BYg0qqEQx0UAIEEjLRlMohHw-4qEVw.apk). Métadonnées rapportées par le responsable, non vérifiées directement auprès d'EAS.
+- Rebuilds nécessaires depuis le commit final retenu sur `main`, avec profil `recette`. Consigner pour chaque nouveau build le SHA source complet, l'identifiant EAS complet et le lien APK. L'installation et la disponibilité des appareils ne sont pas confirmées ; aucun appareil n'est accessible dans cet environnement.
 
 Une réponse HTTP 200 ne prouve pas la version du serveur. Une URL API correcte
 ne prouve pas que les APK contiennent le lot 3. Vérifier le SHA déployé via le
 processus d'exploitation existant et les métadonnées EAS/build des deux APK.
 Ne publier aucun secret ni mot de passe dans les preuves.
+
+Les rebuilds sont actuellement bloqués par l'absence d'authentification Expo
+dans l'environnement de build. Configurer `EXPO_TOKEN` via le gestionnaire de
+secrets de cet environnement ou de la CI, jamais dans le chat ni dans le dépôt.
+Conserver les projets et keystores EAS existants. Depuis une copie propre du
+commit retenu, exécuter dans chacune des deux apps :
+
+```bash
+npx eas-cli build --platform android --profile recette --non-interactive
+```
+
+Cette commande requiert aussi les variables EAS de recette déjà documentées
+dans le guide. Elle n'a pas été exécutée ici. L'export Hermes local n'est pas
+un APK signé et ne remplace pas ces rebuilds. Après installation des nouveaux
+APK, le détenteur des téléphones doit confirmer le build installé et exécuter
+les cas ci-dessous. La recette mobile reste bloquée jusqu'à cette étape.
 
 ## Recette terrain obligatoire
 
