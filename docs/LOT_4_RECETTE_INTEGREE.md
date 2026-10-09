@@ -26,7 +26,7 @@ documents locaux. Ce lot complète le guide `guides/recette-pilote/README.md`.
 - Build marchand : [`6a525ec8-2957-48d9-89dd-9bd37a996caa`](https://expo.dev/accounts/ulrichseglas-team/projects/beninlink-marchand/builds/6a525ec8-2957-48d9-89dd-9bd37a996caa).
 - Build livreur : [`699eeeeb-f37f-4077-9a9c-50958195c80d`](https://expo.dev/accounts/ulrichseglas-team/projects/beninlink-livreur/builds/699eeeeb-f37f-4077-9a9c-50958195c80d).
 - Différences locales déclarées lors des builds : `owner` et `projectId` dans `app.json`, `environment: preview` dans `eas.json`, `package-lock.json` régénéré par `npm install`. Les diffs ne sont pas encore fournis. La régénération du lock peut modifier les dépendances : son absence d'impact ne peut pas être attestée sans comparaison. Versionner les fichiers utilisés sur une branche/PR pour rendre les builds reproductibles, sans recréer les projets EAS ni les keystores.
-- L'installation et la disponibilité des appareils ne sont pas confirmées ; aucun appareil n'est accessible dans cet environnement. Aucun cas de recette terrain n'est déclaré validé.
+- Les deux apps sont désormais déclarées installées ; aucun appareil n'est accessible dans cet environnement. Un blocage d'inscription marchand est signalé (voir ci-dessous). Aucun cas de recette terrain n'est déclaré validé.
 
 Une réponse HTTP 200 ne prouve pas la version du serveur. Une URL API correcte
 ne prouve pas que les APK contiennent le lot 3. Vérifier le SHA déployé via le
@@ -51,6 +51,41 @@ APK, le détenteur des téléphones doit confirmer le build installé et exécut
 les cas ci-dessous. La recette mobile reste bloquée jusqu'à cette étape.
 
 ## Recette terrain obligatoire
+
+### Premier retour sur appareils : inscription marchand
+
+Les deux apps sont déclarées installées par le responsable. Un blocage du
+parcours d'inscription marchand est signalé lors de la saisie et de la validation
+du formulaire ; message exact et captures encore attendus. Le diagnostic de
+code révèle un défaut certain, distinct de ce premier blocage : l'app
+envoyait seulement `otp`, alors que `MerchantRepository::otpVerification()`
+recherche le compte avec `mobile` et `otp`. Le parcours API simulé M9 transmettait
+les deux et ne révélait donc pas l'omission du client réel.
+
+Plan de correction : transmettre le numéro reçu de l'inscription à travers
+l'écran de vérification, `SessionProvider` et le client auth ; afficher un code
+de cinq chiffres conformément au serveur ; tester la transmission et le refus
+en cas de numéro absent. Autre anomalie confirmée : une inscription invalide
+renvoyait HTTP 422 avec « Le marchand a été ajouté avec succès ». Le message
+est remplacé par une demande de correction des champs ; les erreurs détaillées
+restent sous `data.message`, sans modification du contrat. Les tests vérifient
+ce refus et la navigation du formulaire vers le numéro normalisé. Aucun
+changement d'endpoint ou d'architecture. La
+cause exacte du blocage observé sur téléphone reste à confronter au message
+signalé. La correction mobile nécessite un nouveau build pour être testée.
+
+Les deux lockfiles joints ont été identifiés par leur nom de package : marchand
+et livreur. Comparaison JSON avec les fichiers du dépôt : contenu identique,
+y compris versions, intégrités, dépendances et métadonnées ; seul un éventuel
+formatage peut différer. Aucun changement de dépendance n'est constaté dans
+ces pièces. Ne pas les régénérer pour cette correction.
+
+Validation de la correction : **56 tests marchand réussis**, typage et lint
+réussis, export Android Hermes réussi. Tests PHP ciblés inscription/OpenAPI :
+**8 tests réussis, 310 assertions**, dont le nouveau test du contrat SMS.
+Suite Laravel complète : **1 446 tests réussis, 51 954 assertions**. Captures
+du problème de saisie attendues ; validation sur les appareils à refaire après
+déploiement serveur et reconstruction de l'app marchand.
 
 ### Suivi technique après fusion de la préparation
 

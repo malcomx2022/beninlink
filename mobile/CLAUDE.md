@@ -103,6 +103,7 @@ Rien de tout ceci ne peut être versionné — ce sont des secrets et des liens 
    porte aucune.
 
 ## Conventions
+- Recette terrain lot 4 : vérification SMS = `mobile` + `otp` (5 chiffres), transmis de la route d'inscription via `SessionProvider` à `src/api/auth.ts`. Ne pas envoyer le code seul ; voir `../docs/LOT_4_RECETTE_INTEGREE.md`.
 - Réutiliser les patterns de l'app (navigation, services d'API, i18n) ; repérer un écran
   existant avant d'en créer un. Toute chaîne visible passe par l'i18n FR.
 - **Un jeton qui tombe déconnecte l'écran** (**S144**) : le client d'API efface le jeton sur un 401, et `clearToken()`

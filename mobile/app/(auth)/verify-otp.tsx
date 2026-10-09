@@ -28,13 +28,13 @@ export default function VerifyOtpScreen() {
 
   async function submit() {
     setError('');
-    if (!otp.trim()) {
+    if (!mobile?.trim() || !otp.trim()) {
       setError(t('errors.requiredField'));
       return;
     }
     setLoading(true);
     try {
-      await verifyOtp(otp.trim());
+      await verifyOtp(mobile.trim(), otp.trim());
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
     } finally {
@@ -67,8 +67,8 @@ export default function VerifyOtpScreen() {
         value={otp}
         onChangeText={setOtp}
         keyboardType="number-pad"
-        maxLength={6}
-        placeholder="••••••"
+        maxLength={5}
+        placeholder="•••••"
         editable={!loading}
       />
       <ErrorText>{error}</ErrorText>

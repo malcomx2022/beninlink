@@ -70,10 +70,10 @@ export async function signUp(payload: SignUpPayload): Promise<string> {
 }
 
 /** Vérifie le code SMS et ouvre la session. */
-export async function verifyOtp(otp: string): Promise<AuthUser> {
+export async function verifyOtp(mobile: string, otp: string): Promise<AuthUser> {
   const result = await api.post<SignInResult>(
     endpoints.otpVerification,
-    { otp },
+    { mobile: mobile.trim(), otp: otp.trim() },
     { authenticated: false },
   );
   await setToken(result.token);

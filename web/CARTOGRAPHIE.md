@@ -16,6 +16,15 @@
 
 ---
 
+## Recette terrain lot 4 — inscription marchand (2026-10-09)
+
+Le refus de validation de `Api/V10/AuthController::register()` conservait le
+message de succès du socle malgré HTTP 422. Message corrigé, enveloppe et règles
+de validation conservées. `RecettePiloteRepetitionTest` vérifie le message et les
+erreurs IFU/RCCM. Côté mobile, vérification SMS corrigée pour transmettre le
+numéro avec le code ; voir `../docs/LOT_4_RECETTE_INTEGREE.md`. Le défaut observé
+sur appareil dans la saisie du formulaire reste à préciser par captures.
+
 ## Bloc A — Vue d'ensemble & stack
 - Version PHP requise : **`^8.1`** (`composer.json`) + extensions `curl`, `gd`,
   `json`, `mysqli`, `pdo`. ⇒ Le plancher réel est **8.1**, pas 8.3 : le « PHP 8.3 »

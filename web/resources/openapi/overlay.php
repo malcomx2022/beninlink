@@ -226,7 +226,7 @@ $operations = [
         'requestBody' => $body(['driver_id' => $str('Identifiant livreur'), 'password' => $str()], ['driver_id', 'password']),
         'responses' => $ok($obj(['token' => $str(), 'user' => $ref('DeliverymanUser')])) + ['401' => ['description' => 'Identifiants invalides'], '403' => ['description' => 'Compte désactivé par le transporteur (S145) : aucun jeton']]],
     'POST otp-verification' => ['tag' => 'Authentification', 'summary' => 'Vérifier le code SMS et ouvrir la session',
-        'requestBody' => $body(['otp' => $str('5 chiffres')], ['otp']),
+        'requestBody' => $body(['mobile' => $str('Numéro renvoyé par l’inscription'), 'otp' => $str('5 chiffres')], ['mobile', 'otp']),
         'responses' => $ok($ref('SignInResult')) + ['401' => ['description' => 'Code invalide (l\'enveloppe porte `success: true`, se fier au statut HTTP)']]],
     'POST resend-otp' => ['tag' => 'Authentification', 'summary' => 'Renvoyer le code SMS', 'requestBody' => $body(['mobile' => $str()], ['mobile']), 'responses' => $ok($obj(['mobile' => $str()]))],
     'POST password/email' => ['tag' => 'Authentification', 'summary' => 'Demander un lien de réinitialisation', 'description' => 'Le lien envoyé par e-mail mène à la page web du backend ; le jeton qu\'il porte est accepté par `POST password/reset`.', 'requestBody' => $body(['email' => $str()], ['email']), 'responses' => $ok($obj(['message' => $str()]))],
