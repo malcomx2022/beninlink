@@ -242,6 +242,8 @@ avant les apps.
   `LoginController::credentials()` (**S140**, `SocialLoginController::connecter()`, `SocialLoginStaysInItsCompanyTest`).
   « Mot de passe oublié » sur le site ne vise qu'un compte de la société du site et **ne connecte pas** : on se
   connecte ensuite, avec les conditions de la connexion (**S141**, `WebPasswordResetOpensNoSessionTest`).
+  Ce que la connexion dit d'un compte (livreur, transporteur du domaine central) ne se dit qu'après un mot de passe
+  juste (**S142**, `$motDePasseJuste`, `LoginTellsNothingWithoutPasswordTest`).
 - **Un retour de paiement n'applique rien à un identifiant de l'URL** (**S129**) : `switchPlan()` reçoit une
   requête composée (`user_id = Auth::id()`), et une session Stripe ne sert qu'une fois
   (`subscriptions.stripe_session_id` unique, `StripeSubscriptionReturnTest`).
