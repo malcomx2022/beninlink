@@ -1,0 +1,35 @@
+# Sous-flux : ouvre une session livreur sur la recette, à partir d'une app vierge.
+# Prouve que la connexion par identifiant livreur aboutit à la liste des courses.
+# Identifiants lus dans l'environnement, jamais écrits ici :
+#   MAESTRO_IDENTIFIANT (users.unique_id du livreur) et MAESTRO_MOT_DE_PASSE.
+# Maestro reprend tout seul les variables du shell préfixées MAESTRO_ (ou -e NOM=valeur).
+# Les autorisations (position, appareil photo, notifications) sont accordées au lancement :
+# aucune boîte de dialogue système n'interrompt le parcours. Désactiver le service de
+# saisie automatique du téléphone de test (il propose d'enregistrer le mot de passe).
+appId: app.beninlink.livreur
+tags:
+  - sous-flux
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: login-identifiant
+    timeout: 20000
+- tapOn:
+    id: login-identifiant
+- inputText: ${MAESTRO_IDENTIFIANT}
+- tapOn:
+    id: login-mot-de-passe
+- inputText: ${MAESTRO_MOT_DE_PASSE}
+- hideKeyboard
+- tapOn: Se connecter
+- extendedWaitUntil:
+    visible: Mes courses
+    timeout: 20000
+- assertVisible:
+    id: onglet-courses
+- assertNotVisible:
+    id: login-identifiant

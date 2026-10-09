@@ -30,15 +30,15 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: t('parcels.title'), tabBarLabel: t('tabs.parcels'), tabBarIcon: icon('bicycle-outline') }}
+        options={{ title: t('parcels.title'), tabBarLabel: t('tabs.parcels'), tabBarButtonTestID: 'onglet-courses', tabBarIcon: icon('bicycle-outline') }}
       />
       <Tabs.Screen
         name="earnings"
-        options={{ title: t('earnings.title'), tabBarLabel: t('tabs.earnings'), tabBarIcon: icon('wallet-outline') }}
+        options={{ title: t('earnings.title'), tabBarLabel: t('tabs.earnings'), tabBarButtonTestID: 'onglet-gains', tabBarIcon: icon('wallet-outline') }}
       />
       <Tabs.Screen
         name="profile"
-        options={{ title: t('profile.title'), tabBarLabel: t('tabs.profile'), tabBarIcon: icon('person-outline') }}
+        options={{ title: t('profile.title'), tabBarLabel: t('tabs.profile'), tabBarButtonTestID: 'onglet-profil', tabBarIcon: icon('person-outline') }}
       />
     </Tabs>
   );

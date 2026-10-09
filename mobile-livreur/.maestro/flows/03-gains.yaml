@@ -1,0 +1,23 @@
+# L'onglet Gains s'ouvre et montre ses chiffres (en FCFA entiers) et ses trois listes.
+appId: app.beninlink.livreur
+tags:
+  - lecture
+---
+- runFlow: ../subflows/connexion.yaml
+- tapOn:
+    id: onglet-gains
+- extendedWaitUntil:
+    visible: Mes gains
+    timeout: 15000
+- assertVisible: Solde
+- assertVisible: COD à reverser
+- assertVisible: '-?[0-9].*FCFA'
+- assertVisible: Encaissements remis
+- scrollUntilVisible:
+    element:
+      text: Revenus
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: Dépenses
+    direction: DOWN

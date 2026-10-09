@@ -11,8 +11,8 @@ name: Parcours Maestro (APK de recette)
 # le porteur ; ils n'apparaissent ni dans les parcours ni dans les journaux :
 #   MAESTRO_MARCHAND_IDENTIFIANT, MAESTRO_MARCHAND_MOT_DE_PASSE,
 #   MAESTRO_LIVREUR_IDENTIFIANT,  MAESTRO_LIVREUR_MOT_DE_PASSE.
-# Par défaut seuls les parcours `lecture` tournent (`--exclude-tags=ecriture`) ;
-# `ecriture` crée un colis ou livre une course sur le serveur de recette.
+# Le `config.yaml` de chaque app exclut les parcours `ecriture` : ils créent un colis ou
+# livrent une course sur le serveur de recette. Cochés, ils sont joués ensuite, un par un.
 on:
   workflow_dispatch:
     inputs:
@@ -62,7 +62,7 @@ jobs:
         env:
           IDENTIFIANT: ${{ inputs.app == 'mobile' && secrets.MAESTRO_MARCHAND_IDENTIFIANT || secrets.MAESTRO_LIVREUR_IDENTIFIANT }}
           MOT_DE_PASSE: ${{ inputs.app == 'mobile' && secrets.MAESTRO_MARCHAND_MOT_DE_PASSE || secrets.MAESTRO_LIVREUR_MOT_DE_PASSE }}
-          TAGS: ${{ !inputs.ecriture && '--exclude-tags=ecriture' || '' }}
+          ECRITURE: ${{ inputs.ecriture }}
         with:
           api-level: 34
           arch: x86_64
@@ -70,7 +70,8 @@ jobs:
           disable-animations: true
           script: |
             adb install -r "$RUNNER_TEMP/app.apk"
-            maestro test $TAGS -e MAESTRO_IDENTIFIANT="$IDENTIFIANT" -e MAESTRO_MOT_DE_PASSE="$MOT_DE_PASSE" --format junit --output "$RUNNER_TEMP/maestro.xml" --debug-output "$RUNNER_TEMP/maestro-debug" ${{ inputs.app }}/.maestro
+            maestro test -e MAESTRO_IDENTIFIANT="$IDENTIFIANT" -e MAESTRO_MOT_DE_PASSE="$MOT_DE_PASSE" --format junit --output "$RUNNER_TEMP/maestro.xml" --debug-output "$RUNNER_TEMP/maestro-debug" ${{ inputs.app }}/.maestro
+            if [ "$ECRITURE" = "true" ]; then for f in $(grep -l '^  - ecriture' ${{ inputs.app }}/.maestro/flows/*.yaml); do maestro test -e MAESTRO_IDENTIFIANT="$IDENTIFIANT" -e MAESTRO_MOT_DE_PASSE="$MOT_DE_PASSE" --debug-output "$RUNNER_TEMP/maestro-debug" "$f" || exit 1; done; fi
 
       - name: Rapport
         if: always()

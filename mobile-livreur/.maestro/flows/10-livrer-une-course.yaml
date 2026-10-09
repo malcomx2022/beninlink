@@ -1,0 +1,54 @@
+# ÉCRITURE — déclare livrée la première course « En cours » du compte de recette, puis
+# vérifie le retour à la liste. Irréversible côté app : à lancer sur un compte dont une
+# course peut être consommée (maestro test --include-tags=ecriture .maestro/flows/10-livrer-une-course.yaml).
+# Photo et signature sont facultatives sur « Livré » : le flux n'ouvre pas l'appareil photo
+# et ne signe pas (une preuve réelle reste un geste humain). Sans course en cours, il échoue.
+appId: app.beninlink.livreur
+tags:
+  - ecriture
+---
+- runFlow: ../subflows/connexion.yaml
+- tapOn: En cours
+- extendedWaitUntil:
+    visible:
+      id: parcel-card-.*
+    timeout: 15000
+- tapOn:
+    id: parcel-card-.*
+    index: 0
+- extendedWaitUntil:
+    visible: Détail de la course
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      text: Changer le statut
+    direction: DOWN
+- tapOn: Changer le statut
+- extendedWaitUntil:
+    visible: Livraison partielle
+    timeout: 15000
+- tapOn: Livré
+- assertVisible: Preuve de livraison
+- assertVisible: Prendre une photo
+# Le défilement part du libellé, jamais du cadre de signature : un geste sur le cadre
+# tracerait une signature au lieu de faire défiler.
+- swipe:
+    from:
+      text: Preuve de livraison
+    direction: UP
+- runFlow:
+    when:
+      notVisible: Enregistrer
+    commands:
+      - swipe:
+          from:
+            text: 'Cette déclaration est définitive.*'
+          direction: UP
+- tapOn: Enregistrer
+- extendedWaitUntil:
+    notVisible: Issue de la course
+    timeout: 20000
+- extendedWaitUntil:
+    visible: Mes courses
+    timeout: 15000
+- assertNotVisible: Enregistrer

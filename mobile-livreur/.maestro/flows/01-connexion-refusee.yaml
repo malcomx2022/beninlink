@@ -1,0 +1,31 @@
+# Un mauvais mot de passe n'ouvre pas de session : le message d'erreur s'affiche
+# et le livreur reste sur l'écran de connexion. Le mot de passe saisi est faux à dessein.
+appId: app.beninlink.livreur
+tags:
+  - lecture
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: login-identifiant
+    timeout: 20000
+- assertVisible: Espace livreur
+- assertVisible: Identifiant livreur
+- tapOn:
+    id: login-identifiant
+- inputText: ${MAESTRO_IDENTIFIANT}
+- tapOn:
+    id: login-mot-de-passe
+- inputText: mauvais-mot-de-passe-maestro
+- hideKeyboard
+- tapOn: Se connecter
+- extendedWaitUntil:
+    visible:
+      id: login-erreur
+    timeout: 20000
+- assertVisible: Se connecter
+- assertVisible: 'Mot de passe oublié \?'
+- assertNotVisible: Mes courses
