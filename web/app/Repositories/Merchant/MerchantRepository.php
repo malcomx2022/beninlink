@@ -290,9 +290,14 @@ class MerchantRepository implements MerchantInterface{
     public function otpVerification($request) {
         try {
 
-            $merchantUser     = User::where('mobile', $request->mobile)->where('otp', $request->otp)->first();
+            // S137 — un code sert une fois et pas plus de User::OTP_TTL_MINUTES : par l'API, il ouvre
+            // une session ; le socle le laissait valable sans limite, rejouable après usage.
+            $merchantUser     = User::where('mobile', $request->mobile)->where('otp', $request->otp)
+                ->whereNotNull('otp_expires_at')->where('otp_expires_at', '>', now())
+                ->first();
             if($merchantUser != null){
                 $merchantUser->verification_status = Status::ACTIVE;
+                $merchantUser->otp                 = null;
                 $merchantUser->save();
                 return $merchantUser;
             }

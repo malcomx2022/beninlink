@@ -551,7 +551,10 @@ class CompanyRepository implements CompanyInterface
     {
         try {
 
-            $merchantUser     = User::where('email', $request->email)->where('otp', $request->otp)->first();
+            // S137 — même règle que le code SMS marchand : pas plus de User::OTP_TTL_MINUTES.
+            $merchantUser     = User::where('email', $request->email)->where('otp', $request->otp)
+                ->whereNotNull('otp_expires_at')->where('otp_expires_at', '>', now())
+                ->first();
             if ($merchantUser != null) {
                 $merchantUser->verification_status = Status::ACTIVE;
                 $merchantUser->otp = null;
