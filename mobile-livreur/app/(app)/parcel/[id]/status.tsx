@@ -73,7 +73,7 @@ export default function ParcelStatusScreen() {
     let cashCollection: number | undefined;
     if (action === 'partial') {
       const n = Number(collected.replace(/\s+/g, ''));
-      if (!Number.isInteger(n) || n < 0) {
+      if (!collected.trim() || !Number.isInteger(n) || n < 0) {
         setFieldError(t('errors.invalidAmount'));
         return;
       }

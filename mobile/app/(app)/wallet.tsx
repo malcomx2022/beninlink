@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Link, useLocalSearchParams } from 'expo-router';
+import { Link, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 
+import { storage } from '../../src/api/session';
 import { ApiError } from '../../src/api/client';
 import { fetchRechargeStatus, initiateRecharge } from '../../src/api/fedapay';
 import { fetchWalletHistory } from '../../src/api/wallet';
@@ -41,6 +42,10 @@ export default function WalletScreen() {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
+  const [reference, setReference] = useState<string | null>(null);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  const [trackingReady, setTrackingReady] = useState(false);
+  const referenceKey = `beninlink.merchant.${user?.id}.recharge`;
 
   const balance = user?.merchant?.wallet_balance ?? 0;
 
@@ -62,9 +67,75 @@ export default function WalletScreen() {
     }
   }, []);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     void loadHistory(1);
-  }, [loadHistory]);
+    void refresh().catch(() => setError(t('errors.unexpected')));
+  }, [loadHistory, refresh]));
+
+  const verifyRecharge = useCallback(async (pendingReference: string) => {
+    const result = await fetchRechargeStatus(pendingReference);
+    if (result.status === 'approved') {
+      await refresh();
+      setInfo(t('wallet.rechargeApproved'));
+    } else if (result.status === 'declined') {
+      setInfo(t('wallet.rechargeDeclined'));
+    } else if (result.status === 'canceled') {
+      setInfo(t('wallet.rechargeCanceled'));
+    } else {
+      setInfo(t('wallet.rechargePending'));
+    }
+    if (['approved', 'declined', 'canceled'].includes(result.status)) {
+      await storage.remove(referenceKey);
+      setReference(null);
+      setPaymentUrl(null);
+    }
+    await loadHistory(1);
+  }, [loadHistory, refresh, referenceKey]);
+
+  useEffect(() => {
+    let active = true;
+    setTrackingReady(false);
+    void storage.get(referenceKey).then((saved) => {
+      if (active) {
+        // Tolère aussi la première forme, qui ne conservait que la référence.
+        const payment = saved?.startsWith('{') ? JSON.parse(saved) : { reference: saved };
+        if (payment.reference !== null && typeof payment.reference !== 'string') throw new Error('Invalid reference');
+        setReference(payment.reference);
+        setPaymentUrl(typeof payment.payment_url === 'string' ? payment.payment_url : null);
+        setTrackingReady(true);
+      }
+    }).catch(() => {
+      if (active) setError(t('errors.unexpected'));
+    });
+    return () => { active = false; };
+  }, [referenceKey]);
+
+  const checkRecharge = useCallback(async () => {
+    if (!reference) return;
+    setBusy(true);
+    setError('');
+    try {
+      await verifyRecharge(reference);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
+    } finally {
+      setBusy(false);
+    }
+  }, [reference, verifyRecharge]);
+
+  const resumePayment = useCallback(async () => {
+    if (!reference || !paymentUrl) return;
+    setBusy(true);
+    setError('');
+    try {
+      await WebBrowser.openBrowserAsync(paymentUrl);
+      await verifyRecharge(reference);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
+    } finally {
+      setBusy(false);
+    }
+  }, [reference, paymentUrl, verifyRecharge]);
 
   const recharge = useCallback(async () => {
     setError('');
@@ -78,20 +149,17 @@ export default function WalletScreen() {
 
     setBusy(true);
     try {
-      const { reference, payment_url } = await initiateRecharge(value);
+      const { reference: pendingReference, payment_url } = await initiateRecharge(value);
+      setReference(pendingReference);
+      setPaymentUrl(payment_url);
+      await storage.set(referenceKey, JSON.stringify({ reference: pendingReference, payment_url }));
 
       // Ouvre la page FedaPay et attend sa fermeture. Le résultat renvoyé ne
       // dit RIEN du paiement : il indique seulement que l'utilisateur est revenu.
       await WebBrowser.openBrowserAsync(payment_url);
 
       // Seule autorité : le serveur, qui n'a crédité que sur webhook signé.
-      const status = await fetchRechargeStatus(reference);
-      if (status.status === 'approved') {
-        setInfo(t('wallet.rechargeApproved'));
-        await refresh(); // recharge le profil pour afficher le nouveau solde
-      } else {
-        setInfo(t('wallet.rechargePending'));
-      }
+      await verifyRecharge(pendingReference);
       setAmount('');
       await loadHistory(1); // la recharge apparaît dans l'historique, quel que soit son statut
     } catch (e) {
@@ -104,7 +172,7 @@ export default function WalletScreen() {
     } finally {
       setBusy(false);
     }
-  }, [amount, refresh, loadHistory]);
+  }, [amount, verifyRecharge, referenceKey, loadHistory]);
 
   return (
     <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
@@ -147,8 +215,15 @@ export default function WalletScreen() {
           title={t('wallet.rechargeAction')}
           onPress={recharge}
           loading={busy}
+          disabled={!trackingReady || !!reference}
           variant="accent"
         />
+        {!!reference && (
+          <Button title={t('wallet.checkRecharge')} onPress={checkRecharge} loading={busy} />
+        )}
+        {!!reference && !!paymentUrl && (
+          <Button title={t('wallet.resumePayment')} onPress={resumePayment} loading={busy} />
+        )}
         {/* Rappel honnête : le crédit dépend de la confirmation de l'opérateur. */}
         <Muted>{t('wallet.confirmationNotice')}</Muted>
       </Card>

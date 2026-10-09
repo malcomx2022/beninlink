@@ -36,6 +36,8 @@ use App\Models\Backend\Setting;
 use App\Models\Config;
 use App\Repositories\Wallet\WalletInterface;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\Parcel\PartialDeliveryRequest;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -2864,6 +2866,10 @@ class ParcelRepository implements ParcelInterface {
      * montant DEJA reduit.
      */
     public function parcelPartialDelivered($id,$request){
+        // Toutes les entrées, même une invocation directe du repository, portent la même règle XOF.
+        if (Validator::make($request->all(), (new PartialDeliveryRequest())->rules())->fails()) {
+            return false;
+        }
 
         // Le colis doit etre chez nous, et son sort ne doit pas etre deja scelle.
         $colis = Parcel::companywise()->find($id);
@@ -2884,14 +2890,14 @@ class ParcelRepository implements ParcelInterface {
             $parcelPartialDelivered->save();
             $parcel                           = Parcel::find($id);
             //calculations
-            $cod_charges_amount           = ($request->cash_collection / 100) * $parcel->cod_charge;
+            $cod_charges_amount           = round(($request->cash_collection / 100) * $parcel->cod_charge);
             $total_charges                = (
                 $cod_charges_amount             +
                 $parcel->delivery_charge        +
                 $parcel->liquid_fragile_amount  +
                 $parcel->packaging_amount
             );
-            $vat_amount                   = ($total_charges/100) * $parcel->vat;
+            $vat_amount                   = round(($total_charges/100) * $parcel->vat);
             $chargeWithVat                = ($total_charges+$vat_amount);
             $totaldeliveryAmount          = ($request->cash_collection - $chargeWithVat);
             $current_payable              = ($request->cash_collection - $totaldeliveryAmount);
@@ -3164,14 +3170,14 @@ class ParcelRepository implements ParcelInterface {
             //end old
             $parcel->cash_collection            = $parcel->old_cash_collection;
             //calculations
-            $cod_charges_amount             = ($parcel->old_cash_collection / 100) * $parcel->cod_charge;
+            $cod_charges_amount             = round(($parcel->old_cash_collection / 100) * $parcel->cod_charge);
             $total_charges                  = (
                 $cod_charges_amount             +
                 $parcel->delivery_charge        +
                 $parcel->liquid_fragile_amount  +
                 $parcel->packaging_amount
             );
-            $vat_amount                     = ($total_charges/100) * $parcel->vat;
+            $vat_amount                     = round(($total_charges/100) * $parcel->vat);
             $chargeWithVat                  = ($total_charges+$vat_amount);
             $totaldeliveryAmount            = ($parcel->old_cash_collection - $chargeWithVat);
             $current_payable                = ($parcel->old_cash_collection - $chargeWithVat);

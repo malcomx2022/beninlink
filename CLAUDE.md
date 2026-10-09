@@ -56,6 +56,9 @@ Le module **FedaPay** vit **entièrement dans `web/`**. Les apps ouvrent seuleme
 l'`payment_url` renvoyée par le backend ; elles n'accèdent jamais aux clés.
 
 ## Travailler avec Claude Code
+- Corrections d'alignement (lot 3, 2026-10-09) : `docs/LOT_3_CORRECTIONS.md`.
+- Revue d'alignement des trois applications (lots 1–2, référence S145) :
+  `docs/REVUE_ALIGNEMENT_LOTS_1_2.md` ; écarts et critères de correction, sans changement des décisions historiques.
 - `claude` à la racine pour la vue d'ensemble ; `cd web` / `cd mobile` / `cd mobile-livreur`
   pour un contexte ciblé (le CLAUDE.md local se charge).
 - Gros changement → **plan mode** d'abord.

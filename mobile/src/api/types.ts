@@ -227,7 +227,12 @@ export type InvoiceDetails = Invoice & {
   delivery_charge: Amount;
   cod_amount: Amount;
   total_return_fee: Amount;
-  /** Net à reverser = encaissé − frais − COD − retours. */
+  vat_amount?: Amount;
+  other_fees?: Amount;
+  fees_ht?: Amount;
+  fees_ttc?: Amount;
+  statement_consistent?: boolean;
+  /** Net figé à l'émission : encaissé − tous les frais HT − TVA. */
   payable_amount: Amount;
   merchant_name: string | null;
   merchant_phone: string | null;

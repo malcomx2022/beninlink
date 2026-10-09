@@ -17,6 +17,7 @@ use App\Models\MerchantShops;
 use App\Repositories\Merchant\MerchantInterface;
 use App\Repositories\MerchantPanel\Shops\ShopsInterface;
 use Illuminate\Http\Request;
+use App\Http\Requests\Parcel\PartialDeliveryRequest;
 use App\Http\Requests\Parcel\StoreRequest;
 use App\Http\Requests\Parcel\UpdateRequest;
 use App\Models\Backend\DeliveryMan;
@@ -1298,9 +1299,7 @@ class ParcelController extends Controller
 
     public function parcelPartialDelivered(Request $request){
 
-        $validator = Validator::make($request->all(),[
-            'cash_collection'       => 'required',
-        ]);
+        $validator = Validator::make($request->all(), (new PartialDeliveryRequest())->rules());
 
         if($validator->fails()){
             Toastr::error(__('parcel.required'),__('message.error'));

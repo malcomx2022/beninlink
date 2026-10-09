@@ -10,6 +10,7 @@ use App\Models\Backend\DeliverymanStatement;
 use App\Repositories\Parcel\ParcelInterface;
 use App\Traits\ApiReturnFormatTrait;
 use Illuminate\Http\Request;
+use App\Http\Requests\Parcel\PartialDeliveryRequest;
 use Illuminate\Support\Facades\Validator;
 
 class DeliveryManParcelController extends Controller
@@ -94,9 +95,7 @@ class DeliveryManParcelController extends Controller
 
     public function parcelPartialDelivered($id, Request $request)
     {
-        $validator = Validator::make($request->all(),[
-            'cash_collection'       => 'required',
-        ]);
+        $validator = Validator::make($request->all(), (new PartialDeliveryRequest())->rules());
 
         if ($validator->fails()) {
             return $this->responseWithError(__('parcel.required'), ['message' => $validator->errors()], 422);

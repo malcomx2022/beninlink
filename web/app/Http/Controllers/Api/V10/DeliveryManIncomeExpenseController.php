@@ -38,7 +38,7 @@ class DeliveryManIncomeExpenseController extends Controller
             $incomes                 = DeliverymanStatement::where(['type'=>StatementType::INCOME,'delivery_man_id'=>auth()->user()->deliveryman->id])->get();
             $expenses                = DeliverymanStatement::where(['type'=>StatementType::EXPENSE,'delivery_man_id'=>auth()->user()->deliveryman->id])->get();
             $totalIncome             = $incomes->sum('amount');
-            $totalExpenses           = $incomes->sum('amount');
+            $totalExpenses           = $expenses->sum('amount');
             $deliverymanTotalAmount  = $this->deliverymanTotalAmount($totalIncome,$totalExpenses);
             return $this->responseWithSuccess(__('income.income_expense'), ['income'=>IncomeExpenseResource::collection($incomes),'expense'=>IncomeExpenseResource::collection($expenses),'deliveryInfo'=>$deliverymanTotalAmount], 200);
         } catch (\Exception $exception) {

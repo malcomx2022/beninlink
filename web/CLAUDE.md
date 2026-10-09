@@ -4,6 +4,10 @@
 > Garder < 200 lignes. Aucun secret ici (les clés vivent dans web/.env).
 
 ## Rôle
+**Lot 3 (2026-10-09)** : détail API des relevés via `SettlementStatement`, comme PDF/export ; COD/TVA partiels
+arrondis au franc et validation commune `PartialDeliveryRequest` (web/API/repository). Retraits : entier positif.
+Voir `../docs/LOT_3_CORRECTIONS.md`.
+
 Cœur de BeninLink : socle We Courier, multi-tenant par sous-domaine, API consommée
 par les apps `mobile/` et `mobile-livreur/`. **C'est le contrat** ; on le fait évoluer
 avant les apps.

@@ -1471,8 +1471,8 @@
                                     },
                                     "cash_collection": {
                                         "type": "integer",
-                                        "description": "Obligatoire pour la livraison partielle",
-                                        "nullable": true
+                                        "description": "Obligatoire pour la livraison partielle, entier XOF non négatif",
+                                        "minimum": 0
                                     },
                                     "signatureImage": {
                                         "type": "string",
@@ -1850,7 +1850,8 @@
                                 "properties": {
                                     "cash_collection": {
                                         "type": "integer",
-                                        "description": "Montant encaissé"
+                                        "description": "Montant encaissé, entier XOF non négatif",
+                                        "minimum": 0
                                     },
                                     "note": {
                                         "type": "string",
@@ -1905,7 +1906,7 @@
                         "description": "Ressource introuvable ou hors du périmètre du compte connecté"
                     },
                     "422": {
-                        "description": "Montant absent, colis déjà livré ou déjà partiellement livré, ou hors de la société"
+                        "description": "Montant absent, négatif ou fractionnaire, colis déjà livré ou déjà partiellement livré, ou hors de la société"
                     }
                 },
                 "security": [
@@ -3038,6 +3039,7 @@
                     "Factures"
                 ],
                 "summary": "Ventilation d'un relevé",
+                "description": "Montants issus des lignes figées invoice_parcels via SettlementStatement, comme le PDF et les exports. Aucun recalcul des colis vivants. payable_amount est le net enregistré à l’émission ; statement_consistent signale une éventuelle reprise historique.",
                 "parameters": [
                     {
                         "name": "id",
@@ -5868,7 +5870,7 @@
                     "Retraits"
                 ],
                 "summary": "Demander un retrait du net à reverser",
-                "description": "Le montant est comparé à `merchant.current_balance` et le compte doit appartenir au marchand (S19) : 422 sinon.",
+                "description": "Le montant est un entier XOF strictement positif, comparé à `merchant.current_balance` et le compte doit appartenir au marchand (S19) : 422 sinon.",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -5877,7 +5879,9 @@
                                 "type": "object",
                                 "properties": {
                                     "amount": {
-                                        "type": "integer"
+                                        "type": "integer",
+                                        "description": "Entier XOF strictement positif",
+                                        "minimum": 1
                                     },
                                     "merchant_account": {
                                         "type": "integer",
@@ -5987,7 +5991,9 @@
                                 "type": "object",
                                 "properties": {
                                     "amount": {
-                                        "type": "integer"
+                                        "type": "integer",
+                                        "description": "Entier XOF strictement positif",
+                                        "minimum": 1
                                     },
                                     "merchant_account": {
                                         "type": "integer"
@@ -9472,6 +9478,22 @@
                     },
                     "total_return_fee": {
                         "$ref": "#/components/schemas/Amount"
+                    },
+                    "vat_amount": {
+                        "$ref": "#/components/schemas/Amount"
+                    },
+                    "other_fees": {
+                        "$ref": "#/components/schemas/Amount"
+                    },
+                    "fees_ht": {
+                        "$ref": "#/components/schemas/Amount"
+                    },
+                    "fees_ttc": {
+                        "$ref": "#/components/schemas/Amount"
+                    },
+                    "statement_consistent": {
+                        "type": "boolean",
+                        "description": "Cohérence du net enregistré avec les lignes figées"
                     },
                     "payable_amount": {
                         "$ref": "#/components/schemas/Amount"

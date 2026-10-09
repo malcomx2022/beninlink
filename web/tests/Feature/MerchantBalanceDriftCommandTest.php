@@ -8,6 +8,7 @@ use App\Models\Backend\DeliveryMan;
 use App\Models\Backend\Merchant;
 use App\Models\Backend\MerchantStatement;
 use App\Models\Backend\Parcel;
+use App\Models\Backend\VatStatement;
 use App\Repositories\Parcel\ParcelInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -67,6 +68,13 @@ class MerchantBalanceDriftCommandTest extends TestCase
         $repo = app(ParcelInterface::class);
         $repo->parcelPartialDelivered($colis->id, new Request(['cash_collection' => 12000]));
         $repo->parcelPartialDeliveredCancel($colis->id, new Request());
+
+        // Fixture HISTORIQUE : le calcul courant arrondit désormais à 202 XOF.
+        // La commande doit encore comprendre les anciennes lignes à 201,60,
+        // sans modifier leur formule d'explication ni leur régularisation.
+        VatStatement::where('parcel_id', $colis->id)->update(['amount' => 201.6]);
+        MerchantStatement::where('parcel_id', $colis->id)->where('amount', 202)
+            ->update(['amount' => 201.6]);
 
         $marchand = Merchant::find($this->marchand->id);
         $marchand->current_balance = (float) $marchand->current_balance + self::ECART;
