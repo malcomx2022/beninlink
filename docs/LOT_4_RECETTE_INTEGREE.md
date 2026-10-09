@@ -28,6 +28,22 @@ Ne publier aucun secret ni mot de passe dans les preuves.
 
 ## Recette terrain obligatoire
 
+### Suivi technique après fusion de la préparation
+
+L'exécution [37922282998](https://github.com/malcomx2022/beninlink/actions/runs/37922282998)
+a réussi Laravel, l'app livreur, la répétition et les deux déploiements SSH.
+L'app marchand a échoué sur deux tests du portefeuille : dépassement du délai
+sur le scénario pending, puis réponse approved inattendue dans le cas declined.
+La validation des contrôles du lot 3 demeure celle de son exécution dédiée ;
+cette nouvelle exécution révèle une fragilité de tests à corriger.
+
+Les tests du portefeuille attendent désormais que les boutons soient activés
+avant de les presser (restauration du suivi et fin de traitement asynchrones).
+Le mock des statuts est réinitialisé entre scénarios afin qu'une réponse à usage
+unique non consommée ne contamine pas le test suivant. Le code de paiement
+et ses règles métier ne sont pas modifiés. Vérification locale : 50 tests
+marchand réussis ; résultat CI de la correction à vérifier sur sa PR.
+
 Utiliser uniquement les comptes et colis pilotes de recette, les paiements
 sandbox et le guide existant. Remplir `guides/recette-pilote/lot-4-suivi.csv`.
 
