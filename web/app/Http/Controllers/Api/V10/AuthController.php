@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V10;
 
 use Illuminate\Validation\Rules\Password as PasswordRule;
+use App\Enums\Status;
 use App\Enums\UserType;
 use App\Http\Middleware\UserTypeMiddleware;
 use App\Http\Controllers\Controller;
@@ -101,6 +102,11 @@ class AuthController extends Controller
         if(Auth::user() && Auth::user()->user_type != UserType::MERCHANT):
             return $this->responseWithError(__('auth.credentials_msg'), [], 401);
         endif;
+        // S145 — un compte désactivé par son transporteur n'obtient plus de jeton (la connexion web l'exigeait déjà,
+        // `LoginController::credentials()`). Le refus se dit après le mot de passe juste (S142).
+        if ((int) Auth::user()->status !== Status::ACTIVE) {
+            return $this->responseWithError(__('auth.failed'), [], 403);
+        }
         
         return $this->responseWithSuccess(__('auth.signin_msg'), ['token' => auth()->user()->createToken($request->merchant_id, UserTypeMiddleware::abilitiesFor(auth()->user()))->plainTextToken,'user'=>new UserResource(auth()->user())], 200);
 
@@ -127,6 +133,11 @@ class AuthController extends Controller
         if(Auth::user() && Auth::user()->user_type != UserType::DELIVERYMAN):
             return $this->responseWithError(__('auth.credentials_msg'), [], 401);
         endif;
+        // S145 — un compte désactivé par son transporteur n'obtient plus de jeton (la connexion web l'exigeait déjà,
+        // `LoginController::credentials()`). Le refus se dit après le mot de passe juste (S142).
+        if ((int) Auth::user()->status !== Status::ACTIVE) {
+            return $this->responseWithError(__('auth.failed'), [], 403);
+        }
 
         return $this->responseWithSuccess(__('auth.signin_msg'), ['token' => auth()->user()->createToken($request->driver_id, UserTypeMiddleware::abilitiesFor(auth()->user()))->plainTextToken,'user'=>new  DeliverymanUserResource(auth()->user())], 200);
 

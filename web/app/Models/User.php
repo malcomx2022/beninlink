@@ -69,6 +69,12 @@ class User extends Authenticatable
         });
 
         static::updated(function (User $user) {
+            // S145 — un compte désactivé perd ses jetons : l'app de la PME ou du livreur revient à la connexion (S144)
+            // et n'en obtient pas d'autre (`AuthController`).
+            if ($user->wasChanged('status') && (int) $user->status !== Status::ACTIVE) {
+                $user->tokens()->delete();
+            }
+
             if (! $user->wasChanged('password')) {
                 return;
             }

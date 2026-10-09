@@ -1194,6 +1194,9 @@
                     "401": {
                         "description": "Identifiants invalides"
                     },
+                    "403": {
+                        "description": "Compte désactivé par le transporteur (S145) : aucun jeton"
+                    },
                     "422": {
                         "description": "Erreurs de validation",
                         "content": {
@@ -7379,6 +7382,9 @@
                     },
                     "401": {
                         "description": "Identifiants invalides"
+                    },
+                    "403": {
+                        "description": "Compte désactivé par le transporteur (S145) : aucun jeton"
                     },
                     "422": {
                         "description": "Erreurs de validation",
