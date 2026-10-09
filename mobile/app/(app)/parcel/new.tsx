@@ -271,6 +271,7 @@ export default function NewParcelScreen() {
       <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
         <ChoiceGroup
           label={t('parcels.shop')}
+          testID="colis-boutique"
           options={(form?.shops ?? []).map((shop) => ({ value: shop.id, label: shop.name }))}
           value={shopId}
           onChange={setShopId}
@@ -279,6 +280,7 @@ export default function NewParcelScreen() {
 
         <ChoiceGroup
           label={t('parcels.category')}
+          testID="colis-categorie"
           options={Object.values(form?.deliveryCategories ?? {}).map((category) => ({
             value: category.id,
             label: category.title,
@@ -290,6 +292,7 @@ export default function NewParcelScreen() {
 
         <ChoiceGroup
           label={t('parcels.deliveryType')}
+          testID="colis-type"
           options={typeOptions}
           value={typeId}
           onChange={setTypeId}
@@ -303,6 +306,7 @@ export default function NewParcelScreen() {
           <>
             <ChoiceGroup
               label={t('parcels.zone')}
+              testID="colis-zone"
               options={zoneOptions}
               value={zoneId}
               onChange={setZoneId}
@@ -357,6 +361,7 @@ export default function NewParcelScreen() {
 
         <Field
           label={t('parcels.name')}
+          testID="colis-nom"
           value={values.customer_name}
           onChangeText={set('customer_name')}
           placeholder="Ex. Aïcha Kora"
@@ -365,6 +370,7 @@ export default function NewParcelScreen() {
         />
         <Field
           label={t('auth.phone')}
+          testID="colis-telephone"
           value={values.customer_phone}
           onChangeText={set('customer_phone')}
           keyboardType="phone-pad"
@@ -374,6 +380,7 @@ export default function NewParcelScreen() {
         />
         <Field
           label={t('parcels.address')}
+          testID="colis-adresse"
           value={values.customer_address}
           onChangeText={set('customer_address')}
           placeholder="Ville, quartier"
@@ -382,6 +389,7 @@ export default function NewParcelScreen() {
         />
         <Field
           label={t('parcels.weight')}
+          testID="colis-poids"
           value={values.weight}
           onChangeText={set('weight')}
           keyboardType="numeric"
@@ -391,6 +399,7 @@ export default function NewParcelScreen() {
         />
         <Field
           label={t('parcels.cashCollection')}
+          testID="colis-montant-cod"
           value={values.cash_collection}
           onChangeText={set('cash_collection')}
           keyboardType="numeric"

@@ -51,6 +51,7 @@ export default function LoginScreen() {
 
         <Field
           label={t('auth.driverId')}
+          testID="login-identifiant"
           value={driverId}
           onChangeText={setDriverId}
           autoCapitalize="none"
@@ -62,6 +63,7 @@ export default function LoginScreen() {
         <Muted>{t('auth.driverIdHint')}</Muted>
         <Field
           label={t('auth.password')}
+          testID="login-mot-de-passe"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -70,7 +72,12 @@ export default function LoginScreen() {
           error={fieldErrors.password?.[0]}
         />
 
-        <ErrorText>{error}</ErrorText>
+        {/* Repère E2E (.maestro/flows/01) : le message vient du serveur, seul l'identifiant est stable. */}
+        {!!error && (
+          <View testID="login-erreur" collapsable={false}>
+            <ErrorText>{error}</ErrorText>
+          </View>
+        )}
         <Button title={t('auth.signIn')} onPress={submit} loading={loading} variant="accent" />
         {/* S98 — mot de passe oublié : les mêmes routes que l'app marchand. */}
         <Link href="/(auth)/forgot-password" style={styles.link}>

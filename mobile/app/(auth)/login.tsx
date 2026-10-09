@@ -54,6 +54,7 @@ export default function LoginScreen() {
 
         <Field
           label={t('auth.merchantId')}
+          testID="login-identifiant"
           value={merchantId}
           onChangeText={setMerchantId}
           autoCapitalize="none"
@@ -69,6 +70,7 @@ export default function LoginScreen() {
 
         <Field
           label={t('auth.password')}
+          testID="login-mot-de-passe"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -79,7 +81,7 @@ export default function LoginScreen() {
           returnKeyType="go"
         />
 
-        <ErrorText>{error}</ErrorText>
+        <ErrorText testID="login-erreur">{error}</ErrorText>
 
         <Button title={t('auth.signIn')} onPress={submit} loading={loading} />
 

@@ -1,0 +1,63 @@
+# La liste des courses se lit, et la première course s'ouvre : montant à encaisser
+# en FCFA, Appeler / Itinéraire, puis l'écran d'issue propose les trois issues.
+# Lecture seule : on revient en arrière sans jamais toucher « Enregistrer ».
+# Une liste vide ne fait pas échouer le flux (la partie « course » est sautée).
+appId: app.beninlink.livreur
+tags:
+  - lecture
+---
+- runFlow: ../subflows/connexion.yaml
+- assertVisible: Partager ma position
+- tapOn: Retours
+- tapOn: Livrés
+- tapOn: En cours
+# La liste part vide puis se remplit : on laisse au serveur le temps de répondre.
+- extendedWaitUntil:
+    visible:
+      id: parcel-card-.*
+    timeout: 10000
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: parcel-card-.*
+    commands:
+      - assertVisible: À encaisser
+      - tapOn:
+          id: parcel-card-.*
+          index: 0
+      - extendedWaitUntil:
+          visible: Détail de la course
+          timeout: 15000
+      - extendedWaitUntil:
+          visible:
+            id: course-a-encaisser
+          timeout: 15000
+      - assertVisible:
+          id: course-a-encaisser
+          text: '-?[0-9].*FCFA'
+      - assertVisible: À encaisser
+      - assertVisible: Destinataire
+      - assertVisible: Appeler
+      - assertVisible: Itinéraire
+      - scrollUntilVisible:
+          element:
+            text: Changer le statut
+          direction: DOWN
+      - tapOn: Changer le statut
+      - extendedWaitUntil:
+          visible: Livraison partielle
+          timeout: 15000
+      - assertVisible: Issue de la course
+      - assertVisible: Livré
+      - assertVisible: Livraison partielle
+      - assertVisible: Retour
+      - assertVisible: Montant attendu
+      - back
+      - extendedWaitUntil:
+          visible: Détail de la course
+          timeout: 10000
+      - back
+      - extendedWaitUntil:
+          visible: Mes courses
+          timeout: 10000

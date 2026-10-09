@@ -1,0 +1,8 @@
+# Configuration Maestro de l'app livreur.
+# Par défaut, seuls les flux de lecture tournent : les flux « ecriture » modifient la recette
+# (une course déclarée livrée ne revient pas) et ne partent que sur demande explicite :
+#   maestro test --include-tags=ecriture .maestro
+flows:
+  - "flows/*.yaml"
+excludeTags:
+  - ecriture

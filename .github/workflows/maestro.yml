@@ -1,0 +1,84 @@
+name: Parcours Maestro (APK de recette)
+
+# S149 — rejoue les parcours Maestro des deux apps sur un émulateur Android, contre
+# l'APK de recette donné en entrée et le serveur de recette qu'il vise.
+#
+# **Déclenchement manuel seulement** : un émulateur coûte une quinzaine de minutes
+# de runner par app, et le quota GitHub Actions est compté (S100). On le lance après
+# un build EAS, avant de remettre les APK aux PME — pas sur chaque pull request.
+#
+# Les identifiants des comptes de recette sont des **secrets du dépôt**, posés par
+# le porteur ; ils n'apparaissent ni dans les parcours ni dans les journaux :
+#   MAESTRO_MARCHAND_IDENTIFIANT, MAESTRO_MARCHAND_MOT_DE_PASSE,
+#   MAESTRO_LIVREUR_IDENTIFIANT,  MAESTRO_LIVREUR_MOT_DE_PASSE.
+# Le `config.yaml` de chaque app exclut les parcours `ecriture` : ils créent un colis ou
+# livrent une course sur le serveur de recette. Cochés, ils sont joués ensuite, un par un.
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'App à rejouer'
+        type: choice
+        options: [mobile, mobile-livreur]
+        default: mobile
+      apk_url:
+        description: "Lien de l'APK de recette (artefact EAS, https)"
+        type: string
+        required: true
+      ecriture:
+        description: 'Jouer aussi les parcours qui écrivent sur le serveur de recette'
+        type: boolean
+        default: false
+
+jobs:
+  parcours:
+    name: Maestro (${{ inputs.app }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      # KVM pour un émulateur x86_64 accéléré sur le runner Linux.
+      - name: KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: APK
+        env:
+          APK_URL: ${{ inputs.apk_url }}
+        run: |
+          case "$APK_URL" in https://*) ;; *) echo "::error::Lien https attendu"; exit 1 ;; esac
+          curl -fsSL -o "$RUNNER_TEMP/app.apk" "$APK_URL"
+
+      - name: Maestro
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Parcours
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          IDENTIFIANT: ${{ inputs.app == 'mobile' && secrets.MAESTRO_MARCHAND_IDENTIFIANT || secrets.MAESTRO_LIVREUR_IDENTIFIANT }}
+          MOT_DE_PASSE: ${{ inputs.app == 'mobile' && secrets.MAESTRO_MARCHAND_MOT_DE_PASSE || secrets.MAESTRO_LIVREUR_MOT_DE_PASSE }}
+          ECRITURE: ${{ inputs.ecriture }}
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: |
+            adb install -r "$RUNNER_TEMP/app.apk"
+            maestro test -e MAESTRO_IDENTIFIANT="$IDENTIFIANT" -e MAESTRO_MOT_DE_PASSE="$MOT_DE_PASSE" --format junit --output "$RUNNER_TEMP/maestro.xml" --debug-output "$RUNNER_TEMP/maestro-debug" ${{ inputs.app }}/.maestro
+            if [ "$ECRITURE" = "true" ]; then for f in $(grep -l '^  - ecriture' ${{ inputs.app }}/.maestro/flows/*.yaml); do maestro test -e MAESTRO_IDENTIFIANT="$IDENTIFIANT" -e MAESTRO_MOT_DE_PASSE="$MOT_DE_PASSE" --debug-output "$RUNNER_TEMP/maestro-debug" "$f" || exit 1; done; fi
+
+      - name: Rapport
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-${{ inputs.app }}
+          path: |
+            ${{ runner.temp }}/maestro.xml
+            ${{ runner.temp }}/maestro-debug
+          if-no-files-found: ignore

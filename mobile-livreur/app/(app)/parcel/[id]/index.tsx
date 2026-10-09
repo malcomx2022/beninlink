@@ -75,7 +75,7 @@ export default function ParcelDetailScreen() {
             <Text style={styles.status}>{stage ? stageLabel(stage) : '—'}</Text>
             <View style={styles.codBox}>
               <Text style={styles.codLabel}>{t('parcels.cod')}</Text>
-              <Text style={styles.codValue}>{formatAmount(parcel.cash_collection)}</Text>
+              <Text style={styles.codValue} testID="course-a-encaisser">{formatAmount(parcel.cash_collection)}</Text>
             </View>
           </Card>
 

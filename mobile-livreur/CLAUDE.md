@@ -125,3 +125,10 @@ Icônes Ionicons ; visuels d'app générés depuis `assets/source/generate.py`.
 - **Un jeton qui tombe déconnecte l'écran** (**S144** ; **S147** : même quand le 401 arrive en page HTML d'un proxy, `client.ts` efface le jeton avant de lire le corps ; **S148** : un `signal` déjà abandonné, ou abandonné pendant la lecture du jeton, n'envoie rien — l'erreur dit « Requête annulée. », jamais « expirée », et l'écouteur posé sur le signal est retiré après la réponse) : le client d'API efface le jeton sur un 401, et `clearToken()`
   prévient `SessionProvider` (`onTokenCleared`), qui revient à la connexion. Depuis S135/S136 le serveur révoque des jetons
   en cours de session ; un écran ne garde jamais un compte dont le jeton n'existe plus (`SessionProvider.test.tsx`).
+- **Parcours Maestro** (**S149**) : `.maestro/` rejoue les écrans sur l'APK de recette installé
+  (`docs/guides/recette-pilote/MAESTRO.md`). Les parcours visent le texte de `src/i18n/fr.ts` et
+  quelques `testID` ; `src/maestro.test.ts` échoue si un texte visé disparaît de `fr.ts` ou si un
+  `id:` ne correspond à aucun `testID`. Renommer une phrase ou retirer un `testID` utilisé par un
+  parcours, c'est mettre le parcours à jour dans le même commit. Aucun identifiant dans les
+  parcours : `${MAESTRO_IDENTIFIANT}` / `${MAESTRO_MOT_DE_PASSE}`. Le tag `ecriture` (création de
+  colis, livraison) est exclu par `config.yaml`.

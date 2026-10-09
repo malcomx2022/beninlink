@@ -1,0 +1,19 @@
+# Prouve qu'une connexion valide ouvre le tableau de bord du marchand : identité,
+# relevé de règlement (net à reverser) et compteurs de colis.
+appId: app.beninlink.marchand
+tags:
+  - lecture
+---
+- runFlow: ../subflows/connexion.yaml
+- assertVisible: "Tableau de bord"
+- assertVisible: "Identifiant marchand.*"
+- assertVisible: "Relevé de règlement"
+- assertVisible: "Net à reverser"
+- scrollUntilVisible:
+    element:
+      text: "Colis au total"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "Mes colis"
+    direction: DOWN

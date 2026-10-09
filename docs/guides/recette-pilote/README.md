@@ -5,6 +5,9 @@
 > livreurs. Mis à jour le 2026-10-03 (S71 : répétition générale automatisée,
 > fiche de préparation, modèle de collecte).
 
+> **S149** : avant de remettre un APK, ses parcours d'écran se rejouent sur un vrai Android
+> avec Maestro — voir `MAESTRO.md`.
+
 ## 0. Répétition générale — ce que la suite prouve avant qu'un téléphone soit allumé
 
 Chaque scénario du §4 a deux moitiés : ce que l'app **affiche** (un humain, un

@@ -1,0 +1,23 @@
+# Sous-parcours : ouvre une session marchand neuve (données de l'app effacées) avec le
+# compte de recette passé par l'environnement, et prouve que le tableau de bord s'affiche.
+# Identifiants : MAESTRO_IDENTIFIANT / MAESTRO_MOT_DE_PASSE — jamais écrits ici.
+appId: app.beninlink.marchand
+---
+- launchApp:
+    clearState: true
+    permissions:
+      notifications: allow
+- extendedWaitUntil:
+    visible: "Se connecter"
+    timeout: 20000
+- tapOn:
+    id: "login-identifiant"
+- inputText: "${MAESTRO_IDENTIFIANT}"
+- tapOn:
+    id: "login-mot-de-passe"
+- inputText: "${MAESTRO_MOT_DE_PASSE}"
+- hideKeyboard
+- tapOn: "Se connecter"
+- extendedWaitUntil:
+    visible: "Tableau de bord"
+    timeout: 30000

@@ -1,0 +1,28 @@
+# Le profil s'affiche, et « Se déconnecter » ramène à l'écran de connexion.
+appId: app.beninlink.livreur
+tags:
+  - lecture
+---
+- runFlow: ../subflows/connexion.yaml
+- tapOn:
+    id: onglet-profil
+- extendedWaitUntil:
+    visible: Agence
+    timeout: 15000
+- assertVisible: Changer le mot de passe
+- scrollUntilVisible:
+    element:
+      text: Mes tarifs
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: Se déconnecter
+    direction: DOWN
+- tapOn: Se déconnecter
+- extendedWaitUntil:
+    visible:
+      id: login-identifiant
+    timeout: 20000
+- assertVisible: Se connecter
+- assertVisible: Identifiant livreur
+- assertNotVisible: Mes courses

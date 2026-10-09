@@ -1,0 +1,93 @@
+# Prouve qu'un marchand crée un colis de bout en bout : formulaire rempli, devis du
+# serveur reçu, création confirmée, retour à la liste où le colis apparaît.
+# ÉCRIT EN RECETTE (un colis « Client Maestro » de plus) : exclu des lancements par
+# défaut, à jouer exprès : maestro test .maestro/flows/10-creer-un-colis.yaml
+# Préalables du compte de recette : au moins une boutique, une catégorie, un type de
+# livraison actif, une première zone NATIONALE (une zone d'export exige un pays) et un
+# portefeuille prépayé qui couvre les frais — sinon le devis ou la création échoue.
+appId: app.beninlink.marchand
+tags:
+  - ecriture
+---
+- runFlow: ../subflows/connexion.yaml
+- scrollUntilVisible:
+    element:
+      text: "Mes colis"
+    direction: DOWN
+- tapOn: "Mes colis"
+# Le bouton affiche « + Nouveau colis » : expression régulière voulue.
+- tapOn: ".*Nouveau colis"
+- extendedWaitUntil:
+    visible: "Devis"
+    timeout: 20000
+# Choix servis par le serveur : on prend la première option de chaque groupe.
+- tapOn:
+    id: "colis-boutique-0"
+- tapOn:
+    id: "colis-categorie-0"
+- tapOn:
+    id: "colis-type-0"
+- scrollUntilVisible:
+    element:
+      id: "colis-zone-0"
+    direction: DOWN
+- tapOn:
+    id: "colis-zone-0"
+- scrollUntilVisible:
+    element:
+      id: "colis-nom"
+    direction: DOWN
+- tapOn:
+    id: "colis-nom"
+- inputText: "Client Maestro"
+- hideKeyboard
+- tapOn:
+    id: "colis-telephone"
+- inputText: "0196000000"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "colis-adresse"
+    direction: DOWN
+- tapOn:
+    id: "colis-adresse"
+- inputText: "Cotonou, test Maestro"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "colis-poids"
+    direction: DOWN
+- tapOn:
+    id: "colis-poids"
+- inputText: "1"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "colis-montant-cod"
+    direction: DOWN
+- tapOn:
+    id: "colis-montant-cod"
+- inputText: "1000"
+- hideKeyboard
+# Le devis arrive du serveur (temporisé) : sans lui, la création reste désactivée.
+- scrollUntilVisible:
+    element:
+      text: 'Total des frais \(TVA comprise\)'
+    direction: DOWN
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: "Créer le colis"
+    direction: DOWN
+- tapOn: "Créer le colis"
+# Réussite = le formulaire se ferme (la création le remplace par la liste) et le
+# colis apparaît dans « En cours ». Un refus laisse le formulaire, donc échoue ici.
+- extendedWaitUntil:
+    notVisible: "Créer le colis"
+    timeout: 30000
+- assertVisible: "Mes colis"
+- scrollUntilVisible:
+    element:
+      text: "Client Maestro"
+    direction: DOWN
+    timeout: 20000

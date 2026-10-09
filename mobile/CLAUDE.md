@@ -150,3 +150,10 @@ Rien de tout ceci ne peut être versionné — ce sont des secrets et des liens 
   réinitialisé, changement de mot de passe et liste des colis se rendent ainsi ; le client, le jeton,
   les modules d'API et `t()` ont leurs tests unitaires. Chaque `beforeEach` fait `jest.resetAllMocks()`
   et `clearToken()` : une réponse `mockResolvedValueOnce` ou un jeton d'un test ne passe pas au suivant.
+- **Parcours Maestro** (**S149**) : `.maestro/` rejoue les écrans sur l'APK de recette installé
+  (`docs/guides/recette-pilote/MAESTRO.md`). Les parcours visent le texte de `src/i18n/fr.ts` et
+  quelques `testID` ; `src/maestro.test.ts` échoue si un texte visé disparaît de `fr.ts` ou si un
+  `id:` ne correspond à aucun `testID`. Renommer une phrase ou retirer un `testID` utilisé par un
+  parcours, c'est mettre le parcours à jour dans le même commit. Aucun identifiant dans les
+  parcours : `${MAESTRO_IDENTIFIANT}` / `${MAESTRO_MOT_DE_PASSE}`. Le tag `ecriture` (création de
+  colis, livraison) est exclu par `config.yaml`.

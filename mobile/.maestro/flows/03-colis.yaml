@@ -1,0 +1,39 @@
+# Prouve que la liste des colis s'ouvre, que ses trois onglets se parcourent, et que
+# la fiche du premier colis (s'il y en a un) s'ouvre puis se referme. Une liste vide
+# ne fait pas échouer le parcours.
+appId: app.beninlink.marchand
+tags:
+  - lecture
+---
+- runFlow: ../subflows/connexion.yaml
+- scrollUntilVisible:
+    element:
+      text: "Mes colis"
+    direction: DOWN
+- tapOn: "Mes colis"
+- extendedWaitUntil:
+    visible: "En cours"
+    timeout: 20000
+- tapOn: "Livrés"
+- tapOn: "Retours"
+- tapOn: "En cours"
+# La liste se charge après l'affichage : on laisse au premier colis le temps
+# d'arriver, sans échouer s'il n'y en a aucun.
+- assertVisible:
+    id: "parcel-card-.*"
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "parcel-card-.*"
+    commands:
+      - tapOn:
+          id: "parcel-card-.*"
+          index: 0
+      - extendedWaitUntil:
+          visible: "Destinataire"
+          timeout: 20000
+      - assertVisible: "Montants"
+      - back
+      - assertVisible: "En cours"
+- assertVisible: "Mes colis"
