@@ -236,7 +236,8 @@ avant les apps.
   Un **code OTP** vaut `User::OTP_TTL_MINUTES` (posé par le modèle à chaque écriture) et s'efface dès qu'il a servi
   (**S137**, `OtpSingleUseTest`) : une vérification d'OTP filtre toujours `otp_expires_at > now()`.
   Jamais de mot de passe ni de code dans la session (**S138**, `SignupSessionHoldsNoSecretTest`) : le code vérifié
-  ouvre la session du compte qu'il vérifie (`Auth::login()`, société du site).
+  ouvre la session du compte qu'il vérifie (`Auth::login()`, société du site). « Se souvenir de moi » garde l'identifiant,
+  jamais le mot de passe, et un mot de passe changé change `remember_token` (**S139**, `RememberMeKeepsNoPasswordTest`).
 - **Un retour de paiement n'applique rien à un identifiant de l'URL** (**S129**) : `switchPlan()` reçoit une
   requête composée (`user_id = Auth::id()`), et une session Stripe ne sert qu'une fois
   (`subscriptions.stripe_session_id` unique, `StripeSubscriptionReturnTest`).

@@ -79,6 +79,12 @@ class User extends Authenticatable
                 ->when($courant instanceof \Laravel\Sanctum\PersonalAccessToken, fn ($q) => $q->whereKeyNot($courant->getKey()))
                 ->delete();
 
+            // S139 — le cookie « se souvenir de moi » d'un autre navigateur rouvrait une session sans mot de
+            // passe, après que la sienne avait expiré : le jeton de rappel change avec le mot de passe.
+            if (filled($user->getRememberToken())) {
+                $user->forceFill(['remember_token' => \Illuminate\Support\Str::random(60)])->saveQuietly();
+            }
+
             // La session web qui change son propre mot de passe reste ouverte : `CloseSessionsOnPasswordChange`
             // range l'empreinte du compte connecté, souvent une autre instance que celle écrite ici.
             $web = auth()->guard('web');

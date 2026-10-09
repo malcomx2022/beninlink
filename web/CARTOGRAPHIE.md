@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-09 (S138 — la session d'une inscription ne garde ni mot de passe ni code ; S137 — un code SMS ne sert qu'une fois, et pas longtemps ; S136 — se déconnecter d'un appareil ne déconnecte pas les autres ; S135 — un mot de passe changé ferme les autres accès ; S134 — un mot de passe neuf a huit caractères au moins ; S133 — un numéro béninois se saisit comme on le dit ; S132 — le cookie de session ne part plus en clair ; S131 — la surface publique a une cadence bornée ; S130 — le parcours OTP du site marchand est limité comme l'API ; S129 — le retour Stripe n'active qu'un abonnement, pour le compte qui a payé ; S128 — la partie serveur de S126 est close ; S127 — un texte riche écrit par un autre est nettoyé avant d'être rendu ; S126 — un fichier téléversé ne devient jamais du code serveur ; S125 — l'arriéré des droits du back-office fermé ; S124 — l'installateur de modules fermé, cinq écrans gardés par leur droit ; S123 — l'origine d'un mouvement de portefeuille se lit en français ; S122 — une date affichée parle la langue de son lecteur ; S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-09 (S139 — « se souvenir de moi » ne garde pas le mot de passe ; S138 — la session d'une inscription ne garde ni mot de passe ni code ; S137 — un code SMS ne sert qu'une fois, et pas longtemps ; S136 — se déconnecter d'un appareil ne déconnecte pas les autres ; S135 — un mot de passe changé ferme les autres accès ; S134 — un mot de passe neuf a huit caractères au moins ; S133 — un numéro béninois se saisit comme on le dit ; S132 — le cookie de session ne part plus en clair ; S131 — la surface publique a une cadence bornée ; S130 — le parcours OTP du site marchand est limité comme l'API ; S129 — le retour Stripe n'active qu'un abonnement, pour le compte qui a payé ; S128 — la partie serveur de S126 est close ; S127 — un texte riche écrit par un autre est nettoyé avant d'être rendu ; S126 — un fichier téléversé ne devient jamais du code serveur ; S125 — l'arriéré des droits du back-office fermé ; S124 — l'installateur de modules fermé, cinq écrans gardés par leur droit ; S123 — l'origine d'un mouvement de portefeuille se lit en français ; S122 — une date affichée parle la langue de son lecteur ; S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -9689,3 +9689,38 @@ remis en session.
 
 Rien à faire. Les sessions d'inscription ouvertes avant le déploiement perdent le mot de passe à la vérification
 du code.
+
+## S139 — « se souvenir de moi » ne garde pas le mot de passe (2026-10-09)
+
+### D'où ça vient
+
+Cocher « se souvenir de moi » à la connexion web rangeait le **mot de passe saisi** dans un cookie `userpassword`
+de 24 heures (`LoginController::login()`), et `auth/login.blade.php` le rendait **en clair** dans le `value` du
+champ mot de passe : quiconque ouvrait `/login` sur ce navigateur, déconnecté ou non, le lisait dans la source de
+la page. Le cookie survivait aussi à un changement de mot de passe. Par ailleurs, le jeton de rappel de Laravel
+(`remember_token`) ne changeait pas avec le mot de passe : un navigateur dont la session avait expiré revenait par
+son cookie de rappel, et `CloseSessionsOnPasswordChange` (S135), qui ne compare que l'empreinte rangée en session,
+ne le voyait pas.
+
+### Ce qui est fait
+
+- La connexion ne garde que l'identifiant (`useremail`) et **efface** `userpassword` à chaque connexion. La vue ne
+  lit plus ce cookie ; le champ identifiant reprend `old('email')`, à défaut le cookie (le socle rendait un `?`
+  et un `:` littéraux dans la balise).
+- Le retour sans mot de passe reste le jeton de rappel de Laravel (`attemptLogin`, case `remember`).
+- `User::booted()` : un mot de passe changé change aussi `remember_token`. Tous les cookies de rappel du compte
+  tombent ; la session qui change elle-même son mot de passe reste ouverte (S135) et gardera à nouveau son rappel
+  à la prochaine connexion avec la case cochée.
+
+### Le filet
+
+`RememberMeKeepsNoPasswordTest` : la connexion « se souvenir de moi » pose l'identifiant et le jeton de rappel,
+expire `userpassword` ; la page de connexion servie avec l'ancien cookie ne rend pas le mot de passe ; un cookie de
+rappel ne rouvre pas de session après un changement de mot de passe, mais fonctionne tant qu'il ne change pas.
+Sabotages, chacun rouge sur son seul test : cookie remis par le contrôleur, `value` remis dans la vue, jeton de
+rappel inchangé (ce dernier prouve que le contournement de S135 existait).
+
+### Côté serveur (au porteur)
+
+Rien à faire. Un navigateur qui porte encore l'ancien cookie (24 h au plus) ne le voit plus rendu, et le perd à sa
+prochaine connexion.
