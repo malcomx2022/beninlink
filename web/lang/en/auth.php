@@ -16,6 +16,7 @@ return [
     'courier_app_only' => 'This is a courier account: it signs in from the courier app, not on the website.',
     'failed' => 'You are not an active person, please contact Admin!',
     // 'failed' => 'These credentials do not match our records.',
+    'social_refused' => 'This account cannot sign in on this site. Sign in with your identifier and password, or contact your carrier.',
     'password'          => 'The provided password is incorrect.',
     'throttle'          => 'Too many login attempts. Please try again in :seconds seconds.',
     'token_refresh'     => 'Tokens Refresh',
