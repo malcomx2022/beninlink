@@ -291,6 +291,19 @@ describe('401 (S144)', () => {
     expect(fetchCalls(fetchMock)[1]!.headers).not.toHaveProperty('Authorization');
   });
 
+  it("efface aussi le jeton quand le 401 arrive en page HTML (proxy) — S147", async () => {
+    await setToken('jeton-revoque');
+    const ecouteur = jest.fn();
+    const retirer = onTokenCleared(ecouteur);
+    fetchMock.mockResolvedValueOnce(jsonResponse(401, '<html>Accès refusé</html>'));
+
+    await expect(api.get('profile')).rejects.toMatchObject({ status: 401 });
+    retirer();
+
+    expect(ecouteur).toHaveBeenCalledTimes(1);
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('beninlink.merchant.token');
+  });
+
   it('garde le jeton sur un 403 ou un 500', async () => {
     await setToken('jeton-valide');
     const ecouteur = jest.fn();

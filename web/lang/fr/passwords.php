@@ -16,4 +16,6 @@ return array(
     'throttled' => 'Veuillez patienter avant de réessayer.',
     'token' => 'Ce jeton de réinitialisation de mot de passe est invalide.',
     'user' => "Nous ne pouvons pas trouver un utilisateur avec cette adresse e-mail.",
+    // S147 : la seule réponse de « mot de passe oublié », que l'adresse ait un compte ou non.
+    'sent_neutral' => "Si un compte correspond à cette adresse, un lien de réinitialisation vient de lui être envoyé.",
 );

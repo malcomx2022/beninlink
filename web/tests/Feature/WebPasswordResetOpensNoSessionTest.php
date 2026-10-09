@@ -91,7 +91,7 @@ class WebPasswordResetOpensNoSessionTest extends TestCase
         $autre = $this->compte('autre.s141@example.test', ['company_id' => $ailleurs]);
         $ici = $this->compte('ici.s141@example.test');
 
-        $this->post(self::HOTE . '/password/email', ['email' => 'autre.s141@example.test'])->assertSessionHasErrors('email');
+        $this->post(self::HOTE . '/password/email', ['email' => 'autre.s141@example.test'])->assertSessionHasNoErrors(); // S147 : réponse neutre
         Notification::assertNotSentTo($autre, ResetPassword::class);
 
         $this->post(self::HOTE . '/password/email', ['email' => 'ici.s141@example.test']);

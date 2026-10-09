@@ -4962,7 +4962,7 @@
                     "Authentification"
                 ],
                 "summary": "Demander un lien de réinitialisation",
-                "description": "Le lien envoyé par e-mail mène à la page web du backend ; le jeton qu'il porte est accepté par `POST password/reset`.",
+                "description": "Le lien envoyé par e-mail mène à la page web du backend ; le jeton qu'il porte est accepté par `POST password/reset`. La réponse est la même, que l'adresse ait un compte ou non (S147).",
                 "requestBody": {
                     "required": true,
                     "content": {
