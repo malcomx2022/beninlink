@@ -1,0 +1,22 @@
+# Prouve que « Se déconnecter » (écran Profil) ferme la session et ramène à l'écran
+# de connexion.
+appId: app.beninlink.marchand
+tags:
+  - lecture
+---
+- runFlow: ../subflows/connexion.yaml
+- scrollUntilVisible:
+    element:
+      text: "Profil"
+    direction: DOWN
+- tapOn: "Profil"
+- scrollUntilVisible:
+    element:
+      text: "Se déconnecter"
+    direction: DOWN
+- tapOn: "Se déconnecter"
+- extendedWaitUntil:
+    visible: "Se connecter"
+    timeout: 20000
+- assertVisible: "Identifiant marchand"
+- assertNotVisible: "Tableau de bord"

@@ -1,0 +1,21 @@
+# Prouve que le portefeuille s'ouvre avec son solde et le bouton de recharge
+# Mobile Money. Ne paie rien : le bouton est vu, jamais touché.
+appId: app.beninlink.marchand
+tags:
+  - lecture
+---
+- runFlow: ../subflows/connexion.yaml
+- scrollUntilVisible:
+    element:
+      text: "Portefeuille"
+    direction: DOWN
+- tapOn: "Portefeuille"
+- extendedWaitUntil:
+    visible: "Solde du portefeuille"
+    timeout: 20000
+- assertVisible: "Recharger"
+- scrollUntilVisible:
+    element:
+      text: "Payer par Mobile Money"
+    direction: DOWN
+- assertVisible: "Payer par Mobile Money"

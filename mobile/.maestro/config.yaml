@@ -1,0 +1,20 @@
+# Parcours de bout en bout de l'app marchand (Maestro), joués contre un APK installé
+# (`app.beninlink.marchand`) relié au serveur de recette.
+#
+# Lancer, depuis mobile/ :
+#   MAESTRO_IDENTIFIANT=… MAESTRO_MOT_DE_PASSE=… maestro test .maestro
+# Maestro lit de lui-même les variables d'environnement préfixées MAESTRO_ ; on peut
+# aussi les passer par `-e MAESTRO_IDENTIFIANT=…`. Aucun identifiant n'est versionné.
+#
+# Étiquettes :
+#   lecture  — ne modifie rien sur le serveur ; joué par défaut.
+#   ecriture — crée des données en recette (un colis…) ; exclu par défaut. Le jouer
+#              exprès, fichier par fichier :
+#              maestro test .maestro/flows/10-creer-un-colis.yaml
+#
+# `src/maestro.test.ts` (Jest) garde ces parcours alignés sur `src/i18n/fr.ts` et sur
+# les `testID` des écrans : renommer un libellé casse le test, pas la recette.
+flows:
+  - "flows/*"
+excludeTags:
+  - ecriture

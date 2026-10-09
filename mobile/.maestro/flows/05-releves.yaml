@@ -1,0 +1,17 @@
+# Prouve que l'écran des factures (relevés de règlement) s'ouvre : relevé en cours,
+# net à reverser, et la section des relevés émis.
+appId: app.beninlink.marchand
+tags:
+  - lecture
+---
+- runFlow: ../subflows/connexion.yaml
+- scrollUntilVisible:
+    element:
+      text: "Factures"
+    direction: DOWN
+- tapOn: "Factures"
+- extendedWaitUntil:
+    visible: "Relevé en cours"
+    timeout: 20000
+- assertVisible: "Net à reverser"
+- assertVisible: "Relevés émis"

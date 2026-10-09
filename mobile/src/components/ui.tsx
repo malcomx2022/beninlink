@@ -35,10 +35,17 @@ export function Muted({ children }: { children: React.ReactNode }) {
   return <Text style={styles.muted}>{children}</Text>;
 }
 
-/** Message d'erreur. Rouge = incident, conformément à la charte. */
-export function ErrorText({ children }: { children: React.ReactNode }) {
+/**
+ * Message d'erreur. Rouge = incident, conformément à la charte.
+ * `testID` : repère des parcours Maestro (`.maestro/`), sans effet à l'écran.
+ */
+export function ErrorText({ children, testID }: { children: React.ReactNode; testID?: string }) {
   if (!children) return null;
-  return <Text style={styles.error}>{children}</Text>;
+  return (
+    <Text style={styles.error} testID={testID}>
+      {children}
+    </Text>
+  );
 }
 
 type FieldProps = TextInputProps & { label: string; error?: string };
@@ -115,6 +122,9 @@ export function StatTile({
  * Choix parmi quelques options, en pastilles.
  * Préféré à un `Picker` natif : pas de dépendance supplémentaire, et les listes
  * du formulaire de colis (boutiques, catégories, types) restent courtes.
+ *
+ * `testID` : préfixe des repères Maestro — l'option de rang n porte `<testID>-n`
+ * (`colis-zone-0`…), parce que ses libellés viennent du serveur.
  */
 export function ChoiceGroup<T extends string | number>({
   label,
@@ -122,24 +132,27 @@ export function ChoiceGroup<T extends string | number>({
   value,
   onChange,
   error,
+  testID,
 }: {
   label: string;
   options: { value: T; label: string }[];
   value: T | null;
   onChange: (value: T) => void;
   error?: string;
+  testID?: string;
 }) {
   return (
     <View style={styles.field}>
       <Label>{label}</Label>
       <View style={styles.choices}>
-        {options.map((option) => {
+        {options.map((option, index) => {
           const active = option.value === value;
           return (
             <Pressable
               key={String(option.value)}
               onPress={() => onChange(option.value)}
               style={[styles.choice, active && styles.choiceActive]}
+              testID={testID ? `${testID}-${index}` : undefined}
             >
               <Text style={[styles.choiceLabel, active && styles.choiceLabelActive]}>
                 {option.label}
