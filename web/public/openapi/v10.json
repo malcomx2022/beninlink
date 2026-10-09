@@ -3666,12 +3666,17 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
+                                    "mobile": {
+                                        "type": "string",
+                                        "description": "Numéro renvoyé par l’inscription"
+                                    },
                                     "otp": {
                                         "type": "string",
                                         "description": "5 chiffres"
                                     }
                                 },
                                 "required": [
+                                    "mobile",
                                     "otp"
                                 ]
                             }

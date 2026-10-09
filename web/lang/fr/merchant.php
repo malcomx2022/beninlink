@@ -24,6 +24,7 @@ return array (
   'edit_merchant'       => 'Modifier le marchand',
   'delivery_charge_added_msg'           => 'Les frais de livraison du marchand ont été ajoutés avec succès.',
   'added_msg'           => 'Le marchand a été ajouté avec succès.',
+  'signup_validation_error' => 'Veuillez corriger les champs indiqués pour créer votre compte.',
   'update_msg'          => 'Le marchand a été mis à jour avec succès.',
   'delivery_charge_update_msg'          => 'Les frais de livraison du marchand ont été mis à jour avec succès.',
   'delete_msg'          => 'Le marchand a été supprimé avec succès.',

@@ -21,7 +21,7 @@ type SessionState = {
   user: AuthUser | null;
   signIn: (merchantId: string, password: string) => Promise<void>;
   /** Ouvre la session à partir du code SMS reçu après inscription. */
-  verifyOtp: (otp: string) => Promise<void>;
+  verifyOtp: (mobile: string, otp: string) => Promise<void>;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 };
@@ -63,8 +63,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       signIn: async (merchantId, password) => {
         setUser(await apiSignIn(merchantId, password));
       },
-      verifyOtp: async (otp) => {
-        setUser(await apiVerifyOtp(otp));
+      verifyOtp: async (mobile, otp) => {
+        setUser(await apiVerifyOtp(mobile, otp));
       },
       signOut: async () => {
         // D'abord l'appareil, tant que le jeton de session est encore valide :

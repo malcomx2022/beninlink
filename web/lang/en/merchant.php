@@ -1,6 +1,7 @@
 <?php
 
 return array (
+  'signup_validation_error' => 'Please correct the indicated fields to create your account.',
   'dashboard'           => 'Dashboard',
   'merchant_dashboard'  => 'Merchant Dashboard',
   'title'               => 'Merchant',
