@@ -121,12 +121,14 @@ export function ChoiceGroup<T extends string | number>({
   value,
   onChange,
   error,
+  disabled = false,
 }: {
   label: string;
   options: { value: T; label: string }[];
   value: T | null;
   onChange: (value: T) => void;
   error?: string;
+  disabled?: boolean;
 }) {
   return (
     <View style={styles.field}>
@@ -137,6 +139,8 @@ export function ChoiceGroup<T extends string | number>({
           return (
             <Pressable
               key={String(option.value)}
+              disabled={disabled}
+              accessibilityState={{ disabled }}
               onPress={() => onChange(option.value)}
               style={[styles.choice, active && styles.choiceActive]}
             >

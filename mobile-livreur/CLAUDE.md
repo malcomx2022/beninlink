@@ -93,6 +93,7 @@ Icônes Ionicons ; visuels d'app générés depuis `assets/source/generate.py`.
   `reportOutcome()` l'envoie en multipart sous `signatureImage`, le JSON du socle sinon.
 
 ## Commandes
+- Lot 8 : changement d'issue = signature remise à zéro ; formulaire figé pendant capture/envoi ; capture manquante réessayable sans déclaration. Signature facultative conservée. Voir `../docs/LOT_8_PREUVES_LIVRAISON.md`.
 - Lot 7 : actualisation distincte de la restauration, panne réseau propagée sans effacer le compte ; 401 déconnectant et réponse tardive ignorée si le jeton a changé. Voir `../docs/LOT_7_SESSION_RESEAU.md`.
 - `npm install` · `npx expo start` · `npm run typecheck` · `npx expo lint` · `npm test`
   (**S84** : Jest `jest-expo`, les modules purs `money` et `parcelStatus` ; le job `apps` du
