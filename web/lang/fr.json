@@ -264,5 +264,14 @@
     "Successfully verified.": "Vérification réussie.",
     "Invalid OTP.": "Code de vérification invalide.",
     "Invalid API key.": "Clé d'API invalide.",
-    "This file type is not accepted.": "Ce type de fichier n'est pas accepté."
+    "This file type is not accepted.": "Ce type de fichier n'est pas accepté.",
+    "Reset Password Notification": "Réinitialisation de votre mot de passe",
+    "You are receiving this email because we received a password reset request for your account.": "Vous recevez ce courriel parce qu'une réinitialisation du mot de passe de votre compte a été demandée.",
+    "This password reset link will expire in :count minutes.": "Ce lien de réinitialisation expire dans :count minutes.",
+    "If you did not request a password reset, no further action is required.": "Si vous n'avez rien demandé, ignorez ce courriel : votre mot de passe ne change pas.",
+    "Regards": "Cordialement",
+    "Hello!": "Bonjour,",
+    "Whoops!": "Oups !",
+    "If you're having trouble clicking the \":actionText\" button, copy and paste the URL below\ninto your web browser:": "Si le bouton « :actionText » ne fonctionne pas, copiez et collez l'adresse ci-dessous\ndans votre navigateur :",
+    "All rights reserved.": "Tous droits réservés."
 }
