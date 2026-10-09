@@ -141,3 +141,9 @@ Rien de tout ceci ne peut être versionné — ce sont des secrets et des liens 
   ne se rend pas en test : on en **extrait** le morceau à prouver en composant. Avant tout
   commit : `npx tsc --noEmit`, `npx expo lint`, `npm test` ; le job `apps` du workflow les
   rejoue sur la pull request (sans conditionner le déploiement serveur).
+- **Tests d'intégration : l'écran, le module d'API et le vrai client, seul `fetch` simulé** (**S146**).
+  `src/testing/fetchMock.ts` fabrique les réponses et décode les appels ; `src/testing/fields.ts` trouve
+  un `Field` par son libellé. Connexion (avec le vrai `SessionProvider`), mot de passe oublié /
+  réinitialisé, changement de mot de passe et liste des colis se rendent ainsi ; le client, le jeton,
+  les modules d'API et `t()` ont leurs tests unitaires. Chaque `beforeEach` fait `jest.resetAllMocks()`
+  et `clearToken()` : une réponse `mockResolvedValueOnce` ou un jeton d'un test ne passe pas au suivant.
