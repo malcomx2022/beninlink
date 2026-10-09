@@ -297,6 +297,7 @@ export const fr = {
     changePassword: 'Changer le mot de passe',
     currentPassword: 'Mot de passe actuel',
     saved: 'Informations enregistrées.',
+    refresh: 'Actualiser le profil',
     passwordChanged: 'Mot de passe modifié.',
     allFieldsNotice:
       'Tous les champs sont enregistrés tels quels : un champ vidé sera effacé de votre compte.',
