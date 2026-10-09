@@ -240,6 +240,8 @@ avant les apps.
   jamais le mot de passe, et un mot de passe changé change `remember_token` (**S139**, `RememberMeKeepsNoPasswordTest`).
   La connexion Google / Facebook ouvre un compte de la société du site, marchand, actif et vérifié — les conditions de
   `LoginController::credentials()` (**S140**, `SocialLoginController::connecter()`, `SocialLoginStaysInItsCompanyTest`).
+  « Mot de passe oublié » sur le site ne vise qu'un compte de la société du site et **ne connecte pas** : on se
+  connecte ensuite, avec les conditions de la connexion (**S141**, `WebPasswordResetOpensNoSessionTest`).
 - **Un retour de paiement n'applique rien à un identifiant de l'URL** (**S129**) : `switchPlan()` reçoit une
   requête composée (`user_id = Auth::id()`), et une session Stripe ne sert qu'une fois
   (`subscriptions.stripe_session_id` unique, `StripeSubscriptionReturnTest`).

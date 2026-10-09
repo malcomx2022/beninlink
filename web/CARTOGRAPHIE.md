@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-09 (S140 — la connexion Google ou Facebook reste dans sa société ; S139 — « se souvenir de moi » ne garde pas le mot de passe ; S138 — la session d'une inscription ne garde ni mot de passe ni code ; S137 — un code SMS ne sert qu'une fois, et pas longtemps ; S136 — se déconnecter d'un appareil ne déconnecte pas les autres ; S135 — un mot de passe changé ferme les autres accès ; S134 — un mot de passe neuf a huit caractères au moins ; S133 — un numéro béninois se saisit comme on le dit ; S132 — le cookie de session ne part plus en clair ; S131 — la surface publique a une cadence bornée ; S130 — le parcours OTP du site marchand est limité comme l'API ; S129 — le retour Stripe n'active qu'un abonnement, pour le compte qui a payé ; S128 — la partie serveur de S126 est close ; S127 — un texte riche écrit par un autre est nettoyé avant d'être rendu ; S126 — un fichier téléversé ne devient jamais du code serveur ; S125 — l'arriéré des droits du back-office fermé ; S124 — l'installateur de modules fermé, cinq écrans gardés par leur droit ; S123 — l'origine d'un mouvement de portefeuille se lit en français ; S122 — une date affichée parle la langue de son lecteur ; S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-09 (S141 — réinitialiser son mot de passe sur le site n'ouvre pas de session ; S140 — la connexion Google ou Facebook reste dans sa société ; S139 — « se souvenir de moi » ne garde pas le mot de passe ; S138 — la session d'une inscription ne garde ni mot de passe ni code ; S137 — un code SMS ne sert qu'une fois, et pas longtemps ; S136 — se déconnecter d'un appareil ne déconnecte pas les autres ; S135 — un mot de passe changé ferme les autres accès ; S134 — un mot de passe neuf a huit caractères au moins ; S133 — un numéro béninois se saisit comme on le dit ; S132 — le cookie de session ne part plus en clair ; S131 — la surface publique a une cadence bornée ; S130 — le parcours OTP du site marchand est limité comme l'API ; S129 — le retour Stripe n'active qu'un abonnement, pour le compte qui a payé ; S128 — la partie serveur de S126 est close ; S127 — un texte riche écrit par un autre est nettoyé avant d'être rendu ; S126 — un fichier téléversé ne devient jamais du code serveur ; S125 — l'arriéré des droits du back-office fermé ; S124 — l'installateur de modules fermé, cinq écrans gardés par leur droit ; S123 — l'origine d'un mouvement de portefeuille se lit en français ; S122 — une date affichée parle la langue de son lecteur ; S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -9760,3 +9760,36 @@ Mockery garde la première attente, d'où un test par profil.
 ### Côté serveur (au porteur)
 
 Rien à faire. La connexion sociale n'est active que si `google_status` / `facebook_status` le sont.
+
+## S141 — réinitialiser son mot de passe sur le site n'ouvre pas de session (2026-10-09)
+
+### D'où ça vient
+
+« Mot de passe oublié » sur le site passe par `ForgotPasswordController` et `ResetPasswordController`, les traits
+`laravel/ui` du socle, inchangés. Deux défauts, de la même famille que S140 :
+
+- `ResetsPasswords::resetPassword()` **connectait** le compte dès le mot de passe changé, sans aucune condition
+  de `LoginController` : un marchand désactivé par son transporteur, un livreur (S104) ou le compte d'une autre
+  société entraient par ce chemin.
+- L'adresse se cherchait **sur toutes les sociétés** : le site d'un transporteur envoyait son lien de
+  réinitialisation au compte d'un autre, et le réinitialisait.
+
+### Ce qui est fait
+
+- `ForgotPasswordController::credentials()` et `ResetPasswordController::credentials()` ajoutent
+  `company_id = settings()->id` sur un site de locataire : le lien ne part et ne sert que pour un compte du site.
+- `ResetPasswordController::resetPassword()` change le mot de passe et émet `PasswordReset`, **sans connecter** ;
+  `User::booted()` ferme les autres accès et change le jeton de rappel (S135, S139). La réponse renvoie à la page
+  de connexion avec `passwords.reset`.
+- La réinitialisation **par l'API** ne connectait déjà personne (S96, S134) ; elle n'est pas touchée.
+
+### Le filet
+
+`WebPasswordResetOpensNoSessionTest` (3 tests) : une réinitialisation change le mot de passe, renvoie à la
+connexion sans session, et le nouveau mot de passe connecte ; un compte désactivé ou un livreur n'entrent pas
+par ce chemin ; le site n'envoie pas de lien au compte d'une autre société, et son jeton n'y réinitialise rien.
+Sabotages, tous rouges : connexion remise, filtre de société retiré de la réinitialisation, puis de l'envoi du lien.
+
+### Côté serveur (au porteur)
+
+Rien à faire.
