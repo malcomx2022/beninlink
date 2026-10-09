@@ -21,7 +21,7 @@
                                         class="form-control form-control-lg @error('email') is-invalid @enderror"
                                         name="email" required autocomplete="email" autofocus
                                         placeholder="{{ __('placeholder.email_or_mobile') }}"
-                                        @if (Cookie::has('useremail')) ? value="{{ Cookie::get('useremail') }}" : value="{{ old('email') }}" @endif>
+                                        value="{{ old('email', Cookie::get('useremail')) }}">
                                     @error('email')
                                         <span class="invalid-feedback" role="alert">
                                             <strong>{{ $message }}</strong>
@@ -31,8 +31,7 @@
                                 <div class="form-group">
                                     <input id="password" type="password"
                                         class="form-control form-control-lg @error('password') is-invalid @enderror"
-                                        name="password" required autocomplete="current-password" placeholder="{{ __('placeholder.Enter_password') }}"
-                                        @if (Cookie::has('userpassword')) value="{{ Cookie::get('userpassword') }}" @endif>
+                                        name="password" required autocomplete="current-password" placeholder="{{ __('placeholder.Enter_password') }}">
                                     @error('password')
                                         <span class="invalid-feedback" role="alert">
                                             <strong>{{ $message }}</strong>

@@ -34,16 +34,15 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         
-        // Active Remember me 24 houre
-        if($request->remember != null)
-        {
-            Cookie::queue('useremail',$request->email,1440);
-            Cookie::queue('userpassword',$request->password,1440);
-        }
-        else
-        {
+        // S139 — « se souvenir de moi » garde l'identifiant saisi, jamais le mot de passe : le socle le
+        // rangeait 24 h dans un cookie que la page de connexion rendait en clair dans son `value`. Le
+        // retour sans mot de passe est le jeton de rappel de Laravel (`attemptLogin`, case `remember`).
+        // Le cookie d'un navigateur servi avant S139 s'efface à la connexion suivante.
+        Cookie::queue(Cookie::forget('userpassword'));
+        if ($request->boolean('remember')) {
+            Cookie::queue('useremail', $request->email, 1440);
+        } else {
             Cookie::queue(Cookie::forget('useremail'));
-            Cookie::queue(Cookie::forget('userpassword'));
         }
         
         $this->validateLogin($request);
