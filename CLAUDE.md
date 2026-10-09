@@ -56,6 +56,7 @@ Le module **FedaPay** vit **entièrement dans `web/`**. Les apps ouvrent seuleme
 l'`payment_url` renvoyée par le backend ; elles n'accèdent jamais aux clés.
 
 ## Travailler avec Claude Code
+- Refus de validation du compte (lot 10, 2026-10-09) : `docs/LOT_10_VALIDATION_COMPTE.md`.
 - Profil enregistré et relecture (lot 9, 2026-10-09) : `docs/LOT_9_PROFIL_ENREGISTRE.md`.
 - Preuves de livraison (lot 8, 2026-10-09) : `docs/LOT_8_PREUVES_LIVRAISON.md`.
 - Profil et session réseau des apps (lot 7, 2026-10-09) : `docs/LOT_7_SESSION_RESEAU.md`.

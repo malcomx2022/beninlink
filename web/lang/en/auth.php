@@ -34,6 +34,7 @@ return [
     'password_update'   => 'Password updated successfully',
     'password_old'      => 'Old password not match!',
     'profile_update'    => 'Profile updated successfully.',
+    'validation_error' => 'Please correct the form fields.',
 
     /* Lot 4 (2026-09-18) — the product's entry screens. */
     'sign_in'               => 'Sign in',

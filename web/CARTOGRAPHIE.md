@@ -16,6 +16,14 @@
 
 ---
 
+## Lot 10 — validation du compte (2026-10-09)
+
+`Api/V10/AuthController::profileUpdate()` renvoyait `auth.profile_update` même
+sur HTTP 422 ; `updatePassword()` rendait le simple titre `auth.update_password`.
+Les deux refus utilisent maintenant `auth.validation_error` en FR/EN, sans
+modifier la validation, le statut, ni `data.message` par champ. Les messages
+de réussite restent distincts. Voir `../docs/LOT_10_VALIDATION_COMPTE.md`.
+
 ## Recette terrain lot 4 — inscription marchand (2026-10-09)
 
 Complément lot 6 : `Api/V10/AuthController::resendOTP()` appelait deux fois le

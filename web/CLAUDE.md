@@ -4,6 +4,7 @@
 > Garder < 200 lignes. Aucun secret ici (les clés vivent dans web/.env).
 
 ## Rôle
+- Lot 10 : les refus 422 du profil et du mot de passe utilisent `auth.validation_error` ; erreurs par champ et règles conservées. Voir `../docs/LOT_10_VALIDATION_COMPTE.md`.
 **Lot 3 (2026-10-09)** : détail API des relevés via `SettlementStatement`, comme PDF/export ; COD/TVA partiels
 arrondis au franc et validation commune `PartialDeliveryRequest` (web/API/repository). Retraits : entier positif.
 Voir `../docs/LOT_3_CORRECTIONS.md`.

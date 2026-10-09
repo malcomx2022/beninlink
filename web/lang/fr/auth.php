@@ -34,6 +34,7 @@ return [
     'password_update'   => 'Mot de passe mis à jour avec succès',
     'password_old'      => 'L\'ancien mot de passe ne correspond pas !',
     'profile_update'    => 'Profil mis à jour avec succès.',
+    'validation_error' => 'Veuillez corriger les champs du formulaire.',
 
     /* ── Lot 4 (2026-09-18) — les écrans d'entrée du produit ──────────────────
        La page de connexion était entièrement en anglais en dur : c'est la
