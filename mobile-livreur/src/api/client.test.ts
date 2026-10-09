@@ -260,6 +260,19 @@ describe('401 et jeton révoqué (S144)', () => {
     expect(dernierAppel().init.headers.Authorization).toBeUndefined();
   });
 
+  it('efface aussi le jeton quand le 401 arrive en page HTML (proxy) — S147', async () => {
+    await setToken('jeton-revoque');
+    const ecouteur = jest.fn();
+    const retirer = onTokenCleared(ecouteur);
+    fetchMock.mockResolvedValueOnce(reponse(401, '<html>Accès refusé</html>'));
+
+    await expect(api.get('deliveryman/profile')).rejects.toMatchObject({ status: 401 });
+    retirer();
+
+    expect(ecouteur).toHaveBeenCalledTimes(1);
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('beninlink.livreur.token');
+  });
+
   it("n'efface pas le jeton sur un 403 ou un 422", async () => {
     await setToken('jeton-valide');
     fetchMock

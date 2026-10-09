@@ -252,6 +252,9 @@ avant les apps.
   (**S143**, `User::sendPasswordResetNotification()`, `ResetPasswordNotification`, `PasswordResetMailIsQueuedTest`).
   Un compte **désactivé** n'obtient pas de jeton par l'API (403) et perd les siens (`User::booted()`, **S145**,
   `DisabledAccountGetsNoTokenTest`).
+  « Mot de passe oublié » (API et site) rend **une seule réponse**, `passwords.sent_neutral`, que l'adresse ait un
+  compte, n'en ait pas ou ait déjà reçu un lien (**S147**, `PasswordResetTellsNothingTest`) ; le lien ne part qu'au
+  compte qui existe.
 - **Un retour de paiement n'applique rien à un identifiant de l'URL** (**S129**) : `switchPlan()` reçoit une
   requête composée (`user_id = Auth::id()`), et une session Stripe ne sert qu'une fois
   (`subscriptions.stripe_session_id` unique, `StripeSubscriptionReturnTest`).

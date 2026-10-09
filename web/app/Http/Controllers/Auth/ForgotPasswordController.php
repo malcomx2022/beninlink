@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ForgotPasswordController extends Controller
@@ -28,5 +29,26 @@ class ForgotPasswordController extends Controller
     protected function credentials(Request $request)
     {
         return tenant() ? $request->only('email') + ['company_id' => settings()->id] : $request->only('email');
+    }
+
+    /**
+     * **S147** — la page répond pareil, que l'adresse ait un compte ici ou non : le socle disait « nous ne
+     * pouvons pas trouver un utilisateur avec cette adresse », donc lesquelles sont inscrites (contraire à S142).
+     */
+    protected function sendResetLinkResponse(Request $request, $response)
+    {
+        return $this->reponseNeutre($request);
+    }
+
+    protected function sendResetLinkFailedResponse(Request $request, $response)
+    {
+        return $this->reponseNeutre($request);
+    }
+
+    private function reponseNeutre(Request $request)
+    {
+        return $request->wantsJson()
+            ? new JsonResponse(['message' => __('passwords.sent_neutral')], 200)
+            : back()->with('status', __('passwords.sent_neutral'));
     }
 }

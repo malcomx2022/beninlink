@@ -108,7 +108,7 @@ Rien de tout ceci ne peut être versionné — ce sont des secrets et des liens 
 - Recette terrain lot 4 : vérification SMS = `mobile` + `otp` (5 chiffres), transmis de la route d'inscription via `SessionProvider` à `src/api/auth.ts`. Ne pas envoyer le code seul ; voir `../docs/LOT_4_RECETTE_INTEGREE.md`.
 - Réutiliser les patterns de l'app (navigation, services d'API, i18n) ; repérer un écran
   existant avant d'en créer un. Toute chaîne visible passe par l'i18n FR.
-- **Un jeton qui tombe déconnecte l'écran** (**S144**) : le client d'API efface le jeton sur un 401, et `clearToken()`
+- **Un jeton qui tombe déconnecte l'écran** (**S144** ; **S147** : même quand le 401 arrive en page HTML d'un proxy, `client.ts` efface le jeton avant de lire le corps) : le client d'API efface le jeton sur un 401, et `clearToken()`
   prévient `SessionProvider` (`onTokenCleared`), qui revient à la connexion. Depuis S135/S136 le serveur révoque des jetons
   en cours de session ; un écran ne garde jamais un compte dont le jeton n'existe plus (`SessionProvider.test.tsx`).
 - Chaînes **natives** (nom d'app, demandes de permission iOS/Android) : `src/i18n/expo-fr.json`,

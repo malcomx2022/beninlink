@@ -133,6 +133,10 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
   clearTimeout(timeout);
 
+  // S147 : le jeton est refusé quel que soit le corps — un 401 en page HTML (proxy,
+  // pare-feu) doit ramener à la connexion comme un 401 JSON (S144).
+  if (response.status === 401) await clearToken();
+
   const raw = await response.text();
   let payload: unknown = null;
   if (raw.trim() !== '') {
@@ -148,7 +152,6 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
 
   if (!response.ok) {
-    if (response.status === 401) await clearToken();
     throw new ApiError(
       extractMessage(payload, `Erreur serveur (HTTP ${response.status}).`),
       response.status,

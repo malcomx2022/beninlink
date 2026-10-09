@@ -217,17 +217,11 @@ class AuthController extends Controller
     public function sendPasswordResetLinkEmail(Request $request) {
         $request->validate(['email' => 'required|email']);
 
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        // S147 : une seule réponse, que l'adresse ait un compte, n'en ait pas, ou ait déjà reçu un lien
+        // (« throttled » ne vise qu'un compte qui existe) — sinon la route dit quelles adresses sont inscrites.
+        Password::sendResetLink($request->only('email'));
 
-        if($status === Password::RESET_LINK_SENT) {
-            return $this->responseWithSuccess(__('auth.password_reset_link'), ['message' => __($status)], 200);
-        } else {
-            throw ValidationException::withMessages([
-                'email' => __($status)
-            ]);
-        }
+        return $this->responseWithSuccess(__('auth.password_reset_link'), ['message' => __('passwords.sent_neutral')], 200);
     }
 
     public function resetPassword(Request $request) {
