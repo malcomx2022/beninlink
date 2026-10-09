@@ -18,6 +18,12 @@
 
 ## Recette terrain lot 4 — inscription marchand (2026-10-09)
 
+Complément lot 6 : `Api/V10/AuthController::resendOTP()` appelait deux fois le
+repository pour une demande, générant deux SMS dont seul le dernier code était
+valable. Appel unique rétabli ; `OtpSingleUseTest` vérifie un seul job `SendSms`
+et la concordance avec le code enregistré. Le transport D13, les limites et
+la durée de validité restent inchangés. Voir `../docs/LOT_6_RENVOI_SMS.md`.
+
 Le refus de validation de `Api/V10/AuthController::register()` conservait le
 message de succès du socle malgré HTTP 422. Message corrigé, enveloppe et règles
 de validation conservées. `RecettePiloteRepetitionTest` vérifie le message et les

@@ -78,7 +78,6 @@ class AuthController extends Controller
 
     public function resendOTP(Request $request)
     {
-        $this->merchantRepo->resendOTP($request);
         if($this->merchantRepo->resendOTP($request)){
             return $this->responseWithSuccess(__('auth.resend_otp_msg'), ['mobile'=>$request->mobile], 200);
         }else{
