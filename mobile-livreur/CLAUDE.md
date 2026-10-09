@@ -41,7 +41,7 @@ Application **livreur (coursier)**, React Native / Expo. **Consomme l'API de `we
 | Issue de la course (livré / partielle / retour + montant) | `(app)/parcel/[id]/status.tsx` | `deliveryman/parcel-status-update` (`status_action`) |
 | Gains | `(app)/(tabs)/earnings.tsx` | `deliveryman/profile`, `income-expense`, `parcel-payment-logs` |
 | Profil | `(app)/(tabs)/profile.tsx` | `deliveryman/profile`, `sign-out` |
-| Mot de passe | `(app)/profile/password.tsx` | `update-password` (6 caractères, confirmation) |
+| Mot de passe | `(app)/profile/password.tsx` | `update-password` (8 caractères — S134, confirmation) |
 
 ### v2 (2026-09-05)
 - **Position** : `src/domain/location.ts` (`expo-location`, autorisation « pendant
@@ -95,7 +95,13 @@ Icônes Ionicons ; visuels d'app générés depuis `assets/source/generate.py`.
 ## Commandes
 - `npm install` · `npx expo start` · `npm run typecheck` · `npx expo lint` · `npm test`
   (**S84** : Jest `jest-expo`, les modules purs `money` et `parcelStatus` ; le job `apps` du
-  workflow rejoue typage, lint et tests sur la pull request).
+  workflow rejoue typage, lint et tests sur la pull request). **S146** : le client HTTP, le jeton,
+  `auth` / `deliveryman`, `photo` / `location` et `t()` ont leurs tests unitaires ; quatre écrans
+  (connexion, statut d'une course, gains, mots de passe) sont rendus **avec les vrais modules d'API
+  et le vrai `client.ts`**, seul `fetch` simulé, avec les modules de l'appareil (SecureStore, caméra,
+  position, `expo-router`, signature). Un envoi de fichier se teste avec le `FormData` de React Native :
+  celui de Node rend `{uri, name, type}` en « [object Object] ». Chaque `beforeEach` fait
+  `jest.resetAllMocks()` : une réponse `mockResolvedValueOnce` non consommée ne passe pas au test suivant.
 - **Le contrat avec `web/` est tenu en PHPUnit** (**S85**, `web/tests/Feature/DeliverymanAppContractTest`
   et `ParcelStageTest`) : chaque entrée de `src/api/endpoints.ts` existe dans la spec et n'est
   jamais réservée au type marchand ; l'app appelle ce qu'elle inventorie (les entrées sans
