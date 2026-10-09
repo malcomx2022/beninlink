@@ -7,15 +7,20 @@
     "recette": {
       "distribution": "internal",
       "channel": "recette",
-      "android": { "buildType": "apk" },
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://recette.beninlink.app/api/v10"
-      }
+      },
+      "environment": "preview"
     },
     "production": {
       "autoIncrement": true,
       "channel": "production",
-      "android": { "buildType": "app-bundle" },
+      "android": {
+        "buildType": "app-bundle"
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://beninlink.app/api/v10"
       }

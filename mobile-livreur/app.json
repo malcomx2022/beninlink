@@ -17,7 +17,12 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png",
         "backgroundColor": "#12503A"
-      }
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "ios": {
       "bundleIdentifier": "app.beninlink.livreur",
@@ -61,6 +66,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "projectId": "62234009-eec4-4bdd-9a83-b3e4c30b5d98",
+    "owner": "ulrichseglas-team",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "62234009-eec4-4bdd-9a83-b3e4c30b5d98"
+      }
     }
   }
 }

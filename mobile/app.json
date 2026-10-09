@@ -48,6 +48,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "projectId": "dec3eeea-1ea8-4e8d-8eb0-09d2a8603d5c",
+    "owner": "ulrichseglas-team",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "dec3eeea-1ea8-4e8d-8eb0-09d2a8603d5c"
+      }
     }
   }
 }
