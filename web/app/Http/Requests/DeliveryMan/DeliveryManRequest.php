@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\DeliveryMan;
 
+use Illuminate\Validation\Rules\Password;
 use App\Models\Backend\DeliveryMan;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Request;
@@ -33,11 +34,11 @@ class DeliveryManRequest extends FormRequest
 
             $email    = ['required', 'email', 'string', Rule::unique("users", "email")->ignore($userID)];
             $mobile   = ['required', 'numeric','digits_between:11,14', Rule::unique("users", "mobile")->ignore($userID)];
-            $password = ['nullable'];
+            $password = ['nullable', Password::defaults()]; // S134
         } else {
             $email    = ['required', 'email', 'string', 'unique:users,email'];
             $mobile   = ['required', 'numeric','digits_between:11,14', 'unique:users,mobile'];
-            $password = ['required', 'min:6'];
+            $password = ['required', Password::defaults()]; // S134
         }
 
         return [

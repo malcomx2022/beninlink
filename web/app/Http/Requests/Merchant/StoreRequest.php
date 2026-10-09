@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Merchant;
 
+use Illuminate\Validation\Rules\Password;
 use App\Models\User;
 use App\Rules\LegalIdentifier;
 use Illuminate\Foundation\Http\FormRequest;
@@ -31,7 +32,7 @@ class StoreRequest extends FormRequest
             'mobile'                => ['required','numeric','digits_between:11,14'], 
             'hub'                   => ['required','numeric'],
             'status'                => ['required','numeric'],
-            'password'              => ['required','min:6'],
+            'password'              => ['required', Password::defaults()], // S134
             'address'               => ['required','string','max:191'],
             'payment_period'        => ['numeric'],
             // R7 b (S75) : statut TVA explicite — trois valeurs, rien d'autre.

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Merchant;
 
+use Illuminate\Validation\Rules\Password;
 use App\Models\User;
 use App\Rules\LegalIdentifier;
 use Illuminate\Foundation\Http\FormRequest;
@@ -38,7 +39,7 @@ class SignUpRequest extends FormRequest
             // 'last_name'         => ['nullable','string','max:191'],
             'address'           => ['required','string','max:191'],
             'mobile'            => ['required','numeric','digits_between:11,14' ],
-            'password'          => ['required','min:6'],
+            'password'          => ['required', Password::defaults()], // S134
             // Identifiants légaux béninois (chantier 2). IFU et RCCM identifient
             // l'entreprise ; la CNSS ne concerne que les employeurs, d'où `nullable`.
             'ifu'               => ['required', new LegalIdentifier(LegalIdentifier::IFU)],

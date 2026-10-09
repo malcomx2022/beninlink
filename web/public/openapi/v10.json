@@ -6480,11 +6480,11 @@
                                     },
                                     "mobile": {
                                         "type": "string",
-                                        "description": "11 à 14 chiffres avec indicatif, ex. 22997000000"
+                                        "description": "10 chiffres, avec ou sans +229, ex. 01 97 00 00 00 ; rangé 2290197000000 (S133)"
                                     },
                                     "password": {
                                         "type": "string",
-                                        "description": "6 caractères minimum"
+                                        "description": "8 caractères minimum (S134)"
                                     },
                                     "ifu": {
                                         "type": "string",
@@ -8494,7 +8494,7 @@
                                     },
                                     "new_password": {
                                         "type": "string",
-                                        "description": "6 caractères minimum"
+                                        "description": "8 caractères minimum (S134)"
                                     },
                                     "confirm_password": {
                                         "type": "string"

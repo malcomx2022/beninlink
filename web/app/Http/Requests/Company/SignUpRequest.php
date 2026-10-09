@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Company;
 
+use Illuminate\Validation\Rules\Password;
 use App\Rules\LegalIdentifier;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -28,7 +29,7 @@ class SignUpRequest extends FormRequest
             // owner user information
             'name'           => ['required','string','max:191'],
             'email'          => ['required','string','unique:users'],
-            'password'       => ['required','string'],
+            'password'       => ['required','string', Password::defaults()], // S134
             'mobile'         => ['required','numeric','unique:users'], 
             'address'        => ['string','max:191'],
             // Identifiants legaux du transporteur (chantier 2).
