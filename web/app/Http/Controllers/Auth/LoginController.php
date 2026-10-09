@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
@@ -57,7 +58,12 @@ class LoginController extends Controller
         // l'app livreur. Le laisser entrer menait à `/dashboard`, qui lui
         // répondait 500 (famille S37 : un refus annoncé comme une panne). On
         // refuse ici, avant la session, avec le mot qui dit où aller.
-        if ($user && (int) $user->user_type === UserType::DELIVERYMAN) {
+        // S142 — ce qu'on dit d'un compte (livreur, transporteur de rattachement) ne se dit qu'à qui a
+        // son mot de passe. Le socle redirigeait vers le site du transporteur, et S104 refusait le livreur,
+        // sur la seule adresse saisie : n'importe qui apprenait chez quel transporteur une PME est inscrite.
+        $motDePasseJuste = $user && Hash::check((string) $request->get('password'), (string) $user->password);
+
+        if ($motDePasseJuste && (int) $user->user_type === UserType::DELIVERYMAN) {
             throw ValidationException::withMessages([
                 $this->username() => [__('auth.courier_app_only')],
             ]);
@@ -72,7 +78,7 @@ class LoginController extends Controller
            
         else: 
          
-            if($user && $user->user_type != UserType::SUPER_ADMIN): 
+            if($motDePasseJuste && $user->user_type != UserType::SUPER_ADMIN): 
                 return redirect()->to(scheme_name($user->tenantDetails->domains[0]->domain));
                 // return $this->sendFailedLoginResponse($request);
             endif;
