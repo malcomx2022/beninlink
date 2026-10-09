@@ -56,6 +56,7 @@ Le module **FedaPay** vit **entièrement dans `web/`**. Les apps ouvrent seuleme
 l'`payment_url` renvoyée par le backend ; elles n'accèdent jamais aux clés.
 
 ## Travailler avec Claude Code
+- Saisie inscription marchand (lot 5, 2026-10-09) : `docs/LOT_5_SAISIE_INSCRIPTION.md`.
 - Recette intégrée (lot 4, 2026-10-09) : `docs/LOT_4_RECETTE_INTEGREE.md` ; preuves terrain à compléter, versions serveur/APK à identifier.
 - Corrections d'alignement (lot 3, 2026-10-09) : `docs/LOT_3_CORRECTIONS.md`.
 - Revue d'alignement des trois applications (lots 1–2, référence S145) :

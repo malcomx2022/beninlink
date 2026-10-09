@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { signUp } from '../../src/api/auth';
 import { ApiError } from '../../src/api/client';
@@ -19,6 +20,7 @@ import { t } from '../../src/i18n';
  */
 export default function SignUpScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [values, setValues] = useState({
     business_name: '',
     full_name: '',
@@ -39,6 +41,16 @@ export default function SignUpScreen() {
   async function submit() {
     setError('');
     setFieldErrors({});
+    const requiredFields = ['business_name', 'full_name', 'mobile', 'address', 'ifu', 'rccm', 'password'] as const;
+    const missing: Record<string, string[]> = {};
+    for (const field of requiredFields) {
+      if (!values[field].trim()) missing[field] = [t('errors.requiredField')];
+    }
+    if (Object.keys(missing).length) {
+      setFieldErrors(missing);
+      setError(t('auth.signupCorrectionHint'));
+      return;
+    }
     setLoading(true);
     try {
       const mobile = await signUp({
@@ -71,7 +83,8 @@ export default function SignUpScreen() {
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.page, { paddingBottom: spacing.lg + insets.bottom }]} keyboardShouldPersistTaps="handled">
+        <Muted>{t('auth.signupRequiredHint')}</Muted>
         <Field
           label={t('auth.companyName')}
           value={values.business_name}
@@ -93,10 +106,11 @@ export default function SignUpScreen() {
           value={values.mobile}
           onChangeText={set('mobile')}
           keyboardType="phone-pad"
-          placeholder="22997000000"
+          placeholder="01 97 00 00 00"
           error={fieldErrors.mobile?.[0]}
           editable={!loading}
         />
+        <Muted>{t('auth.signupPhoneHint')}</Muted>
         <Field
           label={t('auth.city')}
           value={values.address}
@@ -108,7 +122,7 @@ export default function SignUpScreen() {
 
         <Muted>{t('auth.legalSection')}</Muted>
         <Field
-          label={t('auth.ifu')}
+          label={`${t('auth.ifu')} (${t('common.required')})`}
           value={values.ifu}
           onChangeText={set('ifu')}
           keyboardType="number-pad"
@@ -118,14 +132,15 @@ export default function SignUpScreen() {
           editable={!loading}
         />
         <Field
-          label={t('auth.rccm')}
+          label={`${t('auth.rccm')} (${t('common.required')})`}
           value={values.rccm}
           onChangeText={set('rccm')}
           autoCapitalize="characters"
-          placeholder="RB/COT/24 B 1234"
+          placeholder="Ex. RB/COT/24 B 1234"
           error={fieldErrors.rccm?.[0]}
           editable={!loading}
         />
+        <Muted>{t('auth.signupRccmHint')}</Muted>
         <Field
           label={`${t('auth.cnss')} (${t('common.optional')})`}
           value={values.cnss}
@@ -144,7 +159,7 @@ export default function SignUpScreen() {
           error={fieldErrors.password?.[0]}
           editable={!loading}
         />
-
+        <Muted>{t('auth.signupPasswordHint')}</Muted>
         <ErrorText>{error}</ErrorText>
         <Button title={t('auth.createAccount')} onPress={submit} loading={loading} />
       </ScrollView>
