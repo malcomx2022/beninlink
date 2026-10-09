@@ -342,7 +342,7 @@ describe('réseau', () => {
     expect(signal?.aborted).toBe(false); // le minuteur a été annulé après la réponse
   });
 
-  it("répercute l'abandon demandé par l'appelant (rapporté comme un délai dépassé)", async () => {
+  it("répercute l'abandon demandé par l'appelant, dit « annulée » (S148)", async () => {
     const controleur = new AbortController();
     fetchMock.mockImplementationOnce(
       (_url, init) =>
@@ -354,6 +354,39 @@ describe('réseau', () => {
     const promesse = request('deliveryman/dashboard', { authenticated: false, signal: controleur.signal });
     controleur.abort();
 
-    await expect(promesse).rejects.toMatchObject({ status: 0, message: 'La requête a expiré. Vérifiez votre connexion.' });
+    await expect(promesse).rejects.toMatchObject({ status: 0, message: 'Requête annulée.' });
+  });
+
+  it("n'envoie rien quand l'appelant a déjà renoncé (S148)", async () => {
+    const controleur = new AbortController();
+    controleur.abort();
+
+    await expect(request('deliveryman/dashboard', { signal: controleur.signal })).rejects.toMatchObject({ message: 'Requête annulée.' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("n'envoie rien quand l'appelant renonce pendant la lecture du jeton (S148)", async () => {
+    let rendreJeton: (v: string | null) => void = () => undefined;
+    jest.mocked(SecureStore.getItemAsync).mockImplementationOnce(
+      () => new Promise((resolve) => { rendreJeton = resolve; }),
+    );
+    const controleur = new AbortController();
+
+    const promesse = request('deliveryman/dashboard', { signal: controleur.signal });
+    controleur.abort();
+    rendreJeton('jeton');
+
+    await expect(promesse).rejects.toMatchObject({ message: 'Requête annulée.' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("ne garde aucun écouteur sur le signal de l'appelant après la réponse (S148)", async () => {
+    const controleur = new AbortController();
+    const retirer = jest.spyOn(controleur.signal, 'removeEventListener');
+    fetchMock.mockResolvedValueOnce(reponse(200, { data: [] }));
+
+    await request('deliveryman/dashboard', { signal: controleur.signal });
+
+    expect(retirer).toHaveBeenCalledWith('abort', expect.any(Function));
   });
 });

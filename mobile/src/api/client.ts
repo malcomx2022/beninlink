@@ -172,6 +172,11 @@ function readPage(candidate: unknown): ApiPage | null {
 }
 
 /** Envoie la requête et rend la réponse JSON brute (enveloppe comprise), ou lève `ApiError`. */
+/** Le renoncement de l'appelant (devis devenu obsolète…), distinct d'un délai dépassé. */
+function requeteAnnulee(): ApiError {
+  return new ApiError('Requête annulée.', 0);
+}
+
 async function perform(path: string, options: RequestOptions = {}): Promise<unknown> {
   const { method = 'GET', body, authenticated = true, query, signal } = options;
 
@@ -186,10 +191,19 @@ async function perform(path: string, options: RequestOptions = {}): Promise<unkn
     if (token) headers.Authorization = `Bearer ${token}`;
   }
 
+  // S148 : un appelant qui a renoncé — avant l'appel ou pendant la lecture du jeton —
+  // n'envoie rien ; son renoncement se dit « annulée », jamais « expirée ».
+  if (signal?.aborted) throw requeteAnnulee();
+
   // Abandon au-delà du délai, en respectant un signal éventuellement fourni.
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  signal?.addEventListener('abort', () => controller.abort(), { once: true });
+  const relayerAbandon = () => controller.abort();
+  signal?.addEventListener('abort', relayerAbandon, { once: true });
+  const liberer = () => {
+    clearTimeout(timeout);
+    signal?.removeEventListener('abort', relayerAbandon);
+  };
 
   let response: Response;
   try {
@@ -200,13 +214,14 @@ async function perform(path: string, options: RequestOptions = {}): Promise<unkn
       signal: controller.signal,
     });
   } catch {
-    clearTimeout(timeout);
+    liberer();
+    if (signal?.aborted) throw requeteAnnulee();
     if (controller.signal.aborted) {
       throw new ApiError('La requête a expiré. Vérifiez votre connexion.', 0);
     }
     throw new ApiError('Connexion au serveur impossible.', 0);
   }
-  clearTimeout(timeout);
+  liberer();
 
   // S147 : le jeton est refusé quel que soit le corps — un 401 en page HTML (proxy,
   // pare-feu) doit ramener à la connexion comme un 401 JSON (S144).
