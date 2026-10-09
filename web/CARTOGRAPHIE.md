@@ -9917,3 +9917,18 @@ recrée pas. Sabotages, chacun rouge sur son seul test : refus de l'API retiré,
 
 Rien. Les comptes désactivés **avant** ce lot gardent leurs jetons ouverts jusqu'à leur prochaine modification de
 statut ; pour les fermer tout de suite : réactiver puis désactiver le compte depuis le back-office.
+
+## Revue d'alignement — lot 3 (2026-10-09, base S145)
+
+Complément des sessions historiques, sans nouvelle numérotation Claude. Plan et reproductions :
+`docs/REVUE_ALIGNEMENT_LOTS_1_2.md` ; corrections et recette restante : `docs/LOT_3_CORRECTIONS.md`.
+
+- Détail API de relevé : `InvoiceDetailsResource` lit `SettlementStatement` (lignes figées), expose TVA/autres frais
+  et cohérence du net enregistré. Aucun `whereIn(parcels_id)` ni recalcul des colis vivants.
+- Partiel : `PartialDeliveryRequest` commun aux routes web/livreur et au repository ; COD/TVA arrondis. L'annulation
+  conserve le remboursement des montants réellement écrits. Aucun changement de schéma ni reprise du passé.
+- Retrait : entier positif ; gains livreur : agrégat des dépenses corrigé. OpenAPI régénéré depuis l'overlay.
+- Marchand : devis lié aux choix courants, vérification de recharge persistée par compte, niveaux douaniers communs.
+- Régressions : `ThreeApplicationsAlignmentTest`, `PartialDeliveryAccountingTest`, tests d'écrans marchand.
+- Le lot ne fusionne pas sur main et ne déploie pas. La recette Android/sandbox et la vérification des relevés
+  historiques incohérents restent nécessaires avant finalisation.

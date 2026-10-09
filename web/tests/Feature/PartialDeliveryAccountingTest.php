@@ -45,8 +45,8 @@ class PartialDeliveryAccountingTest extends TestCase
     /** 120 (COD) + 1 000 (livraison) + 0 (emballage, fragile). */
     private const CHARGES_REDUITES = 1120.0;
 
-    /** 18 % de 1 120. */
-    private const TVA_REDUITE = 201.6;
+    /** 18 % de 1 120, arrondis au franc XOF. */
+    private const TVA_REDUITE = 202.0;
 
     private Merchant $marchand;
     private DeliveryMan $livreur;

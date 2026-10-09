@@ -18,6 +18,7 @@ import { fonts, fontSizes, radii, spacing } from '../../../src/theme/typography'
 import { deliveryTypeId, deliveryTypeLabel } from '../../../src/domain/deliveryType';
 import { formatAmount, formatRate } from '../../../src/domain/money';
 import { zoneChoices } from '../../../src/domain/zoneChoices';
+import { customsLevelColorName } from '../../../src/domain/customsLevel';
 import { t } from '../../../src/i18n';
 
 /**
@@ -42,8 +43,7 @@ export default function NewParcelScreen() {
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [typeId, setTypeId] = useState<number | null>(null);
   /**
-   * Route du colis (**D4**) : zone et délai. `null` = barème hérité, le colis
-   * est alors facturé par son seul type de livraison, comme avant la refonte.
+   * Route du colis (**D4**) : zone obligatoire et délai facultatif (S91).
    */
   const [zoneId, setZoneId] = useState<number | null>(null);
   const [delayId, setDelayId] = useState<number | null>(null);
@@ -67,12 +67,17 @@ export default function NewParcelScreen() {
   const [shortfall, setShortfall] = useState<WalletShortfall | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [quote, setQuote] = useState<ParcelQuote | null>(null);
+  const [quoteResult, setQuote] = useState<ParcelQuote | null>(null);
+  const [quotedKey, setQuotedKey] = useState('');
   const [quoting, setQuoting] = useState(false);
   /** Douane : référentiel des pays et catégories, et choix du marchand. */
   const [customs, setCustoms] = useState<CustomsReference | null>(null);
   const [country, setCountry] = useState<string | null>(null);
   const [goods, setGoods] = useState<string | null>(null);
+
+  // La signature invalide le devis dès le rendu, avant même le prochain effet.
+  const quoteKey = JSON.stringify([categoryId, typeId, values.cash_collection, values.weight, country, goods, zoneId, delayId]);
+  const quote = quotedKey === quoteKey ? quoteResult : null;
 
   const set = (key: keyof typeof values) => (value: string) =>
     setValues((v) => ({ ...v, [key]: value }));
@@ -113,7 +118,9 @@ export default function NewParcelScreen() {
    * lente pourrait écraser une réponse plus récente.
    */
   useEffect(() => {
-    if (!categoryId || !typeId) {
+    setQuote(null);
+    setQuoting(false);
+    if (!categoryId || !typeId || !zoneId) {
       setQuote(null);
       return;
     }
@@ -135,10 +142,13 @@ export default function NewParcelScreen() {
           },
           controller.signal,
         );
-        setQuote(result);
+        if (!controller.signal.aborted) {
+          setQuote(result);
+          setQuotedKey(quoteKey);
+        }
       } catch {
         // Devis abandonné ou serveur indisponible : on n'affiche aucun montant
-        // plutôt qu'un montant faux. La création reste possible.
+        // plutôt qu'un montant faux. Un devis courant est requis avant confirmation.
         if (!controller.signal.aborted) setQuote(null);
       } finally {
         if (!controller.signal.aborted) setQuoting(false);
@@ -149,7 +159,7 @@ export default function NewParcelScreen() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [categoryId, typeId, values.cash_collection, values.weight, country, goods, zoneId, delayId]);
+  }, [categoryId, typeId, values.cash_collection, values.weight, country, goods, zoneId, delayId, quoteKey]);
 
   const typeOptions = useMemo(() => {
     // `deliveryTypes` liste des interrupteurs de configuration : on ne garde que
@@ -203,8 +213,13 @@ export default function NewParcelScreen() {
       return;
     }
     const cash = Number(values.cash_collection.replace(/\s/g, ''));
-    if (!Number.isFinite(cash) || cash < 0) {
+    if (!Number.isInteger(cash) || cash < 0) {
       setFieldErrors({ cash_collection: [t('parcels.invalidAmount')] });
+      return;
+    }
+
+    if (!quote || quoting || quote.customs?.blocking) {
+      setError(t('parcels.quoteHint'));
       return;
     }
 
@@ -435,13 +450,13 @@ export default function NewParcelScreen() {
             <View
               style={[
                 styles.customs,
-                { borderColor: quote.customs.blocking ? colors.danger : colors.accent },
+                { borderColor: colors[customsLevelColorName(quote.customs.level)] },
               ]}
             >
               <Text
                 style={[
                   styles.customsLevel,
-                  { color: quote.customs.blocking ? colors.danger : colors.accentDark },
+                  { color: colors[customsLevelColorName(quote.customs.level)] },
                 ]}
               >
                 {quote.customs.blocking ? t('customs.blockingTitle') : quote.customs.level_name}
@@ -472,7 +487,7 @@ export default function NewParcelScreen() {
           title={t('parcels.create')}
           onPress={submit}
           loading={saving}
-          disabled={quote?.customs?.blocking === true}
+          disabled={!quote || quoting || quote.customs?.blocking === true}
           variant="accent"
         />
       </ScrollView>

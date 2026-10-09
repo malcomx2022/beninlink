@@ -176,6 +176,10 @@ export const fr = {
     rechargeAction: 'Payer par Mobile Money',
     operators: 'MTN MoMo et Moov Money — vous choisirez votre opérateur à l\'étape suivante.',
     invalidAmount: 'Saisissez un montant entier supérieur à zéro.',
+    checkRecharge: 'Vérifier le paiement',
+    resumePayment: 'Reprendre le paiement',
+    rechargeDeclined: 'Paiement refusé. Votre portefeuille n’a pas été crédité.',
+    rechargeCanceled: 'Paiement annulé. Votre portefeuille n’a pas été crédité.',
     rechargeApproved: 'Paiement confirmé. Votre solde a été mis à jour.',
     /** Le crédit dépend du webhook signé : ne jamais annoncer un solde à jour trop tôt. */
     rechargePending:
@@ -184,6 +188,8 @@ export const fr = {
       'Le solde n\'est crédité qu\'après confirmation de l\'opérateur, jamais au retour de la page de paiement.',
   },
   invoices: {
+    needsReview: 'La ventilation de ce relevé nécessite une vérification comptable. Le net enregistré est conservé ; contactez votre transporteur.',
+    otherFees: 'Autres frais (emballage, fragile)',
     title: 'Factures',
     settlementStatement: 'Relevé de règlement',
     codCollected: 'Encaissé COD',

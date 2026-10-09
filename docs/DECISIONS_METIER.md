@@ -19,6 +19,10 @@
 ---
 
 ## D1 — TVA au niveau entreprise ✅
+Suivi d'implémentation du **2026-10-09 (lot 3)** : application de l'arrondi XOF aux livraisons partielles et de
+la source figée aux détails API des relevés ; aucune nouvelle décision, reprise historique ou migration DECIMAL.
+D8 (inversion), D9 (relevé) et D15 sont conservées. Voir `LOT_3_CORRECTIONS.md`.
+
 
 **Constat.** Le socle ne connaissait qu'un taux **par marchand** (`merchants.vat`,
 défaut 0). Un marchand créé sans saisie n'était jamais taxé : la facture était fausse

@@ -15,7 +15,9 @@ use App\Repositories\DeliveryMan\DeliveryManInterface;
 use App\Repositories\Parcel\ParcelInterface;
 use App\Traits\ApiReturnFormatTrait;
 use Illuminate\Http\Request;
+use App\Http\Requests\Parcel\PartialDeliveryRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class DeliverymanController extends Controller
 {
@@ -168,6 +170,10 @@ class DeliverymanController extends Controller
 
             //partial delivered
             case ParcelStatus::PARTIAL_DELIVERED:
+                $validator = Validator::make($request->all(), (new PartialDeliveryRequest())->rules());
+                if ($validator->fails()) {
+                    return $this->responseWithError(__('parcel.required'), ['message' => $validator->errors()], 422);
+                }
                 if($this->parcel->parcelPartialDelivered($request->parcel_id, $request)):
                     return $this->responseWithSuccess(__('parcel.partial_delivered_success'),[],200);
                 else:

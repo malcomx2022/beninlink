@@ -23,7 +23,7 @@ const TOKEN_KEY = 'beninlink.merchant.token';
 
 const isWeb = Platform.OS === 'web';
 
-const storage = {
+export const storage = {
   async get(key: string): Promise<string | null> {
     if (isWeb) {
       try {

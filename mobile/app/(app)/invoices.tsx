@@ -185,10 +185,18 @@ export default function InvoicesScreen() {
             {open &&
               (detail ? (
                 <View style={styles.detail}>
-                  <Line label={t('invoices.codCollected')} value={detail.total_deliverd_amount} />
-                  <Line label={t('invoices.fees')} value={detail.delivery_charge} negative />
-                  <Line label={t('parcels.codFee')} value={detail.cod_amount} negative />
-                  <Line label={t('invoices.returnFees')} value={detail.total_return_fee} negative />
+                  {detail.statement_consistent === false ? (
+                    <ErrorText>{t('invoices.needsReview')}</ErrorText>
+                  ) : (
+                    <>
+                      <Line label={t('invoices.codCollected')} value={detail.total_deliverd_amount} />
+                      <Line label={t('invoices.fees')} value={detail.delivery_charge} negative />
+                      <Line label={t('parcels.codFee')} value={detail.cod_amount} negative />
+                      <Line label={t('invoices.returnFees')} value={detail.total_return_fee} negative />
+                      <Line label={t('invoices.otherFees')} value={detail.other_fees ?? 0} negative />
+                      <Line label={t('invoices.vat')} value={detail.vat_amount ?? 0} negative />
+                    </>
+                  )}
                   <Line label={t('invoices.netPayable')} value={detail.payable_amount} strong />
                   <Muted>
                     {t('invoices.totalParcels')} : {detail.total_parcels}

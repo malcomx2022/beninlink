@@ -53,6 +53,10 @@ Chercher un écran dans `src/` ne trouve rien — et ne prouve rien (S68).
   **avant** l'envoi — le serveur refuserait. `MerchantAppPricingContractTest` (web) lit ces sources.
 
 ## Statuts colis (alignés backend)
+**Lot 3 (2026-10-09)** : confirmation seulement avec un devis courant ; TVA/autres frais figés dans le relevé.
+Référence de recharge pending persistée par compte (stockage de session), bouton « Vérifier le paiement » après
+réouverture ; « Reprendre le paiement » rouvre la même URL, sans nouvelle transaction ; refus et annulation distincts de l'attente. Voir `../docs/LOT_3_CORRECTIONS.md`.
+
 En attente → Ramassage assigné → Entrepôt → Livreur assigné → Livré ; + Livraison partielle, Retour.
 
 ## Design system
