@@ -261,7 +261,42 @@ describe('erreurs', () => {
     const e = await erreur(api.post('parcel/quote', {}, { signal: controller.signal }));
 
     expect(e.status).toBe(0);
-    expect(e.message).toBe('La requête a expiré. Vérifiez votre connexion.');
+    expect(e.message).toBe('Requête annulée.'); // S148 : pas « expirée »
+  });
+
+  it("n'envoie rien quand l'appelant a déjà renoncé (S148)", async () => {
+    const controller = new AbortController();
+    controller.abort();
+
+    const e = await erreur(api.post('parcel/quote', {}, { signal: controller.signal }));
+
+    expect(e.message).toBe('Requête annulée.');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("n'envoie rien quand l'appelant renonce pendant la lecture du jeton (S148)", async () => {
+    let rendreJeton: (v: string | null) => void = () => undefined;
+    jest.mocked(SecureStore.getItemAsync).mockImplementationOnce(
+      () => new Promise((resolve) => { rendreJeton = resolve; }),
+    );
+    const controller = new AbortController();
+
+    const promesse = erreur(api.post('parcel/quote', {}, { signal: controller.signal }));
+    controller.abort();
+    rendreJeton('jeton');
+
+    expect((await promesse).message).toBe('Requête annulée.');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("ne garde aucun écouteur sur le signal de l'appelant après la réponse (S148)", async () => {
+    const controller = new AbortController();
+    const retirer = jest.spyOn(controller.signal, 'removeEventListener');
+    fetchMock.mockResolvedValueOnce(ok({}));
+
+    await api.post('parcel/quote', {}, { signal: controller.signal });
+
+    expect(retirer).toHaveBeenCalledWith('abort', expect.any(Function));
   });
 });
 

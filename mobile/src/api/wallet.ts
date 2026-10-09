@@ -27,7 +27,10 @@ export async function fetchWalletHistory(page = 1): Promise<Paged<WalletEntry>> 
     endpoints.walletHistory,
     { query: { page } },
   );
-  return toPaged(data?.entries ?? [], pageInfo, WALLET_HISTORY_PER_PAGE);
+  // S148 : `data` vide arrive en `[]` (ApiReturnFormatTrait) — et `[].entries` est une méthode
+  // de tableau, pas une liste. Seul un tableau est une liste de mouvements.
+  const entries = data && Array.isArray(data.entries) ? data.entries : [];
+  return toPaged(entries, pageInfo, WALLET_HISTORY_PER_PAGE);
 }
 
 export async function fetchPaymentAccounts(): Promise<PaymentAccount[]> {

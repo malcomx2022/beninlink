@@ -73,6 +73,11 @@ describe('historique du porte-monnaie', () => {
     fetchMock.mockResolvedValueOnce(ok({}));
     await expect(fetchWalletHistory()).resolves.toEqual({ items: [], hasMore: false });
   });
+
+  it("rend une liste vide quand `data` arrive en tableau vide — `[].entries` n'est pas une liste (S148)", async () => {
+    fetchMock.mockResolvedValueOnce(ok([]));
+    await expect(fetchWalletHistory()).resolves.toEqual({ items: [], hasMore: false });
+  });
 });
 
 describe('comptes et demandes de retrait', () => {
