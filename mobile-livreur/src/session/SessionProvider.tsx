@@ -10,7 +10,7 @@ import type { ReactNode } from 'react';
 
 import { signIn as apiSignIn, signOut as apiSignOut } from '../api/auth';
 import { fetchProfile } from '../api/deliveryman';
-import { getToken } from '../api/session';
+import { getToken, onTokenCleared } from '../api/session';
 import { desabonnerAppareil } from '../push';
 import type { DeliverymanUser } from '../api/types';
 
@@ -47,6 +47,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void restore();
   }, [restore]);
+
+  // S144 — un jeton révoqué en cours de session (401) ramène à l'écran de connexion.
+  useEffect(() => onTokenCleared(() => setUser(null)), []);
 
   const value = useMemo<SessionState>(
     () => ({

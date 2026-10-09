@@ -65,7 +65,24 @@ export async function setToken(token: string): Promise<void> {
   await storage.set(TOKEN_KEY, token);
 }
 
+/**
+ * S144 — qui doit savoir que le jeton est tombé. Le client d'API efface le jeton sur un 401 ; depuis S135 et S136
+ * le serveur en révoque en cours de session (mot de passe changé ailleurs, réinitialisé, rafraîchi). Sans écouteur,
+ * la session gardait son compte en mémoire : l'app restait sur des écrans connectés dont chaque appel échouait,
+ * jusqu'au redémarrage. `SessionProvider` s'abonne et revient à l'écran de connexion.
+ */
+type Ecouteur = () => void;
+const ecouteurs = new Set<Ecouteur>();
+
+export function onTokenCleared(ecouteur: Ecouteur): () => void {
+  ecouteurs.add(ecouteur);
+  return () => {
+    ecouteurs.delete(ecouteur);
+  };
+}
+
 export async function clearToken(): Promise<void> {
   cachedToken = null;
   await storage.remove(TOKEN_KEY);
+  ecouteurs.forEach((ecouteur) => ecouteur());
 }
