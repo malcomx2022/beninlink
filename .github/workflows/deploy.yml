@@ -101,7 +101,10 @@ jobs:
         run: npx expo lint
 
       - name: Tests
-        run: npm test -- --ci
+        # Les suites React Native chargent le runtime et ses transformations.
+        # Les sérialiser limite la concurrence sur le runner et reproduit
+        # la validation locale ; aucun délai de test n'est augmenté.
+        run: npm test -- --ci --runInBand
 
   # S80 — la RÉPÉTITION de déploiement : ce que `deploy.sh` fait sur le serveur,
   # rejoué ici avant, sur une pull request comme sur `main`.

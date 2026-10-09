@@ -103,6 +103,7 @@ Rien de tout ceci ne peut être versionné — ce sont des secrets et des liens 
    porte aucune.
 
 ## Conventions
+- Lot 5 : champs obligatoires contrôlés avant inscription, aide téléphone/RCCM, bouton au-dessus de la zone système ; la validation des formats reste côté serveur. Voir `../docs/LOT_5_SAISIE_INSCRIPTION.md`.
 - Recette terrain lot 4 : vérification SMS = `mobile` + `otp` (5 chiffres), transmis de la route d'inscription via `SessionProvider` à `src/api/auth.ts`. Ne pas envoyer le code seul ; voir `../docs/LOT_4_RECETTE_INTEGREE.md`.
 - Réutiliser les patterns de l'app (navigation, services d'API, i18n) ; repérer un écran
   existant avant d'en créer un. Toute chaîne visible passe par l'i18n FR.
