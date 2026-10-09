@@ -246,6 +246,8 @@ avant les apps.
   juste (**S142**, `$motDePasseJuste`, `LoginTellsNothingWithoutPasswordTest`).
   Le courriel de réinitialisation part en file, en français, lien et marque (société du compte) figés dans la requête
   (**S143**, `User::sendPasswordResetNotification()`, `ResetPasswordNotification`, `PasswordResetMailIsQueuedTest`).
+  Un compte **désactivé** n'obtient pas de jeton par l'API (403) et perd les siens (`User::booted()`, **S145**,
+  `DisabledAccountGetsNoTokenTest`).
 - **Un retour de paiement n'applique rien à un identifiant de l'URL** (**S129**) : `switchPlan()` reçoit une
   requête composée (`user_id = Auth::id()`), et une session Stripe ne sert qu'une fois
   (`subscriptions.stripe_session_id` unique, `StripeSubscriptionReturnTest`).

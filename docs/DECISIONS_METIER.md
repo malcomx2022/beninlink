@@ -2,7 +2,7 @@
 
 > Registre des décisions qui ne relèvent pas du code seul. Chaque entrée dit ce
 > qui a été **tranché** (et livré), ce qui reste **à trancher** par le métier, et
-> par qui. Mis à jour le 2026-10-09, S144 (D1-D16 ; les décisions R1-R9 du porteur du
+> par qui. Mis à jour le 2026-10-09, S145 (D1-D16 ; les décisions R1-R9 du porteur du
 > 2026-10-03 sont ventilées dans les lignes qu'elles tranchent).
 
 | # | Sujet | État | Livré dans le code | Reste à trancher |
