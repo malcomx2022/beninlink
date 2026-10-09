@@ -228,6 +228,8 @@ avant les apps.
 - **Un texte riche écrit par un autre que le lecteur se rend par `{!! safeHtml(…) !!}`** (**S127**,
   `App\Support\SafeHtml`, HTMLPurifier) : jamais `{!! $x->description !!}` — le middleware `XSS` exempte
   `description` et ne couvre pas l'API (`RichTextIsSanitizedTest`).
+- **Un mot de passe neuf passe par `Password::defaults()`** (**S134**, huit caractères, `AppServiceProvider`) : inscription,
+  création et modification d'un compte, changement, réinitialisation ; jamais la connexion (`NewPasswordPolicyTest`).
 - **Un retour de paiement n'applique rien à un identifiant de l'URL** (**S129**) : `switchPlan()` reçoit une
   requête composée (`user_id = Auth::id()`), et une session Stripe ne sert qu'une fois
   (`subscriptions.stripe_session_id` unique, `StripeSubscriptionReturnTest`).

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\User;
 
+use Illuminate\Validation\Rules\Password;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -27,7 +28,7 @@ class StoreUserRequest extends FormRequest
         return [
             'name'           => ['required','string','max:191'],
             'email'          => ['required','string','unique:users'],
-            'password'       => ['required','string'],
+            'password'       => ['required','string', Password::defaults()], // S134
             'mobile'         => ['required','numeric','digits_between:11,14','unique:users'],
             'nid_number'     => ['nullable','numeric','digits_between:1,20'],
             'designation_id' => ['required','numeric'],

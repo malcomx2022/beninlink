@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\MerchantProfile;
 
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdatePasswordRequest extends FormRequest
@@ -25,8 +26,8 @@ class UpdatePasswordRequest extends FormRequest
     {
         return [
             'old_password'     => ['required'],
-            'new_password'     => ['required','min:6'],
-            'confirm_password' => ['required_with:new_password','same:new_password','min:6'],
+            'new_password'     => ['required', Password::defaults()], // S134
+            'confirm_password' => ['required_with:new_password','same:new_password'],
         ];
     }
 }

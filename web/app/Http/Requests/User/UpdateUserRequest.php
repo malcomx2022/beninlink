@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\User;
 
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 
@@ -30,7 +31,7 @@ class UpdateUserRequest extends FormRequest
             return [
                 'name'           => ['required','string','max:191'],
                 'email'          => 'required|string|unique:users,email,'.Request::input('id'),
-                'password'       => ['nullable'],
+                'password'       => ['nullable', Password::defaults()], // S134
                 'mobile'         => 'required|numeric|digits_between:11,14|unique:users,mobile,'.Request::input('id'),
                 'nid_number'     => ['nullable','numeric','digits_between:1,20'],
 
@@ -46,7 +47,7 @@ class UpdateUserRequest extends FormRequest
             return [
                 'name'           => ['required','string','max:191'],
                 'email'          => 'required|string|unique:users,email,'.Request::input('id'),
-                'password'       => ['nullable'],
+                'password'       => ['nullable', Password::defaults()], // S134
                 'mobile'         => 'required|numeric|digits_between:11,14|unique:users,mobile,'.Request::input('id'),
                 'image'          => 'nullable|image|mimes:jpeg,png,jpg|max:5098',
                 'address'        => ['required','string','max:191'],

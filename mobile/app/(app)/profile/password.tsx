@@ -8,8 +8,8 @@ import { Button, ErrorText, Field, Muted } from '../../../src/components/ui';
 import { spacing } from '../../../src/theme/typography';
 import { t } from '../../../src/i18n';
 
-/** Minimum imposé par `PUT /update-password` (`UpdatePasswordRequest`). */
-const MIN_PASSWORD_LENGTH = 6;
+/** Minimum imposé par `PUT /update-password` (`Password::defaults()`, S134). */
+const MIN_PASSWORD_LENGTH = 8;
 
 /**
  * Changement de mot de passe, session ouverte. Le backend vérifie l'ancien

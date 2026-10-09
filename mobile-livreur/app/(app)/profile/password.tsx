@@ -9,8 +9,8 @@ import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, spacing } from '../../../src/theme/typography';
 import { t } from '../../../src/i18n';
 
-/** Le backend exige 6 caractères et la confirmation (`UpdatePasswordRequest`). */
-const MIN_LENGTH = 6;
+/** Le backend exige 8 caractères et la confirmation (`Password::defaults()`, S134). */
+const MIN_LENGTH = 8;
 
 export default function PasswordScreen() {
   const router = useRouter();

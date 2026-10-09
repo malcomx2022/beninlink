@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Installer;
 
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Foundation\Http\FormRequest;
 
 class InstallRequest extends FormRequest
@@ -30,7 +31,7 @@ class InstallRequest extends FormRequest
             'first_name'   => 'required',
             'last_name'    => 'required',
             'email'        => 'required|email',
-            'password'     => 'required',
+            'password'     => ['required', Password::defaults()], // S134
             'purchase_code'=> ['required']
         ];
     }

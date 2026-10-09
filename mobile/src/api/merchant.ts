@@ -102,7 +102,7 @@ export function updateProfile(payload: ProfileUpdatePayload): Promise<void> {
 
 /**
  * Change le mot de passe. Le backend vérifie l'ancien et répond 422 avec un
- * message explicite s'il ne correspond pas ; minimum 6 caractères.
+ * message explicite s'il ne correspond pas ; minimum 8 caractères (S134).
  */
 export function updatePassword(oldPassword: string, newPassword: string): Promise<void> {
   return api.put(endpoints.updatePassword, {

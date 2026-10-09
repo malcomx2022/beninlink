@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Company;
 
+use Illuminate\Validation\Rules\Password;
 use App\Rules\LegalIdentifier;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
@@ -34,7 +35,7 @@ class StoreRequest extends FormRequest
             // owner user information
             'name'           => ['required','string','max:191'],
             'email'          => ['required','string','unique:users'],
-            'password'       => ['required','string'],
+            'password'       => ['required','string', Password::defaults()], // S134
             'mobile'         => ['required','numeric', 'unique:users'],
             'nid_number'     => ['nullable','numeric' ],
             'designation_id' => ['required','numeric'],

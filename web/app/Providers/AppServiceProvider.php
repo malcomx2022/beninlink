@@ -159,6 +159,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // S134 — tout mot de passe neuf (inscription, création d'un compte, changement, réinitialisation)
+        // passe par `Password::defaults()` : huit caractères au moins. La connexion ne l'exige pas, pour
+        // qu'un compte plus ancien à six caractères entre encore et puisse en changer.
+        \Illuminate\Validation\Rules\Password::defaults(fn () => \Illuminate\Validation\Rules\Password::min(8));
         Paginator::useBootstrapFive();
         Paginator::useBootstrapFour();
         Schema::defaultStringLength(191);

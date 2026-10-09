@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V10;
 
+use Illuminate\Validation\Rules\Password as PasswordRule;
 use App\Enums\UserType;
 use App\Http\Middleware\UserTypeMiddleware;
 use App\Http\Controllers\Controller;
@@ -205,7 +206,7 @@ class AuthController extends Controller
         $request->validate([
             'token' => 'required',
             'email' => 'required|email',
-            'password' => 'required|min:8|confirmed',
+            'password' => ['required', 'confirmed', PasswordRule::defaults()], // S134 : même règle que tout mot de passe neuf
         ]);
 
         $status = Password::reset(

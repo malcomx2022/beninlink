@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Merchant;
 
+use Illuminate\Validation\Rules\Password;
 use App\Models\Backend\Merchant;
 use App\Models\User;
 use App\Rules\LegalIdentifier;
@@ -35,6 +36,7 @@ class UpdateRequest extends FormRequest
             'hub'                   => ['required','numeric'],
             'status'                => ['required','numeric'], 
             'address'               => ['required','string','max:191'],
+            'password'              => ['nullable', Password::defaults()], // S134 : écrit par update() s'il est saisi
             'payment_period'        => ['numeric'],
             // R7 b (S75) : statut TVA explicite — trois valeurs, rien d'autre.
             'vat_status'            => ['nullable', 'in:unset,taxable,exempt'],

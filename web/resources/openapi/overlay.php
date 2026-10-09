@@ -216,7 +216,7 @@ $operations = [
     // — Authentification -------------------------------------------------
     'POST register' => ['tag' => 'Authentification', 'summary' => 'Inscription d\'une PME marchande',
         'description' => 'Ne connecte pas : envoie un code par SMS et renvoie le numéro. Enchaîner sur `POST otp-verification`. IFU et RCCM sont exigés (chantier 2) ; la CNSS ne concerne que les employeurs.',
-        'requestBody' => $body(['business_name' => $str(), 'full_name' => $str(), 'address' => $str(), 'mobile' => $str('11 à 14 chiffres avec indicatif, ex. 22997000000'), 'password' => $str('6 caractères minimum'), 'ifu' => $str('13 chiffres'), 'rccm' => $str('ex. RB/COT/24 B 1234'), 'cnss' => $str('', true), 'hub_id' => $int('', true)], ['business_name', 'full_name', 'address', 'mobile', 'password', 'ifu', 'rccm']),
+        'requestBody' => $body(['business_name' => $str(), 'full_name' => $str(), 'address' => $str(), 'mobile' => $str('10 chiffres, avec ou sans +229, ex. 01 97 00 00 00 ; rangé 2290197000000 (S133)'), 'password' => $str('8 caractères minimum (S134)'), 'ifu' => $str('13 chiffres'), 'rccm' => $str('ex. RB/COT/24 B 1234'), 'cnss' => $str('', true), 'hub_id' => $int('', true)], ['business_name', 'full_name', 'address', 'mobile', 'password', 'ifu', 'rccm']),
         'responses' => $ok($obj(['mobile' => $str()]), 'Code SMS envoyé')],
     'POST signin' => ['tag' => 'Authentification', 'summary' => 'Connexion marchand',
         'description' => '`merchant_id` est l\'**identifiant marchand** (`users.unique_id`), pas le téléphone. 401 pour un compte qui n\'est pas marchand.',
@@ -233,7 +233,7 @@ $operations = [
     'POST password/reset' => ['tag' => 'Authentification', 'summary' => 'Définir un nouveau mot de passe à partir du jeton', 'requestBody' => $body(['token' => $str(), 'email' => $str(), 'password' => $str('8 caractères minimum'), 'password_confirmation' => $str()], ['token', 'email', 'password', 'password_confirmation']), 'responses' => $ok($obj(['message' => $str()]))],
     'GET refresh' => ['tag' => 'Authentification', 'summary' => 'Renouveler le jeton', 'description' => 'Révoque tous les jetons du compte et en émet un nouveau.', 'responses' => $ok($obj(['token' => $str()]))],
     'POST sign-out' => ['tag' => 'Authentification', 'summary' => 'Déconnexion (révocation du jeton)', 'responses' => $empty],
-    'PUT update-password' => ['tag' => 'Profil', 'summary' => 'Changer le mot de passe', 'requestBody' => $body(['old_password' => $str(), 'new_password' => $str('6 caractères minimum'), 'confirm_password' => $str()], ['old_password', 'new_password', 'confirm_password']), 'responses' => $empty + ['422' => ['description' => 'Validation, ou ancien mot de passe incorrect']]],
+    'PUT update-password' => ['tag' => 'Profil', 'summary' => 'Changer le mot de passe', 'requestBody' => $body(['old_password' => $str(), 'new_password' => $str('8 caractères minimum (S134)'), 'confirm_password' => $str()], ['old_password', 'new_password', 'confirm_password']), 'responses' => $empty + ['422' => ['description' => 'Validation, ou ancien mot de passe incorrect']]],
 
     // — Référentiels -------------------------------------------------------
     'GET hub' => ['tag' => 'Référentiels', 'summary' => 'Agences (hubs)', 'description' => '10 par page (dépôt partagé avec le back-office) ; `page` à la racine depuis S78.', 'parameters' => [$page], 'responses' => $paged($obj(['hubs' => $arr('Hub')]))],
