@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\Http\Services\SmsService;
 use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\Merchant\StoreRequest;
 use App\Http\Requests\Merchant\SignUpRequest;
 use App\Http\Requests\Merchant\UpdateRequest;
@@ -86,14 +88,16 @@ class MerchantController extends Controller
     public function otpVerification(OtpRequest $request)
     {
         $result     = $this->repo->otpVerification($request);
-        if($result != null){
-            if(auth()->attempt([
-                                'mobile' => $result->mobile,
-                                'password' => session('password')
-                            ]))
-            {
-                return redirect()->route('login');
+        if($result instanceof User){
+            // S138 — le code vérifié ouvre la session du compte qu'il vient de vérifier, sur le site de
+            // sa société. Le socle rejouait `auth()->attempt()` avec le mot de passe gardé EN CLAIR dans
+            // la session depuis l'inscription.
+            $request->session()->forget('password');
+            if ((int) $result->company_id === (int) settings()->id) {
+                Auth::login($result);
+                $request->session()->regenerate();
             }
+            return redirect()->route('login');
         }
         elseif($result == 0){
             return redirect()->route('merchant.otp-verification-form')->with('warning', __('auth.invalid_otp'));

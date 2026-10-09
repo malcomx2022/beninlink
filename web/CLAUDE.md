@@ -235,6 +235,8 @@ avant les apps.
   `sign-out` et `refresh` ne touchent que le jeton de l'appareil qui appelle (**S136**, `ApiSignOutScopeTest`).
   Un **code OTP** vaut `User::OTP_TTL_MINUTES` (posé par le modèle à chaque écriture) et s'efface dès qu'il a servi
   (**S137**, `OtpSingleUseTest`) : une vérification d'OTP filtre toujours `otp_expires_at > now()`.
+  Jamais de mot de passe ni de code dans la session (**S138**, `SignupSessionHoldsNoSecretTest`) : le code vérifié
+  ouvre la session du compte qu'il vérifie (`Auth::login()`, société du site).
 - **Un retour de paiement n'applique rien à un identifiant de l'URL** (**S129**) : `switchPlan()` reçoit une
   requête composée (`user_id = Auth::id()`), et une session Stripe ne sert qu'une fois
   (`subscriptions.stripe_session_id` unique, `StripeSubscriptionReturnTest`).
