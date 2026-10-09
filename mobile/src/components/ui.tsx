@@ -48,6 +48,7 @@ export function Field({ label, error, style, ...props }: FieldProps) {
     <View style={styles.field}>
       <Label>{label}</Label>
       <TextInput
+        accessibilityLabel={label}
         placeholderTextColor={colors.disabled}
         {...props}
         style={[styles.input, !!error && styles.inputError, style]}

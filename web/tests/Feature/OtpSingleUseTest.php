@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Jobs\SendSms;
 use App\Repositories\Superadmin\Company\CompanyRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -64,8 +65,13 @@ class OtpSingleUseTest extends TestCase
         $this->postJson('/api/v10/otp-verification', ['mobile' => '0197010138', 'otp' => $code], ['apiKey' => self::API_KEY])
             ->assertStatus(401);
 
+        Queue::fake(); // isoler le renvoi du SMS initial d'inscription
         $this->postJson('/api/v10/resend-otp', ['mobile' => '0197010138'], ['apiKey' => self::API_KEY])->assertOk();
         $nouveau = $compte->fresh()->otp;
+        Queue::assertPushed(SendSms::class, 1);
+        Queue::assertPushed(SendSms::class, fn (SendSms $job) => $job->otp
+            && $job->phone === $compte->mobile && $job->message === (string) $nouveau
+            && $job->companyId === $compte->company_id);
         $this->postJson('/api/v10/otp-verification', ['mobile' => '0197010138', 'otp' => $nouveau], ['apiKey' => self::API_KEY])
             ->assertOk();
     }

@@ -49,7 +49,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), $validator->rules());
 
         if ($validator->fails()) {
-            return $this->responseWithError(__('merchant.added_msg'), ['message' => $validator->errors()], 422);
+            return $this->responseWithError(__('merchant.signup_validation_error'), ['message' => $validator->errors()], 422);
         }
         if($this->merchantRepo->signUpStore($request)){
             return $this->responseWithSuccess(__('merchant.added_msg'), ['mobile'=>$request->mobile], 200);
@@ -78,7 +78,6 @@ class AuthController extends Controller
 
     public function resendOTP(Request $request)
     {
-        $this->merchantRepo->resendOTP($request);
         if($this->merchantRepo->resendOTP($request)){
             return $this->responseWithSuccess(__('auth.resend_otp_msg'), ['mobile'=>$request->mobile], 200);
         }else{

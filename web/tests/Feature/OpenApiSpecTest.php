@@ -16,6 +16,14 @@ class OpenApiSpecTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_merchant_otp_contract_requires_the_phone_as_well_as_the_code(): void
+    {
+        $spec = (new SpecGenerator())->generate();
+        $schema = $spec['paths']['/otp-verification']['post']['requestBody']['content']['application/json']['schema'];
+        $this->assertSame(['mobile', 'otp'], $schema['required']);
+        $this->assertArrayHasKey('mobile', $schema['properties']);
+    }
+
     public function test_every_api_route_is_in_the_spec(): void
     {
         $generator = new SpecGenerator();

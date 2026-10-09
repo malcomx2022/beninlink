@@ -21,16 +21,22 @@ documents locaux. Ce lot complète le guide `guides/recette-pilote/README.md`.
 - URL confirmée par le responsable de recette : `https://recette.beninlink.app`, réponse HTTP 200 rapportée ; API des deux APK : `https://recette.beninlink.app/api/v10`.
 - APK historiques déclarés terminés le **2026-10-07 à 14:40 UTC** : marchand `0bd31084`, livreur `8b3ff02d` (identifiants abrégés fournis). Ils précèdent les corrections récentes des apps et le lot 3 ; ils ne permettent pas de valider ces corrections.
 - Artefacts historiques fournis : [marchand](https://expo.dev/artifacts/eas/sTCYMqh04f3RgzCOUAKv5CFSQ3Y7n8ExgWh5zXXniqM.apk), [livreur](https://expo.dev/artifacts/eas/cpe02BmK4w3V4BYg0qqEQx0UAIEEjLRlMohHw-4qEVw.apk). Métadonnées rapportées par le responsable, non vérifiées directement auprès d'EAS.
-- Rebuilds nécessaires depuis le commit final retenu sur `main`, avec profil `recette`. Consigner pour chaque nouveau build le SHA source complet, l'identifiant EAS complet et le lien APK. L'installation et la disponibilité des appareils ne sont pas confirmées ; aucun appareil n'est accessible dans cet environnement.
+- **Nouveaux rebuilds déclarés FINISHED le 2026-10-09**, depuis `main` avec S133/S134/S144 : [marchand](https://expo.dev/artifacts/eas/GDXArOtZlQrzqdhwVJcqi4hHCGLB_RAze_lFvdnV2ww.apk), [livreur](https://expo.dev/artifacts/eas/fBrEqrB0enCuueY5gU0hx8zhq_bqcC61inFKi3uU0jA.apk). Ces liens remplacent les APK historiques pour la recette. Disponibilité et contenu rapportés par le responsable, non vérifiés directement auprès d'EAS.
+- SHA source déclaré pour les deux nouveaux builds : `54b1955f988a8ba6e1c90efbecd09e1260ecf2c2` (fusion de la PR #216). Vérification Git effectuée : ce SHA contient le commit du lot 3 `874795d1cad40052c6ac562276bef9c0138edb68` dans son historique. La base source déclarée inclut donc les corrections du lot 3.
+- Build marchand : [`6a525ec8-2957-48d9-89dd-9bd37a996caa`](https://expo.dev/accounts/ulrichseglas-team/projects/beninlink-marchand/builds/6a525ec8-2957-48d9-89dd-9bd37a996caa).
+- Build livreur : [`699eeeeb-f37f-4077-9a9c-50958195c80d`](https://expo.dev/accounts/ulrichseglas-team/projects/beninlink-livreur/builds/699eeeeb-f37f-4077-9a9c-50958195c80d).
+- Différences locales déclarées lors des builds : `owner` et `projectId` dans `app.json`, `environment: preview` dans `eas.json`, `package-lock.json` régénéré par `npm install`. Les diffs ne sont pas encore fournis. La régénération du lock peut modifier les dépendances : son absence d'impact ne peut pas être attestée sans comparaison. Versionner les fichiers utilisés sur une branche/PR pour rendre les builds reproductibles, sans recréer les projets EAS ni les keystores.
+- Les deux apps sont désormais déclarées installées ; aucun appareil n'est accessible dans cet environnement. Un blocage d'inscription marchand est signalé (voir ci-dessous). Aucun cas de recette terrain n'est déclaré validé.
 
 Une réponse HTTP 200 ne prouve pas la version du serveur. Une URL API correcte
 ne prouve pas que les APK contiennent le lot 3. Vérifier le SHA déployé via le
 processus d'exploitation existant et les métadonnées EAS/build des deux APK.
 Ne publier aucun secret ni mot de passe dans les preuves.
 
-Les rebuilds sont actuellement bloqués par l'absence d'authentification Expo
-dans l'environnement de build. Configurer `EXPO_TOKEN` via le gestionnaire de
-secrets de cet environnement ou de la CI, jamais dans le chat ni dans le dépôt.
+Le blocage de reconstruction est levé selon le retour du responsable : les deux
+nouveaux APK sont terminés. Pour une reconstruction ultérieure depuis cet
+environnement, configurer `EXPO_TOKEN` via son gestionnaire de secrets ou celui
+de la CI, jamais dans le chat ni dans le dépôt.
 Conserver les projets et keystores EAS existants. Depuis une copie propre du
 commit retenu, exécuter dans chacune des deux apps :
 
@@ -45,6 +51,41 @@ APK, le détenteur des téléphones doit confirmer le build installé et exécut
 les cas ci-dessous. La recette mobile reste bloquée jusqu'à cette étape.
 
 ## Recette terrain obligatoire
+
+### Premier retour sur appareils : inscription marchand
+
+Les deux apps sont déclarées installées par le responsable. Un blocage du
+parcours d'inscription marchand est signalé lors de la saisie et de la validation
+du formulaire ; message exact et captures encore attendus. Le diagnostic de
+code révèle un défaut certain, distinct de ce premier blocage : l'app
+envoyait seulement `otp`, alors que `MerchantRepository::otpVerification()`
+recherche le compte avec `mobile` et `otp`. Le parcours API simulé M9 transmettait
+les deux et ne révélait donc pas l'omission du client réel.
+
+Plan de correction : transmettre le numéro reçu de l'inscription à travers
+l'écran de vérification, `SessionProvider` et le client auth ; afficher un code
+de cinq chiffres conformément au serveur ; tester la transmission et le refus
+en cas de numéro absent. Autre anomalie confirmée : une inscription invalide
+renvoyait HTTP 422 avec « Le marchand a été ajouté avec succès ». Le message
+est remplacé par une demande de correction des champs ; les erreurs détaillées
+restent sous `data.message`, sans modification du contrat. Les tests vérifient
+ce refus et la navigation du formulaire vers le numéro normalisé. Aucun
+changement d'endpoint ou d'architecture. La
+cause exacte du blocage observé sur téléphone reste à confronter au message
+signalé. La correction mobile nécessite un nouveau build pour être testée.
+
+Les deux lockfiles joints ont été identifiés par leur nom de package : marchand
+et livreur. Comparaison JSON avec les fichiers du dépôt : contenu identique,
+y compris versions, intégrités, dépendances et métadonnées ; seul un éventuel
+formatage peut différer. Aucun changement de dépendance n'est constaté dans
+ces pièces. Ne pas les régénérer pour cette correction.
+
+Validation de la correction : **56 tests marchand réussis**, typage et lint
+réussis, export Android Hermes réussi. Tests PHP ciblés inscription/OpenAPI :
+**8 tests réussis, 310 assertions**, dont le nouveau test du contrat SMS.
+Suite Laravel complète : **1 446 tests réussis, 51 954 assertions**. Captures
+du problème de saisie attendues ; validation sur les appareils à refaire après
+déploiement serveur et reconstruction de l'app marchand.
 
 ### Suivi technique après fusion de la préparation
 

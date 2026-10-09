@@ -145,16 +145,24 @@ describe('inscription et code SMS', () => {
     expect(mobile).toBe('0196000001');
   });
 
-  it('verifyOtp ouvre la session avec le jeton reçu', async () => {
+  it('verifyOtp transmet le numéro avec le code (rognés) et ouvre la session avec le jeton reçu', async () => {
     fetchMock.mockResolvedValueOnce(ok({ token: 'jeton-otp', user }));
 
-    await expect(verifyOtp('123456')).resolves.toEqual(user);
+    await expect(verifyOtp(' 2290196000001 ', ' 123456 ')).resolves.toEqual(user);
 
     const call = singleCall(fetchMock);
     expect(call.path).toBe('otp-verification');
-    expect(call.body).toEqual({ otp: '123456' });
+    expect(call.body).toEqual({ mobile: '2290196000001', otp: '123456' });
     expect(call.headers).not.toHaveProperty('Authorization');
     await expect(getToken()).resolves.toBe('jeton-otp');
+  });
+
+  it("verifyOtp ne range aucun jeton quand le code est refusé", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(422, { success: false, message: 'Code refusé', data: [] }));
+
+    await expect(verifyOtp('2290196000001', '12345')).rejects.toMatchObject({ status: 422, message: 'Code refusé' });
+    expect(SecureStore.setItemAsync).not.toHaveBeenCalled();
+    await expect(getToken()).resolves.toBeNull();
   });
 
   it('resendOtp renvoie le numéro sur la route publique', async () => {

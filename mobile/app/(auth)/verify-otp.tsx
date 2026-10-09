@@ -25,16 +25,18 @@ export default function VerifyOtpScreen() {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
 
   async function submit() {
+    if (loading || resending) return;
     setError('');
-    if (!otp.trim()) {
+    if (!mobile?.trim() || !otp.trim()) {
       setError(t('errors.requiredField'));
       return;
     }
     setLoading(true);
     try {
-      await verifyOtp(otp.trim());
+      await verifyOtp(mobile.trim(), otp.trim());
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
     } finally {
@@ -43,17 +45,22 @@ export default function VerifyOtpScreen() {
   }
 
   async function resend() {
+    if (loading || resending) return;
     setError('');
     setInfo('');
-    if (!mobile) {
+    if (!mobile?.trim()) {
       setError(t('errors.unexpected'));
       return;
     }
+    setResending(true);
     try {
-      await resendOtp(mobile);
+      await resendOtp(mobile.trim());
+      setOtp('');
       setInfo(t('auth.otpResent'));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
+    } finally {
+      setResending(false);
     }
   }
 
@@ -67,14 +74,14 @@ export default function VerifyOtpScreen() {
         value={otp}
         onChangeText={setOtp}
         keyboardType="number-pad"
-        maxLength={6}
-        placeholder="••••••"
-        editable={!loading}
+        maxLength={5}
+        placeholder="•••••"
+        editable={!loading && !resending}
       />
       <ErrorText>{error}</ErrorText>
       {!!info && <Muted>{info}</Muted>}
-      <Button title={t('auth.verify')} onPress={submit} loading={loading} />
-      <Button title={t('auth.resendOtp')} onPress={resend} variant="accent" disabled={loading} />
+      <Button title={t('auth.verify')} onPress={submit} loading={loading} disabled={resending} />
+      <Button title={t('auth.resendOtp')} onPress={resend} variant="accent" disabled={loading} loading={resending} />
     </ScrollView>
   );
 }

@@ -271,7 +271,9 @@ class RecettePiloteRepetitionTest extends TestCase
             'ifu' => '3202600010006', 'rccm' => 'RB/COT/26 B 10006',
         ];
 
-        $this->postJson('/api/v10/register', array_diff_key($pme, ['ifu' => 1, 'rccm' => 1]), $this->entetes())->assertStatus(422);
+        $this->postJson('/api/v10/register', array_diff_key($pme, ['ifu' => 1, 'rccm' => 1]), $this->entetes())->assertStatus(422)
+            ->assertJsonPath('message', 'Veuillez corriger les champs indiqués pour créer votre compte.')
+            ->assertJsonStructure(['data' => ['message' => ['ifu', 'rccm']]]);
         $this->postJson('/api/v10/register', ['ifu' => '123'] + $pme, $this->entetes())->assertStatus(422);
         $this->postJson('/api/v10/register', $pme, $this->entetes())->assertOk();
 
