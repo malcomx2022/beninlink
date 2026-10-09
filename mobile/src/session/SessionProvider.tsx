@@ -40,13 +40,27 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      setUser(await fetchProfile());
+      const profile = await fetchProfile();
+      if (await getToken() === token) setUser(profile);
     } catch {
       // Jeton invalide ou serveur injoignable : on repart déconnecté.
-      setUser(null);
+      if (await getToken() === token) setUser(null);
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Une panne réseau n'invalide pas une session déjà ouverte. Le client d'API
+  // efface le jeton sur 401 ; son écouteur conserve cette déconnexion.
+  const refresh = useCallback(async () => {
+    const token = await getToken();
+    if (!token) {
+      setUser(null);
+      return;
+    }
+    const profile = await fetchProfile();
+    // Ne pas restaurer le compte si la session a changé pendant la requête.
+    if (await getToken() === token) setUser(profile);
   }, []);
 
   useEffect(() => {
@@ -73,9 +87,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         await apiSignOut();
         setUser(null);
       },
-      refresh: restore,
+      refresh,
     }),
-    [loading, user, restore],
+    [loading, user, refresh],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

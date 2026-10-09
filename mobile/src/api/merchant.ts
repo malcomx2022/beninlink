@@ -29,8 +29,9 @@ export function fetchBalanceDetails(): Promise<BalanceDetails> {
   return api.get<BalanceDetails>(endpoints.balanceDetails);
 }
 
-export function fetchProfile(): Promise<AuthUser> {
-  return api.get<AuthUser>(endpoints.profile);
+export async function fetchProfile(): Promise<AuthUser> {
+  const result = await api.get<{ user: AuthUser }>(endpoints.profile);
+  return result.user;
 }
 
 /** Nombre de factures par page — fixé côté serveur par `paginate(10)`. Repli si `page` manque (S78). */

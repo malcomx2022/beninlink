@@ -103,6 +103,7 @@ Rien de tout ceci ne peut être versionné — ce sont des secrets et des liens 
    porte aucune.
 
 ## Conventions
+- Lot 7 : profil lu sous `data.user` ; actualisation d'une session ouverte distincte de la restauration, panne réseau propagée sans effacer le compte ; réponse ignorée si le jeton a changé. Voir `../docs/LOT_7_SESSION_RESEAU.md`.
 - Lot 6 : pendant le renvoi SMS, saisie et actions bloquées ; ancien code vidé après réussite seulement, erreur réessayable. Voir `../docs/LOT_6_RENVOI_SMS.md`.
 - Lot 5 : champs obligatoires contrôlés avant inscription, aide téléphone/RCCM, bouton au-dessus de la zone système ; la validation des formats reste côté serveur. Voir `../docs/LOT_5_SAISIE_INSCRIPTION.md`.
 - Recette terrain lot 4 : vérification SMS = `mobile` + `otp` (5 chiffres), transmis de la route d'inscription via `SessionProvider` à `src/api/auth.ts`. Ne pas envoyer le code seul ; voir `../docs/LOT_4_RECETTE_INTEGREE.md`.
