@@ -2,7 +2,7 @@
 
 > Relevé de l'existant AVANT toute modification. Lecture seule.
 > Chaque bloc cite les fichiers réels du socle. Blocs **A-K** renseignés.
-> Dernière mise à jour : 2026-10-09 (S142 — la page de connexion ne dit rien d'un compte à qui n'a pas son mot de passe ; S141 — réinitialiser son mot de passe sur le site n'ouvre pas de session ; S140 — la connexion Google ou Facebook reste dans sa société ; S139 — « se souvenir de moi » ne garde pas le mot de passe ; S138 — la session d'une inscription ne garde ni mot de passe ni code ; S137 — un code SMS ne sert qu'une fois, et pas longtemps ; S136 — se déconnecter d'un appareil ne déconnecte pas les autres ; S135 — un mot de passe changé ferme les autres accès ; S134 — un mot de passe neuf a huit caractères au moins ; S133 — un numéro béninois se saisit comme on le dit ; S132 — le cookie de session ne part plus en clair ; S131 — la surface publique a une cadence bornée ; S130 — le parcours OTP du site marchand est limité comme l'API ; S129 — le retour Stripe n'active qu'un abonnement, pour le compte qui a payé ; S128 — la partie serveur de S126 est close ; S127 — un texte riche écrit par un autre est nettoyé avant d'être rendu ; S126 — un fichier téléversé ne devient jamais du code serveur ; S125 — l'arriéré des droits du back-office fermé ; S124 — l'installateur de modules fermé, cinq écrans gardés par leur droit ; S123 — l'origine d'un mouvement de portefeuille se lit en français ; S122 — une date affichée parle la langue de son lecteur ; S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
+> Dernière mise à jour : 2026-10-09 (S143 — le courriel de réinitialisation part en file, en français ; S142 — la page de connexion ne dit rien d'un compte à qui n'a pas son mot de passe ; S141 — réinitialiser son mot de passe sur le site n'ouvre pas de session ; S140 — la connexion Google ou Facebook reste dans sa société ; S139 — « se souvenir de moi » ne garde pas le mot de passe ; S138 — la session d'une inscription ne garde ni mot de passe ni code ; S137 — un code SMS ne sert qu'une fois, et pas longtemps ; S136 — se déconnecter d'un appareil ne déconnecte pas les autres ; S135 — un mot de passe changé ferme les autres accès ; S134 — un mot de passe neuf a huit caractères au moins ; S133 — un numéro béninois se saisit comme on le dit ; S132 — le cookie de session ne part plus en clair ; S131 — la surface publique a une cadence bornée ; S130 — le parcours OTP du site marchand est limité comme l'API ; S129 — le retour Stripe n'active qu'un abonnement, pour le compte qui a payé ; S128 — la partie serveur de S126 est close ; S127 — un texte riche écrit par un autre est nettoyé avant d'être rendu ; S126 — un fichier téléversé ne devient jamais du code serveur ; S125 — l'arriéré des droits du back-office fermé ; S124 — l'installateur de modules fermé, cinq écrans gardés par leur droit ; S123 — l'origine d'un mouvement de portefeuille se lit en français ; S122 — une date affichée parle la langue de son lecteur ; S121 — un montant affiché est en FCFA entiers ; S120 — le registre dit l'état du 2026-10-08 ; S119 — les scripts du back-office parlent français ; S118 — les messages du back-office et de l'API parlent français ; S117 — le back-office parle français, ses comptes sont béninois ; S116 — le panneau marchand parle français et compte en FCFA ; S115 — le parcours d'une PME pilote parle français, du formulaire au courriel ; S114 — les pages d'erreur et les phrases des vues parlent français ; S113 — aucune clé de traduction affichée brute ; S112 — le catalogue français ne garde plus d'anglais ; S111 — aucune marque tierce sur les pages publiques ; S110 — la société renommée, les secrets de recette nommés ; S109 — l'état du serveur corrigé : quatre points sur cinq faits, le renommage attend ; S108 — le serveur : société renommée, Supervisor et crontab posés ; S107 — dette technique T2, T3, T9 tranchée (D15) ; S106 — R1, R2 et R8 actés par des défauts réversibles ; S105 — la page des plans ne dépend plus d'un réglage Stripe absent ; S104 — un compte livreur n'entre pas au back-office web ; S103 — les cartes de colis des deux apps rendues en test ; S102 — le registre dit la production vraie ; S101 — les listes de colis signalent le document douanier à collecter ; S100 — la CI des pull requests n'attend plus le déploiement de main ; S99 — le garde du .env refuse le mode debug en production ; S98 — mot de passe oublié dans l'app livreur ; S97 — le garde du .env refuse un cache non partagé ; S96 — les entrées d'authentification de l'API limitées contre la force brute ; S95 — le livreur voit l'alerte douanière de sa course ; S94 — l'alerte douanière sur la fiche colis web ; S93 — la vitrine d'une société neuve parle français ; S92 — les semences parlent du Bénin ; S91 — l'app marchand : barème par zones seul ; S90 — l'API négocie
 > sa langue ; S89 — un déploiement refusé
 > remet l'ancien code ; S88 —
 > l'installateur fermé sur une base installée ; S87 — plus
@@ -9824,3 +9824,38 @@ chacun rouge sur son seul test : refus livreur sur l'adresse seule, redirection 
 ### Côté serveur (au porteur)
 
 Rien à faire.
+
+## S143 — le courriel de réinitialisation part en file, en français (2026-10-09)
+
+### D'où ça vient
+
+« Mot de passe oublié » (site, `ForgotPasswordController`, et API, `AuthController::forgotPassword`) passe par
+`Password::sendResetLink()`, qui envoyait la notification `ResetPassword` de Laravel :
+
+- **dans la requête** (contraire à **D13**) : un SMTP lent ou en panne faisait échouer ou attendre la page ;
+- **en anglais** : aucune de ses phrases (sujet, corps, bouton, formule, pied) n'était dans `lang/fr.json`.
+
+### Ce qui est fait
+
+- `App\Notifications\ResetPasswordNotification` (`ResetPassword` + `ShouldQueue`) : bâtie par le worker, elle
+  ne lit ni hôte ni société ; son lien et sa marque lui sont donnés.
+- `User::sendPasswordResetNotification()` fige, dans la requête : le **lien** vers le site où la demande a été faite
+  (`url(route('password.reset', …, false))`), la **langue** (`locale(app()->getLocale())`) et la **marque**, celle de la
+  société **du compte** (F4 : par l'API, `settings()` n'a ni site ni session et retomberait sur la société 1).
+- `lang/fr.json` : les neuf phrases de la notification et du gabarit de courriel de Laravel (sujet, corps, bouton,
+  « Cordialement », « Bonjour, », « Oups ! », lien de secours, « Tous droits réservés. »).
+- `OffRequestScopeCoverageTest` (S56) couvre la nouvelle notification (`app/Notifications`) : aucune résolution
+  ambiante.
+
+### Le filet
+
+`PasswordResetMailIsQueuedTest` (2 tests) : sur le site, la demande met en file une `ResetPasswordNotification`
+dont le lien vise ce site, en français ; par l'API, le courriel rendu est en français, signé de la société du
+compte. `WebPasswordResetOpensNoSessionTest` (S141), `CourierPasswordResetTest` (S98) et `RecettePiloteRepetitionTest` (M10) suivent la
+nouvelle classe (la suite complète les a signalés : ils nommaient la notification du socle). Sabotages, tous rouges : notification
+du socle remise, marque ambiante, hors file, sujet non traduit.
+
+### Côté serveur (au porteur)
+
+Le courriel part désormais par le **worker de file** (D13, `beninlink:file-attente`) : rien de neuf si le worker
+tourne déjà pour les SMS, push et courriels.

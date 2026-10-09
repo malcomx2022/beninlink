@@ -7,7 +7,7 @@ use App\Enums\UserType;
 use App\Models\Backend\DeliveryMan;
 use App\Models\Backend\Merchant;
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Notifications\ResetPasswordNotification as ResetPassword; // S143 : la réinitialisation part en file, par cette classe
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;

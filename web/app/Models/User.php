@@ -94,6 +94,19 @@ class User extends Authenticatable
         });
     }
 
+    /**
+     * **S143** — le courriel de réinitialisation part en file (D13) : son lien, sa langue et sa marque sont figés
+     * ici, dans la requête. Le lien vise le site où la demande a été faite ; la marque est celle de la société
+     * **du compte** (F4 : par l'API, `settings()` n'aurait ni site ni session et retomberait sur la société 1).
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $lien = url(route('password.reset', ['token' => $token, 'email' => $this->getEmailForPasswordReset()], false));
+        $marque = GeneralSettings::query()->whereKey($this->company_id)->value('name') ?: config('app.name');
+
+        $this->notify((new \App\Notifications\ResetPasswordNotification($token, $lien, $marque))->locale(app()->getLocale()));
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
