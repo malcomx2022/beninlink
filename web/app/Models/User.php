@@ -48,6 +48,35 @@ class User extends Authenticatable
     /**
      * Activity Log
      */
+    /**
+     * S135 — un mot de passe changé ferme les autres accès de l'API : quel que soit le chemin
+     * (profil, réinitialisation, fiche modifiée par un agent), les jetons Sanctum du compte sont
+     * révoqués, sauf celui de l'appareil qui vient de le changer. Sans cela, un jeton volé
+     * survivait au changement de mot de passe qui devait l'éteindre. Les sessions web suivent
+     * par `CloseSessionsOnPasswordChange` (groupe `web`).
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (User $user) {
+            if (! $user->wasChanged('password')) {
+                return;
+            }
+            $courant = request()->user()?->getKey() === $user->getKey()
+                ? request()->user()->currentAccessToken()
+                : null;
+            $user->tokens()
+                ->when($courant instanceof \Laravel\Sanctum\PersonalAccessToken, fn ($q) => $q->whereKeyNot($courant->getKey()))
+                ->delete();
+
+            // La session web qui change son propre mot de passe reste ouverte : `CloseSessionsOnPasswordChange`
+            // range l'empreinte du compte connecté, souvent une autre instance que celle écrite ici.
+            $web = auth()->guard('web');
+            if ($web->hasUser() && $web->id() === $user->getKey() && $web->user() !== $user) {
+                $web->user()->setAttribute('password', $user->password)->syncOriginalAttribute('password');
+            }
+        });
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
