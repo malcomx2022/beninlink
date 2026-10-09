@@ -184,7 +184,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), $validator->rules());
 
         if ($validator->fails()) {
-            return $this->responseWithError(__('auth.update_password'), ['message' => $validator->errors()], 422);
+            return $this->responseWithError(__('auth.validation_error'), ['message' => $validator->errors()], 422);
         }
         $result = $this->profileRepo->updatePassword(auth()->user()->id, $request);
         if($result == 1){
@@ -205,7 +205,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), $validator->rules());
 
         if ($validator->fails()) {
-            return $this->responseWithError(__('auth.profile_update'), ['message' => $validator->errors()], 422);
+            return $this->responseWithError(__('auth.validation_error'), ['message' => $validator->errors()], 422);
         }
         if($this->merchantProfile->update(auth()->user()->id, $request)){
             return $this->responseWithSuccess(__('auth.profile_update'), [], 200);
