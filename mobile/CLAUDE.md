@@ -103,6 +103,7 @@ Rien de tout ceci ne peut être versionné — ce sont des secrets et des liens 
    porte aucune.
 
 ## Conventions
+- Lot 11 : comptes de retrait inconnus ≠ liste vide ; formulaires après lecture réussie, erreur et nouvelle tentative visibles ; ajout confirmé conservé si relecture échoue, GET seul à la reprise. Voir `../docs/LOT_11_COMPTES_RETRAIT.md`.
 - Lot 9 : écriture du profil confirmée distincte de sa relecture ; après confirmation, champs figés et nouvelle tentative = GET seul. Voir `../docs/LOT_9_PROFIL_ENREGISTRE.md`.
 - Lot 8 : `ChoiceGroup` accepte `disabled` dans les deux apps ; les `testID` Maestro restent inchangés. Voir `../docs/LOT_8_PREUVES_LIVRAISON.md`.
 - Lot 7 : profil lu sous `data.user` ; actualisation d'une session ouverte distincte de la restauration, panne réseau propagée sans effacer le compte ; réponse ignorée si le jeton a changé. Voir `../docs/LOT_7_SESSION_RESEAU.md`.
