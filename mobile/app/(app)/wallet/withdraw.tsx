@@ -48,6 +48,8 @@ export default function WithdrawScreen() {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [ready, setReady] = useState(false);
 
   // Ajout d'un compte Mobile Money : imposé tant qu'aucun compte n'existe,
   // sinon à la demande. Dérivé plutôt que stocké, pour ne pas le recalculer
@@ -63,13 +65,18 @@ export default function WithdrawScreen() {
   const selectedAccountId = accountId ?? accounts[0]?.id ?? null;
 
   const load = useCallback(async () => {
+    setLoading(true);
+    setReady(false);
     setError('');
     try {
       const [a, r] = await Promise.all([fetchPaymentAccounts(), fetchPaymentRequests()]);
       setAccounts(a);
       setRequests(r);
+      setReady(true);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t('errors.unexpected'));
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -78,6 +85,7 @@ export default function WithdrawScreen() {
   }, [load]);
 
   async function addAccount() {
+    if (busy || !ready) return;
     setAccountError('');
     setAccountErrors({});
     const number = mobileNo.replace(/\s/g, '');
@@ -107,6 +115,7 @@ export default function WithdrawScreen() {
   }
 
   async function submit() {
+    if (busy || !ready) return;
     setError('');
     setInfo('');
     const value = Number(amount.replace(/\s/g, ''));
@@ -152,7 +161,16 @@ export default function WithdrawScreen() {
           <Muted>{t('wallet.withdrawIntro')}</Muted>
         </Card>
 
-        {showAccountForm ? (
+        <ErrorText>{error}</ErrorText>
+        {!!info && <Muted>{info}</Muted>}
+
+        {!ready ? (
+          <Card>
+            {loading ? <Muted>{t('common.loading')}</Muted> : (
+              <Button title={t('common.retry')} onPress={() => void load()} disabled={busy} />
+            )}
+          </Card>
+        ) : showAccountForm ? (
           <Card>
             <Title>{t('wallet.addAccount')}</Title>
             {accounts.length === 0 && <Muted>{t('wallet.noAccount')}</Muted>}
@@ -169,6 +187,7 @@ export default function WithdrawScreen() {
               value={operator}
               onChange={setOperator}
               error={accountErrors.mobile_company?.[0]}
+              disabled={busy}
             />
             <Field
               label={t('wallet.mobileNo')}
@@ -198,6 +217,7 @@ export default function WithdrawScreen() {
               options={accounts.map((a) => ({ value: a.id, label: accountLabel(a) }))}
               value={selectedAccountId}
               onChange={setAccountId}
+              disabled={busy}
             />
             <Text style={styles.addLink} onPress={() => !busy && setAddingAccount(true)}>
               {t('wallet.addAccount')}
@@ -216,8 +236,6 @@ export default function WithdrawScreen() {
               onChangeText={setDescription}
               editable={!busy}
             />
-            <ErrorText>{error}</ErrorText>
-            {!!info && <Muted>{info}</Muted>}
             <Button
               title={t('wallet.withdrawAction')}
               onPress={submit}
@@ -227,7 +245,7 @@ export default function WithdrawScreen() {
           </Card>
         )}
 
-        <Card>
+        {ready && <Card>
           <Title>{t('wallet.requests')}</Title>
           {requests.length === 0 && <Muted>{t('wallet.requestsEmpty')}</Muted>}
           {requests.map((r) => (
@@ -244,7 +262,7 @@ export default function WithdrawScreen() {
               <Muted>{r.request_date ?? ''}</Muted>
             </View>
           ))}
-        </Card>
+        </Card>}
       </ScrollView>
     </KeyboardAvoidingView>
   );
